@@ -1,0 +1,477 @@
+[
+  {
+    "v": 11,
+    "id": "cmnrgn0n802f3gb1lw0pfa9rh",
+    "name": "Auth",
+    "folders": [],
+    "requests": [
+      {
+        "v": "17",
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
+        "body": {
+          "body": null,
+          "contentType": null
+        },
+        "name": "auth-google",
+        "method": "GET",
+        "params": [],
+        "headers": [],
+        "endpoint": "<<base_url>>/auth/google",
+        "responses": {
+          "auth-google": {
+            "body": "{\"success\":true,\"message\":\"Login by Google successful\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDg5NDNiMjZhODk5YTZmMTU4MmJmOSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc1ODA0MzUyLCJleHAiOjE3NzY0MDkxNTJ9.0w4xJO91YksLdkPmOGLOwZb4WZmaMR7vI3M2UlEZNSA\",\"user\":{\"id\":\"69d8943b26a899a6f1582bf9\",\"firstname\":\"swapnil\",\"lastname\":\"sutar\",\"email\":\"sutarswapnil322@gmail.com\",\"role\":\"USER\"}}",
+            "code": 200,
+            "name": "auth-google",
+            "status": "OK",
+            "headers": [
+              {
+                "key": "access-control-allow-credentials",
+                "value": "true"
+              },
+              {
+                "key": "connection",
+                "value": "keep-alive"
+              },
+              {
+                "key": "content-length",
+                "value": "387"
+              },
+              {
+                "key": "content-type",
+                "value": "application/json; charset=utf-8"
+              },
+              {
+                "key": "date",
+                "value": "Fri, 10 Apr 2026 06:59:12 GMT"
+              },
+              {
+                "key": "etag",
+                "value": "W/\"183-YwU51jP7c2Ya7e7YgAzpypHoFUk\""
+              },
+              {
+                "key": "keep-alive",
+                "value": "timeout=5"
+              },
+              {
+                "key": "vary",
+                "value": "Origin"
+              },
+              {
+                "key": "x-powered-by",
+                "value": "Express"
+              }
+            ],
+            "originalRequest": {
+              "v": "6",
+              "auth": {
+                "authType": "none",
+                "authActive": true
+              },
+              "body": {
+                "body": null,
+                "contentType": null
+              },
+              "name": "register-user",
+              "method": "GET",
+              "params": [],
+              "headers": [],
+              "endpoint": "<<base_url>>/auth/google",
+              "requestVariables": []
+            }
+          },
+          "register-user": {
+            "body": "{\"success\":true,\"message\":\"Login by Google successful\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDg5NDNiMjZhODk5YTZmMTU4MmJmOSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzc1ODA0MzUyLCJleHAiOjE3NzY0MDkxNTJ9.0w4xJO91YksLdkPmOGLOwZb4WZmaMR7vI3M2UlEZNSA\",\"user\":{\"id\":\"69d8943b26a899a6f1582bf9\",\"firstname\":\"swapnil\",\"lastname\":\"sutar\",\"email\":\"sutarswapnil322@gmail.com\",\"role\":\"USER\"}}",
+            "code": 200,
+            "name": "register-user",
+            "status": "OK",
+            "headers": [
+              {
+                "key": "access-control-allow-credentials",
+                "value": "true"
+              },
+              {
+                "key": "connection",
+                "value": "keep-alive"
+              },
+              {
+                "key": "content-length",
+                "value": "387"
+              },
+              {
+                "key": "content-type",
+                "value": "application/json; charset=utf-8"
+              },
+              {
+                "key": "date",
+                "value": "Fri, 10 Apr 2026 06:59:12 GMT"
+              },
+              {
+                "key": "etag",
+                "value": "W/\"183-YwU51jP7c2Ya7e7YgAzpypHoFUk\""
+              },
+              {
+                "key": "keep-alive",
+                "value": "timeout=5"
+              },
+              {
+                "key": "vary",
+                "value": "Origin"
+              },
+              {
+                "key": "x-powered-by",
+                "value": "Express"
+              }
+            ],
+            "originalRequest": {
+              "v": "6",
+              "auth": {
+                "authType": "none",
+                "authActive": true
+              },
+              "body": {
+                "body": null,
+                "contentType": null
+              },
+              "name": "register-user",
+              "method": "GET",
+              "params": [],
+              "headers": [],
+              "endpoint": "<<base_url>>/auth/google",
+              "requestVariables": []
+            }
+          }
+        },
+        "testScript": "",
+        "description": null,
+        "preRequestScript": "",
+        "requestVariables": [],
+        "id": "cmnrgnb3p00vbeq1l37dqbj0w"
+      },
+      {
+        "v": "17",
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
+        "body": {
+          "body": "{\n  \"firstname\": \"SWAPNIL\",\n  \"lastname\": \"SUTAR\",\n  \"email\": \"SWAP@gmail.com\",\n  \"phoneNumber\": \"93592488899\",\n  \"password\": \"SWAP@123\"\n}\n",
+          "contentType": "application/json"
+        },
+        "name": "register-user",
+        "method": "POST",
+        "params": [],
+        "headers": [],
+        "endpoint": "<<base_url>>/auth/register",
+        "responses": {
+          "register-user": {
+            "body": "{\"success\":true,\"message\":\"User created successfully\",\"data\":{\"id\":\"69d8a179720709e055a0ea13\",\"firstname\":\"SWAPNIL\",\"lastname\":\"SUTAR\",\"email\":\"SWAP@gmail.com\",\"phoneNumber\":\"93592488899\",\"role\":\"USER\",\"createdAt\":\"2026-04-10T07:06:33.277Z\",\"updatedAt\":\"2026-04-10T07:06:33.277Z\"}}",
+            "code": 201,
+            "name": "register-user",
+            "status": "Created",
+            "headers": [
+              {
+                "key": "access-control-allow-credentials",
+                "value": "true"
+              },
+              {
+                "key": "connection",
+                "value": "keep-alive"
+              },
+              {
+                "key": "content-length",
+                "value": "281"
+              },
+              {
+                "key": "content-type",
+                "value": "application/json; charset=utf-8"
+              },
+              {
+                "key": "date",
+                "value": "Fri, 10 Apr 2026 07:06:33 GMT"
+              },
+              {
+                "key": "etag",
+                "value": "W/\"119-jfhbP/WQDxlRcpi51sUE5HyI67M\""
+              },
+              {
+                "key": "keep-alive",
+                "value": "timeout=5"
+              },
+              {
+                "key": "vary",
+                "value": "Origin"
+              },
+              {
+                "key": "x-powered-by",
+                "value": "Express"
+              }
+            ],
+            "originalRequest": {
+              "v": "6",
+              "auth": {
+                "authType": "none",
+                "authActive": true
+              },
+              "body": {
+                "body": "{\n  \"firstname\": \"SWAPNIL\",\n  \"lastname\": \"SUTAR\",\n  \"email\": \"SWAP@gmail.com\",\n  \"phoneNumber\": \"93592488899\",\n  \"password\": \"SWAP@123\"\n}\n",
+                "contentType": "application/json"
+              },
+              "name": "register-user",
+              "method": "POST",
+              "params": [],
+              "headers": [],
+              "endpoint": "<<base_url>>/auth/register",
+              "requestVariables": []
+            }
+          }
+        },
+        "testScript": "",
+        "description": null,
+        "preRequestScript": "",
+        "requestVariables": [],
+        "id": "cmnsk4f8u0seteq1ls0735zo8"
+      },
+      {
+        "v": "17",
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
+        "body": {
+          "body": "{\n  \"email\": \"SWAP@gmail.com\",\n  \"password\": \"SWAP@123\"\n}\n",
+          "contentType": "application/json"
+        },
+        "name": "login-user ",
+        "method": "POST",
+        "params": [],
+        "headers": [],
+        "endpoint": "<<base_url>>/auth/login",
+        "responses": {
+          "login-user": {
+            "body": "{\"success\":true,\"message\":\"login successfully\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDhhMTc5NzIwNzA5ZTA1NWEwZWExMyIsImlhdCI6MTc3NTgwNTAyMiwiZXhwIjoxNzc2NDA5ODIyfQ.r585j079LbgK_hFrEHl8hiLJPXI64hyi_pcu__etL3k\",\"data\":{\"_id\":\"69d8a179720709e055a0ea13\",\"firstname\":\"SWAPNIL\",\"lastname\":\"SUTAR\",\"email\":\"SWAP@gmail.com\",\"phoneNumber\":\"93592488899\",\"role\":\"USER\",\"provider\":\"LOCAL\",\"address\":[],\"createdAt\":\"2026-04-10T07:06:33.277Z\",\"updatedAt\":\"2026-04-10T07:06:33.277Z\",\"__v\":0}}",
+            "code": 200,
+            "name": "login-user",
+            "status": "OK",
+            "headers": [
+              {
+                "key": "access-control-allow-credentials",
+                "value": "true"
+              },
+              {
+                "key": "connection",
+                "value": "keep-alive"
+              },
+              {
+                "key": "content-length",
+                "value": "497"
+              },
+              {
+                "key": "content-type",
+                "value": "application/json; charset=utf-8"
+              },
+              {
+                "key": "date",
+                "value": "Fri, 10 Apr 2026 07:10:22 GMT"
+              },
+              {
+                "key": "etag",
+                "value": "W/\"1f1-NobfQry/5v11SNfio+ja0QVi6y4\""
+              },
+              {
+                "key": "keep-alive",
+                "value": "timeout=5"
+              },
+              {
+                "key": "vary",
+                "value": "Origin"
+              },
+              {
+                "key": "x-powered-by",
+                "value": "Express"
+              }
+            ],
+            "originalRequest": {
+              "v": "6",
+              "auth": {
+                "authType": "none",
+                "authActive": true
+              },
+              "body": {
+                "body": "{\n  \"email\": \"SWAP@gmail.com\",\n  \"password\": \"SWAP@123\"\n}\n",
+                "contentType": "application/json"
+              },
+              "name": "login-user ",
+              "method": "POST",
+              "params": [],
+              "headers": [],
+              "endpoint": "<<base_url>>/auth/login",
+              "requestVariables": []
+            }
+          },
+          "register-user": {
+            "body": "{\"success\":true,\"message\":\"User created successfully\",\"data\":{\"id\":\"69d8a179720709e055a0ea13\",\"firstname\":\"SWAPNIL\",\"lastname\":\"SUTAR\",\"email\":\"SWAP@gmail.com\",\"phoneNumber\":\"93592488899\",\"role\":\"USER\",\"createdAt\":\"2026-04-10T07:06:33.277Z\",\"updatedAt\":\"2026-04-10T07:06:33.277Z\"}}",
+            "code": 201,
+            "name": "register-user",
+            "status": "Created",
+            "headers": [
+              {
+                "key": "access-control-allow-credentials",
+                "value": "true"
+              },
+              {
+                "key": "connection",
+                "value": "keep-alive"
+              },
+              {
+                "key": "content-length",
+                "value": "281"
+              },
+              {
+                "key": "content-type",
+                "value": "application/json; charset=utf-8"
+              },
+              {
+                "key": "date",
+                "value": "Fri, 10 Apr 2026 07:06:33 GMT"
+              },
+              {
+                "key": "etag",
+                "value": "W/\"119-jfhbP/WQDxlRcpi51sUE5HyI67M\""
+              },
+              {
+                "key": "keep-alive",
+                "value": "timeout=5"
+              },
+              {
+                "key": "vary",
+                "value": "Origin"
+              },
+              {
+                "key": "x-powered-by",
+                "value": "Express"
+              }
+            ],
+            "originalRequest": {
+              "v": "6",
+              "auth": {
+                "authType": "none",
+                "authActive": true
+              },
+              "body": {
+                "body": "{\n  \"firstname\": \"SWAPNIL\",\n  \"lastname\": \"SUTAR\",\n  \"email\": \"SWAP@gmail.com\",\n  \"phoneNumber\": \"93592488899\",\n  \"password\": \"SWAP@123\"\n}\n",
+                "contentType": "application/json"
+              },
+              "name": "register-user",
+              "method": "POST",
+              "params": [],
+              "headers": [],
+              "endpoint": "<<base_url>>/auth/register",
+              "requestVariables": []
+            }
+          }
+        },
+        "testScript": "",
+        "description": null,
+        "preRequestScript": "",
+        "requestVariables": [],
+        "id": "cmnskdge00nsjgb1lellmdkem"
+      },
+      {
+        "v": "17",
+        "auth": {
+          "token": "<<auth_token>>",
+          "authType": "bearer",
+          "authActive": true
+        },
+        "body": {
+          "body": "{\n  \"oldPassword\": \"SWAP@123\",\n  \"newPassword\": \"SWAP#123\",\n  \"confirmPassword\": \"SWAP#123\"\n}\n",
+          "contentType": "application/json"
+        },
+        "name": "change-password",
+        "method": "POST",
+        "params": [],
+        "headers": [],
+        "endpoint": "<<base_url>>/auth/change-password",
+        "responses": {
+          "change-password": {
+            "body": "{\"success\":false,\"message\":\"Old password is incorrect\"}",
+            "code": 400,
+            "name": "change-password",
+            "status": "Bad Request",
+            "headers": [
+              {
+                "key": "access-control-allow-credentials",
+                "value": "true"
+              },
+              {
+                "key": "connection",
+                "value": "keep-alive"
+              },
+              {
+                "key": "content-length",
+                "value": "55"
+              },
+              {
+                "key": "content-type",
+                "value": "application/json; charset=utf-8"
+              },
+              {
+                "key": "date",
+                "value": "Fri, 10 Apr 2026 07:32:45 GMT"
+              },
+              {
+                "key": "etag",
+                "value": "W/\"37-S1cnkFwQeev0xz2ZrKoYKVzSZ5A\""
+              },
+              {
+                "key": "keep-alive",
+                "value": "timeout=5"
+              },
+              {
+                "key": "vary",
+                "value": "Origin"
+              },
+              {
+                "key": "x-powered-by",
+                "value": "Express"
+              }
+            ],
+            "originalRequest": {
+              "v": "6",
+              "auth": {
+                "token": "<<auth_token>>",
+                "authType": "bearer",
+                "authActive": true
+              },
+              "body": {
+                "body": "{\n  \"oldPassword\": \"SWAP@123\",\n  \"newPassword\": \"SWAP#123\",\n  \"confirmPassword\": \"SWAP#123\"\n}\n",
+                "contentType": "application/json"
+              },
+              "name": "change-password",
+              "method": "POST",
+              "params": [],
+              "headers": [],
+              "endpoint": "<<base_url>>/auth/change-password",
+              "requestVariables": []
+            }
+          }
+        },
+        "testScript": "",
+        "description": null,
+        "preRequestScript": "",
+        "requestVariables": [],
+        "id": "cmnsl0okw0ogugb1lfapqtbjm"
+      }
+    ],
+    "auth": {
+      "authType": "inherit",
+      "authActive": true
+    },
+    "headers": [],
+    "variables": [],
+    "description": null
+  }
+]
