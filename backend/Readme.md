@@ -37,8 +37,8 @@ src/
 ├── Middleware/
 ├── Utils/
 ├── Config/
-│
-└── app.js
+├── app.js 
+└── index.js
 ```
 
 
@@ -48,18 +48,28 @@ Create a `.env` file:
 
 ```env
 PORT=3000
+API_VERSION=v1
+NODE_ENV=development
+DATABASE_URL=mongodb://localhost:27017/dash-leads
+JWT_SECRET=Le@ds
 
-MONGO_URI=your_mongodb_connection
+EMAIL_USER=demo@gmail.com
+EMAIL_PASSWORD=bscd pqen wjix caem  
 
-JWT_SECRET=your_secret
+RESEND_API_KEY=re_TJc2F2gS_5nzMYezxq6mSYtwG 
 
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_secret
+RAZORPAY_KEY=DEMO_test_SSbtfEMzhQazC4
+RAZORPAY_SECRET=DEMO_rDqIcNTyATWoIXS3HXEF0
+RAZORPAY_WEBHOOK_SECRET=DEMO_test_SbtfEMzhQazC4
 
-RAZORPAY_KEY_ID=your_key
-RAZORPAY_KEY_SECRET=your_secret
+GOOGLE_CLIENT_ID=DEMO-b4d70qstp21qfpingbn9j4ucne.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=DEMO-1kThon3zFHjwNktAygMBlKlVrWi1
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/v1/auth/google/callback
 
-EMAIL_API_KEY=your_email_service_key
+ADMIN_EMAIL=admin@gmail.com
+ADMIN_PASSWORD=ADMIN123
+ADMIN_FIRSTNAME=super
+ADMIN_LASTNAME=admin
 ```
 
 ---
@@ -156,18 +166,6 @@ leads-collections.json
 
 ---
 
-
-
-
-# ⭐ Future Improvements
-
-* Swagger API Docs
-* Redis Caching
-* WebSockets for real-time leads
-* Admin Dashboard UI
-* Notifications system
-
----
 
 # 💡 License
 
