@@ -1,5 +1,7 @@
+import XLSX from "xlsx";
 import { Lead } from "../../Models/leads.model.js";
 import { Category } from "../../Models/category.model.js";
+import { UploadLog } from "../../Models/uploadLog.model.js";
 
 const createLead = async (req, res) => {
   try {
@@ -316,4 +318,410 @@ const getLeadDetailsById = async (req, res) => {
   }
 };
 
-export { createLead, updateLead, deleteLead, getLeadDetailsById, getAllLeads };
+// const uploadLeadsFromExcel = async (req, res) => {
+//   const session = await mongoose.startSession();
+
+//   try {
+//     if (!req.file) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Excel file is required",
+//       });
+//     }
+
+//     if (
+//       !req.file.mimetype.includes("sheet") &&
+//       !req.file.originalname.endsWith(".xlsx")
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Only Excel (.xlsx) files are allowed",
+//       });
+//     }
+
+//     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+//     const sheet = workbook.Sheets[workbook.SheetNames[0]];
+//     const data = XLSX.utils.sheet_to_json(sheet);
+
+//     if (!data.length) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Excel file is empty",
+//       });
+//     }
+
+//     const categoryIds = [
+//       ...new Set(data.map((row) => row.category).filter(Boolean)),
+//     ];
+
+//     const categories = await Category.find({
+//       _id: { $in: categoryIds },
+//     }).select("_id");
+
+//     const categorySet = new Set(categories.map((c) => c._id.toString()));
+
+//     const leadsToInsert = [];
+//     const failedRows = [];
+
+//     for (let i = 0; i < data.length; i++) {
+//       const row = data[i];
+
+//       try {
+//         const {
+//           title,
+//           description,
+//           category,
+//           city,
+//           state,
+//           price,
+//           budgetMin,
+//           budgetMax,
+//           customerName,
+//           phone,
+//           expiresAt,
+//           lng,
+//           lat,
+//         } = row;
+
+//         if (
+//           !title ||
+//           !description ||
+//           !category ||
+//           !city ||
+//           !state ||
+//           !price ||
+//           !expiresAt
+//         ) {
+//           throw new Error("Missing required fields");
+//         }
+
+//         // ✅ Category validation
+//         if (!categorySet.has(category)) {
+//           throw new Error("Invalid category");
+//         }
+
+//         const parsedPrice = Number(price);
+//         if (isNaN(parsedPrice) || parsedPrice <= 0) {
+//           throw new Error("Invalid price");
+//         }
+
+//         const expiryDate = new Date(expiresAt);
+//         if (isNaN(expiryDate) || expiryDate <= new Date()) {
+//           throw new Error("Invalid expiry date");
+//         }
+
+//         // ✅ Phone validation
+//         if (phone && !/^[6-9]\d{9}$/.test(phone)) {
+//           throw new Error("Invalid phone number");
+//         }
+
+//         // ✅ Coordinates validation
+//         const longitude = Number(lng);
+//         const latitude = Number(lat);
+
+//         if (isNaN(longitude) || isNaN(latitude)) {
+//           throw new Error("Invalid coordinates");
+//         }
+
+//         leadsToInsert.push({
+//           title,
+//           description,
+//           category,
+//           city,
+//           state,
+//           price: parsedPrice,
+//           budget: {
+//             min: budgetMin ? Number(budgetMin) : undefined,
+//             max: budgetMax ? Number(budgetMax) : undefined,
+//           },
+//           customerName,
+//           phone,
+//           expiresAt: expiryDate,
+//           location: {
+//             type: "Point",
+//             coordinates: [longitude, latitude],
+//           },
+//           createdBy: req.user.id,
+//         });
+//       } catch (err) {
+//         failedRows.push({
+//           row: i + 1,
+//           error: err.message,
+//         });
+//       }
+//     }
+
+//     if (!leadsToInsert.length) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "No valid leads found",
+//         failedRows,
+//       });
+//     }
+
+//     await session.withTransaction(async () => {
+//       await Lead.insertMany(leadsToInsert);
+//     });
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Leads uploaded successfully",
+//       totalInserted: leadsToInsert.length,
+//       totalFailed: failedRows.length,
+//       failedRows,
+//     });
+//   } catch (error) {
+//     console.error("Upload Leads Error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to upload leads",
+//       error: error.message,
+//     });
+//   } finally {
+//     session.endSession();
+//   }
+// };
+
+const uploadLeadsFromExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Excel file is required",
+      });
+    }
+
+    if (
+      !req.file.mimetype.includes("sheet") &&
+      !req.file.originalname.endsWith(".xlsx")
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Only Excel (.xlsx) files are allowed",
+      });
+    }
+
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(sheet);
+
+    if (!data.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Excel file is empty",
+      });
+    }
+
+    const categoryIds = [
+      ...new Set(data.map((row) => row.category).filter(Boolean)),
+    ];
+
+    const categories = await Category.find({
+      _id: { $in: categoryIds },
+    }).select("_id");
+
+    const categorySet = new Set(categories.map((c) => c._id.toString()));
+
+    const uploadLog = await UploadLog.create({
+      totalRows: data.length,
+    });
+
+    // ✅ Response with message
+    res.status(202).json({
+      success: true,
+      message: "Upload started successfully. Processing in background.",
+      uploadId: uploadLog._id,
+      totalRows: data.length,
+    });
+
+    processLeadsInBackground(data, categorySet, uploadLog._id, req.user.id);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to start upload process",
+    });
+  }
+};
+
+const processLeadsInBackground = async (
+  data,
+  categorySet,
+  uploadId,
+  userId,
+) => {
+  const BATCH_SIZE = 50;
+
+  for (let i = 0; i < data.length; i += BATCH_SIZE) {
+    const batch = data.slice(i, i + BATCH_SIZE);
+
+    let leadsToInsert = [];
+    let logs = [];
+
+    for (let j = 0; j < batch.length; j++) {
+      const row = batch[j];
+      const rowIndex = i + j + 1;
+
+      try {
+        const {
+          title,
+          description,
+          category,
+          city,
+          state,
+          price,
+          budgetMin,
+          budgetMax,
+          customerName,
+          phone,
+          expiresAt,
+          lng,
+          lat,
+        } = row;
+
+        if (
+          !title ||
+          !description ||
+          !category ||
+          !city ||
+          !state ||
+          !price ||
+          !expiresAt
+        ) {
+          throw new Error("Missing required fields");
+        }
+
+        if (!categorySet.has(String(category))) {
+          throw new Error("Invalid category");
+        }
+
+        const parsedPrice = Number(price);
+        if (isNaN(parsedPrice) || parsedPrice <= 0) {
+          throw new Error("Invalid price");
+        }
+
+        const expiryDate = new Date(expiresAt);
+        if (isNaN(expiryDate) || expiryDate <= new Date()) {
+          throw new Error("Invalid expiry date");
+        }
+
+        if (phone && !/^[6-9]\d{9}$/.test(phone)) {
+          throw new Error("Invalid phone number");
+        }
+
+        const longitude = Number(lng);
+        const latitude = Number(lat);
+
+        if (
+          isNaN(longitude) ||
+          isNaN(latitude) ||
+          longitude < -180 ||
+          longitude > 180 ||
+          latitude < -90 ||
+          latitude > 90
+        ) {
+          throw new Error("Invalid coordinates");
+        }
+
+        const location = {
+          type: "Point",
+          coordinates: [longitude, latitude],
+        };
+
+        leadsToInsert.push({
+          title,
+          description,
+          category,
+          city,
+          state,
+          price: parsedPrice,
+          budget: {
+            min: budgetMin ? Number(budgetMin) : undefined,
+            max: budgetMax ? Number(budgetMax) : undefined,
+          },
+          customerName,
+          phone,
+          expiresAt: expiryDate,
+          location,
+          createdBy: userId,
+        });
+      } catch (err) {
+        logs.push({
+          row: rowIndex,
+          message: err.message,
+        });
+      }
+    }
+
+    if (leadsToInsert.length) {
+      await Lead.insertMany(leadsToInsert, { ordered: false });
+    }
+
+    await UploadLog.findByIdAndUpdate(uploadId, {
+      $inc: {
+        processedRows: batch.length,
+        successCount: leadsToInsert.length,
+        failedCount: logs.length,
+      },
+      $push: {
+        logs: { $each: logs },
+      },
+    });
+
+    console.log(
+      `Processed ${Math.min(i + BATCH_SIZE, data.length)}/${data.length}`,
+    );
+  }
+
+  // ✅ Final message stored
+  const finalLog = await UploadLog.findById(uploadId);
+
+  await UploadLog.findByIdAndUpdate(uploadId, {
+    status: "completed",
+    finalMessage: `Upload completed. ${finalLog.successCount} leads added, ${finalLog.failedCount} failed.`,
+  });
+};
+
+const getUploadStatus = async (req, res) => {
+  const log = await UploadLog.findById(req.params.id);
+
+  if (!log) {
+    return res.status(404).json({
+      success: false,
+      message: "Upload not found",
+    });
+  }
+
+  const progress = ((log.processedRows / log.totalRows) * 100).toFixed(2);
+
+  let message = "Upload in progress";
+
+  if (log.status === "completed") {
+    message =
+      log.finalMessage ||
+      `Upload completed. ${log.successCount} success, ${log.failedCount} failed.`;
+  }
+
+  res.json({
+    success: true,
+    message,
+    status: log.status,
+    progress: `${progress}%`,
+    processed: log.processedRows,
+    total: log.totalRows,
+    success: log.successCount,
+    failed: log.failedCount,
+    logs: log.logs.slice(-10),
+  });
+};
+
+export {
+  createLead,
+  updateLead,
+  deleteLead,
+  getLeadDetailsById,
+  getAllLeads,
+  uploadLeadsFromExcel,
+  getUploadStatus,
+};
