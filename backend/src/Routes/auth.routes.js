@@ -13,20 +13,37 @@ import {
 
 const router = express.Router();
 
-router.get(
-  "/google",
+router.get("/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
   }),
 );
 
-router.get(
-  "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: "/login",
-  }),
+router.get( "/google/callback",
+  (req, res, next) => {
+    passport.authenticate("google", (err, user) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          code: "OAUTH_ERROR",
+          message: "Google authentication failed. Please try again.",
+          error: err.message,
+        });
+      }
+
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          code: "OAUTH_USER_NOT_FOUND",
+          message: "Unable to retrieve user information from Google.",
+        });
+      }
+
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
   googleCallback,
 );
 

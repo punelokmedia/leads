@@ -7,26 +7,47 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
-      scope: ["profile", "email"],
+      callbackURL:
+        process.env.NODE_ENV === "production"
+          ? `${process.env.API_BASE_URL}/api/v1/auth/google/callback`
+          : "http://localhost:3000/api/v1/auth/google/callback",
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (req, accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ googleId: profile.id });
+        const email = profile.emails?.[0]?.value;
 
-        if (!user) {
+        let user = await User.findOne({ email });
+
+        const first = profile.name?.givenName || "User";
+        const last = profile.name?.familyName || "";
+
+        const initials = `${first[0]}${last[0] || ""}`.toUpperCase();
+
+        if (user) {
+          if (!user.providers) user.providers = [];
+
+          if (!user.googleId) {
+            user.googleId = profile.id;
+          }
+
+          if (!user.providers.includes("GOOGLE")) {
+            user.providers.push("GOOGLE");
+          }
+
+          await user.save();
+        } else {
           user = await User.create({
-            firstname: profile.name?.givenName || "User",
-            lastname: profile.name?.familyName || "",
-            email: profile.emails?.[0]?.value,
+            firstname: first,
+            lastname: last,
+            email,
             googleId: profile.id,
-            provider: "GOOGLE",
+            providers: ["GOOGLE"],
+            profilePic: `https://api.dicebear.com/5.x/initials/svg?seed=${initials}`,
           });
         }
 
         return done(null, user);
       } catch (err) {
-        console.error("Google Auth Error:", err);
         return done(err, null);
       }
     },
