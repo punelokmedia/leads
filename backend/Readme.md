@@ -141,7 +141,7 @@ Detailed module-wise APIs:
 Use Postman Collection:
 
 ```id="testblock"
-leads-collections.json
+api-collections.json
 ```
 
 ---
@@ -157,14 +157,7 @@ leads-collections.json
 
 ---
 
-# ⚠️ Important Notes
 
-* Always validate user input
-* Use proper error handling
-* Secure routes using middleware
-* Never expose secrets in code
-
----
 
 
 # 💡 License

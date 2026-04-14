@@ -1,14 +1,41 @@
 # 🛠 Admin APIs
 
-base_url: `http://localhost:3000/api/v1`
+Use this command to create the default admin:
 
-Base URL: `{{base_url}}/admin`  
+```bash
+npm run seed:admin
+```
 
 ---
 
-## 📌 Send OTP
+## 🌐 Base URL
 
-**POST** `/send-otp`
+```
+http://localhost:3000/api/v1
+```
+
+### Admin Base Path
+
+```
+{{base_url}}/admin
+```
+
+---
+
+# 🔐 Authentication Flow
+
+1. Send OTP → `/send-otp`
+2. Verify OTP → `/verify-otp`
+3. Receive JWT Token
+4. Use token for protected routes
+
+---
+
+## 📌 1. Send OTP (Admin Login)
+
+**POST** `/admin/send-otp`
+
+### Request
 
 ```json
 {
@@ -16,11 +43,22 @@ Base URL: `{{base_url}}/admin`
 }
 ```
 
+### Response
+
+```json
+{
+  "success": true,
+  "message": "OTP sent to admin email"
+}
+```
+
 ---
 
-## 📌 Verify OTP (Admin Login)
+## 📌 2. Verify OTP (Admin Login)
 
-**POST** `/verify-otp`
+**POST** `/admin/verify-otp`
+
+### Request
 
 ```json
 {
@@ -37,6 +75,8 @@ Base URL: `{{base_url}}/admin`
   "message": "Admin login successful",
   "token": "JWT_TOKEN",
   "data": {
+    "id": "ADMIN_ID",
+    "email": "admin@gmail.com",
     "role": "ADMIN"
   }
 }
@@ -44,9 +84,17 @@ Base URL: `{{base_url}}/admin`
 
 ---
 
-## 📌 Make User Admin
+## 📌 3. Make User Admin 🔐
 
-**POST** `/make-admin` 🔐
+**POST** `/admin/make-admin`
+
+### Headers
+
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+### Request
 
 ```json
 {
@@ -54,9 +102,65 @@ Base URL: `{{base_url}}/admin`
 }
 ```
 
+### Response
+
+```json
+{
+  "success": true,
+  "message": "User promoted to admin successfully"
+}
+```
+
 ---
 
-## 🔐 Notes
+# 🔐 Authorization Rules
 
-* Only ADMIN can access protected routes
-* Token required for role-based actions
+- Only users with role `ADMIN` can access protected routes
+- JWT token is required in headers:
+
+```
+Authorization: Bearer <token>
+```
+
+---
+
+# ⚠️ Important Notes
+
+- OTP is valid for **10 minutes**
+- Only seeded/admin users can log in via OTP
+- Do not expose admin email publicly
+- Always protect admin routes with middleware
+
+---
+
+# 🚀 Developer Tips
+
+- Seed admin only once:
+
+  ```bash
+  npm run seed:admin
+  ```
+
+- Use environment variables:
+
+  ```env
+  ADMIN_EMAIL=admin@gmail.com
+  ADMIN_PASSWORD=Admin@123
+  ```
+
+- Ensure JWT secret is set:
+
+  ```env
+  JWT_SECRET=your_secret_key
+  ```
+
+---
+
+# ✅ Summary
+
+| Feature            | Status |
+| ------------------ | ------ |
+| Admin Seeder       | ✅     |
+| OTP Login          | ✅     |
+| JWT Authentication | ✅     |
+| Role-based Access  | ✅     |
