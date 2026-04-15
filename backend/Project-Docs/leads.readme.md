@@ -7,7 +7,7 @@ This document provides a complete overview of all **Lead-related APIs** in the s
 # 🔐 Base URL
 
 ```
-http://localhost:5000/api/v1/leads
+http://localhost:3000/api/v1/leads
 ```
 
 ---
