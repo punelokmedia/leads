@@ -7,7 +7,7 @@ This document covers all **Admin APIs** including authentication, dashboard anal
 # 🔐 Base URL
 
 ```http
-http://localhost:5000/api/v1/admin
+http://localhost:3000/api/v1/admin
 ```
 
 ---
