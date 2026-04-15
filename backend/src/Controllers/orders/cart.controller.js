@@ -1,5 +1,5 @@
 import { Cart } from "../../Models/cart.mode.js";
-import { Lead } from "../../Models/leads.model.js";
+import { Lead, resolveLeadStatus } from "../../Models/leads.model.js";
 
 const addToCart = async (req, res) => {
   try {
@@ -15,23 +15,23 @@ const addToCart = async (req, res) => {
 
     const lead = await Lead.findById(leadId);
 
-    if (!lead || lead.status !== "ACTIVE") {
-      return res.status(400).json({
+    if (!lead) {
+      return res.status(404).json({
         success: false,
-        message: "This lead is not available",
+        message: "Lead not found",
       });
     }
 
-    // ❌ Expired
-    if (lead.expiresAt < new Date()) {
+    const status = resolveLeadStatus(lead);
+
+    if (status === "EXPIRED") {
       return res.status(400).json({
         success: false,
-        message: "This lead has expired",
+        message: "This lead has expired and cannot be added to cart",
       });
     }
 
-    // ❌ Sold out
-    if (lead.buyers.length >= lead.maxBuyers) {
+    if (status === "SOLD_OUT") {
       return res.status(400).json({
         success: false,
         message: "This lead is already sold out",
@@ -50,11 +50,12 @@ const addToCart = async (req, res) => {
       });
     }
 
-    // ❌ Already in cart
-    if (cart.leads.includes(leadId)) {
+    const exists = cart.leads.some((id) => id.toString() === leadId);
+
+    if (exists) {
       return res.status(400).json({
         success: false,
-        message: "Lead is already in your cart",
+        message: "This lead is already in your cart",
       });
     }
 
@@ -71,89 +72,40 @@ const addToCart = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Failed to add lead to cart. Please try again.",
+      message: "Failed to add lead to cart",
+      error: error.message,
     });
   }
 };
 
 const removeFromCart = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { leadId } = req.body;
+  const cart = await Cart.findOne({ user: req.user.id });
 
-    const cart = await Cart.findOne({ user: userId });
+  if (!cart) return res.status(404).json({ success: false });
 
-    if (!cart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found",
-      });
-    }
+  cart.leads = cart.leads.filter((id) => id.toString() !== req.body.leadId);
 
-    cart.leads = cart.leads.filter((id) => id.toString() !== leadId);
+  await cart.save();
 
-    await cart.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Lead removed from cart",
-      data: cart,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to remove lead",
-    });
-  }
+  res.json({ success: true, message: "Removed" });
 };
 
 const clearCart = async (req, res) => {
-  try {
-    const userId = req.user.id;
+  await Cart.findOneAndUpdate({ user: req.user.id }, { leads: [] });
 
-    await Cart.findOneAndUpdate({ user: userId }, { leads: [] }, { new: true });
-
-    return res.status(200).json({
-      success: true,
-      message: "Cart cleared successfully",
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to clear cart",
-    });
-  }
+  res.json({ success: true, message: "Cart cleared" });
 };
 
 const getCart = async (req, res) => {
-  try {
-    const userId = req.user.id;
+  const cart = await Cart.findOne({ user: req.user.id }).populate({
+    path: "leads",
+    select: "-phone -customerName -buyers",
+  });
 
-    const cart = await Cart.findOne({ user: userId }).populate({
-      path: "leads",
-      select: "-buyers -phone -owner", // hide sensitive fields
-    });
-
-    if (!cart) {
-      return res.status(200).json({
-        success: true,
-        data: { leads: [] },
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: cart,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch cart",
-    });
-  }
+  res.json({
+    success: true,
+    data: cart || { leads: [] },
+  });
 };
 
 export { addToCart, clearCart, getCart, removeFromCart };

@@ -58,14 +58,13 @@ const registerUser = async (req, res) => {
       profilePic: `https://api.dicebear.com/5.x/initials/svg?seed=${firstname}%20${lastname}`,
     });
 
+    user.password = undefined;
+
     return res.status(201).json({
       success: true,
       code: "REGISTER_SUCCESS",
       message: "Account created successfully.",
-      data: {
-        id: user._id,
-        email: user.email,
-      },
+      data: user
     });
   } catch (err) {
     console.error("Register Error:", err);

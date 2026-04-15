@@ -45,6 +45,7 @@ const UserSchema = new Schema(
       required: true,
       trim: true,
     },
+
     lastname: {
       type: String,
       required: true,
@@ -63,10 +64,8 @@ const UserSchema = new Schema(
       type: String,
       default: null,
     },
-
     googleId: {
       type: String,
-      default: null,
     },
 
     providers: {
@@ -95,7 +94,14 @@ const UserSchema = new Schema(
   { timestamps: true },
 );
 
-UserSchema.index({ googleId: 1 }, { unique: true, sparse: true });
+UserSchema.index(
+  { googleId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { googleId: { $exists: true } },
+  },
+);
+
 UserSchema.index({ "address.city": 1, "address.state": 1 });
 
 export const User = mongoose.model("User", UserSchema);

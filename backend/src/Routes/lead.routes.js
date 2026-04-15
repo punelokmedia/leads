@@ -7,6 +7,7 @@ import {
   getAllLeads,
   uploadLeadsFromExcel,
   getUploadStatus,
+ 
 } from "../Controllers/Admin/leads.controller.js";
 import { auth, isAdmin } from "../Middlewares/auth.middleware.js";
 import upload from "../Middlewares/fileupload.middleware.js";
@@ -17,7 +18,7 @@ router.get("/get-all-leads", auth, getAllLeads);
 router.get("/get-lead/:id", auth, getLeadDetailsById);
 
 router.post("/create-lead", auth, isAdmin, createLead);
-router.put("/update-lead", auth, isAdmin, updateLead); //need to update
+router.put("/update-lead/:id", auth, isAdmin, updateLead); 
 router.delete("/delete-lead", auth, isAdmin, deleteLead);
 
 router.post(

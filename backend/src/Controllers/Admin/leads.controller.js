@@ -1,5 +1,5 @@
 import XLSX from "xlsx";
-import { Lead } from "../../Models/leads.model.js";
+import { Lead, resolveLeadStatus } from "../../Models/leads.model.js";
 import { Category } from "../../Models/category.model.js";
 import { UploadLog } from "../../Models/uploadLog.model.js";
 
@@ -123,17 +123,16 @@ const createLead = async (req, res) => {
 
 const updateLead = async (req, res) => {
   try {
-    const { leadId } = req.body;
-    const userId = req.user.id;
+    const { id } = req.params;
 
-    if (!leadId) {
-      return res.status(404).json({
+    if (!id) {
+      return res.status(400).json({
         success: false,
-        message: "leadId is required",
+        message: "Lead ID is required",
       });
     }
 
-    const lead = await Lead.findById(leadId);
+    const lead = await Lead.findById(id);
 
     if (!lead) {
       return res.status(404).json({
@@ -142,35 +141,61 @@ const updateLead = async (req, res) => {
       });
     }
 
-    if (lead.createdBy.toString() !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
+    // ✅ Optional: Prevent updating expired leads
     if (lead.expiresAt < new Date()) {
       return res.status(400).json({
         success: false,
-        message: "Cannot update expired lead",
+        message: "Cannot update an expired lead",
       });
     }
 
-    const updatedLead = await Lead.findByIdAndUpdate(leadId, req.body, {
+    // ✅ Optional: Prevent update if sold out
+    if (lead.buyers.length >= lead.maxBuyers) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot update a sold-out lead",
+      });
+    }
+
+    // ✅ Allowed fields (prevent unwanted updates)
+    const allowedFields = [
+      "title",
+      "description",
+      "category",
+      "city",
+      "state",
+      "address",
+      "price",
+      "budget",
+      "expiresAt",
+      "location",
+    ];
+
+    const updates = {};
+
+    Object.keys(req.body).forEach((key) => {
+      if (allowedFields.includes(key)) {
+        updates[key] = req.body[key];
+      }
+    });
+
+    const updatedLead = await Lead.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
-    });
+    }).populate("category", "name");
 
     return res.status(200).json({
       success: true,
-      message: "Lead updated successfully",
+      message: "Lead updated successfully by admin",
       data: updatedLead,
     });
   } catch (error) {
-    console.error("Update Lead Error:", error);
+    console.error("Admin Update Lead Error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to update lead",
+      error: error.message,
     });
   }
 };
@@ -222,24 +247,47 @@ const getAllLeads = async (req, res) => {
   try {
     const userId = req.user?.id;
 
-    const { page = 1, limit = 10, category, city, state } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      category,
+      city,
+      state,
+      search,
+      sort = "latest", // latest | cheapest | expensive
+    } = req.query;
 
     const query = {
       status: "ACTIVE",
       expiresAt: { $gt: new Date() },
     };
 
+    // ✅ Filters
     if (category) query.category = category;
-    if (city) query.city = city;
-    if (state) query.state = state;
+    if (city) query.city = new RegExp(city, "i");
+    if (state) query.state = new RegExp(state, "i");
 
-    const skip = (page - 1) * limit;
+    // ✅ Search (title + city)
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { city: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // ✅ Sorting
+    let sortOption = { createdAt: -1 }; // latest
+
+    if (sort === "cheapest") sortOption = { price: 1 };
+    if (sort === "expensive") sortOption = { price: -1 };
+
+    const skip = (Number(page) - 1) * Number(limit);
 
     const [leads, total] = await Promise.all([
       Lead.find(query)
-        .select("-phone -customerName -address -__v -buyers")
+        .select("-__v")
         .populate("category", "name")
-        .sort({ createdAt: -1 })
+        .sort(sortOption)
         .skip(skip)
         .limit(Number(limit)),
 
@@ -248,41 +296,67 @@ const getAllLeads = async (req, res) => {
 
     const modifiedLeads = leads.map((lead) => {
       const isPurchased = userId
-        ? lead.buyers?.some((b) => b.user.toString() === userId)
+        ? lead.buyers.some((b) => b.user.toString() === userId)
         : false;
 
+      const obj = lead.toObject();
+
+      // ✅ Hide sensitive data
+      delete obj.buyers;
+      delete obj.phone;
+      delete obj.customerName;
+      delete obj.address;
+
       return {
-        ...lead.toObject(),
+        ...obj,
         isPurchased,
       };
     });
 
     return res.status(200).json({
       success: true,
-      message: "Leads fetched",
+      message: modifiedLeads.length
+        ? "Leads fetched successfully"
+        : "No leads found based on your criteria",
       meta: {
         total,
         page: Number(page),
         limit: Number(limit),
         totalPages: Math.ceil(total / limit),
       },
+      filters: {
+        category,
+        city,
+        state,
+        search,
+        sort,
+      },
       data: modifiedLeads,
     });
   } catch (error) {
     console.error("Get Leads Error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch leads",
+      error: error.message,
     });
   }
 };
 
 const getLeadDetailsById = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id;
     const { id } = req.params;
 
-    const lead = await Lead.findById(id);
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Lead ID is required",
+      });
+    }
+
+    const lead = await Lead.findById(id).populate("category", "name");
 
     if (!lead) {
       return res.status(404).json({
@@ -291,11 +365,21 @@ const getLeadDetailsById = async (req, res) => {
       });
     }
 
-    const purchased = lead.buyers.some((b) => b.user.toString() === userId);
+    const isPurchased = userId
+      ? lead.buyers.some((b) => b.user.toString() === userId)
+      : false;
+
+    const status =
+      lead.expiresAt < new Date()
+        ? "EXPIRED"
+        : lead.buyers.length >= lead.maxBuyers
+          ? "SOLD_OUT"
+          : "ACTIVE";
 
     const responseLead = lead.toObject();
 
-    if (!purchased) {
+    // ✅ Hide sensitive info if not purchased
+    if (!isPurchased) {
       responseLead.phone = null;
       responseLead.address = null;
       responseLead.customerName = null;
@@ -303,17 +387,20 @@ const getLeadDetailsById = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Lead details fetched",
+      message: "Lead details fetched successfully",
       data: {
         ...responseLead,
-        isPurchased: purchased,
+        isPurchased,
+        status,
       },
     });
   } catch (error) {
     console.error("Get Lead Error:", error);
+
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch lead",
+      message: "Failed to fetch lead details",
+      error: error.message,
     });
   }
 };
