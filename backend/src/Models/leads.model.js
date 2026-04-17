@@ -12,11 +12,13 @@ const LeadSchema = new Schema(
       required: true,
       trim: true,
     },
+
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,
     },
+
     city: {
       type: String,
       required: true,
@@ -29,10 +31,12 @@ const LeadSchema = new Schema(
       trim: true,
       index: true,
     },
+
     address: {
       type: String,
       trim: true,
     },
+
     location: {
       type: {
         type: String,
@@ -44,50 +48,58 @@ const LeadSchema = new Schema(
         required: true,
       },
     },
+
     price: {
       type: Number,
       required: true,
       min: 1,
     },
+
     budget: {
       min: Number,
       max: Number,
     },
+
     customerName: {
       type: String,
     },
+
     phone: {
       type: String,
       validate: {
         validator: (v) => !v || /^[6-9]\d{9}$/.test(v),
       },
     },
+
+    image: {
+      type: String,
+      default: "",
+    },
+
     buyers: [
       {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        purchasedAt: {
-          type: Date,
-          default: Date.now,
-        },
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        purchasedAt: { type: Date, default: Date.now },
       },
     ],
+
     maxBuyers: {
       type: Number,
       default: 3,
     },
+
     expiresAt: {
       type: Date,
       required: true,
     },
+
     status: {
       type: String,
       enum: ["ACTIVE", "SOLD_OUT", "EXPIRED"],
       default: "ACTIVE",
       index: true,
     },
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -99,8 +111,8 @@ const LeadSchema = new Schema(
 
 LeadSchema.index({ location: "2dsphere" });
 
-LeadSchema.pre("save", function () {
-  this.status = resolveLeadStatus(this);
+LeadSchema.virtual("remainingSlots").get(function () {
+  return this.maxBuyers - this.buyers.length;
 });
 
 const resolveLeadStatus = (lead) => {
@@ -108,6 +120,10 @@ const resolveLeadStatus = (lead) => {
   if (lead.buyers.length >= lead.maxBuyers) return "SOLD_OUT";
   return "ACTIVE";
 };
+
+LeadSchema.pre("save", function () {
+  this.status = resolveLeadStatus(this);
+});
 
 export const Lead = mongoose.model("Lead", LeadSchema);
 export { resolveLeadStatus };

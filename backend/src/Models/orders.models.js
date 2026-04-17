@@ -6,12 +6,15 @@ const OrderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
+
     leads: [
       {
         lead: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Lead",
+          required: true,
         },
         price: {
           type: Number,
@@ -19,40 +22,46 @@ const OrderSchema = new mongoose.Schema(
         },
       },
     ],
+
     totalAmount: {
       type: Number,
       required: true,
+      min: 1,
     },
+
     currency: {
       type: String,
       default: "INR",
     },
+
     razorpayOrderId: {
       type: String,
       required: true,
+      index: true,
     },
-    razorpayPaymentId: {
-      type: String,
-    },
-    razorpaySignature: {
-      type: String,
-    },
+
+    razorpayPaymentId: String,
+    razorpaySignature: String,
+
     status: {
       type: String,
       enum: ["CREATED", "PAID", "FAILED"],
       default: "CREATED",
+      index: true,
     },
-    paidAt: {
+
+    paidAt: Date,
+    
+    isDownloaded: {
+      type: Boolean,
+      default: false,
+    },
+
+    downloadedAt: {
       type: Date,
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true }
 );
-
-OrderSchema.index({ user: 1 });
-OrderSchema.index({ razorpayOrderId: 1 });
-OrderSchema.index({ status: 1 });
 
 export const Order = mongoose.model("Order", OrderSchema);

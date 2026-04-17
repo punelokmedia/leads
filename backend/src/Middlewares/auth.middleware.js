@@ -13,10 +13,8 @@ const auth = async (req, res, next) => {
       });
     }
 
-    // ✅ Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 🔥 IMPORTANT: Fetch fresh user from DB
     const user = await User.findById(decoded.id);
 
     if (!user) {
@@ -25,8 +23,6 @@ const auth = async (req, res, next) => {
         message: "User not found",
       });
     }
-
-    // ✅ Always use latest role from DB
     req.user = {
       id: user._id,
       email: user.email,
