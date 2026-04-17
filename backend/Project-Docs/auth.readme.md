@@ -1,10 +1,8 @@
 # 🔐 Auth API Documentation
 
-This document covers all **Authentication & User Account APIs** including register, login, Google auth, and password management.
-
 ---
 
-# 🔐 Base URL
+# 🌐 Base URL
 
 ```http
 http://localhost:3000/api/v1/auth
@@ -14,9 +12,7 @@ http://localhost:3000/api/v1/auth
 
 # 🔑 Authentication
 
-Some APIs require JWT token.
-
-### Header:
+Protected APIs require JWT token.
 
 ```json
 {
@@ -28,79 +24,62 @@ Some APIs require JWT token.
 
 # 📊 APIs Overview
 
-| Method | Endpoint           | Description           | Access |
-| ------ | ------------------ | --------------------- | ------ |
-| POST   | `/register`        | Register new user     | Public |
-| POST   | `/login`           | Login user            | Public |
-| GET    | `/google`          | Google login redirect | Public |
-| GET    | `/google/callback` | Google callback       | Public |
-| POST   | `/change-password` | Change password       | User   |
-| POST   | `/forgot-password` | Send OTP              | Public |
-| POST   | `/reset-password`  | Reset password        | Public |
+| Method | Endpoint           | Description                              | Access |
+|--------|--------------------|------------------------------------------|--------|
+| POST   | `/register`        | Register a new user account              | Public |
+| POST   | `/login`           | Authenticate user and return JWT token   | Public |
+| GET    | `/google`          | Redirect to Google OAuth login           | Public |
+| GET    | `/google/callback` | Handle Google OAuth callback             | Public |
+| GET    | `/profile`         | Get logged-in user profile details       | User   |
+| PUT    | `/update-profile`  | Update user profile information          | User   |
+| GET    | `/logout`          | Logout user (invalidate session/token)   | User   |
+| POST   | `/change-password` | Change user password                     | User   |
+| POST   | `/add-address`     | Add or update user address               | User   |
+| POST   | `/forgot-password` | Send OTP to user email for reset         | Public |
+| POST   | `/verify-otp`      | Verify OTP before password reset         | Public |
+| POST   | `/reset-password`  | Reset password after OTP verification    | Public |
 
 ---
 
 # 📌 1. Register User
 
-### 📍 Endpoint:
+### Endpoint
 
 ```http
 POST /register
 ```
 
----
-
-### 📥 Request Body:
+### Request
 
 ```json
 {
   "firstname": "Swapnil",
-  "lastname": "Patil",
+  "lastname": "Sutar",
   "email": "swapnil@gmail.com",
   "phoneNumber": "9876543210",
   "password": "123456"
 }
 ```
 
----
-
-### ✅ Success Response:
+### Success Response
 
 ```json
 {
   "success": true,
-  "code": "REGISTER_SUCCESS",
-  "message": "Account created successfully.",
+  "message": "Account created successfully",
   "data": {
-    "_id": "user123",
-    "firstname": "Swapnil",
-    "lastname": "Patil",
+    "_id": "user_id",
     "email": "swapnil@gmail.com"
   }
 }
 ```
 
----
-
-### 🔁 If Google Account Exists:
-
-```json
-{
-  "success": true,
-  "code": "ACCOUNT_LINKED",
-  "message": "Your account was created using Google. A password has been added successfully."
-}
-```
-
----
-
-### ❌ Error:
+### Error
 
 ```json
 {
   "success": false,
-  "code": "USER_ALREADY_EXISTS",
-  "message": "An account with this email already exists. Please login instead."
+  "message": "User already exists"
 }
 ```
 
@@ -108,15 +87,13 @@ POST /register
 
 # 📌 2. Login User
 
-### 📍 Endpoint:
+### Endpoint
 
 ```http
 POST /login
 ```
 
----
-
-### 📥 Request Body:
+### Request
 
 ```json
 {
@@ -125,18 +102,54 @@ POST /login
 }
 ```
 
----
-
-### ✅ Success Response:
+### Success Response
 
 ```json
 {
   "success": true,
-  "code": "LOGIN_SUCCESS",
-  "message": "Login successful.",
-  "token": "jwt_token_here",
+  "token": "jwt_token",
   "data": {
-    "_id": "user123",
+    "_id": "user_id",
+    "email": "swapnil@gmail.com"
+  }
+}
+```
+
+### Error
+
+```json
+{
+  "success": false,
+  "message": "Invalid credentials"
+}
+```
+
+---
+
+# 📌 3. Get Profile
+
+### Endpoint
+
+```http
+GET /profile
+```
+
+### Headers
+
+```json
+{
+  "Authorization": "Bearer token"
+}
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "user_id",
+    "firstname": "Swapnil",
     "email": "swapnil@gmail.com"
   }
 }
@@ -144,82 +157,109 @@ POST /login
 
 ---
 
-### ❌ Wrong Password:
+# 📌 4. Update Profile
+
+### Endpoint
+
+```http
+PUT /update-profile
+```
+
+### Headers
 
 ```json
 {
-  "success": false,
-  "code": "INVALID_PASSWORD",
-  "message": "Incorrect password. Please try again."
+  "Authorization": "Bearer token"
+}
+```
+
+### Request
+
+```json
+{
+  "firstname": "Swapnil",
+  "lastname": "Sutar"
+}
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully"
 }
 ```
 
 ---
 
-### ❌ Google Account:
+# 📌 5. Logout
+
+### Endpoint
+
+```http
+GET /logout
+```
+
+### Success Response
 
 ```json
 {
-  "success": false,
-  "code": "USE_GOOGLE_LOGIN",
-  "message": "This account is registered with Google. Please login using Google."
+  "success": true,
+  "message": "Logged out successfully"
 }
 ```
 
 ---
 
-# 📌 3. Google Login
+# 📌 6. Google Login
 
-### 📍 Endpoint:
+### Endpoint
 
 ```http
 GET /google
 ```
 
-👉 Redirects user to Google authentication
+👉 Redirects to Google
 
 ---
 
-### 📍 Callback:
+# 📌 7. Google Callback
+
+### Endpoint
 
 ```http
 GET /google/callback
 ```
 
----
-
-### ✅ Success Response:
+### Success Response
 
 ```json
 {
   "success": true,
-  "code": "GOOGLE_LOGIN_SUCCESS",
-  "message": "Logged in successfully using Google.",
-  "token": "jwt_token",
-  "data": {
-    "_id": "user123",
-    "email": "swapnil@gmail.com"
-  }
+  "token": "jwt_token"
 }
 ```
 
 ---
 
-# 📌 4. Change Password
+# 📌 8. Change Password
 
-### 📍 Endpoint:
+### Endpoint
 
 ```http
 POST /change-password
 ```
 
-### 🔐 Access:
+### Headers
 
-Authenticated User
+```json
+{
+  "Authorization": "Bearer token"
+}
+```
 
----
-
-### 📥 Request Body:
+### Request
 
 ```json
 {
@@ -229,9 +269,7 @@ Authenticated User
 }
 ```
 
----
-
-### ✅ Success Response:
+### Success Response
 
 ```json
 {
@@ -242,28 +280,50 @@ Authenticated User
 
 ---
 
-### ❌ Error:
+# 📌 9. Add Address
+
+### Endpoint
+
+```http
+POST /add-address
+```
+
+### Headers
 
 ```json
 {
-  "success": false,
-  "message": "Old password is incorrect"
+  "Authorization": "Bearer token"
+}
+```
+
+### Request
+
+```json
+{
+  "address": "Baner, Pune"
+}
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Address added successfully"
 }
 ```
 
 ---
 
-# 📌 5. Forgot Password (Send OTP)
+# 📌 10. Forgot Password
 
-### 📍 Endpoint:
+### Endpoint
 
 ```http
 POST /forgot-password
 ```
 
----
-
-### 📥 Request Body:
+### Request
 
 ```json
 {
@@ -271,9 +331,7 @@ POST /forgot-password
 }
 ```
 
----
-
-### ✅ Response:
+### Response
 
 ```json
 {
@@ -284,43 +342,53 @@ POST /forgot-password
 
 ---
 
-### 🔒 Security Note:
+# 📌 11. Verify OTP
 
-Even if user doesn't exist:
+### Endpoint
+
+```http
+POST /verify-otp
+```
+
+### Request
+
+```json
+{
+  "email": "swapnil@gmail.com",
+  "otp": "1234"
+}
+```
+
+### Response
 
 ```json
 {
   "success": true,
-  "message": "If account exists, OTP sent"
+  "message": "OTP verified successfully"
 }
 ```
 
 ---
 
-# 📌 6. Reset Password
+# 📌 12. Reset Password
 
-### 📍 Endpoint:
+### Endpoint
 
 ```http
 POST /reset-password
 ```
 
----
-
-### 📥 Request Body:
+### Request
 
 ```json
 {
   "email": "swapnil@gmail.com",
-  "otp": "123456",
   "newPassword": "new123",
   "confirmPassword": "new123"
 }
 ```
 
----
-
-### ✅ Success Response:
+### Response
 
 ```json
 {
@@ -331,48 +399,23 @@ POST /reset-password
 
 ---
 
-### ❌ Invalid OTP:
-
-```json
-{
-  "success": false,
-  "message": "Invalid or expired OTP"
-}
-```
-
----
-
 # ⚠️ Common Errors
 
-### Validation Error:
-
 ```json
 {
   "success": false,
-  "code": "VALIDATION_ERROR",
   "message": "All fields are required"
 }
 ```
 
 ---
 
-# 🧠 Notes
-
-* Passwords are securely hashed
-* JWT token expires in **7 days**
-* Google + Local login supported
-* Account linking supported
-* OTP expires in **10 minutes**
-
----
-
 # 🚀 Summary
 
-* 👤 Users can register/login
-* 🔐 Secure authentication system
-* 🔁 Supports Google + Local login
-* 🔑 Password reset via OTP
+* JWT-based authentication
+* Google + Email login
+* OTP-based password reset
+* Secure password handling
+* User profile management
 
 ---
-
-

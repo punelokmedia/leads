@@ -74,10 +74,10 @@ Authenticated User
 
 ### 🧠 What happens:
 
-* Fetch user cart
-* Calculate total price
-* Create Razorpay order
-* Store order in DB
+- Fetch user cart
+- Calculate total price
+- Create Razorpay order
+- Store order in DB
 
 ---
 
@@ -136,11 +136,11 @@ POST /verify
 
 ### 🧠 What happens:
 
-* Verify signature (security 🔐)
-* Mark order as **PAID**
-* Add user to lead buyers
-* Unlock lead details
-* Clear cart
+- Verify signature (security 🔐)
+- Mark order as **PAID**
+- Add user to lead buyers
+- Unlock lead details
+- Clear cart
 
 ---
 
@@ -185,18 +185,18 @@ POST /razorpay-webhook
 
 ### 🔐 Note:
 
-* This should **NOT use auth middleware** ❗
-* Called directly by Razorpay
+- This should **NOT use auth middleware** ❗
+- Called directly by Razorpay
 
 ---
 
 ### 🧠 What happens:
 
-* Verifies webhook signature
-* Confirms payment automatically
-* Updates order
-* Unlocks leads
-* Clears cart
+- Verifies webhook signature
+- Confirms payment automatically
+- Updates order
+- Unlocks leads
+- Clears cart
 
 ---
 
@@ -213,14 +213,15 @@ POST /razorpay-webhook
   }
 }
 ```
+
 ---
 
 # 🧠 Security Features
 
-* ✅ Signature verification (prevents fraud)
-* ✅ Idempotency (prevents duplicate payments)
-* ✅ Cart cleared after payment
-* ✅ Leads unlocked only after payment
+- ✅ Signature verification (prevents fraud)
+- ✅ Idempotency (prevents duplicate payments)
+- ✅ Cart cleared after payment
+- ✅ Leads unlocked only after payment
 
 ---
 
@@ -266,18 +267,17 @@ Expiry: Any future date
 
 # 📦 Final Notes
 
-* Payment is **mandatory before unlocking leads**
-* Webhook ensures reliability even if frontend fails
-* System is **secure & production-ready**
+- Payment is **mandatory before unlocking leads**
+- Webhook ensures reliability even if frontend fails
+- System is **secure & production-ready**
 
 ---
 
 # 🎯 Summary
 
-* 🛒 Cart → Order → Payment → Unlock
-* 🔒 Fully secure
-* ⚡ Scalable architecture
-* 💰 Revenue-safe system
+- 🛒 Cart → Order → Payment → Unlock
+- 🔒 Fully secure
+- ⚡ Scalable architecture
+- 💰 Revenue-safe system
 
 ---
-

@@ -1,12 +1,12 @@
 # 📌 Leads API Documentation
 
-This document provides a complete overview of all **Lead-related APIs** in the system, including request structure, authentication, and responses.
+This document provides a complete overview of all **Lead-related APIs**, including browsing, purchase history, downloads, and admin operations.
 
 ---
 
-# 🔐 Base URL
+# 🌐 Base URL
 
-```
+```http
 http://localhost:3000/api/v1/leads
 ```
 
@@ -14,9 +14,7 @@ http://localhost:3000/api/v1/leads
 
 # 🔑 Authentication
 
-All APIs require a valid JWT token unless specified.
-
-### Header:
+Protected APIs require JWT token.
 
 ```json
 {
@@ -26,60 +24,46 @@ All APIs require a valid JWT token unless specified.
 
 ---
 
-# 📖 APIs Overview
+# 📊 APIs Overview
 
-| Method | Endpoint             | Description                  | Access       |
-| ------ | -------------------- | ---------------------------- | ------------ |
-| GET    | `/get-all-leads`     | Fetch all leads with filters | User         |
-| GET    | `/get-lead/:id`      | Get single lead details      | User         |
-| POST   | `/create-lead`       | Create a new lead            | Admin        |
-| PUT    | `/update-lead/:id`   | Update a lead                | Admin        |
-| DELETE | `/delete-lead`       | Delete a lead                | Admin        |
-| POST   | `/upload-leads`      | Upload leads via Excel       | Admin        |
-| GET    | `/upload-status/:id` | Check upload progress        | Public/Admin |
+| Method | Endpoint             | Description                               | Access |
+| ------ | -------------------- | ----------------------------------------- | ------ |
+| GET    | `/get-all-leads`     | Fetch all leads with filters & pagination | Public |
+| GET    | `/get-lead/:id`      | Get single lead details                   | Public |
+| GET    | `/history`           | Get user's purchased leads history        | User   |
+| GET    | `/download/:orderId` | Download purchased leads as Excel         | User   |
+| POST   | `/create-lead`       | Create a new lead                         | Admin  |
+| PUT    | `/update-lead/:id`   | Update existing lead                      | Admin  |
+| DELETE | `/delete-lead`       | Delete a lead                             | Admin  |
+| POST   | `/upload-leads`      | Upload leads via Excel                    | Admin  |
+| GET    | `/upload-status/:id` | Check Excel upload progress               | Admin  |
 
 ---
 
 # 📌 1. Get All Leads
 
-### 📍 Endpoint:
+### Endpoint
 
-```
+```http
 GET /get-all-leads
 ```
 
-### 🔎 Query Params (Optional):
+### Query Params (Optional)
 
-* `page`
-* `limit`
-* `category`
-* `city`
-* `state`
-* `search`
-* `sort` → `latest | cheapest | expensive`
+* page
+* limit
+* category
+* city
+* state
+* search
+* sort → latest | cheapest | expensive
 
-### ✅ Response:
+### Response
 
 ```json
 {
   "success": true,
-  "message": "Leads fetched successfully",
-  "meta": {
-    "total": 120,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 12
-  },
-  "data": [
-    {
-      "_id": "lead123",
-      "title": "Property Buyer",
-      "price": 500,
-      "city": "Pune",
-      "state": "Maharashtra",
-      "isPurchased": false
-    }
-  ]
+  "data": []
 }
 ```
 
@@ -87,183 +71,46 @@ GET /get-all-leads
 
 # 📌 2. Get Lead Details
 
-### 📍 Endpoint:
+### Endpoint
 
-```
+```http
 GET /get-lead/:id
 ```
 
-### ✅ Behavior:
+### Behavior
 
-* If **not purchased** → sensitive data hidden
-* If **purchased** → full details shown
-
-### ✅ Response:
-
-```json
-{
-  "success": true,
-  "message": "Lead details fetched successfully",
-  "data": {
-    "_id": "lead123",
-    "title": "Property Buyer",
-    "price": 500,
-    "phone": null,
-    "customerName": null,
-    "isPurchased": false
-  }
-}
-```
+* Not purchased → sensitive data hidden
+* Purchased → full details shown
 
 ---
 
-# 📌 3. Create Lead (Admin)
+# 📌 3. Get Purchase History
 
-### 📍 Endpoint:
+### Endpoint
 
+```http
+GET /history
 ```
-POST /create-lead
-```
 
-### 🔐 Access:
-
-Admin only
-
-### 📥 Body:
+### Headers
 
 ```json
 {
-  "title": "Need Car Loan",
-  "description": "Customer looking for loan",
-  "category": "categoryId",
-  "city": "Mumbai",
-  "state": "Maharashtra",
-  "price": 1000,
-  "expiresAt": "2026-05-01",
-  "coordinates": [72.8777, 19.0760]
+  "Authorization": "Bearer token"
 }
 ```
 
-### ✅ Response:
+### Response
 
 ```json
 {
   "success": true,
-  "message": "Lead created successfully",
-  "data": { ... }
-}
-```
-
----
-
-# 📌 4. Update Lead (Admin)
-
-### 📍 Endpoint:
-
-```
-PUT /update-lead/:id
-```
-
-### 🔐 Access:
-
-Admin only
-
-### 📥 Body:
-
-Any fields to update
-
-### ✅ Response:
-
-```json
-{
-  "success": true,
-  "message": "Lead updated successfully",
-  "data": { ... }
-}
-```
-
----
-
-# 📌 5. Delete Lead (Admin)
-
-### 📍 Endpoint:
-
-```
-DELETE /delete-lead
-```
-
-### 📥 Body:
-
-```json
-{
-  "leadId": "lead123"
-}
-```
-
-### ✅ Response:
-
-```json
-{
-  "success": true,
-  "message": "Lead deleted successfully"
-}
-```
-
----
-
-# 📌 6. Upload Leads via Excel (Admin)
-
-### 📍 Endpoint:
-
-```
-POST /upload-leads
-```
-
-### 🔐 Access:
-
-Admin only
-
-### 📥 Form Data:
-
-* `file` → Excel (.xlsx)
-
-### ✅ Response:
-
-```json
-{
-  "success": true,
-  "message": "Upload started successfully. Processing in background.",
-  "uploadId": "upload123",
-  "totalRows": 200
-}
-```
-
----
-
-# 📌 7. Get Upload Status
-
-### 📍 Endpoint:
-
-```
-GET /upload-status/:id
-```
-
-### ✅ Response:
-
-```json
-{
-  "success": true,
-  "message": "Upload in progress",
-  "status": "processing",
-  "progress": "65%",
-  "processed": 130,
-  "total": 200,
-  "success": 120,
-  "failed": 10,
-  "logs": [
+  "data": [
     {
-      "row": 5,
-      "message": "Invalid price"
+      "orderId": "123",
+      "status": "PAID",
+      "paidAt": "2026-04-17",
+      "leads": []
     }
   ]
 }
@@ -271,12 +118,125 @@ GET /upload-status/:id
 
 ---
 
-# ⚠️ Error Response Format
+# 📌 4. Download Leads
+
+### Endpoint
+
+```http
+GET /download/:orderId
+```
+
+### Description
+
+* Download purchased leads in **Excel (.xlsx)** format
+* Only available for **paid orders**
+* Can be restricted to **one-time download**
+
+---
+
+# 📌 5. Create Lead (Admin)
+
+### Endpoint
+
+```http
+POST /create-lead
+```
+
+### Body
+
+```json
+{
+  "title": "Interior Design Lead",
+  "description": "Looking for 2BHK design",
+  "category": "categoryId",
+  "city": "Pune",
+  "state": "Maharashtra",
+  "price": 500,
+  "expiresAt": "2026-05-01",
+  "coordinates": [73.78, 19.99]
+}
+```
+
+---
+
+# 📌 6. Update Lead (Admin)
+
+### Endpoint
+
+```http
+PUT /update-lead/:id
+```
+
+---
+
+# 📌 7. Delete Lead (Admin)
+
+### Endpoint
+
+```http
+DELETE /delete-lead
+```
+
+### Body
+
+```json
+{
+  "leadId": "leadId"
+}
+```
+
+---
+
+# 📌 8. Upload Leads via Excel
+
+### Endpoint
+
+```http
+POST /upload-leads
+```
+
+### Form Data
+
+* file → Excel (.xlsx)
+
+### Response
+
+```json
+{
+  "success": true,
+  "uploadId": "123"
+}
+```
+
+---
+
+# 📌 9. Get Upload Status
+
+### Endpoint
+
+```http
+GET /upload-status/:id
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "status": "processing",
+  "processed": 50,
+  "total": 100
+}
+```
+
+---
+
+# ⚠️ Error Format
 
 ```json
 {
   "success": false,
-  "message": "Something went wrong"
+  "message": "Error message"
 }
 ```
 
@@ -284,22 +244,19 @@ GET /upload-status/:id
 
 # 🧠 Notes
 
-* Leads expire based on `expiresAt`
-* A lead becomes:
-
-  * `ACTIVE`
-  * `SOLD_OUT`
-  * `EXPIRED`
+* Leads have statuses: ACTIVE, SOLD_OUT, EXPIRED
 * Sensitive data is hidden until purchase
-* Bulk upload runs in background (non-blocking)
+* Bulk upload runs in background
+* Download API returns Excel file
+* Purchase history is based on orders
 
 ---
 
 # 🚀 Summary
 
-* 👤 Users can browse and view leads
-* 👨‍💼 Admins manage leads
-* 📊 Excel upload supports bulk operations
-* 🔒 Secure data exposure based on purchase
+* 👤 Users can browse & purchase leads
+* 📥 Users can download purchased leads
+* 👨‍💼 Admins manage and upload leads
+* ⚡ System supports bulk operations
 
-
+---
