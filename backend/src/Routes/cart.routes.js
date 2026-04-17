@@ -13,6 +13,4 @@ router.post("/add-cart", auth, addToCart);
 router.get("/get-cart", auth, getCart);
 router.delete("/delete-cart-item", auth, removeFromCart);
 router.delete("/delete-cart", auth, clearCart);
-// router.put("/update-cart", auth, updateCart);
-
 export default router;

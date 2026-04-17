@@ -23,12 +23,16 @@ const sendOtpForAdminLogin = async (req, res) => {
         message: "Access denied. Not an admin.",
       });
     }
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
 
     try {
-      const emailResponse = await sendAdminOtpEmail(email, otp);
+      await sendAdminOtpEmail(
+        admin.email,
+        `${admin.firstname} ${admin.lastname}`,
+        otp,
+      );
 
       admin.resetOtp = otp;
       admin.resetOtpExpire = otpExpire;
@@ -174,7 +178,7 @@ const changeUserRoleToAdmin = async (req, res) => {
   }
 };
 
- const getDashboardOverview = async (req, res) => {
+const getDashboardOverview = async (req, res) => {
   try {
     const [
       totalUsers,
@@ -429,6 +433,5 @@ export {
   getTopCategories,
   getRecentOrders,
   getAllLeadsAdmin,
-  getLeadByIdAdmin
-
+  getLeadByIdAdmin,
 };

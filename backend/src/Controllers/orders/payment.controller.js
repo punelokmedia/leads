@@ -4,23 +4,85 @@ import { Order } from "../../Models/orders.models.js";
 import { Lead } from "../../Models/leads.model.js";
 import { razorpay } from "../../Config/razorpay.config.js";
 
+const ORDER_EXPIRY_MINUTES = 15;
+
+const generateCartHash = (leads) => {
+  const sorted = leads
+    .map((l) => `${l._id}-${l.price}`)
+    .sort()
+    .join("|");
+
+  return crypto.createHash("sha256").update(sorted).digest("hex");
+};
+
 const createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const cart = await Cart.findOne({ user: userId })
-      .populate("leads")
-      .select("-customerName -phone");
+    const cart = await Cart.findOne({
+      user: userId,
+    }).populate("leads");
 
     if (!cart || cart.leads.length === 0) {
       return res.status(400).json({
         success: false,
-        message:
-          "Your cart is empty. Please add leads before placing an order.",
+        message: "Cart is empty",
       });
     }
 
-    const totalAmount = cart.leads.reduce((sum, lead) => sum + lead.price, 0);
+    const cartHash = generateCartHash(cart.leads);
+
+    const existingOrder = await Order.findOne({
+      user: userId,
+      status: "CREATED",
+    }).sort({ createdAt: -1 });
+
+    if (existingOrder) {
+      const isExpired =
+        Date.now() - existingOrder.createdAt.getTime() >
+        ORDER_EXPIRY_MINUTES * 60 * 1000;
+
+      if (existingOrder.cartHash === cartHash && !isExpired) {
+        return res.status(200).json({
+          success: true,
+          message: "Reusing existing order",
+          data: {
+            razorpayOrderId: existingOrder.razorpayOrderId,
+            internalOrderId: existingOrder._id,
+            amount: existingOrder.totalAmount,
+            currency: existingOrder.currency,
+            expiresIn: ORDER_EXPIRY_MINUTES * 60,
+          },
+        });
+      }
+
+      existingOrder.status = "FAILED";
+      await existingOrder.save();
+    }
+
+    const leadIds = cart.leads.map((l) => l._id);
+
+    const leads = await Lead.find({ _id: { $in: leadIds } });
+
+    for (let lead of leads) {
+      const remainingSlots = lead.maxBuyers - lead.buyers.length;
+
+      if (remainingSlots <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Lead "${lead.title}" is sold out`,
+        });
+      }
+
+      if (lead.expiresAt < new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: `Lead "${lead.title}" is expired`,
+        });
+      }
+    }
+
+    const totalAmount = leads.reduce((sum, lead) => sum + lead.price, 0);
 
     const razorpayOrder = await razorpay.orders.create({
       amount: totalAmount * 100,
@@ -29,12 +91,14 @@ const createOrder = async (req, res) => {
 
     const order = await Order.create({
       user: userId,
-      leads: cart.leads.map((l) => ({
+      leads: leads.map((l) => ({
         lead: l._id,
         price: l.price,
       })),
       totalAmount,
       razorpayOrderId: razorpayOrder.id,
+      cartHash,
+      status: "CREATED",
     });
 
     return res.status(201).json({
@@ -45,14 +109,16 @@ const createOrder = async (req, res) => {
         internalOrderId: order._id,
         amount: totalAmount,
         currency: "INR",
-        leadsCount: cart.leads.length,
+        expiresIn: ORDER_EXPIRY_MINUTES * 60,
+        leadsCount: leads.length,
       },
     });
   } catch (error) {
     console.error("Create Order Error:", error);
+
     return res.status(500).json({
       success: false,
-      message: "Failed to create order. Please try again later.",
+      message: "Failed to create order",
     });
   }
 };
@@ -65,7 +131,7 @@ const verifyPayment = async (req, res) => {
     if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
       return res.status(400).json({
         success: false,
-        message: "Missing payment verification details",
+        message: "Missing payment details",
       });
     }
 
@@ -77,7 +143,7 @@ const verifyPayment = async (req, res) => {
     if (generatedSignature !== razorpaySignature) {
       return res.status(400).json({
         success: false,
-        message: "Payment verification failed. Invalid signature.",
+        message: "Invalid signature",
       });
     }
 
@@ -93,11 +159,7 @@ const verifyPayment = async (req, res) => {
     if (order.status === "PAID") {
       return res.status(200).json({
         success: true,
-        message: "Payment already verified",
-        data: {
-          orderId: order._id,
-          status: order.status,
-        },
+        message: "Already processed",
       });
     }
 
@@ -105,152 +167,135 @@ const verifyPayment = async (req, res) => {
     order.razorpayPaymentId = razorpayPaymentId;
     order.razorpaySignature = razorpaySignature;
     order.paidAt = new Date();
-
     await order.save();
 
-    for (const item of order.leads) {
-      const lead = await Lead.findById(item.lead);
-      if (!lead) continue;
+    const failedLeads = [];
 
-      const alreadyBought = lead.buyers.some(
-        (b) => b.user.toString() === userId,
+    for (const item of order.leads) {
+      const updated = await Lead.findOneAndUpdate(
+        {
+          _id: item.lead,
+          $expr: { $lt: [{ $size: "$buyers" }, "$maxBuyers"] },
+        },
+        {
+          $push: {
+            buyers: {
+              user: userId,
+              purchasedAt: new Date(),
+            },
+          },
+        },
+        { new: true },
       );
 
-      if (!alreadyBought) {
-        lead.buyers.push({ user: userId });
+      if (!updated) {
+        failedLeads.push(item.lead);
       }
-
-      if (lead.buyers.length >= lead.maxBuyers) {
-        lead.status = "SOLD_OUT";
-      }
-
-      await lead.save();
     }
 
-    await Cart.findOneAndUpdate({ user: userId }, { $set: { leads: [] } });
+    await Cart.findOneAndUpdate(
+      {
+        user: userId,
+      },
+      {
+        $set: {
+          leads: [],
+        },
+      },
+    );
 
     return res.status(200).json({
       success: true,
-      message: "Payment successful. Leads unlocked successfully.",
-      data: {
-        orderId: order._id,
-        paymentId: razorpayPaymentId,
-        status: order.status,
-      },
+      message:
+        failedLeads.length > 0
+          ? "Payment done, but some leads were sold out"
+          : "Payment successful",
+      failedLeads,
     });
   } catch (error) {
-    console.error("Verify Payment Error:", error);
+    console.error("Verify Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Payment verification failed. Please try again.",
+      message: "Payment verification failed",
     });
   }
 };
 
-const webhookSecret = async (req, res) => {
+const webhookHandler = async (req, res) => {
   try {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const signature = req.headers["x-razorpay-signature"];
 
-    const body = JSON.stringify(req.body);
-
     const expectedSignature = crypto
-      .createHmac("sha256", webhookSecret)
-      .update(body)
+      .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
+      .update(req.rawBody)
       .digest("hex");
 
     if (expectedSignature !== signature) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid webhook signature",
-      });
+      return res.status(400).json({ success: false });
     }
 
     const event = req.body.event;
 
-    // 🎯 Handle payment success
     if (event === "payment.captured") {
       const payment = req.body.payload.payment.entity;
 
-      const razorpayOrderId = payment.order_id;
-      const razorpayPaymentId = payment.id;
+      const order = await Order.findOne({
+        razorpayOrderId: payment.order_id,
+      });
 
-      const order = await Order.findOne({ razorpayOrderId });
-
-      if (!order) {
-        return res.status(200).json({
-          success: true,
-          message: "Order not found, skipping",
-        });
+      if (!order || order.status === "PAID") {
+        return res.status(200).json({ success: true });
       }
 
-      // ⚠️ Idempotency
-      if (order.status === "PAID") {
-        return res.status(200).json({
-          success: true,
-          message: "Order already processed",
-          data: {
-            orderId: order._id,
-          },
-        });
-      }
-
-      // ✅ Update order
       order.status = "PAID";
-      order.razorpayPaymentId = razorpayPaymentId;
+      order.razorpayPaymentId = payment.id;
       order.paidAt = new Date();
-
       await order.save();
 
-      const userId = order.user;
-
-      // 🔓 Unlock leads
       for (const item of order.leads) {
-        const lead = await Lead.findById(item.lead);
-        if (!lead) continue;
-
-        const alreadyBought = lead.buyers.some(
-          (b) => b.user.toString() === userId.toString(),
-        );
-
-        if (!alreadyBought) {
-          lead.buyers.push({ user: userId });
+        try {
+          await markLeadAsPurchased(item.lead, order.user);
+        } catch (err) {
+          console.warn(err.message);
         }
-
-        if (lead.buyers.length >= lead.maxBuyers) {
-          lead.status = "SOLD_OUT";
-        }
-
-        await lead.save();
       }
 
-      // 🧹 Clear cart
-      await Cart.findOneAndUpdate({ user: userId }, { $set: { leads: [] } });
-
-      return res.status(200).json({
-        success: true,
-        message: "Webhook processed successfully",
-        data: {
-          orderId: order._id,
-          paymentId: razorpayPaymentId,
-        },
-      });
+      await Cart.findOneAndUpdate(
+        { user: order.user },
+        { $set: { leads: [] } },
+      );
     }
 
-    // ℹ️ Other events
-    return res.status(200).json({
-      success: true,
-      message: `Unhandled event: ${event}`,
-    });
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error("Webhook Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Webhook processing failed",
-    });
+    return res.status(500).json({ success: false });
   }
 };
 
-export { createOrder, verifyPayment, webhookSecret };
+const markLeadAsPurchased = async (leadId, userId) => {
+  const updatedLead = await Lead.findOneAndUpdate(
+    {
+      _id: leadId,
+      $expr: { $lt: [{ $size: "$buyers" }, "$maxBuyers"] },
+    },
+    {
+      $push: {
+        buyers: {
+          user: userId,
+          purchasedAt: new Date(),
+        },
+      },
+    },
+    { new: true },
+  );
+
+  if (!updatedLead) {
+    throw new Error("Lead sold out");
+  }
+
+  return updatedLead;
+};
+
+export { createOrder, verifyPayment, webhookHandler };
