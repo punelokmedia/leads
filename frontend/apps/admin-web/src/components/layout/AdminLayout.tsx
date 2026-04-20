@@ -1,14 +1,20 @@
+import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { AdminSidebar } from '@/components/layout/AdminSidebar'
 import { AdminHeader } from '@/components/layout/AdminHeader'
 
 export function AdminLayout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
   return (
-    <div className="flex min-h-dvh">
-      <AdminSidebar />
+    <div className="flex min-h-dvh bg-transparent">
+      <AdminSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
       <div className="flex min-w-0 flex-1 flex-col">
-        <AdminHeader />
-        <main className="flex-1 overflow-auto p-6 md:p-8">
+        <AdminHeader onMenuToggle={() => setIsSidebarOpen((prev) => !prev)} />
+        <main className="flex-1 overflow-auto p-4 md:p-8">
           <Outlet />
         </main>
       </div>

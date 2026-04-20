@@ -6,6 +6,7 @@ const LeadSchema = new Schema(
     title: {
       type: String,
       required: true,
+      
     },
 
     description: {
