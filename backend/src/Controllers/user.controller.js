@@ -12,7 +12,6 @@ const addAddress = async (req, res) => {
       state,
       country,
       zipcode,
-      isDefault,
     } = req.body;
 
     if (!street || !city || !state || !zipcode) {
@@ -31,12 +30,6 @@ const addAddress = async (req, res) => {
       });
     }
 
-    if (isDefault) {
-      user.address.forEach((addr) => {
-        addr.isDefault = false;
-      });
-    }
-
     const newAddress = {
       label,
       street,
@@ -45,27 +38,29 @@ const addAddress = async (req, res) => {
       state,
       country,
       zipcode,
-      isDefault: isDefault || false,
     };
 
-    user.address.push(newAddress);
+    // 🔥 Replace instead of push
+    user.address = newAddress;
 
     await user.save();
 
     return res.status(200).json({
       success: true,
-      message: "Address added successfully",
+      message: user.address
+        ? "Address updated successfully"
+        : "Address added successfully",
       data: user.address,
     });
+
   } catch (error) {
     console.error("Add Address Error:", error);
+
     return res.status(500).json({
       success: false,
-      message: "Error adding address",
+      message: "Error saving address",
     });
   }
 };
-
-
 
 export { addAddress };

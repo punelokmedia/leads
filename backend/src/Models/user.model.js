@@ -7,43 +7,32 @@ const AddressSchema = new Schema(
       enum: ["HOME", "OFFICE", "OTHER"],
       default: "HOME",
     },
-
     street: {
       type: String,
       required: true,
       trim: true,
     },
-
     landmark: {
       type: String,
       trim: true,
     },
-
     city: {
       type: String,
       required: true,
       trim: true,
     },
-
     state: {
       type: String,
       required: true,
       trim: true,
     },
-
     country: {
       type: String,
       default: "India",
     },
-
     zipcode: {
       type: String,
       required: true,
-    },
-
-    isDefault: {
-      type: Boolean,
-      default: false,
     },
   },
   { _id: false },
@@ -56,7 +45,6 @@ const UserSchema = new Schema(
       required: true,
       trim: true,
     },
-
     lastname: {
       type: String,
       required: true,
@@ -66,20 +54,29 @@ const UserSchema = new Schema(
     email: {
       type: String,
       required: true,
+      unique: true,
       lowercase: true,
       trim: true,
     },
 
     password: {
       type: String,
-      required: function () {
-        return this.provider === "LOCAL";
-      },
+      default: null,
     },
 
-    phoneNumber: {
+    googleId: {
       type: String,
+      default: null,
     },
+
+    providers: {
+      type: [String],
+      enum: ["LOCAL", "GOOGLE"],
+      default: [],
+    },
+
+    phoneNumber: String,
+    profilePic: String,
 
     role: {
       type: String,
@@ -88,32 +85,16 @@ const UserSchema = new Schema(
     },
 
     address: {
-      type: [AddressSchema],
-      default: [],
+      type: AddressSchema,
+      default: null,
     },
 
-    provider: {
-      type: String,
-      enum: ["LOCAL", "GOOGLE"],
-      default: "LOCAL",
-    },
-
-    googleId: {
-      type: String,
-    },
-    resetOtp: {
-      type: String,
-    },
-    resetOtpExpire: {
-      type: Date,
-    },
+    resetOtp: String,
+    resetOtpExpire: Date,
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
-UserSchema.index({ email: 1 });
 UserSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 UserSchema.index({ "address.city": 1, "address.state": 1 });
 

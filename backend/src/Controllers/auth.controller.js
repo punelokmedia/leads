@@ -1,59 +1,79 @@
 import jwt from "jsonwebtoken";
 import { User } from "../Models/user.model.js";
 import { hashPassword, comparePassword } from "../Utils/hash.js";
-import { forgetPasswordEmail } from "../Utils/email.utils.js";
+import { forgetPasswordEmail } from "../Utils/email.resend.utils.js";
 
 const registerUser = async (req, res) => {
   try {
-    const { firstname, lastname, email, phoneNumber, password } = req.body;
+    const { firstname, lastname, email, password, phoneNumber } = req.body;
 
     if (!firstname || !lastname || !email || !phoneNumber || !password) {
       return res.status(400).json({
         success: false,
-        message: "Please fill all the fields",
+        code: "VALIDATION_ERROR",
+        message:
+          "Firstname, lastname, email, phoneNumber and password are required.",
       });
     }
 
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({
+    let user = await User.findOne({ email });
+
+    if (user) {
+      if (!user.providers) user.providers = [];
+
+      if (!user.password) {
+        user.password = await hashPassword(password);
+
+        if (!user.providers.includes("LOCAL")) {
+          user.providers.push("LOCAL");
+        }
+
+        await user.save();
+
+        return res.status(200).json({
+          success: true,
+          code: "ACCOUNT_LINKED",
+          message:
+            "Your account was created using Google. A password has been added successfully. You can now login using email and password.",
+        });
+      }
+
+      return res.status(409).json({
         success: false,
-        message: "User already exists",
+        code: "USER_ALREADY_EXISTS",
+        message:
+          "An account with this email already exists. Please login instead.",
       });
     }
 
     const hashed = await hashPassword(password);
 
-    const user = await User.create({
+    user = await User.create({
       firstname,
       lastname,
       email,
-      phoneNumber,
       password: hashed,
-      provider: "LOCAL",
+      phoneNumber,
+      providers: ["LOCAL"],
+      profilePic: `https://api.dicebear.com/5.x/initials/svg?seed=${firstname}%20${lastname}`,
     });
-
-    user.password = undefined;
 
     return res.status(201).json({
       success: true,
-      message: "User created successfully",
+      code: "REGISTER_SUCCESS",
+      message: "Account created successfully.",
       data: {
         id: user._id,
-        firstname: user.firstname,
-        lastname: user.lastname,
         email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
       },
     });
-  } catch (error) {
-    console.error("Register Error:", error);
+  } catch (err) {
+    console.error("Register Error:", err);
+
     return res.status(500).json({
       success: false,
-      message: "Error while creating user",
+      code: "REGISTER_FAILED",
+      message: "Something went wrong while creating your account.",
     });
   }
 };
@@ -62,23 +82,43 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-
-    if (!user || user.provider !== "LOCAL") {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Invalid credentials",
+        code: "VALIDATION_ERROR",
+        message: "Email and password are required.",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        code: "USER_NOT_FOUND",
+        message: "No account found with this email.",
+      });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({
+        success: false,
+        code: "USE_GOOGLE_LOGIN",
+        message:
+          "This account is registered with Google. Please login using Google.",
       });
     }
 
     const isMatch = await comparePassword(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        code: "INVALID_PASSWORD",
+        message: "Incorrect password. Please try again.",
       });
     }
+
     user.password = undefined;
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -87,62 +127,60 @@ const loginUser = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "login successfully",
+      code: "LOGIN_SUCCESS",
+      message: "Login successful.",
       token,
       data: user,
     });
   } catch (error) {
-    console.error("login Error:", error);
+    console.error("Login Error:", error);
+
     return res.status(500).json({
       success: false,
-      message: "login failed",
+      code: "LOGIN_FAILED",
+      message: "Something went wrong during login.",
     });
   }
 };
 
 const googleCallback = async (req, res) => {
   try {
-    if (!req.user) {
+    const user = req.user;
+
+    if (!user) {
       return res.status(400).json({
         success: false,
-        message: "User not authenticated",
+        code: "GOOGLE_AUTH_FAILED",
+        message: "Google authentication failed. Please try again.",
       });
     }
 
     const token = jwt.sign(
       {
-        id: req.user._id,
-        email: req.user.email,
-        role: req.user.role,
+        id: user._id,
+        email: user.email,
+        role: user.role,
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    user.password = undefined;
 
     return res.status(200).json({
       success: true,
-      message: "Login by Google successful",
+      code: "GOOGLE_LOGIN_SUCCESS",
+      message: "Logged in successfully using Google.",
       token,
-      user: {
-        id: req.user._id,
-        firstname: req.user.firstname,
-        lastname: req.user.lastname,
-        email: req.user.email,
-        role: req.user.role,
-      },
+      data: user,
     });
   } catch (error) {
     console.error("Google Callback Error:", error);
+
     return res.status(500).json({
       success: false,
-      message: "Token generation failed",
+      code: "TOKEN_GENERATION_FAILED",
+      message: "Unable to generate authentication token.",
     });
   }
 };

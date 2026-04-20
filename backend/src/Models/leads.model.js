@@ -2,16 +2,16 @@ import mongoose, { Schema } from "mongoose";
 
 const LeadSchema = new Schema(
   {
-    // 🔹 Basic Info
     title: {
       type: String,
       required: true,
-      
+      trim: true,
     },
 
     description: {
       type: String,
       required: true,
+      trim: true,
     },
 
     category: {
@@ -20,21 +20,23 @@ const LeadSchema = new Schema(
       required: true,
     },
 
-    // 📍 Location (Important)
     city: {
       type: String,
       required: true,
+      trim: true,
       index: true,
     },
 
     state: {
       type: String,
       required: true,
+      trim: true,
       index: true,
     },
 
     address: {
-      type: String, // full address (hidden initially)
+      type: String,
+      trim: true,
     },
 
     location: {
@@ -44,26 +46,61 @@ const LeadSchema = new Schema(
         default: "Point",
       },
       coordinates: {
-        type: [Number], // [lng, lat]
+        type: [Number],
+        required: true,
+        validate: {
+          validator: function (value) {
+            if (!Array.isArray(value) || value.length !== 2) return false;
+
+            const [lng, lat] = value;
+
+            return (
+              typeof lng === "number" &&
+              typeof lat === "number" &&
+              lng >= -180 &&
+              lng <= 180 &&
+              lat >= -90 &&
+              lat <= 90
+            );
+          },
+          message:
+            "Coordinates must be [longitude, latitude] with valid geo range",
+        },
       },
     },
 
-    // 💰 Pricing
     price: {
       type: Number,
       required: true,
+      min: 1,
     },
 
     budget: {
-      min: Number,
-      max: Number,
+      min: {
+        type: Number,
+        min: 0,
+      },
+      max: {
+        type: Number,
+        min: 0,
+      },
     },
 
-    // 👤 Customer Info (hidden before purchase)
-    customerName: String,
-    phone: String,
+    customerName: {
+      type: String,
+      trim: true,
+    },
 
-    // 🔐 Lead Access Logic
+    phone: {
+      type: String,
+      validate: {
+        validator: function (v) {
+          return !v || /^[6-9]\d{9}$/.test(v);
+        },
+        message: "Invalid Indian phone number",
+      },
+    },
+
     buyers: [
       {
         user: {
@@ -80,15 +117,20 @@ const LeadSchema = new Schema(
     maxBuyers: {
       type: Number,
       default: 3,
+      min: 1,
     },
 
-    // ⏳ Expiry
     expiresAt: {
       type: Date,
       required: true,
+      validate: {
+        validator: function (value) {
+          return value > new Date();
+        },
+        message: "Expiry date must be in the future",
+      },
     },
 
-    // 📊 Status
     status: {
       type: String,
       enum: ["ACTIVE", "SOLD_OUT", "EXPIRED"],
@@ -97,7 +139,8 @@ const LeadSchema = new Schema(
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // admin
+      ref: "User",
+      required: true,
     },
   },
   { timestamps: true },
@@ -108,5 +151,21 @@ LeadSchema.index({ category: 1 });
 LeadSchema.index({ city: 1, state: 1 });
 LeadSchema.index({ expiresAt: 1 });
 LeadSchema.index({ status: 1 });
+
+LeadSchema.pre("save", function (next) {
+  if (this.expiresAt < new Date()) {
+    this.status = "EXPIRED";
+  }
+
+  if (this.buyers.length >= this.maxBuyers) {
+    this.status = "SOLD_OUT";
+  }
+
+  next();
+});
+
+LeadSchema.statics.safeInsertMany = async function (docs) {
+  return this.insertMany(docs, { ordered: false });
+};
 
 export const Lead = mongoose.model("Lead", LeadSchema);
