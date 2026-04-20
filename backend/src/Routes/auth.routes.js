@@ -1,6 +1,5 @@
 import express from "express";
 import passport from "../Config/passport.js";
-import { addAddress } from "../Controllers/user.controller.js";
 import { auth } from "../Middlewares/auth.middleware.js";
 import {
   googleCallback,
@@ -9,18 +8,25 @@ import {
   changePassword,
   forgetPassword,
   resetPassword,
+  addAddress,
+  logOutUser,
+  getUserProfile,
+  updateUserProfile,
+  verifyOtp,
 } from "../Controllers/auth.controller.js";
 
 const router = express.Router();
 
-router.get("/google",
+router.get(
+  "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
   }),
 );
 
-router.get( "/google/callback",
+router.get(
+  "/google/callback",
   (req, res, next) => {
     passport.authenticate("google", (err, user) => {
       if (err) {
@@ -49,10 +55,15 @@ router.get( "/google/callback",
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.get("/profile", auth, getUserProfile);
+router.get("/logout", auth, logOutUser);
+router.put("/update-profile", auth, updateUserProfile);
+
 router.post("/change-password", auth, changePassword);
 router.post("/add-address", auth, addAddress);
 
 router.post("/forgot-password", forgetPassword);
+router.post("/verify-otp", verifyOtp);
 router.post("/reset-password", resetPassword);
 
 export default router;

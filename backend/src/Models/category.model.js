@@ -1,12 +1,15 @@
 import mongoose, { Schema } from "mongoose";
 
-const CategorySchema = new Schema({
+const CategorySchema = new Schema(
+  {
     name: {
       type: String,
       required: true,
       unique: true,
     },
-    icon: String,
+    icon: {
+      type: String,
+    },
     isActive: {
       type: Boolean,
       default: true,

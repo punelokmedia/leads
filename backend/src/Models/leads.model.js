@@ -7,7 +7,6 @@ const LeadSchema = new Schema(
       required: true,
       trim: true,
     },
-
     description: {
       type: String,
       required: true,
@@ -26,7 +25,6 @@ const LeadSchema = new Schema(
       trim: true,
       index: true,
     },
-
     state: {
       type: String,
       required: true,
@@ -48,24 +46,6 @@ const LeadSchema = new Schema(
       coordinates: {
         type: [Number],
         required: true,
-        validate: {
-          validator: function (value) {
-            if (!Array.isArray(value) || value.length !== 2) return false;
-
-            const [lng, lat] = value;
-
-            return (
-              typeof lng === "number" &&
-              typeof lat === "number" &&
-              lng >= -180 &&
-              lng <= 180 &&
-              lat >= -90 &&
-              lat <= 90
-            );
-          },
-          message:
-            "Coordinates must be [longitude, latitude] with valid geo range",
-        },
       },
     },
 
@@ -75,42 +55,31 @@ const LeadSchema = new Schema(
       min: 1,
     },
 
+    originalPrice: {
+      type: Number,
+      min: 1,
+    },
+
     budget: {
-      min: {
-        type: Number,
-        min: 0,
-      },
-      max: {
-        type: Number,
-        min: 0,
-      },
+      min: Number,
+      max: Number,
     },
 
     customerName: {
       type: String,
-      trim: true,
     },
 
     phone: {
       type: String,
       validate: {
-        validator: function (v) {
-          return !v || /^[6-9]\d{9}$/.test(v);
-        },
-        message: "Invalid Indian phone number",
+        validator: (v) => !v || /^[6-9]\d{9}$/.test(v),
       },
     },
 
     buyers: [
       {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        purchasedAt: {
-          type: Date,
-          default: Date.now,
-        },
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        purchasedAt: { type: Date, default: Date.now },
       },
     ],
 
@@ -123,18 +92,13 @@ const LeadSchema = new Schema(
     expiresAt: {
       type: Date,
       required: true,
-      validate: {
-        validator: function (value) {
-          return value > new Date();
-        },
-        message: "Expiry date must be in the future",
-      },
     },
 
     status: {
       type: String,
       enum: ["ACTIVE", "SOLD_OUT", "EXPIRED"],
       default: "ACTIVE",
+      index: true,
     },
 
     createdBy: {
@@ -147,25 +111,21 @@ const LeadSchema = new Schema(
 );
 
 LeadSchema.index({ location: "2dsphere" });
-LeadSchema.index({ category: 1 });
-LeadSchema.index({ city: 1, state: 1 });
 LeadSchema.index({ expiresAt: 1 });
-LeadSchema.index({ status: 1 });
 
-LeadSchema.pre("save", function (next) {
-  if (this.expiresAt < new Date()) {
-    this.status = "EXPIRED";
-  }
-
-  if (this.buyers.length >= this.maxBuyers) {
-    this.status = "SOLD_OUT";
-  }
-
-  next();
+LeadSchema.virtual("remainingSlots").get(function () {
+  return this.maxBuyers - this.buyers.length;
 });
 
-LeadSchema.statics.safeInsertMany = async function (docs) {
-  return this.insertMany(docs, { ordered: false });
+const resolveLeadStatus = (lead) => {
+  if (lead.expiresAt < new Date()) return "EXPIRED";
+  if (lead.buyers.length >= lead.maxBuyers) return "SOLD_OUT";
+  return "ACTIVE";
 };
 
+LeadSchema.pre("save", function () {
+  this.status = resolveLeadStatus(this);
+});
+
 export const Lead = mongoose.model("Lead", LeadSchema);
+export { resolveLeadStatus };

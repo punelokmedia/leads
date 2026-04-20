@@ -1,41 +1,81 @@
-# 🛠 Admin APIs
+# 🧑‍💼 Admin API Documentation
 
-Use this command to create the default admin:
+This document covers all **Admin APIs** including authentication, dashboard analytics, and lead management.
 
-```bash
-npm run seed:admin
+---
+
+# 🔐 Base URL
+
+```http
+http://localhost:3000/api/v1/admin
 ```
 
 ---
 
-## 🌐 Base URL
+# 🔑 Authentication
 
-```
-http://localhost:3000/api/v1
-```
+Most APIs require **Admin JWT Token**
 
-### Admin Base Path
+### Header:
 
-```
-{{base_url}}/admin
+```json
+{
+  "Authorization": "Bearer <admin_token>"
+}
 ```
 
 ---
 
-# 🔐 Authentication Flow
+# 📊 APIs Overview
 
-1. Send OTP → `/send-otp`
-2. Verify OTP → `/verify-otp`
-3. Receive JWT Token
-4. Use token for protected routes
+## 🔐 Admin Auth
+
+| Method | Endpoint      | Description              |
+| ------ | ------------- | ------------------------ |
+| POST   | `/send-otp`   | Send OTP for admin login |
+| POST   | `/verify-otp` | Verify OTP & login admin |
 
 ---
 
-## 📌 1. Send OTP (Admin Login)
+## 👨‍💼 Admin Management
 
-**POST** `/admin/send-otp`
+| Method | Endpoint      | Description           |
+| ------ | ------------- | --------------------- |
+| POST   | `/make-admin` | Promote user to admin |
 
-### Request
+---
+
+## 📊 Dashboard Analytics
+
+| Method | Endpoint                    | Description            |
+| ------ | --------------------------- | ---------------------- |
+| GET    | `/dashboard/overview`       | Dashboard stats        |
+| GET    | `/dashboard/revenue`        | Revenue analytics      |
+| GET    | `/dashboard/top-categories` | Top selling categories |
+| GET    | `/dashboard/recent-orders`  | Latest orders          |
+
+---
+
+## 📋 Admin Leads
+
+| Method | Endpoint                   | Description                   |
+| ------ | -------------------------- | ----------------------------- |
+| GET    | `/dashboard/get-all-leads` | Get all leads (admin view)    |
+| GET    | `/dashboard/get-leads/:id` | Get lead details (admin view) |
+
+---
+
+# 🔐 1. Send OTP (Admin Login)
+
+### 📍 Endpoint:
+
+```http
+POST /send-otp
+```
+
+---
+
+### 📥 Request Body:
 
 ```json
 {
@@ -43,7 +83,9 @@ http://localhost:3000/api/v1
 }
 ```
 
-### Response
+---
+
+### ✅ Success Response:
 
 ```json
 {
@@ -54,11 +96,28 @@ http://localhost:3000/api/v1
 
 ---
 
-## 📌 2. Verify OTP (Admin Login)
+### ❌ Error:
 
-**POST** `/admin/verify-otp`
+```json
+{
+  "success": false,
+  "message": "Access denied. Not an admin."
+}
+```
 
-### Request
+---
+
+# 🔐 2. Verify OTP
+
+### 📍 Endpoint:
+
+```http
+POST /verify-otp
+```
+
+---
+
+### 📥 Request Body:
 
 ```json
 {
@@ -67,15 +126,18 @@ http://localhost:3000/api/v1
 }
 ```
 
-### Response
+---
+
+### ✅ Success Response:
 
 ```json
 {
   "success": true,
   "message": "Admin login successful",
-  "token": "JWT_TOKEN",
+  "token": "jwt_token",
   "data": {
-    "id": "ADMIN_ID",
+    "id": "admin123",
+    "fullname": "Admin User",
     "email": "admin@gmail.com",
     "role": "ADMIN"
   }
@@ -84,83 +146,267 @@ http://localhost:3000/api/v1
 
 ---
 
-## 📌 3. Make User Admin 🔐
-
-**POST** `/admin/make-admin`
-
-### Headers
-
-```
-Authorization: Bearer <JWT_TOKEN>
-```
-
-### Request
+### ❌ Error:
 
 ```json
 {
-  "userId": "USER_ID"
+  "success": false,
+  "message": "Invalid OTP"
 }
 ```
 
-### Response
+---
+
+# 👨‍💼 3. Make Admin
+
+### 📍 Endpoint:
+
+```http
+POST /make-admin
+```
+
+---
+
+### 📥 Request Body:
+
+```json
+{
+  "userId": "user123"
+}
+```
+
+---
+
+### 🔐 Access:
+
+Admin only
+
+---
+
+### ✅ Success Response:
 
 ```json
 {
   "success": true,
-  "message": "User promoted to admin successfully"
+  "message": "User promoted to admin successfully",
+  "user": {
+    "id": "user123",
+    "email": "user@gmail.com",
+    "role": "ADMIN"
+  }
 }
 ```
 
 ---
 
-# 🔐 Authorization Rules
+# 📊 4. Dashboard Overview
 
-- Only users with role `ADMIN` can access protected routes
-- JWT token is required in headers:
+### 📍 Endpoint:
 
+```http
+GET /dashboard/overview
 ```
-Authorization: Bearer <token>
+
+---
+
+### ✅ Response:
+
+```json
+{
+  "success": true,
+  "message": "Dashboard overview data fetched successfully.",
+  "data": {
+    "totalUsers": 1200,
+    "totalLeads": 340,
+    "activeLeads": 200,
+    "soldLeads": 100,
+    "expiredLeads": 40,
+    "totalOrders": 180,
+    "totalRevenue": 50000
+  }
+}
 ```
 
 ---
 
-# ⚠️ Important Notes
+# 📈 5. Revenue Analytics
 
-- OTP is valid for **10 minutes**
-- Only seeded/admin users can log in via OTP
-- Do not expose admin email publicly
-- Always protect admin routes with middleware
+### 📍 Endpoint:
 
----
-
-# 🚀 Developer Tips
-
-- Seed admin only once:
-
-  ```bash
-  npm run seed:admin
-  ```
-
-- Use environment variables:
-
-  ```env
-  ADMIN_EMAIL=admin@gmail.com
-  ADMIN_PASSWORD=Admin@123
-  ```
-
-- Ensure JWT secret is set:
-
-  ```env
-  JWT_SECRET=your_secret_key
-  ```
+```http
+GET /dashboard/revenue
+```
 
 ---
 
-# ✅ Summary
+### ✅ Response:
 
-| Feature            | Status |
-| ------------------ | ------ |
-| Admin Seeder       | ✅     |
-| OTP Login          | ✅     |
-| JWT Authentication | ✅     |
-| Role-based Access  | ✅     |
+```json
+{
+  "success": true,
+  "message": "Revenue analytics fetched successfully.",
+  "data": [
+    { "_id": { "month": 1, "year": 2026 }, "total": 12000 },
+    { "_id": { "month": 2, "year": 2026 }, "total": 18000 }
+  ]
+}
+```
+
+---
+
+# 🥇 6. Top Categories
+
+### 📍 Endpoint:
+
+```http
+GET /dashboard/top-categories
+```
+
+---
+
+### ✅ Response:
+
+```json
+{
+  "success": true,
+  "message": "Top performing categories fetched successfully.",
+  "data": [
+    { "_id": "Real Estate", "totalSold": 45 },
+    { "_id": "Jobs", "totalSold": 30 }
+  ]
+}
+```
+
+---
+
+# 🧾 7. Recent Orders
+
+### 📍 Endpoint:
+
+```http
+GET /dashboard/recent-orders
+```
+
+---
+
+### ✅ Response:
+
+```json
+{
+  "success": true,
+  "message": "Recent orders fetched successfully.",
+  "data": [
+    {
+      "_id": "order123",
+      "totalAmount": 1200,
+      "status": "PAID"
+    }
+  ]
+}
+```
+
+---
+
+# 📋 8. Get All Leads (Admin)
+
+### 📍 Endpoint:
+
+```http
+GET /dashboard/get-all-leads
+```
+
+---
+
+### 🧠 Description:
+
+Returns all leads with full data (including sensitive info)
+
+---
+
+### ✅ Response:
+
+```json
+{
+  "success": true,
+  "message": "Leads fetched successfully",
+  "data": [
+    {
+      "_id": "lead123",
+      "title": "Buyer for property",
+      "phone": "9876543210",
+      "customerName": "Rahul"
+    }
+  ]
+}
+```
+
+---
+
+# 📋 9. Get Lead By ID (Admin)
+
+### 📍 Endpoint:
+
+```http
+GET /dashboard/get-leads/:id
+```
+
+---
+
+### ✅ Response:
+
+```json
+{
+  "success": true,
+  "message": "Lead fetched successfully",
+  "data": {
+    "_id": "lead123",
+    "title": "Buyer for property",
+    "phone": "9876543210",
+    "customerName": "Rahul",
+    "address": "Pune"
+  }
+}
+```
+
+---
+
+# ⚠️ Common Errors
+
+### Unauthorized:
+
+```json
+{
+  "success": false,
+  "message": "Access denied. Admin only."
+}
+```
+
+---
+
+# 🧠 Notes
+
+* Admin login is OTP-based (no password)
+* Dashboard APIs are protected
+* Admin can see full lead data
+* Revenue is calculated from paid orders
+
+---
+
+# 🚀 Summary
+
+* 🔐 Secure OTP-based admin login
+* 📊 Full analytics dashboard
+* 👨‍💼 Admin role management
+* 📋 Full access to leads
+
+---
+
+# 💡 Future Enhancements
+
+* Admin activity logs
+* Role-based permissions (super admin, manager)
+* Real-time dashboard updates
+* Export analytics reports
+
+---
+
