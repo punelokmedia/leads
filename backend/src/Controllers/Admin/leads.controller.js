@@ -10,15 +10,7 @@ const getAllLeads = async (req, res) => {
   try {
     const userId = req.user?.id;
 
-    const {
-      page = 1,
-      limit = 10,
-      category,
-      city,
-      state,
-      search,
-      sort = "latest", // latest | cheapest | expensive
-    } = req.query;
+    const { page = 1, limit = 10, category, city, state, search } = req.query;
 
     const query = {
       status: "ACTIVE",
@@ -36,25 +28,12 @@ const getAllLeads = async (req, res) => {
       ];
     }
 
-    let sortOption = { createdAt: -1 };
+    const leads = await Lead.find(query)
+      .populate("category", "name")
+      .limit(limit)
+      .skip((page - 1) * limit);
 
-    if (sort === "cheapest") sortOption = { price: 1 };
-    if (sort === "expensive") sortOption = { price: -1 };
-
-    const skip = (Number(page) - 1) * Number(limit);
-
-    const [leads, total] = await Promise.all([
-      Lead.find(query)
-        .select("-__v")
-        .populate("category", "name")
-        .sort(sortOption)
-        .skip(skip)
-        .limit(Number(limit)),
-
-      Lead.countDocuments(query),
-    ]);
-
-    const modifiedLeads = leads.map((lead) => {
+    const modified = leads.map((lead) => {
       const isPurchased = userId
         ? lead.buyers.some((b) => b.user.toString() === userId)
         : false;
@@ -69,36 +48,20 @@ const getAllLeads = async (req, res) => {
       return {
         ...obj,
         isPurchased,
+        price: obj.price,
+        originalPrice: obj.originalPrice || null,
       };
     });
 
-    return res.status(200).json({
+    return res.json({
       success: true,
-      message: modifiedLeads.length
-        ? "Leads fetched successfully"
-        : "No leads found based on your criteria",
-      meta: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / limit),
-      },
-      filters: {
-        category,
-        city,
-        state,
-        search,
-        sort,
-      },
-      data: modifiedLeads,
+      message: "Leads fetched successfully",
+      data: modified,
     });
-  } catch (error) {
-    console.error("Get Leads Error:", error);
-
+  } catch (err) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch leads",
-      error: error.message,
     });
   }
 };
@@ -148,8 +111,16 @@ const getLeadDetailsById = async (req, res) => {
       message: "Lead details fetched successfully",
       data: {
         ...responseLead,
+
         isPurchased,
         status,
+
+        price: lead.price,
+        originalPrice: lead.originalPrice || null,
+        discount:
+          lead.originalPrice && lead.originalPrice > lead.price
+            ? lead.originalPrice - lead.price
+            : 0,
       },
     });
   } catch (error) {
@@ -158,7 +129,6 @@ const getLeadDetailsById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch lead details",
-      error: error.message,
     });
   }
 };
@@ -173,10 +143,7 @@ const createLead = async (req, res) => {
       state,
       address,
       price,
-      budgetMin,
-      budgetMax,
-      customerName,
-      phone,
+      originalPrice,
       expiresAt,
       coordinates,
     } = req.body;
@@ -203,6 +170,13 @@ const createLead = async (req, res) => {
       });
     }
 
+    if (originalPrice && originalPrice <= price) {
+      return res.status(400).json({
+        success: false,
+        message: "Original price must be greater than price",
+      });
+    }
+
     const expiryDate = new Date(expiresAt);
     if (isNaN(expiryDate) || expiryDate <= new Date()) {
       return res.status(400).json({
@@ -211,40 +185,10 @@ const createLead = async (req, res) => {
       });
     }
 
-    if (
-      (budgetMin && typeof budgetMin !== "number") ||
-      (budgetMax && typeof budgetMax !== "number") ||
-      (budgetMin && budgetMax && budgetMin > budgetMax)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid budget range",
-      });
-    }
-
-    if (phone && !/^[6-9]\d{9}$/.test(phone)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid phone",
-      });
-    }
-
-    if (
-      !coordinates ||
-      !Array.isArray(coordinates) ||
-      coordinates.length !== 2
-    ) {
+    if (!coordinates || coordinates.length !== 2) {
       return res.status(400).json({
         success: false,
         message: "Coordinates must be [lng, lat]",
-      });
-    }
-
-    const categoryExists = await Category.findById(category);
-    if (!categoryExists) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found",
       });
     }
 
@@ -256,9 +200,7 @@ const createLead = async (req, res) => {
       state,
       address,
       price,
-      budget: { min: budgetMin, max: budgetMax },
-      customerName,
-      phone,
+      originalPrice,
       expiresAt: expiryDate,
       location: {
         type: "Point",
@@ -285,13 +227,6 @@ const updateLead = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: "Lead ID is required",
-      });
-    }
-
     const lead = await Lead.findById(id);
 
     if (!lead) {
@@ -304,14 +239,14 @@ const updateLead = async (req, res) => {
     if (lead.expiresAt < new Date()) {
       return res.status(400).json({
         success: false,
-        message: "Cannot update an expired lead",
+        message: "Cannot update expired lead",
       });
     }
 
     if (lead.buyers.length >= lead.maxBuyers) {
       return res.status(400).json({
         success: false,
-        message: "Cannot update a sold-out lead",
+        message: "Cannot update sold-out lead",
       });
     }
 
@@ -323,6 +258,7 @@ const updateLead = async (req, res) => {
       "state",
       "address",
       "price",
+      "originalPrice", 
       "budget",
       "expiresAt",
       "location",
@@ -330,11 +266,22 @@ const updateLead = async (req, res) => {
 
     const updates = {};
 
-    Object.keys(req.body).forEach((key) => {
+    for (const key of Object.keys(req.body)) {
       if (allowedFields.includes(key)) {
         updates[key] = req.body[key];
       }
-    });
+    }
+
+    if (
+      updates.originalPrice &&
+      updates.price &&
+      updates.originalPrice <= updates.price
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Original price must be greater than price",
+      });
+    }
 
     const updatedLead = await Lead.findByIdAndUpdate(id, updates, {
       new: true,
@@ -343,16 +290,14 @@ const updateLead = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Lead updated successfully by admin",
+      message: "Lead updated successfully",
       data: updatedLead,
     });
   } catch (error) {
-    console.error("Admin Update Lead Error:", error);
-
+    console.error("Update Lead Error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update lead",
-      error: error.message,
     });
   }
 };
@@ -595,16 +540,19 @@ const uploadLeadsFromExcel = async (req, res) => {
       });
     }
 
-    // 🔥 Extract category names or IDs
     const categoryValues = [
       ...new Set(
-        data.map((row) => row.Category || row.category).filter(Boolean)
+        data.map((row) => row.Category || row.category).filter(Boolean),
       ),
     ];
 
     const categories = await Category.find({
       $or: [
-        { _id: { $in: categoryValues.filter((v) => mongoose.isValidObjectId(v)) } },
+        {
+          _id: {
+            $in: categoryValues.filter((v) => mongoose.isValidObjectId(v)),
+          },
+        },
         { name: { $in: categoryValues } },
       ],
     });
@@ -640,9 +588,21 @@ const processLeadsInBackground = async (
   data,
   categoryMap,
   uploadId,
-  userId
+  userId,
 ) => {
   const BATCH_SIZE = 50;
+
+  await UploadLog.findByIdAndUpdate(uploadId, {
+    processedRows: 0,
+    successCount: 0,
+    failedCount: 0,
+    logs: [],
+    status: "processing",
+  });
+
+  let totalProcessed = 0;
+  let totalSuccess = 0;
+  let totalFailed = 0;
 
   for (let i = 0; i < data.length; i += BATCH_SIZE) {
     const batch = data.slice(i, i + BATCH_SIZE);
@@ -652,77 +612,104 @@ const processLeadsInBackground = async (
 
     for (let j = 0; j < batch.length; j++) {
       const row = batch[j];
-      const rowIndex = i + j + 2; // +2 because Excel header
+      const rowIndex = i + j + 2;
 
       try {
-        // ✅ Match Excel headers
-        const title = row.Title || row.title;
-        const description = row.Description || row.description;
-        const categoryValue = row.Category || row.category;
-        const city = row.City || row.city;
-        const state = row.State || row.state;
-        const address = row.Address || row.address;
+        const get = (keys) => {
+          for (const k of keys) {
+            if (row[k] !== undefined) return row[k];
+          }
+        };
 
-        const price = Number(row.Price || row.price);
-        const budgetMin = row["Budget Min"] || row.budgetMin;
-        const budgetMax = row["Budget Max"] || row.budgetMax;
+        const title = get(["Title", "title"]);
+        const description = get(["Description", "description"]);
+        const categoryValue = get(["Category", "category"]);
+        const city = get(["City", "city"]);
+        const state = get(["State", "state"]);
+        const address = get(["Address", "address"]);
 
-        const customerName = row["Customer Name"] || row.customerName;
-        const phone = row.Phone || row.phone;
+        const price = Number(get(["Price", "price"]));
+        const originalPriceRaw = get([
+          "Original Price",
+          "OriginalPrice",
+          "originalPrice",
+        ]);
 
-        const expiresAt = row["Expires At"] || row.expiresAt;
+        const originalPrice =
+          originalPriceRaw !== undefined ? Number(originalPriceRaw) : undefined;
 
-        const lng = row.Longitude || row.lng;
-        const lat = row.Latitude || row.lat;
+        const budgetMin = get(["Budget Min", "budgetMin"]);
+        const budgetMax = get(["Budget Max", "budgetMax"]);
 
-        const maxBuyers = row["Max Buyers"] || 3;
-        const image = row.Image || "";
+        const customerName = get(["Customer Name", "customerName"]);
+        const phone = get(["Phone", "phone"]);
 
-        // ✅ Required validation
-        if (!title || !description || !categoryValue || !city || !state || !price || !expiresAt) {
+        const expiresAt = get(["Expires At", "expiresAt"]);
+
+        const lng = Number(get(["Longitude", "lng"]));
+        const lat = Number(get(["Latitude", "lat"]));
+
+        const maxBuyers = Number(get(["Max Buyers"]) || 3);
+        const image = get(["Image"]) || "";
+
+        if (
+          !title ||
+          !description ||
+          !categoryValue ||
+          !city ||
+          !state ||
+          price === undefined ||
+          expiresAt === undefined
+        ) {
           throw new Error("Missing required fields");
         }
 
-        // ✅ Category mapping
         const categoryId = categoryMap.get(categoryValue);
-        if (!categoryId) {
-          throw new Error("Invalid category");
-        }
+        if (!categoryId) throw new Error("Invalid category");
 
-        // ✅ Price validation
         if (isNaN(price) || price <= 0) {
           throw new Error("Invalid price");
         }
 
-        // ✅ Expiry validation
-        const expiryDate = new Date(expiresAt);
-        if (isNaN(expiryDate) || expiryDate <= new Date()) {
+        if (
+          originalPrice !== undefined &&
+          (isNaN(originalPrice) || originalPrice <= price)
+        ) {
+          throw new Error("Original price must be greater than price");
+        }
+
+        let expiryDate;
+
+        if (typeof expiresAt === "number") {
+          expiryDate = new Date((expiresAt - 25569) * 86400 * 1000);
+        } else {
+          expiryDate = new Date(expiresAt);
+        }
+
+        if (!expiryDate || isNaN(expiryDate.getTime())) {
           throw new Error("Invalid expiry date");
         }
 
-        // ✅ Phone validation
-        if (phone && !/^[6-9]\d{9}$/.test(phone)) {
-          throw new Error("Invalid phone number");
+        expiryDate.setHours(23, 59, 59, 999);
+
+        if (expiryDate <= new Date()) {
+          throw new Error("Expiry date must be in future");
         }
 
-        // ✅ Coordinates validation
-        const longitude = Number(lng);
-        const latitude = Number(lat);
-
         if (
-          isNaN(longitude) ||
-          isNaN(latitude) ||
-          longitude < -180 ||
-          longitude > 180 ||
-          latitude < -90 ||
-          latitude > 90
+          isNaN(lng) ||
+          isNaN(lat) ||
+          lng < -180 ||
+          lng > 180 ||
+          lat < -90 ||
+          lat > 90
         ) {
           throw new Error("Invalid coordinates");
         }
 
         const location = {
           type: "Point",
-          coordinates: [longitude, latitude],
+          coordinates: [lng, lat],
         };
 
         leadsToInsert.push({
@@ -734,6 +721,7 @@ const processLeadsInBackground = async (
           address,
           location,
           price,
+          originalPrice,
           budget: {
             min: budgetMin ? Number(budgetMin) : undefined,
             max: budgetMax ? Number(budgetMax) : undefined,
@@ -753,33 +741,39 @@ const processLeadsInBackground = async (
       }
     }
 
-    // ✅ Insert
-    if (leadsToInsert.length) {
-      await Lead.insertMany(leadsToInsert, { ordered: false });
+    let insertedDocs = [];
+
+    if (leadsToInsert.length > 0) {
+      try {
+        insertedDocs = await Lead.insertMany(leadsToInsert, {
+          ordered: false,
+        });
+      } catch (err) {
+        if (err.insertedDocs) {
+          insertedDocs = err.insertedDocs;
+        }
+      }
     }
 
-    // ✅ Update log
+    totalProcessed += batch.length;
+    totalSuccess += insertedDocs.length;
+    totalFailed += logs.length;
+
     await UploadLog.findByIdAndUpdate(uploadId, {
-      $inc: {
-        processedRows: batch.length,
-        successCount: leadsToInsert.length,
-        failedCount: logs.length,
-      },
-      $push: {
-        logs: { $each: logs },
-      },
+      processedRows: totalProcessed,
+      successCount: totalSuccess,
+      failedCount: totalFailed,
+      $push: { logs: { $each: logs } },
     });
 
     console.log(
-      `Processed ${Math.min(i + BATCH_SIZE, data.length)}/${data.length}`
+      `Processed ${Math.min(i + BATCH_SIZE, data.length)}/${data.length}`,
     );
   }
 
-  const finalLog = await UploadLog.findById(uploadId);
-
   await UploadLog.findByIdAndUpdate(uploadId, {
     status: "completed",
-    finalMessage: `Upload completed. ${finalLog.successCount} leads added, ${finalLog.failedCount} failed.`,
+    finalMessage: `Upload completed. ${totalSuccess} success, ${totalFailed} failed.`,
   });
 };
 
@@ -818,16 +812,14 @@ const getUploadStatus = async (req, res) => {
 
 const getUserHistory = async (req, res) => {
   try {
-    console.log("req.user", req.user);
-
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         success: false,
-        code: "UNAUTHORIZED",
         message: "User not authenticated",
       });
     }
-    const userId = req.user._id;
+
+    const userId = req.user.id;
 
     const orders = await Order.find({
       user: userId,
@@ -835,52 +827,54 @@ const getUserHistory = async (req, res) => {
     })
       .populate({
         path: "leads.lead",
-        select: "title city customerName address phone maxBuyers createdAt",
+        select: "title city customerName address phone image",
       })
       .sort({ createdAt: -1 });
 
-    if (!orders || orders.length === 0) {
+    if (!orders.length) {
       return res.status(200).json({
         success: true,
         message: "No purchase history found",
+        count: 0,
         data: [],
       });
     }
 
+    const history = [];
 
-    const formatted = orders.map((order) => {
-      return {
-        orderId: order._id,
-        status: order.status,
-        paidAt: order.paidAt,
+    for (const order of orders) {
+      for (const item of order.leads) {
+        if (!item.lead) continue;
 
-        leads: order.leads
-          .filter((item) => item.lead)
-          .map((item) => ({
-            id: item.lead._id,
-            title: item.lead.title || "N/A",
-            city: item.lead.city || "N/A",
-            customerName: item.lead.customerName || "N/A",
-            address: item.lead.address || "N/A",
-            phone: item.lead.phone || "N/A",
-            sharingLeads: item.lead.maxBuyers || 0,
-            price: item.price || 0,
-          })),
-      };
-    });
+        const lead = item.lead;
+
+        history.push({
+          id: lead._id,
+          orderId: order._id,
+          title: lead.title || "N/A",
+          city: lead.city || "N/A",
+          customerName: lead.customerName || "N/A",
+          address: lead.address || "N/A",
+          phone: lead.phone || "N/A",
+          price: item.price || 0,
+          status: order.status,
+          isDownloaded: order.isDownloaded,
+          paidAt: order.paidAt,
+        });
+      }
+    }
 
     return res.status(200).json({
       success: true,
       message: "User purchase history fetched successfully",
-      count: formatted.length,
-      data: formatted,
+      count: history.length,
+      data: history,
     });
   } catch (error) {
     console.error("Get History Error:", error);
 
     return res.status(500).json({
       success: false,
-      code: "SERVER_ERROR",
       message: "Something went wrong while fetching history",
     });
   }
@@ -888,18 +882,16 @@ const getUserHistory = async (req, res) => {
 
 const downloadLeads = async (req, res) => {
   try {
-    // 🔐 Auth check
-    // if (!req.user || !req.user.id) {
-    //   return res.status(401).json({
-    //     success: false,
-    //     message: "Unauthorized",
-    //   });
-    // }
-
-    const userId = "69e0d38650e19959b8e05b89" // req.user.id;
+    const userId = req.user?.id;
     const { orderId } = req.params;
 
-    // ❗ Validate orderId
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
     if (!orderId) {
       return res.status(400).json({
         success: false,
@@ -907,7 +899,6 @@ const downloadLeads = async (req, res) => {
       });
     }
 
-    // 🔍 Fetch order
     const order = await Order.findOne({
       _id: orderId,
       user: userId,
@@ -927,7 +918,6 @@ const downloadLeads = async (req, res) => {
       });
     }
 
-    // 🚫 One-time download check
     if (order.isDownloaded) {
       return res.status(400).json({
         success: false,
@@ -935,7 +925,6 @@ const downloadLeads = async (req, res) => {
       });
     }
 
-    // 📭 No leads
     if (!order.leads || order.leads.length === 0) {
       return res.status(400).json({
         success: false,
@@ -955,63 +944,61 @@ const downloadLeads = async (req, res) => {
       { header: "Category", key: "category", width: 25 },
       { header: "Requirement", key: "title", width: 30 },
       { header: "Description", key: "description", width: 40 },
-      { header: "Budget", key: "budget", width: 20 },
       { header: "Lead Price", key: "price", width: 15 },
-      { header: "Max Buyers", key: "buyers", width: 15 },
       { header: "Created At", key: "createdAt", width: 20 },
     ];
 
-    // ✨ Style header
     worksheet.getRow(1).font = { bold: true };
 
-    // 🧾 Add rows
-    order.leads.forEach((item) => {
+    for (const item of order.leads) {
       const lead = item.lead;
-      if (!lead) return;
 
-      worksheet.addRow({
-        name: lead.customerName || "N/A",
-        phone: lead.phone || "N/A",
-        city: lead.city || "N/A",
-        state: lead.state || "N/A",
-        address: lead.address || "N/A",
-        category: lead.category?.name || "N/A",
-        title: lead.title || "N/A",
-        description: lead.description || "N/A",
-        budget: `${lead.budget?.min || 0} - ${lead.budget?.max || 0}`,
-        price: item.price || 0,
-        buyers: lead.maxBuyers || 0,
-        createdAt: lead.createdAt
-          ? new Date(lead.createdAt).toLocaleDateString()
-          : "N/A",
-      });
-    });
+      if (!lead) continue;
 
-    // 🎯 Mark as downloaded
+      for (let i = 0; i < item.quantity; i++) {
+        worksheet.addRow({
+          name: lead.customerName || "N/A",
+          phone: lead.phone || "N/A",
+          city: lead.city || "N/A",
+          state: lead.state || "N/A",
+          address: lead.address || "N/A",
+          category: lead.category?.name || "N/A",
+          title: lead.title || "N/A",
+          description: lead.description || "N/A",
+          price: item.price || 0,
+          createdAt: lead.createdAt
+            ? new Date(lead.createdAt).toLocaleDateString()
+            : "N/A",
+        });
+      }
+    }
+
     order.isDownloaded = true;
     order.downloadedAt = new Date();
     await order.save();
 
-    // 📤 Send file
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
 
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=leads-${orderId}.xlsx`
+      `attachment; filename=leads-${orderId}.xlsx`,
     );
 
     await workbook.xlsx.write(res);
+
     res.end();
   } catch (error) {
     console.error("Download Error:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to generate leads file",
-    });
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to generate leads file",
+      });
+    }
   }
 };
 
@@ -1024,5 +1011,5 @@ export {
   uploadLeadsFromExcel,
   getUploadStatus,
   getUserHistory,
-  downloadLeads
+  downloadLeads,
 };

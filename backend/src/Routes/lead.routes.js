@@ -18,7 +18,7 @@ const router = express.Router();
 router.get("/get-all-leads", getAllLeads);
 router.get("/get-lead/:id", getLeadDetailsById);
 router.get("/history", auth, getUserHistory );
-router.get("/download/:orderId", downloadLeads);
+router.get("/download/:orderId", auth, downloadLeads);
 
 router.post("/create-lead", auth, isAdmin, createLead);
 router.put("/update-lead/:id", auth, isAdmin, updateLead);

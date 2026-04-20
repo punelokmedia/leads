@@ -55,6 +55,11 @@ const LeadSchema = new Schema(
       min: 1,
     },
 
+    originalPrice: {
+      type: Number,
+      min: 1,
+    },
+
     budget: {
       min: Number,
       max: Number,
@@ -71,11 +76,6 @@ const LeadSchema = new Schema(
       },
     },
 
-    image: {
-      type: String,
-      default: "",
-    },
-
     buyers: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -86,6 +86,7 @@ const LeadSchema = new Schema(
     maxBuyers: {
       type: Number,
       default: 3,
+      min: 1,
     },
 
     expiresAt: {
@@ -110,6 +111,7 @@ const LeadSchema = new Schema(
 );
 
 LeadSchema.index({ location: "2dsphere" });
+LeadSchema.index({ expiresAt: 1 });
 
 LeadSchema.virtual("remainingSlots").get(function () {
   return this.maxBuyers - this.buyers.length;
