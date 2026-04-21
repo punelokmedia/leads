@@ -5,7 +5,7 @@ type AdminNavItem = {
   to: string
   label: string
   end?: boolean
-  icon: 'dashboard' | 'leads' | 'settings' | 'create' | 'category'
+  icon: 'dashboard' | 'leads' | 'settings' | 'create' | 'category' | 'admin'
   hint?: string
 }
 
@@ -16,6 +16,7 @@ const primaryNav: AdminNavItem[] = [
   { to: '/leads?upload=1', label: 'Bulk Upload', icon: 'create', hint: 'Excel upload' },
   { to: '/categories', label: 'Categories', icon: 'category', hint: 'Category manager' },
   { to: '/categories?create=1', label: 'Add Category', icon: 'create', hint: 'Open side form' },
+  { to: '/admins/add', label: 'Add Admin', icon: 'admin', hint: 'Promote user role' },
 ]
 
 type AdminSidebarProps = {
@@ -59,6 +60,19 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         </svg>
       )
     }
+    if (icon === 'admin') {
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
+          <path
+            d="M12 12a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5ZM6 19.5a6 6 0 0 1 12 0"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <path d="M19 8v4M17 10h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      )
+    }
     return (
       <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
         <path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -69,6 +83,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   function resolveItemActive(item: AdminNavItem, isActive: boolean) {
     if (item.to === '/leads') return location.pathname === '/leads'
     if (item.to === '/categories') return location.pathname === '/categories'
+    if (item.to === '/admins/add') return location.pathname === '/admins/add'
     if (item.to === '/leads?create=1') {
       return location.pathname === '/leads' && location.search.includes('create=1')
     }

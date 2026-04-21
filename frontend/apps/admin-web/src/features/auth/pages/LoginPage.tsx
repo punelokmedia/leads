@@ -47,8 +47,12 @@ export function LoginPage() {
     setIsSending(true)
 
     try {
-      await sendOtp(trimmedEmail)
-      setInfoMessage(`OTP sent to ${trimmedEmail}`)
+      const result = await sendOtp(trimmedEmail)
+      setInfoMessage(
+        result.devOtp
+          ? `Test mode OTP: ${result.devOtp} (email delivery restricted)`
+          : `OTP sent to ${trimmedEmail}`,
+      )
       setResendInSeconds(30)
     } catch (error) {
       setErrorMessage(
@@ -107,8 +111,12 @@ export function LoginPage() {
     setIsSending(true)
 
     try {
-      await sendOtp(pendingEmail)
-      setInfoMessage(`New OTP sent to ${pendingEmail}`)
+      const result = await sendOtp(pendingEmail)
+      setInfoMessage(
+        result.devOtp
+          ? `Test mode OTP: ${result.devOtp} (email delivery restricted)`
+          : `New OTP sent to ${pendingEmail}`,
+      )
       setResendInSeconds(30)
     } catch (error) {
       setErrorMessage(

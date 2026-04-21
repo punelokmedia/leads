@@ -21,7 +21,7 @@ type AdminAuthContextValue = {
   isAuthenticated: boolean
   userEmail: string
   pendingEmail: string
-  sendOtp: (email: string) => Promise<void>
+  sendOtp: (email: string) => Promise<{ message?: string; devOtp?: string }>
   verifyOtp: (otp: string) => Promise<boolean>
   resetOtpFlow: () => void
   logout: () => void
@@ -32,6 +32,7 @@ const AdminAuthContext = createContext<AdminAuthContextValue | null>(null)
 type ApiResponse<T = unknown> = {
   success?: boolean
   message?: string
+  devOtp?: string
   token?: string
   data?: T
 }
@@ -97,6 +98,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
 
     setPendingEmail(email)
+    return { message: payload.message, devOtp: payload.devOtp }
   }, [])
 
   const verifyOtp = useCallback(

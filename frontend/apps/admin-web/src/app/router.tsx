@@ -9,6 +9,7 @@ import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { LeadsPage } from '@/features/leads/pages/LeadsPage'
 import { CreateLeadPage } from '@/features/leads/pages/CreateLeadPage'
 import { CategoriesPage } from '@/features/categories/pages/CategoriesPage'
+import { AddAdminPage } from '@/features/admins/pages/AddAdminPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
           { path: 'leads', element: <LeadsPage /> },
           { path: 'leads/create', element: <CreateLeadPage /> },
           { path: 'categories', element: <CategoriesPage /> },
+          { path: 'admins/add', element: <AddAdminPage /> },
           { path: 'settings', element: <SettingsPage /> },
         ],
       },

@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import { User } from "../../Models/user.model.js";
 import { sendAdminOtpEmail } from "../../Utils/email.resend.utils.js";
 import { Lead } from "../../Models/leads.model.js";
@@ -12,6 +13,20 @@ const getEmailMatcher = (email = "") => ({
 
 const isEnvAdminEmail = (email = "") =>
   ENV.ADMIN_EMAIL?.trim().toLowerCase() === email.trim().toLowerCase();
+
+const isValidEmail = (email = "") =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+const getNameFromEmail = (email = "") => {
+  const localPart = email.trim().split("@")[0] || "Admin";
+  const cleaned = localPart.replace(/[^a-zA-Z0-9]+/g, " ").trim();
+  if (!cleaned) return "Admin";
+  return cleaned
+    .split(" ")
+    .filter(Boolean)
+    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1).toLowerCase())
+    .join(" ");
+};
 
 const resolveAdminByEmail = async (email = "") => {
   const user = await User.findOne({
@@ -46,6 +61,30 @@ const resolveAdminByEmail = async (email = "") => {
   return createdAdmin;
 };
 
+const resolveUserByIdentifier = async ({ userId, email }) => {
+  const trimmedUserId = typeof userId === "string" ? userId.trim() : "";
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+
+  if (normalizedEmail) {
+    if (!isValidEmail(normalizedEmail)) {
+      return { error: "Please provide a valid email" };
+    }
+    const user = await User.findOne({ email: getEmailMatcher(normalizedEmail) });
+    return { user };
+  }
+
+  if (!trimmedUserId) {
+    return { error: "Either userId or email is required" };
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(trimmedUserId)) {
+    return { error: "Invalid userId format" };
+  }
+
+  const user = await User.findById(trimmedUserId);
+  return { user };
+};
+
 const sendOtpForAdminLogin = async (req, res) => {
   try {
     const { email } = req.body;
@@ -66,9 +105,18 @@ const sendOtpForAdminLogin = async (req, res) => {
         message: "Access denied. Not an admin.",
       });
     }
+    if (admin.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin account is blocked",
+      });
+    }
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
     const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
+    admin.resetOtp = otp;
+    admin.resetOtpExpire = otpExpire;
+    await admin.save();
 
     try {
       await sendAdminOtpEmail(
@@ -77,20 +125,33 @@ const sendOtpForAdminLogin = async (req, res) => {
         otp,
       );
 
-      admin.resetOtp = otp;
-      admin.resetOtpExpire = otpExpire;
-      await admin.save();
-
       return res.status(200).json({
         success: true,
         message: "OTP sent to admin email",
       });
     } catch (mailError) {
       console.error("❌ Email failed:", mailError.message);
+      const restrictionError =
+        typeof mailError?.message === "string" &&
+        mailError.message.includes(
+          "You can only send testing emails to your own email address",
+        );
+
+      if (restrictionError && process.env.NODE_ENV !== "production") {
+        return res.status(200).json({
+          success: true,
+          message:
+            "Resend test mode restriction detected. Use this OTP for local testing.",
+          devOtp: otp,
+        });
+      }
 
       return res.status(500).json({
         success: false,
-        message: mailError.message,
+        message:
+          restrictionError
+            ? "Email provider is in test mode. Verify a domain in Resend and set RESEND_FROM_EMAIL."
+            : mailError.message,
       });
     }
   } catch (error) {
@@ -121,6 +182,12 @@ const verifyAdminOtp = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Admin not found",
+      });
+    }
+    if (admin.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin account is blocked",
       });
     }
 
@@ -170,7 +237,7 @@ const verifyAdminOtp = async (req, res) => {
 
 const changeUserRoleToAdmin = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, email, firstname, lastname } = req.body;
 
     console.log("req.user.role ", req.user.role);
 
@@ -181,26 +248,92 @@ const changeUserRoleToAdmin = async (req, res) => {
       });
     }
 
+    const trimmedUserId = typeof userId === "string" ? userId.trim() : "";
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+
     // 🔍 2. Validate input
-    if (!userId) {
+    if (!trimmedUserId && !normalizedEmail) {
       return res.status(400).json({
         success: false,
-        message: "User ID is required",
+        message: "Either userId or email is required",
       });
     }
 
-    // 🔎 3. Find user
-    const user = await User.findById(userId);
+    const useEmailFlow = Boolean(normalizedEmail);
 
-    if (!user) {
-      return res.status(404).json({
+    if (
+      !useEmailFlow &&
+      trimmedUserId &&
+      !mongoose.Types.ObjectId.isValid(trimmedUserId)
+    ) {
+      return res.status(400).json({
         success: false,
-        message: "User not found",
+        message: "Invalid userId format",
       });
+    }
+
+    let user = null;
+    let responseMessage = "User promoted to admin successfully";
+    let createdNewAdmin = false;
+
+    if (!useEmailFlow && trimmedUserId) {
+      user = await User.findById(trimmedUserId);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+    } else {
+      if (!isValidEmail(normalizedEmail)) {
+        return res.status(400).json({
+          success: false,
+          message: "Please provide a valid email",
+        });
+      }
+
+      user = await User.findOne({
+        email: getEmailMatcher(normalizedEmail),
+      });
+
+      if (!user) {
+        const safeFirstName = (firstname || "").trim() || getNameFromEmail(normalizedEmail);
+        const safeLastName = (lastname || "").trim() || "Admin";
+
+        try {
+          user = await User.create({
+            firstname: safeFirstName,
+            lastname: safeLastName,
+            email: normalizedEmail,
+            role: "ADMIN",
+            providers: ["LOCAL"],
+          });
+        } catch (createError) {
+          // In race conditions, same email may be created by another request.
+          if (createError?.code === 11000) {
+            user = await User.findOne({
+              email: getEmailMatcher(normalizedEmail),
+            });
+          } else {
+            throw createError;
+          }
+        }
+
+        if (!user) {
+          return res.status(409).json({
+            success: false,
+            message: "Unable to create admin for this email",
+          });
+        }
+
+        responseMessage = "Admin account created successfully";
+        createdNewAdmin = true;
+      }
     }
 
     // ⚠️ 4. Prevent changing already ADMIN
-    if (user.role === "ADMIN") {
+    if (user.role === "ADMIN" && !createdNewAdmin) {
       return res.status(400).json({
         success: false,
         message: "User is already an admin",
@@ -208,12 +341,24 @@ const changeUserRoleToAdmin = async (req, res) => {
     }
 
     // 🔄 5. Update role
-    user.role = "ADMIN";
-    await user.save();
+    if (!createdNewAdmin) {
+      user = await User.findByIdAndUpdate(
+        user._id,
+        { $set: { role: "ADMIN" } },
+        { new: true },
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+    }
 
     return res.status(200).json({
       success: true,
-      message: "User promoted to admin successfully",
+      message: responseMessage,
       user: {
         id: user._id,
         email: user.email,
@@ -229,10 +374,260 @@ const changeUserRoleToAdmin = async (req, res) => {
   }
 };
 
+const removeAdminRole = async (req, res) => {
+  try {
+    const { userId, email } = req.body;
+    const { user, error } = await resolveUserByIdentifier({ userId, email });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (String(user._id) === String(req.user.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot remove your own admin access",
+      });
+    }
+
+    if (user.role !== "ADMIN") {
+      return res.status(400).json({
+        success: false,
+        message: "User is not an admin",
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $set: { role: "USER" } },
+      { new: true },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Admin role removed successfully",
+      user: {
+        id: updatedUser?._id,
+        email: updatedUser?.email,
+        role: updatedUser?.role,
+      },
+    });
+  } catch (error) {
+    console.error("Remove Admin Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+const updateUserBlockStatus = async (req, res) => {
+  try {
+    const { userId, email, isBlocked } = req.body;
+    const { user, error } = await resolveUserByIdentifier({ userId, email });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (String(user._id) === String(req.user.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot block your own account",
+      });
+    }
+
+    const targetBlockedState = Boolean(isBlocked);
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $set: { isBlocked: targetBlockedState } },
+      { new: true },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: targetBlockedState
+        ? "User blocked successfully"
+        : "User unblocked successfully",
+      user: {
+        id: updatedUser?._id,
+        email: updatedUser?.email,
+        role: updatedUser?.role,
+        isBlocked: updatedUser?.isBlocked,
+      },
+    });
+  } catch (error) {
+    console.error("Block User Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+const deleteUserByAdmin = async (req, res) => {
+  try {
+    const { userId, email } = req.body;
+    const { user, error } = await resolveUserByIdentifier({ userId, email });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (String(user._id) === String(req.user.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot delete your own account",
+      });
+    }
+
+    await User.findByIdAndDelete(user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Delete User Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+const getAllUsersAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search = "" } = req.query;
+    const normalizedLimit = Math.min(Math.max(Number(limit) || 20, 1), 200);
+    const normalizedPage = Math.max(Number(page) || 1, 1);
+    const skip = (normalizedPage - 1) * normalizedLimit;
+
+    const query = {};
+    const trimmedSearch = String(search || "").trim();
+    if (trimmedSearch) {
+      query.$or = [
+        { email: { $regex: trimmedSearch, $options: "i" } },
+        { firstname: { $regex: trimmedSearch, $options: "i" } },
+        { lastname: { $regex: trimmedSearch, $options: "i" } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      User.find(query)
+        .select("-password -resetOtp -resetOtpExpire")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(normalizedLimit),
+      User.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: users.length ? "Users fetched successfully" : "No users found",
+      meta: {
+        total,
+        page: normalizedPage,
+        limit: normalizedLimit,
+        totalPages: Math.ceil(total / normalizedLimit) || 1,
+      },
+      data: users,
+    });
+  } catch (error) {
+    console.error("Get All Users Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+    });
+  }
+};
+
+const getAllAdmins = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search = "" } = req.query;
+    const normalizedLimit = Math.min(Math.max(Number(limit) || 20, 1), 200);
+    const normalizedPage = Math.max(Number(page) || 1, 1);
+    const skip = (normalizedPage - 1) * normalizedLimit;
+
+    const query = { role: "ADMIN" };
+    const trimmedSearch = String(search || "").trim();
+    if (trimmedSearch) {
+      query.$or = [
+        { email: { $regex: trimmedSearch, $options: "i" } },
+        { firstname: { $regex: trimmedSearch, $options: "i" } },
+        { lastname: { $regex: trimmedSearch, $options: "i" } },
+      ];
+    }
+
+    const [admins, total] = await Promise.all([
+      User.find(query)
+        .select("-password -resetOtp -resetOtpExpire")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(normalizedLimit),
+      User.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: admins.length ? "Admins fetched successfully" : "No admins found",
+      meta: {
+        total,
+        page: normalizedPage,
+        limit: normalizedLimit,
+        totalPages: Math.ceil(total / normalizedLimit) || 1,
+      },
+      data: admins,
+    });
+  } catch (error) {
+    console.error("Get All Admins Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch admins",
+    });
+  }
+};
+
 const getDashboardOverview = async (req, res) => {
   try {
     const [
       totalUsers,
+      totalAdmins,
       totalLeads,
       activeLeads,
       soldLeads,
@@ -241,6 +636,7 @@ const getDashboardOverview = async (req, res) => {
       revenueData,
     ] = await Promise.all([
       User.countDocuments(),
+      User.countDocuments({ role: "ADMIN" }),
       Lead.countDocuments(),
       Lead.countDocuments({ status: "ACTIVE" }),
       Lead.countDocuments({ status: "SOLD_OUT" }),
@@ -260,6 +656,7 @@ const getDashboardOverview = async (req, res) => {
       message: "Dashboard overview data fetched successfully.",
       data: {
         totalUsers,
+        totalAdmins,
         totalLeads,
         activeLeads,
         soldLeads,
@@ -479,6 +876,11 @@ export {
   sendOtpForAdminLogin,
   verifyAdminOtp,
   changeUserRoleToAdmin,
+  removeAdminRole,
+  updateUserBlockStatus,
+  deleteUserByAdmin,
+  getAllUsersAdmin,
+  getAllAdmins,
   getDashboardOverview,
   getRevenueAnalytics,
   getTopCategories,
