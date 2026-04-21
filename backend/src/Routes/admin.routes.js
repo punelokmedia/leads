@@ -4,6 +4,11 @@ import {
   sendOtpForAdminLogin,
   verifyAdminOtp,
   changeUserRoleToAdmin,
+  removeAdminRole,
+  updateUserBlockStatus,
+  deleteUserByAdmin,
+  getAllUsersAdmin,
+  getAllAdmins,
   getDashboardOverview,
   getRevenueAnalytics,
   getTopCategories,
@@ -24,6 +29,11 @@ router.post("/verify-otp", verifyAdminOtp);
  * 👨‍💼 ADMIN MANAGEMENT
  */
 router.post("/make-admin", auth, isAdmin, changeUserRoleToAdmin);
+router.post("/remove-admin", auth, isAdmin, removeAdminRole);
+router.post("/users/block", auth, isAdmin, updateUserBlockStatus);
+router.post("/users/delete", auth, isAdmin, deleteUserByAdmin);
+router.get("/users", auth, isAdmin, getAllUsersAdmin);
+router.get("/admins", auth, isAdmin, getAllAdmins);
 
 /**
  * 📊 DASHBOARD ANALYTICS (ALL PROTECTED)

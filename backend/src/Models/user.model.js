@@ -82,6 +82,10 @@ const UserSchema = new Schema(
       enum: ["ADMIN", "USER"],
       default: "USER",
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
 
     address: {
       type: AddressSchema,

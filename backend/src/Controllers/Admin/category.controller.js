@@ -1,4 +1,5 @@
 import { Category } from "../../Models/category.model.js";
+import { Lead } from "../../Models/leads.model.js";
 
 const createCategory = async (req, res) => {
   try {

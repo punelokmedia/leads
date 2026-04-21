@@ -122,6 +122,14 @@ const loginUser = async (req, res) => {
       });
     }
 
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        code: "ACCOUNT_BLOCKED",
+        message: "Your account has been blocked. Please contact support.",
+      });
+    }
+
     const isMatch = await comparePassword(password, user.password);
 
     if (!isMatch) {
@@ -183,6 +191,14 @@ const googleCallback = async (req, res) => {
         success: false,
         code: "GOOGLE_AUTH_FAILED",
         message: "Google authentication failed. Please try again.",
+      });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        code: "ACCOUNT_BLOCKED",
+        message: "Your account has been blocked. Please contact support.",
       });
     }
 

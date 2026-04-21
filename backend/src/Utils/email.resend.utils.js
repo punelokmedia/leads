@@ -1,9 +1,14 @@
 import { resend } from "../Config/resend.config.js";
+import { ENV } from "../Config/env.config.js";
+import { transporter } from "../Config/email.config.js";
+
+const RESEND_FROM_EMAIL = ENV.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+const SMTP_FROM_EMAIL = ENV.EMAIL_USER;
 
 const sendWelcomeEmail = async (recipientEmail, name) => {
   try {
     await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: RESEND_FROM_EMAIL,
       to: recipientEmail,
       subject: "Welcome to Lead sells 🚀",
       html: `
@@ -90,7 +95,7 @@ const sendWelcomeEmail = async (recipientEmail, name) => {
 const forgetPasswordEmail = async (recipientEmail, username, otp) => {
   try {
     await resend.emails.send({
-      from: "onboarding@resend.dev", // or your verified domain
+      from: RESEND_FROM_EMAIL,
       to: recipientEmail,
       subject: "Reset Your Password 🔐",
       html: `
@@ -144,11 +149,8 @@ const forgetPasswordEmail = async (recipientEmail, username, otp) => {
 };
 
 const sendAdminOtpEmail = async (recipientEmail, name, otp) => {
-  const response = await resend.emails.send({
-    from: "onboarding@resend.dev", // or your verified domain
-    to: recipientEmail,
-    subject: "Admin Login Verification 🔐",
-    html: `
+  const subject = "Admin Login Verification 🔐";
+  const html = `
     <div style="background:#f6f6f6; padding:50px; font-family:Arial;">
         
       <div style="max-width:520px; margin:auto; background:#fff; border-radius:18px; box-shadow:0 12px 40px rgba(0,0,0,0.08); overflow:hidden;">
@@ -194,15 +196,48 @@ const sendAdminOtpEmail = async (recipientEmail, name, otp) => {
         </div>
       </div>
     </div>
-    `,
-  });
+    `;
 
-  if (response.error) {
-    console.error("Resend error:", response.error);
-    throw new Error(response.error.message);
+  try {
+    const response = await resend.emails.send({
+      from: RESEND_FROM_EMAIL,
+      to: recipientEmail,
+      subject,
+      html,
+    });
+
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+
+    return response;
+  } catch (resendError) {
+    console.error("Resend error:", resendError?.message || resendError);
+
+    const canUseSmtpFallback =
+      typeof SMTP_FROM_EMAIL === "string" &&
+      SMTP_FROM_EMAIL.length > 0 &&
+      typeof ENV.EMAIL_PASSWORD === "string" &&
+      ENV.EMAIL_PASSWORD.length > 0;
+
+    if (!canUseSmtpFallback) {
+      throw resendError;
+    }
+
+    try {
+      await transporter.sendMail({
+        from: SMTP_FROM_EMAIL,
+        to: recipientEmail,
+        subject,
+        html,
+      });
+
+      return { id: "smtp-fallback" };
+    } catch (smtpError) {
+      console.error("SMTP fallback error:", smtpError?.message || smtpError);
+      throw smtpError;
+    }
   }
-
-  return response;
 };
 
 export { sendWelcomeEmail, forgetPasswordEmail, sendAdminOtpEmail };

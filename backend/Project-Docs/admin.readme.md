@@ -41,7 +41,7 @@ Most APIs require **Admin JWT Token**
 
 | Method | Endpoint      | Description           |
 | ------ | ------------- | --------------------- |
-| POST   | `/make-admin` | Promote user to admin |
+| POST   | `/admin/make-admin` | Promote user to admin |
 
 ---
 
@@ -162,7 +162,7 @@ POST /verify-otp
 ### 📍 Endpoint:
 
 ```http
-POST /make-admin
+POST /admin/make-admin
 ```
 
 ---
@@ -171,7 +171,17 @@ POST /make-admin
 
 ```json
 {
-  "userId": "user123"
+  "userId": "69df88e081d21c7ba9aec69a"
+}
+```
+
+Or create admin by email:
+
+```json
+{
+  "email": "newadmin@gmail.com",
+  "firstname": "New",
+  "lastname": "Admin"
 }
 ```
 
@@ -190,8 +200,8 @@ Admin only
   "success": true,
   "message": "User promoted to admin successfully",
   "user": {
-    "id": "user123",
-    "email": "user@gmail.com",
+    "id": "69df88e081d21c7ba9aec69a",
+    "email": "swapnil2002@gmail.com",
     "role": "ADMIN"
   }
 }
@@ -217,6 +227,7 @@ GET /dashboard/overview
   "message": "Dashboard overview data fetched successfully.",
   "data": {
     "totalUsers": 1200,
+    "totalAdmins": 12,
     "totalLeads": 340,
     "activeLeads": 200,
     "soldLeads": 100,

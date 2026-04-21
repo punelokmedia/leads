@@ -149,13 +149,26 @@ const createLead = async (req, res) => {
       coordinates,
     } = req.body;
 
+    const normalizedTitle = String(title ?? "").trim();
+    const normalizedDescription = String(description ?? "").trim();
+    const normalizedCategory = String(category ?? "").trim();
+    const normalizedCity = String(city ?? "").trim();
+    const normalizedState = String(state ?? "").trim();
+    const normalizedAddress = address ? String(address).trim() : "";
+    const parsedPrice = Number(price);
+    const parsedOriginalPrice =
+      originalPrice !== undefined && originalPrice !== null && originalPrice !== ""
+        ? Number(originalPrice)
+        : undefined;
+
     if (
-      !title ||
-      !description ||
-      !category ||
-      !city ||
-      !state ||
-      !price ||
+      !normalizedTitle ||
+      !normalizedDescription ||
+      !normalizedCategory ||
+      !normalizedCity ||
+      !normalizedState ||
+      Number.isNaN(parsedPrice) ||
+      parsedPrice <= 0 ||
       !expiresAt
     ) {
       return res.status(400).json({
@@ -164,14 +177,25 @@ const createLead = async (req, res) => {
       });
     }
 
-    if (typeof price !== "number" || price <= 0) {
+    if (!mongoose.isValidObjectId(normalizedCategory)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid price",
+        message: "Invalid category ID",
       });
     }
 
-    if (originalPrice && originalPrice <= price) {
+    const existingCategory = await Category.findById(normalizedCategory).select("_id");
+    if (!existingCategory) {
+      return res.status(400).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    if (
+      parsedOriginalPrice !== undefined &&
+      (Number.isNaN(parsedOriginalPrice) || parsedOriginalPrice <= parsedPrice)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Original price must be greater than price",
@@ -186,26 +210,43 @@ const createLead = async (req, res) => {
       });
     }
 
-    if (!coordinates || coordinates.length !== 2) {
+    if (!Array.isArray(coordinates) || coordinates.length !== 2) {
       return res.status(400).json({
         success: false,
         message: "Coordinates must be [lng, lat]",
       });
     }
 
+    const parsedLng = Number(coordinates[0]);
+    const parsedLat = Number(coordinates[1]);
+
+    if (
+      Number.isNaN(parsedLng) ||
+      Number.isNaN(parsedLat) ||
+      parsedLng < -180 ||
+      parsedLng > 180 ||
+      parsedLat < -90 ||
+      parsedLat > 90
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid coordinates",
+      });
+    }
+
     const lead = await Lead.create({
-      title,
-      description,
-      category,
-      city,
-      state,
-      address,
-      price,
-      originalPrice,
+      title: normalizedTitle,
+      description: normalizedDescription,
+      category: normalizedCategory,
+      city: normalizedCity,
+      state: normalizedState,
+      address: normalizedAddress,
+      price: parsedPrice,
+      originalPrice: parsedOriginalPrice,
       expiresAt: expiryDate,
       location: {
         type: "Point",
-        coordinates,
+        coordinates: [parsedLng, parsedLat],
       },
       createdBy: req.user.id,
     });
