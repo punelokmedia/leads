@@ -54,7 +54,6 @@ const LeadSchema = new Schema(
       required: true,
       min: 1,
     },
-
     originalPrice: {
       type: Number,
       min: 1,
@@ -65,9 +64,7 @@ const LeadSchema = new Schema(
       max: Number,
     },
 
-    customerName: {
-      type: String,
-    },
+    customerName: String,
 
     phone: {
       type: String,
@@ -76,12 +73,10 @@ const LeadSchema = new Schema(
       },
     },
 
-    buyers: [
-      {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        purchasedAt: { type: Date, default: Date.now },
-      },
-    ],
+    buyersCount: {
+      type: Number,
+      default: 0,
+    },
 
     maxBuyers: {
       type: Number,
@@ -112,14 +107,15 @@ const LeadSchema = new Schema(
 
 LeadSchema.index({ location: "2dsphere" });
 LeadSchema.index({ expiresAt: 1 });
+LeadSchema.index({ maxBuyers: 1, buyersCount: 1 });
 
 LeadSchema.virtual("remainingSlots").get(function () {
-  return this.maxBuyers - this.buyers.length;
+  return this.maxBuyers - this.buyersCount;
 });
 
 const resolveLeadStatus = (lead) => {
   if (lead.expiresAt < new Date()) return "EXPIRED";
-  if (lead.buyers.length >= lead.maxBuyers) return "SOLD_OUT";
+  if (lead.buyersCount >= lead.maxBuyers) return "SOLD_OUT";
   return "ACTIVE";
 };
 
