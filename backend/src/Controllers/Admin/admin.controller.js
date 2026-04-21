@@ -3,6 +3,7 @@ import { User } from "../../Models/user.model.js";
 import { sendAdminOtpEmail } from "../../Utils/email.resend.utils.js";
 import { Lead } from "../../Models/leads.model.js";
 import { Order } from "../../Models/orders.models.js";
+import { LeadPurchase } from "../../Models/lead.purchase.model.js";
 
 const sendOtpForAdminLogin = async (req, res) => {
   try {
@@ -266,14 +267,43 @@ const getRevenueAnalytics = async (req, res) => {
 
 const getTopCategories = async (req, res) => {
   try {
-    const data = await Lead.aggregate([
-      { $unwind: "$buyers" },
+    const data = await LeadPurchase.aggregate([
       {
-        $group: {
-          _id: "$category",
-          totalSold: { $sum: 1 },
+        $lookup: {
+          from: "leads",
+          localField: "lead",
+          foreignField: "_id",
+          as: "leadData",
         },
       },
+      { $unwind: "$leadData" },
+
+      {
+        $group: {
+          _id: "$leadData.category",
+          totalSold: { $sum: "$quantity" },
+        },
+      },
+
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      { $unwind: "$category" },
+
+      {
+        $project: {
+          _id: 0,
+          categoryId: "$category._id",
+          categoryName: "$category.name",
+          totalSold: 1,
+        },
+      },
+
       { $sort: { totalSold: -1 } },
       { $limit: 5 },
     ]);
@@ -334,7 +364,7 @@ const getAllLeadsAdmin = async (req, res) => {
       city,
       state,
       search,
-      status, // 🔥 admin can filter by status
+      status,
       sort = "latest",
     } = req.query;
 
@@ -364,18 +394,25 @@ const getAllLeadsAdmin = async (req, res) => {
     const [leads, total] = await Promise.all([
       Lead.find(query)
         .populate("category", "name")
-        .populate("buyers.user", "firstname email") // 🔥 admin visibility
         .populate("createdBy", "firstname email")
         .sort(sortOption)
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(Number(limit))
+        .lean(),
 
       Lead.countDocuments(query),
     ]);
 
+    // ✅ Add computed fields
+    const formattedLeads = leads.map((lead) => ({
+      ...lead,
+      remainingSlots: lead.maxBuyers - (lead.buyersCount || 0),
+      isSoldOut: lead.buyersCount >= lead.maxBuyers,
+    }));
+
     return res.status(200).json({
       success: true,
-      message: leads.length
+      message: formattedLeads.length
         ? "Admin leads fetched successfully"
         : "No leads found",
       meta: {
@@ -384,7 +421,7 @@ const getAllLeadsAdmin = async (req, res) => {
         limit: Number(limit),
         totalPages: Math.ceil(total / limit),
       },
-      data: leads,
+      data: formattedLeads,
     });
   } catch (error) {
     console.error("Admin Get Leads Error:", error);
@@ -392,7 +429,6 @@ const getAllLeadsAdmin = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch leads (admin)",
-      error: error.message,
     });
   }
 };
@@ -401,8 +437,8 @@ const getLeadByIdAdmin = async (req, res) => {
   try {
     const lead = await Lead.findById(req.params.id)
       .populate("category", "name")
-      .populate("buyers.user", "firstname email")
-      .populate("createdBy", "firstname email");
+      .populate("createdBy", "firstname email")
+      .lean();
 
     if (!lead) {
       return res.status(404).json({
@@ -411,12 +447,26 @@ const getLeadByIdAdmin = async (req, res) => {
       });
     }
 
+    const purchases = await LeadPurchase.find({ lead: lead._id })
+      .populate("user", "firstname email")
+      .sort({ purchasedAt: -1 })
+      .lean();
+
+    const formattedLead = {
+      ...lead,
+      remainingSlots: lead.maxBuyers - (lead.buyersCount || 0),
+      totalSold: lead.buyersCount,
+      purchases, 
+    };
+
     return res.status(200).json({
       success: true,
       message: "Lead fetched successfully (admin)",
-      data: lead,
+      data: formattedLead,
     });
   } catch (error) {
+    console.error("Get Lead Admin Error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch lead",

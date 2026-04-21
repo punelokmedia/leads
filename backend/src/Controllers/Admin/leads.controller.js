@@ -1,10 +1,10 @@
 import XLSX from "xlsx";
 import ExcelJS from "exceljs";
+import mongoose from "mongoose";
 import { Lead, resolveLeadStatus } from "../../Models/leads.model.js";
 import { Category } from "../../Models/category.model.js";
 import { UploadLog } from "../../Models/uploadLog.model.js";
 import { Order } from "../../Models/orders.models.js";
-import mongoose from "mongoose";
 
 const getAllLeads = async (req, res) => {
   try {
@@ -34,6 +34,7 @@ const getAllLeads = async (req, res) => {
       .skip((page - 1) * limit);
 
     const modified = leads.map((lead) => {
+      
       const isPurchased = userId
         ? lead.buyers.some((b) => b.user.toString() === userId)
         : false;

@@ -20,6 +20,10 @@ const OrderSchema = new mongoose.Schema(
           type: Number,
           required: true,
         },
+        quantity: { 
+          type: Number,
+          required: true,
+        },
       },
     ],
 
@@ -45,21 +49,19 @@ const OrderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["CREATED", "PAID", "FAILED"],
+      enum: ["CREATED", "PROCESSING", "PAID", "FAILED"], // ✅ added PROCESSING
       default: "CREATED",
       index: true,
     },
 
     paidAt: Date,
-    
+
     isDownloaded: {
       type: Boolean,
       default: false,
     },
 
-    downloadedAt: {
-      type: Date,
-    },
+    downloadedAt: Date,
   },
   { timestamps: true }
 );
