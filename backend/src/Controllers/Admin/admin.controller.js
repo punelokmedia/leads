@@ -633,6 +633,7 @@ const getDashboardOverview = async (req, res) => {
       soldLeads,
       expiredLeads,
       totalOrders,
+      pendingOrders,
       revenueData,
     ] = await Promise.all([
       User.countDocuments(),
@@ -642,6 +643,7 @@ const getDashboardOverview = async (req, res) => {
       Lead.countDocuments({ status: "SOLD_OUT" }),
       Lead.countDocuments({ status: "EXPIRED" }),
       Order.countDocuments({ status: "PAID" }),
+      Order.countDocuments({ status: "CREATED" }),
       Order.aggregate([
         { $match: { status: "PAID" } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } },
@@ -662,6 +664,7 @@ const getDashboardOverview = async (req, res) => {
         soldLeads,
         expiredLeads,
         totalOrders,
+        pendingOrders,
         totalRevenue,
       },
     });
@@ -714,7 +717,7 @@ const getRevenueAnalytics = async (req, res) => {
 
 const getTopCategories = async (req, res) => {
   try {
-    const data = await Lead.aggregate([
+    const soldByLeadBuyers = await Lead.aggregate([
       { $unwind: "$buyers" },
       {
         $group: {
@@ -722,18 +725,94 @@ const getTopCategories = async (req, res) => {
           totalSold: { $sum: 1 },
         },
       },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      {
+        $unwind: {
+          path: "$category",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalSold: 1,
+          categoryId: "$_id",
+          categoryName: { $ifNull: ["$category.name", "Unknown"] },
+        },
+      },
       { $sort: { totalSold: -1 } },
       { $limit: 5 },
     ]);
+
+    // Fallback: some old/partial flows may create paid orders but not update lead.buyers.
+    // In that case we derive category sales directly from paid order line items.
+    const soldByOrders =
+      soldByLeadBuyers.length > 0
+        ? soldByLeadBuyers
+        : await Order.aggregate([
+            { $match: { status: "PAID" } },
+            { $unwind: "$leads" },
+            {
+              $lookup: {
+                from: "leads",
+                localField: "leads.lead",
+                foreignField: "_id",
+                as: "leadDoc",
+              },
+            },
+            {
+              $unwind: {
+                path: "$leadDoc",
+                preserveNullAndEmptyArrays: false,
+              },
+            },
+            {
+              $group: {
+                _id: "$leadDoc.category",
+                totalSold: { $sum: { $ifNull: ["$leads.quantity", 1] } },
+              },
+            },
+            {
+              $lookup: {
+                from: "categories",
+                localField: "_id",
+                foreignField: "_id",
+                as: "category",
+              },
+            },
+            {
+              $unwind: {
+                path: "$category",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                totalSold: 1,
+                categoryId: "$_id",
+                categoryName: { $ifNull: ["$category.name", "Unknown"] },
+              },
+            },
+            { $sort: { totalSold: -1 } },
+            { $limit: 5 },
+          ]);
 
     return res.status(200).json({
       success: true,
       code: "TOP_CATEGORIES_FETCHED",
       message:
-        data.length > 0
+        soldByOrders.length > 0
           ? "Top performing categories fetched successfully."
           : "No category sales data available yet.",
-      data,
+      data: soldByOrders,
     });
   } catch (error) {
     console.error("Top Categories Error:", error);
@@ -748,10 +827,53 @@ const getTopCategories = async (req, res) => {
 
 const getRecentOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ status: "PAID" })
+    const { page = 1, limit = 5, period = "all", date } = req.query;
+    const normalizedLimit = Math.min(Math.max(Number(limit) || 5, 1), 50);
+    const normalizedPage = Math.max(Number(page) || 1, 1);
+    const skip = (normalizedPage - 1) * normalizedLimit;
+    const now = new Date();
+    const orderQuery = { status: "PAID" };
+
+    const rangeStart = new Date(now);
+    rangeStart.setHours(0, 0, 0, 0);
+    const rangeEnd = new Date(now);
+    rangeEnd.setHours(23, 59, 59, 999);
+
+    if (period === "today") {
+      orderQuery.createdAt = { $gte: rangeStart, $lte: rangeEnd };
+    } else if (period === "weekly") {
+      const weeklyStart = new Date(rangeStart);
+      weeklyStart.setDate(weeklyStart.getDate() - 6);
+      orderQuery.createdAt = { $gte: weeklyStart, $lte: rangeEnd };
+    } else if (period === "monthly") {
+      const monthlyStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      orderQuery.createdAt = { $gte: monthlyStart, $lte: rangeEnd };
+    } else if (period === "quarterly") {
+      const quarter = Math.floor(now.getMonth() / 3);
+      const quarterStart = new Date(now.getFullYear(), quarter * 3, 1);
+      orderQuery.createdAt = { $gte: quarterStart, $lte: rangeEnd };
+    } else if (period === "yearly") {
+      const yearStart = new Date(now.getFullYear(), 0, 1);
+      orderQuery.createdAt = { $gte: yearStart, $lte: rangeEnd };
+    } else if (period === "custom" && typeof date === "string" && date.trim()) {
+      const selectedDate = new Date(date);
+      if (!Number.isNaN(selectedDate.getTime())) {
+        const customStart = new Date(selectedDate);
+        customStart.setHours(0, 0, 0, 0);
+        const customEnd = new Date(selectedDate);
+        customEnd.setHours(23, 59, 59, 999);
+        orderQuery.createdAt = { $gte: customStart, $lte: customEnd };
+      }
+    }
+
+    const [orders, total] = await Promise.all([
+      Order.find(orderQuery)
       .populate("user", "email firstname lastname")
       .sort({ createdAt: -1 })
-      .limit(10);
+      .skip(skip)
+      .limit(normalizedLimit),
+      Order.countDocuments(orderQuery),
+    ]);
 
     return res.status(200).json({
       success: true,
@@ -760,6 +882,12 @@ const getRecentOrders = async (req, res) => {
         orders.length > 0
           ? "Recent orders fetched successfully."
           : "No recent orders found.",
+      meta: {
+        total,
+        page: normalizedPage,
+        limit: normalizedLimit,
+        totalPages: Math.ceil(total / normalizedLimit) || 1,
+      },
       data: orders,
     });
   } catch (error) {

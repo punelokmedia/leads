@@ -11,6 +11,35 @@ type Category = {
   icon?: string
 }
 
+const ICON_PRESETS: Array<{ label: string; url: string }> = [
+  { label: 'Interior', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/sofa.svg' },
+  { label: 'Carpenter', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/hammer.svg' },
+  { label: 'Web App', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/globe.svg' },
+  { label: 'Mobile App', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/smartphone.svg' },
+  { label: 'Electrician', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/plug.svg' },
+  { label: 'Plumber', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/wrench.svg' },
+  { label: 'Painter', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/paintbrush.svg' },
+  { label: 'Cleaning', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/sparkles.svg' },
+  { label: 'AC Service', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/fan.svg' },
+  { label: 'CCTV', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/cctv.svg' },
+  { label: 'Marketing', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/megaphone.svg' },
+  { label: 'Finance', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/badge-dollar-sign.svg' },
+  { label: 'Education', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/graduation-cap.svg' },
+  { label: 'Healthcare', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/stethoscope.svg' },
+  { label: 'Legal', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/scale.svg' },
+  { label: 'Photography', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/camera.svg' },
+  { label: 'Events', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/calendar-check-2.svg' },
+  { label: 'Travel', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/plane.svg' },
+  { label: 'Real Estate', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/building-2.svg' },
+  { label: 'Automobile', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/car.svg' },
+  { label: 'Design', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/palette.svg' },
+  { label: 'Software', url: 'https://cdn.jsdelivr.net/npm/lucide-static/icons/code-2.svg' },
+]
+
+function isLikelyUrl(value: string) {
+  return /^https?:\/\//i.test(value.trim())
+}
+
 function getToken() {
   if (typeof window === 'undefined') return ''
   const raw = window.localStorage.getItem(AUTH_STORAGE_KEY)
@@ -195,12 +224,12 @@ export function CategoriesPage() {
   }, [searchParams])
 
   return (
-    <div className="space-y-6">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-violet-50/40 to-indigo-50/30 shadow-sm">
-        <div className="relative px-5 py-5 md:px-6 md:py-6">
+    <div className="space-y-5">
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-violet-50/40 to-indigo-50/20 shadow-sm">
+        <div className="relative px-5 py-4 md:px-6 md:py-5">
           <div className="pointer-events-none absolute right-0 top-0 h-36 w-36 rounded-full bg-violet-200/40 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-12 -left-12 h-28 w-28 rounded-full bg-sky-200/40 blur-3xl" />
-          <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="relative flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-violet-600">
                 Categories Workspace
@@ -212,7 +241,7 @@ export function CategoriesPage() {
                 Keep category names organized and maintain clean lead classification.
               </p>
             </div>
-            <div className="rounded-2xl border border-violet-100 bg-white/90 px-4 py-3 text-right shadow-sm">
+            <div className="rounded-2xl border border-violet-100 bg-white/95 px-4 py-2.5 text-right shadow-sm">
               <p className="text-[11px] uppercase tracking-wide text-slate-500">
                 Total categories
               </p>
@@ -251,20 +280,20 @@ export function CategoriesPage() {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search category..."
-                className="w-44 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                className="w-52 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
               />
               <button
                 type="button"
                 onClick={() => void loadCategories()}
                 disabled={!hasAuth || loadingCategories}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-60"
+                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 disabled:opacity-60"
               >
                 Refresh
               </button>
               <button
                 type="button"
                 onClick={openAddCategoryDrawer}
-                className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-500"
+                className="rounded-xl bg-violet-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-500"
               >
                 + Add category
               </button>
@@ -301,37 +330,50 @@ export function CategoriesPage() {
                 {filteredCategories.map((category, index) => (
                   <div
                     key={category._id}
-                    className="rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-3 py-3 shadow-sm transition hover:border-violet-200 hover:shadow"
+                    className="rounded-2xl border border-slate-200 bg-white px-3 py-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-xs font-semibold text-violet-700">
-                          {category.name.slice(0, 2).toUpperCase()}
-                        </span>
+                        {isLikelyUrl(category.icon ?? '') ? (
+                          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white">
+                            <img
+                              src={category.icon}
+                              alt={category.name}
+                              className="h-5 w-5 object-contain"
+                              onError={(event) => {
+                                event.currentTarget.style.display = 'none'
+                              }}
+                            />
+                          </span>
+                        ) : (
+                          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 text-xs font-semibold text-violet-700">
+                            {category.name.slice(0, 2).toUpperCase()}
+                          </span>
+                        )}
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-slate-800">
                             {category.name}
                           </p>
                           <p className="truncate text-xs text-slate-500">
-                            {category.icon || 'No icon URL'}
+                            {category.icon || 'No icon selected'}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="hidden rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-500 md:inline-flex">
+                        <span className="hidden rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-500 md:inline-flex">
                           #{index + 1}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleEditCategory(category)}
-                          className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => void handleDeleteCategory(category._id)}
-                          className="rounded-md border border-rose-300 bg-white px-2.5 py-1 text-xs font-medium text-rose-700 transition hover:bg-rose-50"
+                          className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
                         >
                           Delete
                         </button>
@@ -399,6 +441,50 @@ export function CategoriesPage() {
                     className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
                   />
                 </label>
+
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Quick icon presets (20+)
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCategoryIcon('')}
+                      className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:bg-slate-100"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="grid max-h-40 grid-cols-2 gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 sm:grid-cols-3">
+                    {ICON_PRESETS.map((item) => {
+                      const isSelected = categoryIcon.trim() === item.url
+                      return (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => setCategoryIcon(item.url)}
+                          className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-[11px] font-medium transition ${
+                            isSelected
+                              ? 'border-violet-300 bg-violet-50 text-violet-700'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-violet-200 hover:bg-violet-50/60'
+                          }`}
+                        >
+                          <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white">
+                            <img
+                              src={item.url}
+                              alt={item.label}
+                              className="h-3.5 w-3.5 object-contain"
+                              onError={(event) => {
+                                event.currentTarget.style.display = 'none'
+                              }}
+                            />
+                          </span>
+                          <span className="truncate">{item.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">

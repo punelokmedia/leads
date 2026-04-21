@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminAuth } from '@/features/auth/context/AdminAuthContext'
+import { useToast } from '@/components/feedback/ToastProvider'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const { pendingEmail, sendOtp, verifyOtp, resetOtpFlow } = useAdminAuth()
 
   const [email, setEmail] = useState('')
@@ -38,7 +40,9 @@ export function LoginPage() {
 
     if (!trimmedEmail) {
       setInfoMessage('')
-      setErrorMessage('Please enter your admin email.')
+      const message = 'Please enter your admin email.'
+      setErrorMessage(message)
+      toast.error(message)
       return
     }
 
@@ -53,11 +57,12 @@ export function LoginPage() {
           ? `Test mode OTP: ${result.devOtp} (email delivery restricted)`
           : `OTP sent to ${trimmedEmail}`,
       )
+      toast.success(result.devOtp ? 'OTP generated in test mode' : 'OTP sent successfully')
       setResendInSeconds(30)
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to send OTP. Try again.',
-      )
+      const message = error instanceof Error ? error.message : 'Unable to send OTP. Try again.'
+      setErrorMessage(message)
+      toast.error(message)
     } finally {
       setIsSending(false)
     }
@@ -68,7 +73,9 @@ export function LoginPage() {
     const cleanOtp = otp.trim()
     if (!cleanOtp) {
       setInfoMessage('')
-      setErrorMessage('Please enter the OTP code.')
+      const message = 'Please enter the OTP code.'
+      setErrorMessage(message)
+      toast.error(message)
       return
     }
 
@@ -79,15 +86,18 @@ export function LoginPage() {
     try {
       const success = await verifyOtp(cleanOtp)
       if (!success) {
-        setErrorMessage('Incorrect OTP. Please check and try again.')
+        const message = 'Incorrect OTP. Please check and try again.'
+        setErrorMessage(message)
+        toast.error(message)
         return
       }
       setInfoMessage('Login successful. Redirecting to dashboard...')
+      toast.success('Login successful')
       navigate('/', { replace: true })
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to verify OTP. Try again.',
-      )
+      const message = error instanceof Error ? error.message : 'Unable to verify OTP. Try again.'
+      setErrorMessage(message)
+      toast.error(message)
     } finally {
       setIsVerifying(false)
     }
@@ -117,11 +127,12 @@ export function LoginPage() {
           ? `Test mode OTP: ${result.devOtp} (email delivery restricted)`
           : `New OTP sent to ${pendingEmail}`,
       )
+      toast.success('OTP resent successfully')
       setResendInSeconds(30)
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to resend OTP. Try again.',
-      )
+      const message = error instanceof Error ? error.message : 'Unable to resend OTP. Try again.'
+      setErrorMessage(message)
+      toast.error(message)
     } finally {
       setIsSending(false)
     }

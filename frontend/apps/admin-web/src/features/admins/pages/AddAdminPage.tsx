@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useToast } from '@/components/feedback/ToastProvider'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:5000'
@@ -55,6 +56,7 @@ function getToken() {
 }
 
 export function AddAdminPage() {
+  const toast = useToast()
   const [userId, setUserId] = useState('')
   const [email, setEmail] = useState('')
   const [firstname, setFirstname] = useState('')
@@ -87,6 +89,24 @@ export function AddAdminPage() {
   const [isFormDrawerOpen, setIsFormDrawerOpen] = useState(false)
   const isEmailFlow = Boolean(email.trim())
 
+  const showError = useCallback(
+    (message: string) => {
+      setErrorMessage(message)
+      setSuccessMessage('')
+      toast.error(message)
+    },
+    [toast],
+  )
+
+  const showSuccess = useCallback(
+    (message: string) => {
+      setSuccessMessage(message)
+      setErrorMessage('')
+      toast.success(message)
+    },
+    [toast],
+  )
+
   const loadOverview = useCallback(async () => {
     const token = getToken()
     if (!token) {
@@ -114,10 +134,12 @@ export function AddAdminPage() {
         totalUsers: Number(payload.data?.totalUsers ?? 0),
         totalAdmins: Number(payload.data?.totalAdmins ?? 0),
       })
+    } catch {
+      toast.error('Unable to load dashboard overview')
     } finally {
       setLoadingOverview(false)
     }
-  }, [])
+  }, [toast])
 
   const loadUsersAndAdmins = useCallback(async () => {
     const token = getToken()
@@ -180,10 +202,12 @@ export function AddAdminPage() {
           ),
         }))
       }
+    } catch {
+      toast.error('Unable to load users/admins list')
     } finally {
       setLoadingLists(false)
     }
-  }, [adminsPage, listSearch, usersPage])
+  }, [adminsPage, listSearch, toast, usersPage])
 
   useEffect(() => {
     void loadOverview()
@@ -253,15 +277,13 @@ export function AddAdminPage() {
     const trimmedLastname = lastname.trim()
 
     if (!trimmedUserId && !trimmedEmail) {
-      setErrorMessage('User ID ya Email me se koi ek required hai')
-      setSuccessMessage('')
+      showError('User ID ya Email me se koi ek required hai')
       return
     }
 
     const token = getToken()
     if (!token) {
-      setErrorMessage('Admin token not found. Please login again.')
-      setSuccessMessage('')
+      showError('Admin token not found. Please login again.')
       return
     }
 
@@ -300,13 +322,14 @@ export function AddAdminPage() {
         throw new Error(payload.message || 'Failed to promote user')
       }
 
-      setSuccessMessage(payload.message || 'User promoted to admin successfully')
+      const message = payload.message || 'User promoted to admin successfully'
+      showSuccess(message)
       const promoted = payload.user ?? null
       setPromotedUser(promoted)
       if (promoted) {
         setApiPreview({
           success: true,
-          message: payload.message || 'User promoted to admin successfully',
+            message,
           user: {
             id: promoted.id ?? '',
             email: promoted.email ?? '',
@@ -324,7 +347,7 @@ export function AddAdminPage() {
       }))
       await Promise.all([loadOverview(), loadUsersAndAdmins()])
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to promote user')
+      showError(error instanceof Error ? error.message : 'Failed to promote user')
     } finally {
       setLoading(false)
     }
@@ -334,7 +357,7 @@ export function AddAdminPage() {
     const { resolvedEmail, resolvedUserId } = getActionIdentifiers(target)
 
     if (!resolvedUserId && !resolvedEmail) {
-      setErrorMessage('User ID ya Email me se koi ek required hai')
+      showError('User ID ya Email me se koi ek required hai')
       return
     }
 
@@ -350,14 +373,14 @@ export function AddAdminPage() {
         },
         'Failed to remove admin role',
       )
-      setSuccessMessage(payload.message || 'Admin role removed successfully')
+      showSuccess(payload.message || 'Admin role removed successfully')
       setOverview((previous) => ({
         ...previous,
         totalAdmins: Math.max(0, previous.totalAdmins - 1),
       }))
       await Promise.all([loadOverview(), loadUsersAndAdmins()])
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to remove admin role')
+      showError(error instanceof Error ? error.message : 'Failed to remove admin role')
     } finally {
       setLoading(false)
     }
@@ -367,7 +390,7 @@ export function AddAdminPage() {
     const { resolvedEmail, resolvedUserId } = getActionIdentifiers(target)
 
     if (!resolvedUserId && !resolvedEmail) {
-      setErrorMessage('User ID ya Email me se koi ek required hai')
+      showError('User ID ya Email me se koi ek required hai')
       return
     }
 
@@ -384,12 +407,12 @@ export function AddAdminPage() {
         },
         blockValue ? 'Failed to block user' : 'Failed to unblock user',
       )
-      setSuccessMessage(
+      showSuccess(
         payload.message || (blockValue ? 'User blocked successfully' : 'User unblocked successfully'),
       )
       await loadUsersAndAdmins()
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to update block status')
+      showError(error instanceof Error ? error.message : 'Failed to update block status')
     } finally {
       setLoading(false)
     }
@@ -399,7 +422,7 @@ export function AddAdminPage() {
     const { resolvedEmail, resolvedUserId } = getActionIdentifiers(target)
 
     if (!resolvedUserId && !resolvedEmail) {
-      setErrorMessage('User ID ya Email me se koi ek required hai')
+      showError('User ID ya Email me se koi ek required hai')
       return
     }
 
@@ -417,7 +440,7 @@ export function AddAdminPage() {
         },
         'Failed to delete user',
       )
-      setSuccessMessage(payload.message || 'User deleted successfully')
+      showSuccess(payload.message || 'User deleted successfully')
       setOverview((previous) => ({
         ...previous,
         totalUsers: Math.max(0, previous.totalUsers - 1),
@@ -428,7 +451,7 @@ export function AddAdminPage() {
       }))
       await Promise.all([loadOverview(), loadUsersAndAdmins()])
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete user')
+      showError(error instanceof Error ? error.message : 'Failed to delete user')
     } finally {
       setLoading(false)
     }

@@ -7,7 +7,7 @@ export function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <div className="flex min-h-dvh bg-transparent">
+    <div className="flex min-h-dvh bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
       <AdminSidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}

@@ -16,9 +16,26 @@
     @apply antialiased;
   }
   body {
-    @apply m-0 min-h-dvh bg-admin-50 text-slate-800 font-sans;
+    @apply m-0 min-h-dvh overflow-x-hidden bg-admin-50 text-slate-800 font-sans;
     background-image:
       radial-gradient(circle at top left, rgba(124, 58, 237, 0.08), transparent 35%),
       radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 40%);
+  }
+}
+
+@layer utilities {
+  @keyframes toast-in {
+    0% {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .toast-enter {
+    animation: toast-in 0.22s ease-out;
   }
 }
