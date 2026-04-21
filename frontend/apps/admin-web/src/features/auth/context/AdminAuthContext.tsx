@@ -8,16 +8,19 @@ import {
 } from 'react'
 
 const AUTH_STORAGE_KEY = 'admin_auth_session'
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:5000'
+const ADMIN_AUTH_BASE = `${API_BASE_URL}/api/v1/admin`
 
 type AdminSession = {
   email: string
+  token: string
 }
 
 type AdminAuthContextValue = {
   isAuthenticated: boolean
   userEmail: string
   pendingEmail: string
-  demoOtp: string
   sendOtp: (email: string) => Promise<void>
   verifyOtp: (otp: string) => Promise<boolean>
   resetOtpFlow: () => void
@@ -26,8 +29,29 @@ type AdminAuthContextValue = {
 
 const AdminAuthContext = createContext<AdminAuthContextValue | null>(null)
 
-function createOtpCode() {
-  return String(Math.floor(100000 + Math.random() * 900000))
+type ApiResponse<T = unknown> = {
+  success?: boolean
+  message?: string
+  token?: string
+  data?: T
+}
+
+type VerifyOtpResponseData = {
+  email?: string
+}
+
+async function parseApiResponse<T>(
+  response: Response,
+): Promise<{ ok: boolean; payload: ApiResponse<T> }> {
+  let payload: ApiResponse<T> = {}
+
+  try {
+    payload = (await response.json()) as ApiResponse<T>
+  } catch {
+    payload = {}
+  }
+
+  return { ok: response.ok, payload }
 }
 
 function readStoredSession(): AdminSession | null {
@@ -42,7 +66,7 @@ function readStoredSession(): AdminSession | null {
 
   try {
     const parsed = JSON.parse(raw) as AdminSession
-    if (parsed.email) {
+    if (parsed.email && parsed.token) {
       return parsed
     }
   } catch {
@@ -57,43 +81,63 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     readStoredSession(),
   )
   const [pendingEmail, setPendingEmail] = useState('')
-  const [demoOtp, setDemoOtp] = useState('')
 
   const sendOtp = useCallback(async (email: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    const response = await fetch(`${ADMIN_AUTH_BASE}/send-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    })
+    const { ok, payload } = await parseApiResponse(response)
+
+    if (!ok || !payload.success) {
+      throw new Error(payload.message ?? 'Failed to send OTP.')
+    }
 
     setPendingEmail(email)
-    setDemoOtp(createOtpCode())
   }, [])
 
   const verifyOtp = useCallback(
     async (otp: string) => {
-      await new Promise((resolve) => setTimeout(resolve, 400))
-
-      if (!pendingEmail || otp !== demoOtp) {
+      if (!pendingEmail) {
         return false
       }
 
-      const nextSession = { email: pendingEmail }
+      const response = await fetch(`${ADMIN_AUTH_BASE}/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: pendingEmail, otp }),
+      })
+      const { ok, payload } = await parseApiResponse<VerifyOtpResponseData>(response)
+
+      if (!ok || !payload.success || !payload.token) {
+        throw new Error(payload.message ?? 'OTP verification failed.')
+      }
+
+      const nextSession = {
+        email: payload.data?.email ?? pendingEmail,
+        token: payload.token,
+      }
       setSession(nextSession)
       setPendingEmail('')
-      setDemoOtp('')
       window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession))
 
       return true
     },
-    [demoOtp, pendingEmail],
+    [pendingEmail],
   )
 
   const resetOtpFlow = useCallback(() => {
     setPendingEmail('')
-    setDemoOtp('')
   }, [])
 
   const logout = useCallback(() => {
     setSession(null)
     setPendingEmail('')
-    setDemoOtp('')
     window.localStorage.removeItem(AUTH_STORAGE_KEY)
   }, [])
 
@@ -102,13 +146,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(session),
       userEmail: session?.email ?? '',
       pendingEmail,
-      demoOtp,
       sendOtp,
       verifyOtp,
       resetOtpFlow,
       logout,
     }),
-    [demoOtp, logout, pendingEmail, sendOtp, session, verifyOtp, resetOtpFlow],
+    [logout, pendingEmail, sendOtp, session, verifyOtp, resetOtpFlow],
   )
 
   return (

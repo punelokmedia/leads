@@ -3,19 +3,62 @@ import { User } from "../../Models/user.model.js";
 import { sendAdminOtpEmail } from "../../Utils/email.resend.utils.js";
 import { Lead } from "../../Models/leads.model.js";
 import { Order } from "../../Models/orders.models.js";
+import { ENV } from "../../Config/env.config.js";
+
+const getEmailMatcher = (email = "") => ({
+  $regex: `^${email.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+  $options: "i",
+});
+
+const isEnvAdminEmail = (email = "") =>
+  ENV.ADMIN_EMAIL?.trim().toLowerCase() === email.trim().toLowerCase();
+
+const resolveAdminByEmail = async (email = "") => {
+  const user = await User.findOne({
+    email: getEmailMatcher(email),
+  });
+
+  if (user) {
+    if (user.role === "ADMIN") return user;
+
+    if (isEnvAdminEmail(email)) {
+      user.role = "ADMIN";
+      await user.save();
+      return user;
+    }
+
+    return null;
+  }
+
+  if (!isEnvAdminEmail(email)) return null;
+
+  const envAdminEmail = ENV.ADMIN_EMAIL?.trim().toLowerCase();
+  if (!envAdminEmail) return null;
+
+  const createdAdmin = await User.create({
+    firstname: ENV.ADMIN_FIRSTNAME?.trim() || "Super",
+    lastname: ENV.ADMIN_LASTNAME?.trim() || "Admin",
+    email: envAdminEmail,
+    role: "ADMIN",
+    providers: ["LOCAL"],
+  });
+
+  return createdAdmin;
+};
 
 const sendOtpForAdminLogin = async (req, res) => {
   try {
     const { email } = req.body;
+    const normalizedEmail = email?.trim();
 
-    if (!email) {
+    if (!normalizedEmail) {
       return res.status(400).json({
         success: false,
         message: "Email is required",
       });
     }
 
-    const admin = await User.findOne({ email, role: "ADMIN" });
+    const admin = await resolveAdminByEmail(normalizedEmail);
 
     if (!admin) {
       return res.status(403).json({
@@ -63,8 +106,16 @@ const sendOtpForAdminLogin = async (req, res) => {
 const verifyAdminOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
+    const normalizedEmail = email?.trim();
 
-    const admin = await User.findOne({ email, role: "ADMIN" });
+    if (!normalizedEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const admin = await resolveAdminByEmail(normalizedEmail);
 
     if (!admin) {
       return res.status(404).json({
