@@ -13,7 +13,7 @@ const getAllLeads = async (req, res) => {
     const { page = 1, limit = 10, category, city, state, search } = req.query;
 
     const query = {
-      status: "ACTIVE",
+      // status: "ACTIVE",
       expiresAt: { $gt: new Date() },
     };
 
