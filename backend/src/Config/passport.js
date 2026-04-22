@@ -10,7 +10,7 @@ passport.use(
       callbackURL:
         process.env.NODE_ENV === "production"
           ? `${process.env.API_BASE_URL}/api/v1/auth/google/callback`
-          : "http://localhost:3000/api/v1/auth/google/callback",
+          : "http://localhost:5000/api/v1/auth/google/callback",
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {

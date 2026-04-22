@@ -12,8 +12,25 @@ import cart from "./Routes/cart.routes.js";
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+];
+
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: (origin, callback) => {
+    // Allow server-to-server calls and tools without browser origin header.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
 };

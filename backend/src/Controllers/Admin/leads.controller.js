@@ -10,7 +10,18 @@ const getAllLeads = async (req, res) => {
   try {
     const userId = req.user?.id;
 
-    const { page = 1, limit = 10, category, city, state, search } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      category,
+      city,
+      state,
+      search,
+      sort = "latest",
+    } = req.query;
+
+    const normalizedPage = Math.max(Number(page) || 1, 1);
+    const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
 
     const query = {
       status: "ACTIVE",
@@ -28,10 +39,18 @@ const getAllLeads = async (req, res) => {
       ];
     }
 
+    let sortOption = { createdAt: -1 };
+    if (sort === "cheapest") sortOption = { price: 1 };
+    if (sort === "expensive") sortOption = { price: -1 };
+
+    const skip = (normalizedPage - 1) * normalizedLimit;
+    const total = await Lead.countDocuments(query);
+
     const leads = await Lead.find(query)
       .populate("category", "name")
-      .limit(limit)
-      .skip((page - 1) * limit);
+      .sort(sortOption)
+      .limit(normalizedLimit)
+      .skip(skip);
 
     const modified = leads.map((lead) => {
       const isPurchased = userId
@@ -57,6 +76,12 @@ const getAllLeads = async (req, res) => {
       success: true,
       message: "Leads fetched successfully",
       data: modified,
+      pagination: {
+        total,
+        page: normalizedPage,
+        limit: normalizedLimit,
+        totalPages: Math.ceil(total / normalizedLimit),
+      },
     });
   } catch (err) {
     return res.status(500).json({
