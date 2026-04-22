@@ -10,12 +10,20 @@ const getAllLeads = async (req, res) => {
   try {
     const userId = req.user?.id;
 
-    const { page = 1, limit = 10, category, city, state, search } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      category,
+      city,
+      state,
+      search,
+      sort = "latest",
+    } = req.query;
 
-    const query = {
-      // status: "ACTIVE",
-      expiresAt: { $gt: new Date() },
-    };
+    const normalizedPage = Math.max(Number(page) || 1, 1);
+    const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
+
+    const query = {};
 
     if (category) query.category = category;
     if (city) query.city = new RegExp(city, "i");
@@ -28,10 +36,18 @@ const getAllLeads = async (req, res) => {
       ];
     }
 
+    let sortOption = { createdAt: -1 };
+    if (sort === "cheapest") sortOption = { price: 1 };
+    if (sort === "expensive") sortOption = { price: -1 };
+
+    const skip = (normalizedPage - 1) * normalizedLimit;
+    const total = await Lead.countDocuments(query);
+
     const leads = await Lead.find(query)
       .populate("category", "name")
-      .limit(limit)
-      .skip((page - 1) * limit);
+      .sort(sortOption)
+      .limit(normalizedLimit)
+      .skip(skip);
 
     const modified = leads.map((lead) => {
       
@@ -58,6 +74,12 @@ const getAllLeads = async (req, res) => {
       success: true,
       message: "Leads fetched successfully",
       data: modified,
+      pagination: {
+        total,
+        page: normalizedPage,
+        limit: normalizedLimit,
+        totalPages: Math.ceil(total / normalizedLimit),
+      },
     });
   } catch (err) {
     return res.status(500).json({
@@ -275,20 +297,6 @@ const updateLead = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Lead not found",
-      });
-    }
-
-    if (lead.expiresAt < new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot update expired lead",
-      });
-    }
-
-    if (lead.buyers.length >= lead.maxBuyers) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot update sold-out lead",
       });
     }
 
