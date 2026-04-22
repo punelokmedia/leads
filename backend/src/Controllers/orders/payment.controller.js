@@ -7,6 +7,8 @@ import { razorpay } from "../../Config/razorpay.config.js";
 import { LeadPurchase } from "../../Models/lead.purchase.model.js";
 
 const ORDER_EXPIRY = 15 * 60 * 1000;
+const RAZORPAY_PUBLIC_KEY =
+  process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || "";
 
 const generateCartHash = (items) => {
   const sorted = items
@@ -53,6 +55,7 @@ const createOrder = async (req, res) => {
           success: true,
           message: "Using existing pending order",
           data: {
+            keyId: RAZORPAY_PUBLIC_KEY,
             razorpayOrderId: existing.razorpayOrderId,
             internalOrderId: existing._id,
             amount: existing.totalAmount,
@@ -134,10 +137,16 @@ const createOrder = async (req, res) => {
       });
     } catch (err) {
       console.error("Razorpay Error:", err);
+      const errorDescription = err?.error?.description || err?.message || "";
+      const isAuthError =
+        Number(err?.statusCode) === 401 ||
+        String(errorDescription).toLowerCase().includes("authentication failed");
 
       return res.status(502).json({
         success: false,
-        message: "Payment gateway error. Please try again.",
+        message: isAuthError
+          ? "Razorpay authentication failed. Please verify backend Razorpay key and secret."
+          : "Payment gateway error. Please try again.",
       });
     }
 
@@ -157,6 +166,7 @@ const createOrder = async (req, res) => {
       success: true,
       message: "Order created successfully",
       data: {
+        keyId: RAZORPAY_PUBLIC_KEY,
         razorpayOrderId: order.razorpayOrderId,
         internalOrderId: order._id,
         amount: order.totalAmount,

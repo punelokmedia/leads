@@ -15,8 +15,8 @@ import upload from "../Middlewares/fileupload.middleware.js";
 
 const router = express.Router();
 
-router.get("/get-all-leads", getAllLeads);
-router.get("/", getAllLeads);
+ router.get("/get-all-leads", getAllLeads);
+
 router.get("/get-lead/:id", getLeadDetailsById);
 router.get("/history", auth, getUserHistory );
 router.get("/download/:orderId", auth, downloadLeads);
