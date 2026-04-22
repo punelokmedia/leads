@@ -185,21 +185,26 @@ const logOutUser = async (req, res) => {
 const googleCallback = async (req, res) => {
   try {
     const user = req.user;
+    const frontendBaseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        code: "GOOGLE_AUTH_FAILED",
-        message: "Google authentication failed. Please try again.",
-      });
+      const redirectUrl = new URL("/", frontendBaseUrl);
+      redirectUrl.searchParams.set("gauth", "1");
+      redirectUrl.searchParams.set(
+        "error",
+        "Google authentication failed. Please try again.",
+      );
+      return res.redirect(302, redirectUrl.toString());
     }
 
     if (user.isBlocked) {
-      return res.status(403).json({
-        success: false,
-        code: "ACCOUNT_BLOCKED",
-        message: "Your account has been blocked. Please contact support.",
-      });
+      const redirectUrl = new URL("/", frontendBaseUrl);
+      redirectUrl.searchParams.set("gauth", "1");
+      redirectUrl.searchParams.set(
+        "error",
+        "Your account has been blocked. Please contact support.",
+      );
+      return res.redirect(302, redirectUrl.toString());
     }
 
     const token = jwt.sign(
@@ -212,23 +217,30 @@ const googleCallback = async (req, res) => {
       { expiresIn: "7d" },
     );
 
-    user.password = undefined;
+    const redirectUrl = new URL("/", frontendBaseUrl);
+    redirectUrl.searchParams.set("gauth", "1");
+    redirectUrl.searchParams.set("token", token);
+    redirectUrl.searchParams.set(
+      "user",
+      JSON.stringify({
+        _id: user._id,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        profilePic: user.profilePic,
+      }),
+    );
 
-    return res.status(200).json({
-      success: true,
-      code: "GOOGLE_LOGIN_SUCCESS",
-      message: "Logged in successfully using Google.",
-      token,
-      data: user,
-    });
+    return res.redirect(302, redirectUrl.toString());
   } catch (error) {
     console.error("Google Callback Error:", error);
 
-    return res.status(500).json({
-      success: false,
-      code: "TOKEN_GENERATION_FAILED",
-      message: "Unable to generate authentication token.",
-    });
+    const redirectUrl = new URL("/", process.env.FRONTEND_URL || "http://localhost:5173");
+    redirectUrl.searchParams.set("gauth", "1");
+    redirectUrl.searchParams.set("error", "Unable to complete Google login.");
+    return res.redirect(302, redirectUrl.toString());
   }
 };
 

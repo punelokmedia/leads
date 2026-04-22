@@ -41,6 +41,9 @@ type HomeLead = {
   image: string
   location: string
   sharing: string
+  buyersCount: number
+  maxBuyers: number
+  remainingSlots: number
   oldPrice: number
   price: number
   createdAt: string
@@ -59,6 +62,9 @@ const mapLeadsForCards = (items: LeadsApiItem[], startIndex: number): HomeLead[]
     image: `/lead-room-${((startIndex + index) % 3) + 1}.jpg`,
     location: `${lead.city}, ${lead.state}`,
     sharing: `Sharing Leads (${lead.buyersCount}/${lead.maxBuyers})`,
+    buyersCount: lead.buyersCount,
+    maxBuyers: lead.maxBuyers,
+    remainingSlots: Math.max(0, lead.maxBuyers - lead.buyersCount),
     oldPrice:
       typeof lead.originalPrice === 'number' && lead.originalPrice > lead.price
         ? lead.originalPrice
@@ -115,6 +121,9 @@ export function HomePage() {
   const [allLeads, setAllLeads] = useState<HomeLead[]>([])
   const [isLeadsLoading, setIsLeadsLoading] = useState(false)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [activeCartLeadId, setActiveCartLeadId] = useState<string | null>(null)
+  const [cartFeedback, setCartFeedback] = useState('')
+  const [leadQuantities, setLeadQuantities] = useState<Record<string, number>>({})
   const [leadsError, setLeadsError] = useState('')
   const [pagination, setPagination] = useState<LeadsPagination>({ page: 1, totalPages: 1 })
   const selectedCity = selectedCategory ? CATEGORY_CITY_MAP[selectedCategory] ?? '' : ''
@@ -142,10 +151,13 @@ export function HomePage() {
           if (appliedSearch.trim()) params.set('search', appliedSearch.trim())
           if (selectedCity) params.set('city', selectedCity)
 
-          const response = await fetch(`${baseUrl}/api/v1/leads?${params.toString()}`, {
+          const response = await fetch(
+            `${baseUrl}/api/v1/leads/get-all-leads?${params.toString()}`,
+            {
             method: 'GET',
             signal: controller.signal,
-          })
+            },
+          )
           const payload = await response.json()
           window.clearTimeout(timeoutId)
 
@@ -204,10 +216,13 @@ export function HomePage() {
           if (appliedSearch.trim()) params.set('search', appliedSearch.trim())
           if (selectedCity) params.set('city', selectedCity)
 
-          const response = await fetch(`${baseUrl}/api/v1/leads?${params.toString()}`, {
+          const response = await fetch(
+            `${baseUrl}/api/v1/leads/get-all-leads?${params.toString()}`,
+            {
             method: 'GET',
             signal: controller.signal,
-          })
+            },
+          )
           const payload = await response.json()
           window.clearTimeout(timeoutId)
 
@@ -232,6 +247,58 @@ export function HomePage() {
       setLeadsError(networkError?.message ?? 'Unable to fetch leads right now.')
       setIsLoadingMore(false)
     })()
+  }
+
+  useEffect(() => {
+    setLeadQuantities((prev) => {
+      const next: Record<string, number> = {}
+      for (const lead of allLeads) {
+        const maxAllowed = Math.max(1, Math.min(3, lead.remainingSlots || 1))
+        const current = prev[lead.id] ?? 1
+        next[lead.id] = Math.min(Math.max(current, 1), maxAllowed)
+      }
+      return next
+    })
+  }, [allLeads])
+
+  const handleAddToCart = async (leadId: string, quantity: number) => {
+    const userToken = localStorage.getItem('user_token')
+    if (!userToken) {
+      setCartFeedback('Please login first to add leads in cart.')
+      return
+    }
+
+    setActiveCartLeadId(leadId)
+    setCartFeedback('')
+    let networkError: Error | null = null
+
+    for (const baseUrl of API_BASE_URL_CANDIDATES) {
+      try {
+        const response = await fetch(`${baseUrl}/api/v1/cart/add-cart`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${userToken}`,
+          },
+          body: JSON.stringify({ leadId, quantity }),
+        })
+        const payload = await response.json()
+
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.message ?? 'Unable to add lead in cart.')
+        }
+
+        setCartFeedback(payload?.message ?? 'Added to cart successfully.')
+        window.dispatchEvent(new Event('cart:updated'))
+        setActiveCartLeadId(null)
+        return
+      } catch (error) {
+        networkError = error instanceof Error ? error : new Error('Unable to add lead in cart.')
+      }
+    }
+
+    setCartFeedback(networkError?.message ?? 'Unable to add lead in cart.')
+    setActiveCartLeadId(null)
   }
 
   return (
@@ -412,18 +479,28 @@ export function HomePage() {
                   exit={{ opacity: 0, y: 12 }}
                   transition={{ duration: 0.35, delay: index * 0.03 }}
                   whileHover={{ y: -6, boxShadow: '0 14px 26px rgba(0,0,0,0.10)' }}
-                  className="relative overflow-hidden rounded-2xl border border-stone-300 bg-[#efefef] shadow-sm"
+                  className={`relative overflow-hidden rounded-2xl border border-stone-300 shadow-sm ${
+                    lead.isSoldOut ? 'bg-stone-200' : 'bg-[#efefef]'
+                  }`}
                 >
-                  {lead.isSoldOut ? (
-                    <div className="pointer-events-none absolute top-4 -right-10 z-10 rotate-[35deg] border-2 border-red-700 bg-red-600/95 px-10 py-1 text-sm font-extrabold tracking-widest text-white shadow-lg">
-                      SOLD OUT
-                    </div>
-                  ) : null}
-                  <img
-                    src={lead.image}
-                    alt={lead.title}
-                    className="h-44 w-full rounded-t-2xl object-cover"
-                  />
+                  <div className="relative">
+                    <img
+                      src={lead.image}
+                      alt={lead.title}
+                      className={`h-44 w-full rounded-t-2xl object-cover ${
+                        lead.isSoldOut ? 'grayscale-[35%] brightness-90' : ''
+                      }`}
+                    />
+                    {lead.isSoldOut ? (
+                      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+                        <img
+                          src="/sold-out-stamp.png"
+                          alt="Sold Out"
+                          className="h-24 w-24 rotate-[-16deg] object-contain opacity-95 sm:h-28 sm:w-28"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
                   <div className="space-y-2.5 p-3">
                     <h3 className="text-[22px] leading-tight font-extrabold text-stone-900">
                       {lead.title}
@@ -440,19 +517,68 @@ export function HomePage() {
                         ) : null}
                         ₹{lead.price}/-
                       </p>
-                      <motion.button
-                        type="button"
-                        whileHover={{ scale: 1.04 }}
-                        whileTap={{ scale: 0.97 }}
-                        className={`rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition ${
-                          lead.isSoldOut
-                            ? 'cursor-not-allowed bg-stone-400'
-                            : 'bg-green-500 hover:bg-green-600'
-                        }`}
-                        disabled={lead.isSoldOut}
-                      >
-                        {lead.isSoldOut ? 'Sold Out' : 'Add to Cart'}
-                      </motion.button>
+                      <div className="flex items-center gap-2">
+                        <div className="inline-flex items-center rounded-full border border-stone-300 bg-white">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setLeadQuantities((prev) => ({
+                                ...prev,
+                                [lead.id]: Math.max(1, (prev[lead.id] ?? 1) - 1),
+                              }))
+                            }
+                            className="h-8 w-8 rounded-l-full text-base font-bold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            disabled={lead.isSoldOut || (leadQuantities[lead.id] ?? 1) <= 1}
+                            aria-label="Decrease quantity"
+                          >
+                            -
+                          </button>
+                          <span className="min-w-7 text-center text-sm font-semibold text-stone-800">
+                            {leadQuantities[lead.id] ?? 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setLeadQuantities((prev) => ({
+                                ...prev,
+                                [lead.id]: Math.min(
+                                  Math.max(1, Math.min(3, lead.remainingSlots || 1)),
+                                  (prev[lead.id] ?? 1) + 1,
+                                ),
+                              }))
+                            }
+                            className="h-8 w-8 rounded-r-full text-base font-bold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            disabled={
+                              lead.isSoldOut ||
+                              (leadQuantities[lead.id] ?? 1) >=
+                                Math.max(1, Math.min(3, lead.remainingSlots || 1))
+                            }
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <motion.button
+                          type="button"
+                          onClick={() => {
+                            void handleAddToCart(lead.id, leadQuantities[lead.id] ?? 1)
+                          }}
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.97 }}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition ${
+                            lead.isSoldOut
+                              ? 'cursor-not-allowed bg-stone-400'
+                              : 'bg-green-500 hover:bg-green-600'
+                          }`}
+                          disabled={lead.isSoldOut || activeCartLeadId === lead.id}
+                        >
+                          {lead.isSoldOut
+                            ? 'Sold Out'
+                            : activeCartLeadId === lead.id
+                              ? 'Adding...'
+                              : 'Add'}
+                        </motion.button>
+                      </div>
                     </div>
                     <p className="text-xs text-stone-400">{new Date(lead.createdAt).toLocaleDateString()}</p>
                   </div>
@@ -461,6 +587,11 @@ export function HomePage() {
             </AnimatePresence>
           </div>
         )}
+        {cartFeedback ? (
+          <p className="mt-4 rounded-xl border border-[#F8B020]/40 bg-[#FFF7E8] px-4 py-2 text-sm font-medium text-stone-700">
+            {cartFeedback}
+          </p>
+        ) : null}
 
         {hasMoreLeads && !isLeadsLoading ? (
           <div className="mt-10 flex justify-center">

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
 const API_BASE_URL_CANDIDATES = Array.from(
@@ -13,6 +13,38 @@ const API_BASE_URL_CANDIDATES = Array.from(
 const buildAuthUrl = (apiBaseUrl: string, path: string) =>
   `${apiBaseUrl}/api/v1/auth${path}`
 const buildApiUrl = (apiBaseUrl: string, path: string) => `${apiBaseUrl}/api/v1${path}`
+const RAZORPAY_KEY_ID =
+  import.meta.env.VITE_RAZORPAY_KEY_ID ?? import.meta.env.VITE_RAZORPAY_KEY ?? 'demo_key'
+
+const getLeadPreviewImage = (id: string) => {
+  const lastChar = id?.slice(-1) ?? ''
+  const parsed = Number.parseInt(lastChar, 16)
+  const index = Number.isNaN(parsed) ? 1 : (parsed % 3) + 1
+  return `/lead-room-${index}.jpg`
+}
+
+declare global {
+  interface RazorpayCheckout {
+    open: () => void
+    on: (event: string, callback: (response: Record<string, unknown>) => void) => void
+  }
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => RazorpayCheckout
+  }
+}
+
+const ensureRazorpayLoaded = async () => {
+  if (window.Razorpay) return
+
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Unable to load Razorpay checkout script.'))
+    document.body.appendChild(script)
+  })
+}
 
 type HistoryLead = {
   id: string
@@ -23,15 +55,47 @@ type HistoryLead = {
   address: string
   phone: string
   price: number
+  quantity: number
   status: string
   isDownloaded: boolean
   paidAt: string
 }
 
+type HistoryApiOrder = {
+  orderId?: string
+  status?: string
+  isDownloaded?: boolean
+  paidAt?: string
+  items?: Array<{
+    leadId?: string
+    title?: string
+    city?: string
+    customerName?: string
+    address?: string
+    phone?: string
+    price?: number
+    quantity?: number
+  }>
+}
+
+type CartLead = {
+  _id: string
+  title: string
+  price: number
+  quantity: number
+  city: string
+  state: string
+  remainingSlots: number
+  totalSlots: number
+  expiresAt: string
+}
+
 export function PublicHeader() {
+  const navigate = useNavigate()
   const [panelMode, setPanelMode] = useState<
     | 'account'
     | 'history'
+    | 'cart'
     | 'login'
     | 'signup'
     | 'forgot-email'
@@ -90,6 +154,15 @@ export function PublicHeader() {
   const [profilePic, setProfilePic] = useState('')
   const [historyLeads, setHistoryLeads] = useState<HistoryLead[]>([])
   const [isHistoryLoading, setIsHistoryLoading] = useState(false)
+  const [cartLeads, setCartLeads] = useState<CartLead[]>([])
+  const [removedCartLeads, setRemovedCartLeads] = useState<{ _id: string; title: string; reason: string }[]>(
+    [],
+  )
+  const [cartSummary, setCartSummary] = useState({ totalItems: 0, totalAmount: 0 })
+  const [isCartLoading, setIsCartLoading] = useState(false)
+  const [isPaymentProcessing, setIsPaymentProcessing] = useState(false)
+  const [downloadOrderId, setDownloadOrderId] = useState<string | null>(null)
+  const [isDownloadPopupOpen, setIsDownloadPopupOpen] = useState(false)
   const isPanelOpen = panelMode !== null
   const userToken = localStorage.getItem('user_token')
   const hasSavedAddress = Boolean(
@@ -225,12 +298,7 @@ export function PublicHeader() {
   const handleGoogleLogin = () => {
     resetAuthMessages()
     const googleAuthUrl = buildAuthUrl(API_BASE_URL_CANDIDATES[0], '/google')
-    const openedWindow = window.open(googleAuthUrl, '_blank', 'noopener,noreferrer')
-
-    if (!openedWindow) {
-      // Fallback when popup is blocked by browser settings.
-      window.location.assign(googleAuthUrl)
-    }
+    window.location.assign(googleAuthUrl)
   }
 
   const fetchHistoryLeads = async () => {
@@ -251,7 +319,31 @@ export function PublicHeader() {
         throw new Error(payload?.message ?? 'Unable to load purchase history.')
       }
 
-      setHistoryLeads(Array.isArray(payload?.data) ? payload.data : [])
+      const orders = Array.isArray(payload?.data) ? (payload.data as HistoryApiOrder[]) : []
+      const flattened: HistoryLead[] = orders.flatMap((order) => {
+        const orderId = order?.orderId ?? ''
+        const status = order?.status ?? 'PAID'
+        const isDownloaded = Boolean(order?.isDownloaded)
+        const paidAt = order?.paidAt ?? new Date().toISOString()
+        const items = Array.isArray(order?.items) ? order.items : []
+
+        return items.map((item, index) => ({
+          id: item?.leadId || `${orderId}-${index}`,
+          orderId,
+          title: item?.title ?? 'Lead',
+          city: item?.city ?? 'N/A',
+          customerName: item?.customerName ?? 'N/A',
+          address: item?.address ?? 'N/A',
+          phone: item?.phone ?? 'N/A',
+          price: Number(item?.price) || 0,
+          quantity: Number(item?.quantity) || 1,
+          status,
+          isDownloaded,
+          paidAt,
+        }))
+      })
+
+      setHistoryLeads(flattened)
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Unable to load purchase history.')
     } finally {
@@ -259,7 +351,281 @@ export function PublicHeader() {
     }
   }
 
-  const handleDownloadLead = async (leadId: string) => {
+  const fetchCart = async () => {
+    if (!userToken) {
+      setCartLeads([])
+      setRemovedCartLeads([])
+      setCartSummary({ totalItems: 0, totalAmount: 0 })
+      return
+    }
+
+    try {
+      setIsCartLoading(true)
+      resetAuthMessages()
+      const response = await requestApi('/cart/get-cart', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      })
+      const payload = await response.json()
+
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message ?? 'Unable to load cart.')
+      }
+
+      const data = payload?.data ?? {}
+      setCartLeads(Array.isArray(data.leads) ? data.leads : [])
+      setRemovedCartLeads(Array.isArray(data.removedLeads) ? data.removedLeads : [])
+      setCartSummary({
+        totalItems: Number(data.totalItems) || 0,
+        totalAmount: Number(data.totalAmount) || 0,
+      })
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Unable to load cart.')
+    } finally {
+      setIsCartLoading(false)
+    }
+  }
+
+  const handleAddCartQuantity = async (leadId: string) => {
+    if (!userToken) {
+      setAuthError('Please login first.')
+      setPanelMode('login')
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      resetAuthMessages()
+      const response = await requestApi('/cart/add-cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({ leadId, quantity: 1 }),
+      })
+      const payload = await response.json()
+
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message ?? 'Unable to update cart.')
+      }
+
+      setAuthSuccess(payload?.message ?? 'Cart updated successfully.')
+      await fetchCart()
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Unable to update cart.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRemoveCartQuantity = async (leadId: string) => {
+    if (!userToken) {
+      setAuthError('Please login first.')
+      setPanelMode('login')
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      resetAuthMessages()
+      const response = await requestApi('/cart/delete-cart-item', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({ leadId, quantity: 1 }),
+      })
+      const payload = await response.json()
+
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message ?? 'Unable to update cart.')
+      }
+
+      setAuthSuccess(payload?.message ?? 'Cart updated successfully.')
+      await fetchCart()
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Unable to update cart.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDeleteCartItem = async (leadId: string, quantity: number) => {
+    if (!userToken) {
+      setAuthError('Please login first.')
+      setPanelMode('login')
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      resetAuthMessages()
+      const response = await requestApi('/cart/delete-cart-item', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({ leadId, quantity }),
+      })
+      const payload = await response.json()
+
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message ?? 'Unable to delete cart item.')
+      }
+
+      setAuthSuccess(payload?.message ?? 'Cart updated successfully.')
+      await fetchCart()
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Unable to delete cart item.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleClearCart = async () => {
+    if (!userToken) {
+      setAuthError('Please login first.')
+      setPanelMode('login')
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      resetAuthMessages()
+      const response = await requestApi('/cart/delete-cart', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      })
+      const payload = await response.json()
+
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message ?? 'Unable to clear cart.')
+      }
+
+      setAuthSuccess(payload?.message ?? 'Cart cleared successfully.')
+      await fetchCart()
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Unable to clear cart.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleProceedToPay = async () => {
+    if (!userToken) {
+      setAuthError('Please login first.')
+      setPanelMode('login')
+      return
+    }
+
+    if (cartLeads.length === 0) {
+      setAuthError('Your cart is empty.')
+      return
+    }
+
+    try {
+      setIsPaymentProcessing(true)
+      resetAuthMessages()
+
+      const createResponse = await requestApi('/payments/create', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      })
+      const createPayload = await createResponse.json()
+
+      if (!createResponse.ok || !createPayload?.success) {
+        throw new Error(createPayload?.message ?? 'Unable to create payment order.')
+      }
+
+      const orderData = createPayload?.data ?? {}
+      if (!orderData?.razorpayOrderId) {
+        throw new Error('Payment order ID missing. Please try again.')
+      }
+      const internalOrderId =
+        typeof orderData?.internalOrderId === 'string' ? orderData.internalOrderId : ''
+
+      await ensureRazorpayLoaded()
+      if (!window.Razorpay) {
+        throw new Error('Razorpay checkout unavailable right now.')
+      }
+
+      const razorpay = new window.Razorpay({
+        key: orderData.keyId || RAZORPAY_KEY_ID,
+        amount: Number(orderData.amount) * 100,
+        currency: orderData.currency ?? 'INR',
+        name: 'Leads Solution',
+        description: `${orderData.leadsCount ?? cartSummary.totalItems} lead(s) purchase`,
+        order_id: orderData.razorpayOrderId,
+        modal: {
+          ondismiss: () => {
+            setAuthError('Payment cancelled.')
+            setIsPaymentProcessing(false)
+          },
+        },
+        handler: async (response: {
+          razorpay_order_id: string
+          razorpay_payment_id: string
+          razorpay_signature: string
+        }) => {
+          try {
+            const verifyResponse = await requestApi('/payments/verify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${userToken}`,
+              },
+              body: JSON.stringify({
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              }),
+            })
+            const verifyPayload = await verifyResponse.json()
+
+            if (!verifyResponse.ok || !verifyPayload?.success) {
+              throw new Error(verifyPayload?.message ?? 'Payment verification failed.')
+            }
+
+            setAuthSuccess(verifyPayload?.message ?? 'Payment successful.')
+            await fetchCart()
+            if (internalOrderId) {
+              setDownloadOrderId(internalOrderId)
+              setIsDownloadPopupOpen(true)
+            } else {
+              setPanelMode('history')
+              void fetchHistoryLeads()
+            }
+          } catch (error) {
+            setAuthError(error instanceof Error ? error.message : 'Payment verification failed.')
+          } finally {
+            setIsPaymentProcessing(false)
+          }
+        },
+      })
+
+      razorpay.on('payment.failed', (response: Record<string, unknown>) => {
+        const error = response?.error as { description?: string } | undefined
+        setAuthError(error?.description || 'Payment Failed')
+        setIsPaymentProcessing(false)
+      })
+
+      razorpay.open()
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Unable to start payment.')
+      setIsPaymentProcessing(false)
+    }
+  }
+
+  const handleDownloadLead = async (orderId: string) => {
     if (!userToken) {
       setAuthError('Please login first.')
       return
@@ -268,7 +634,7 @@ export function PublicHeader() {
     try {
       setIsLoading(true)
       resetAuthMessages()
-      const response = await requestApi(`/leads/download/${leadId}`, {
+      const response = await requestApi(`/leads/download/${orderId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${userToken}`,
@@ -289,7 +655,7 @@ export function PublicHeader() {
       const blob = await response.blob()
       const contentDisposition = response.headers.get('content-disposition') ?? ''
       const filenameMatch = /filename="?([^"]+)"?/i.exec(contentDisposition)
-      const filename = filenameMatch?.[1] ?? `leads-${leadId}.xlsx`
+      const filename = filenameMatch?.[1] ?? `leads-${orderId}.xlsx`
 
       const objectUrl = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -305,6 +671,18 @@ export function PublicHeader() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleDownloadAfterPayment = async () => {
+    if (!downloadOrderId) {
+      setAuthError('Order ID missing for download.')
+      return
+    }
+
+    await handleDownloadLead(downloadOrderId)
+    setIsDownloadPopupOpen(false)
+    setPanelMode('history')
+    void fetchHistoryLeads()
   }
 
   const fetchProfile = async () => {
@@ -449,10 +827,58 @@ export function PublicHeader() {
     } finally {
       localStorage.removeItem('user_token')
       localStorage.removeItem('user_profile')
+      sessionStorage.clear()
+
+      // Best-effort cleanup for browser-managed cache storage.
+      try {
+        if ('caches' in window) {
+          const cacheKeys = await window.caches.keys()
+          await Promise.all(cacheKeys.map((cacheKey) => window.caches.delete(cacheKey)))
+        }
+      } catch {
+        // Ignore cache cleanup errors.
+      }
+
+      setCartLeads([])
+      setRemovedCartLeads([])
+      setCartSummary({ totalItems: 0, totalAmount: 0 })
+      setHistoryLeads([])
       setPanelMode('login')
       setAuthSuccess('Logged out successfully.')
     }
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('gauth') !== '1') return
+
+    const token = params.get('token')
+    const serializedUser = params.get('user')
+    const googleError = params.get('error')
+
+    if (googleError) {
+      setAuthError(googleError)
+      navigate('/', { replace: true })
+      return
+    }
+
+    if (token) {
+      let parsedUser: unknown = undefined
+      if (serializedUser) {
+        try {
+          parsedUser = JSON.parse(serializedUser)
+        } catch {
+          parsedUser = undefined
+        }
+      }
+      storeUserSession(token, parsedUser)
+      setPanelMode(null)
+      setIsMobileMenuOpen(false)
+      setAuthSuccess('Logged in successfully using Google.')
+    }
+
+    navigate('/', { replace: true })
+  }, [navigate])
 
   useEffect(() => {
     if (panelMode === 'account' && userToken) {
@@ -465,6 +891,35 @@ export function PublicHeader() {
       void fetchHistoryLeads()
     }
   }, [panelMode, userToken])
+
+  useEffect(() => {
+    if (panelMode === 'cart' && userToken) {
+      void fetchCart()
+    }
+  }, [panelMode, userToken])
+
+  useEffect(() => {
+    if (userToken) {
+      void fetchCart()
+    } else {
+      setCartLeads([])
+      setRemovedCartLeads([])
+      setCartSummary({ totalItems: 0, totalAmount: 0 })
+    }
+  }, [userToken])
+
+  useEffect(() => {
+    if (!userToken) return
+
+    const handleCartUpdated = () => {
+      void fetchCart()
+    }
+
+    window.addEventListener('cart:updated', handleCartUpdated)
+    return () => {
+      window.removeEventListener('cart:updated', handleCartUpdated)
+    }
+  }, [userToken])
 
   const handleForgotPasswordRequest = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -718,7 +1173,11 @@ export function PublicHeader() {
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <button
               type="button"
-              className="hidden h-9 w-9 place-items-center rounded-full border border-stone-300 bg-white text-stone-600 transition hover:border-stone-400 hover:text-stone-800 sm:grid"
+              onClick={() => {
+                resetAuthMessages()
+                setPanelMode('cart')
+              }}
+              className="relative hidden h-9 w-9 place-items-center rounded-full border border-stone-300 bg-white text-stone-600 transition hover:border-stone-400 hover:text-stone-800 sm:grid"
               aria-label="Cart"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -726,6 +1185,11 @@ export function PublicHeader() {
                 <circle cx="10" cy="20" r="1.5" />
                 <circle cx="17" cy="20" r="1.5" />
               </svg>
+              {cartSummary.totalItems > 0 ? (
+                <span className="absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-[#F8B020] px-1 text-[10px] leading-none font-bold text-white">
+                  {cartSummary.totalItems}
+                </span>
+              ) : null}
             </button>
             <button
               type="button"
@@ -848,6 +1312,17 @@ export function PublicHeader() {
                       type="button"
                       onClick={() => {
                         resetAuthMessages()
+                        setPanelMode('cart')
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="w-full rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700"
+                    >
+                      Cart
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetAuthMessages()
                         setPanelMode('history')
                         setIsMobileMenuOpen(false)
                       }}
@@ -941,6 +1416,11 @@ export function PublicHeader() {
                 <h2 className="mt-2 text-4xl font-black text-stone-900">History</h2>
                 <p className="mt-1 text-sm text-stone-600">Your purchased leads</p>
               </>
+            ) : panelMode === 'cart' ? (
+              <>
+                <h2 className="mt-2 text-4xl font-black text-stone-900">Cart</h2>
+                <p className="mt-1 text-sm text-stone-600">Review selected leads before checkout</p>
+              </>
             ) : panelMode === 'forgot-email' ? (
               <>
                 <h2 className="mt-2 text-4xl font-black text-stone-900">Forget Password</h2>
@@ -1010,7 +1490,7 @@ export function PublicHeader() {
                     >
                       <div className="flex items-start gap-3">
                         <img
-                          src={`/lead-room-${(Number(lead.id.at(-1)) % 3) + 1}.jpg`}
+                          src={getLeadPreviewImage(lead.id)}
                           alt={lead.title}
                           className="h-10 w-14 rounded-lg object-cover"
                         />
@@ -1032,7 +1512,7 @@ export function PublicHeader() {
                         <p>{lead.phone}</p>
                         <div className="mt-2 flex items-center justify-between">
                           <p className="text-xs text-stone-600">
-                            {lead.isDownloaded ? '3 Sharing Leads' : '1 Sharing Leads'}
+                            {lead.quantity} {lead.quantity > 1 ? 'Sharing Leads' : 'Sharing Lead'}
                           </p>
                           <span className="rounded-full bg-green-500 px-5 py-1 text-xs font-bold tracking-wide text-white">
                             {lead.status}
@@ -1044,7 +1524,7 @@ export function PublicHeader() {
                         <button
                           type="button"
                           onClick={() => {
-                            void handleDownloadLead(lead.id)
+                            void handleDownloadLead(lead.orderId || lead.id)
                           }}
                           className="w-full rounded-xl border border-[#B3BA70] bg-white px-4 py-2 text-sm font-semibold text-[#99A13E] transition hover:bg-[#F8FADF]"
                         >
@@ -1054,6 +1534,136 @@ export function PublicHeader() {
                     </article>
                   ))}
                 </div>
+              )}
+            </div>
+          ) : panelMode === 'cart' ? (
+            <div className="min-h-[58vh] rounded-t-[34px] bg-[#efefef] px-4 pt-6 pb-8">
+              {!userToken ? (
+                <button
+                  type="button"
+                  onClick={() => setPanelMode('login')}
+                  className="w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+                >
+                  Continue to Login
+                </button>
+              ) : isCartLoading ? (
+                <p className="text-center text-sm font-medium text-stone-600">Loading cart...</p>
+              ) : cartLeads.length === 0 ? (
+                <p className="text-center text-sm text-stone-600">Your cart is empty.</p>
+              ) : (
+                <>
+                  {removedCartLeads.length > 0 ? (
+                    <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                      Some leads are no longer available and removed from cart.
+                    </div>
+                  ) : null}
+                  <div className="space-y-4">
+                    {cartLeads.map((lead) => (
+                      <article
+                        key={lead._id}
+                        className="rounded-2xl border border-[#B3BA70] bg-white p-3 shadow-sm"
+                      >
+                        <div className="flex items-start gap-3">
+                          <img
+                            src={getLeadPreviewImage(lead._id)}
+                            alt={lead.title}
+                            className="h-10 w-14 rounded-lg object-cover"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <h4 className="truncate text-xl font-black text-stone-900">{lead.title}</h4>
+                            <p className="mt-0.5 text-xs text-stone-500">{lead.city} City</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 rounded-xl bg-stone-100 p-3 text-sm text-stone-700">
+                          <p>
+                            {lead.city}, {lead.state}
+                          </p>
+                          <p className="mt-1 text-xs text-stone-600">
+                            Sharing Leads ({lead.totalSlots - lead.remainingSlots}/{lead.totalSlots})
+                          </p>
+                          <div className="mt-3 flex items-center justify-between gap-2">
+                            <div className="inline-flex items-center rounded-full border border-stone-300 bg-white">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  void handleRemoveCartQuantity(lead._id)
+                                }}
+                                className="h-8 w-8 rounded-l-full text-base font-bold text-stone-700 hover:bg-stone-100"
+                                aria-label="Decrease quantity"
+                              >
+                                -
+                              </button>
+                              <span className="min-w-8 px-2 text-center text-sm font-semibold">
+                                {lead.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  void handleAddCartQuantity(lead._id)
+                                }}
+                                className="h-8 w-8 rounded-r-full text-base font-bold text-stone-700 hover:bg-stone-100"
+                                aria-label="Increase quantity"
+                              >
+                                +
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                void handleDeleteCartItem(lead._id, lead.quantity)
+                              }}
+                              className="rounded-full border border-red-300 px-3 py-1 text-xs font-semibold text-red-500 hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          <p className="text-sm font-bold text-stone-800">
+                            ₹{lead.price} x {lead.quantity}
+                          </p>
+                          <p className="text-base font-black text-[#0DA638]">
+                            ₹{(lead.price * lead.quantity).toLocaleString()}
+                          </p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    <div className="rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-700">
+                      <div className="flex items-center justify-between">
+                        <span>Total Items</span>
+                        <span>{cartSummary.totalItems}</span>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-base font-black text-stone-900">
+                        <span>Total Amount</span>
+                        <span>₹{cartSummary.totalAmount.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleProceedToPay()
+                      }}
+                      disabled={isPaymentProcessing || isLoading}
+                      className="w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isPaymentProcessing ? 'Opening Payment...' : 'Proceed to Pay'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleClearCart()
+                      }}
+                      className="w-full rounded-2xl border border-red-300 bg-white py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50"
+                    >
+                      Clear Cart
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           ) : panelMode === 'account' ? (
@@ -1847,6 +2457,38 @@ export function PublicHeader() {
           )}
         </aside>
       </div>
+      {isDownloadPopupOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-5 text-center shadow-2xl">
+            <h3 className="text-3xl font-black text-[#F8B020]">Download</h3>
+            <div className="mx-auto mt-3 grid h-20 w-20 place-items-center rounded-full bg-[#FFF7E8]">
+              <svg viewBox="0 0 24 24" className="h-10 w-10 text-[#F8B020]" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 3v11" />
+                <path d="m7 10 5 5 5-5" />
+                <rect x="4" y="18" width="16" height="3" rx="1.5" />
+              </svg>
+            </div>
+            <p className="mt-3 text-sm text-stone-600">Download the lead file from the option below.</p>
+            <button
+              type="button"
+              onClick={() => {
+                void handleDownloadAfterPayment()
+              }}
+              className="mt-4 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+            >
+              Download File
+            </button>
+            <p className="mt-2 text-xs font-semibold text-red-500">Only one time download available</p>
+            <button
+              type="button"
+              onClick={() => setIsDownloadPopupOpen(false)}
+              className="mt-3 text-sm font-semibold text-stone-500 hover:text-stone-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
     </>
   )
 }
