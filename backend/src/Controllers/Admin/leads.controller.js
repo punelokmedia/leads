@@ -23,10 +23,7 @@ const getAllLeads = async (req, res) => {
     const normalizedPage = Math.max(Number(page) || 1, 1);
     const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
 
-    const query = {
-      // status: "ACTIVE",
-      expiresAt: { $gt: new Date() },
-    };
+    const query = {};
 
     if (category) query.category = category;
     if (city) query.city = new RegExp(city, "i");
@@ -300,20 +297,6 @@ const updateLead = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Lead not found",
-      });
-    }
-
-    if (lead.expiresAt < new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot update expired lead",
-      });
-    }
-
-    if (lead.buyers.length >= lead.maxBuyers) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot update sold-out lead",
       });
     }
 

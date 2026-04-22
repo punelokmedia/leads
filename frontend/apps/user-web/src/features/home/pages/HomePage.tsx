@@ -412,8 +412,13 @@ export function HomePage() {
                   exit={{ opacity: 0, y: 12 }}
                   transition={{ duration: 0.35, delay: index * 0.03 }}
                   whileHover={{ y: -6, boxShadow: '0 14px 26px rgba(0,0,0,0.10)' }}
-                  className="overflow-hidden rounded-2xl border border-stone-300 bg-[#efefef] shadow-sm"
+                  className="relative overflow-hidden rounded-2xl border border-stone-300 bg-[#efefef] shadow-sm"
                 >
+                  {lead.isSoldOut ? (
+                    <div className="pointer-events-none absolute top-4 -right-10 z-10 rotate-[35deg] border-2 border-red-700 bg-red-600/95 px-10 py-1 text-sm font-extrabold tracking-widest text-white shadow-lg">
+                      SOLD OUT
+                    </div>
+                  ) : null}
                   <img
                     src={lead.image}
                     alt={lead.title}
