@@ -91,8 +91,7 @@ const getCategoryById = async (req, res) => {
 
 const updateCategory = async (req, res) => {
   try {
-    const { categoryId } = req.body;
-    const { name, icon } = req.body;
+    const { categoryId, name, icon } = req.body;
 
     if (!categoryId) {
       return res.status(404).json({
