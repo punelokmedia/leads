@@ -1,10 +1,10 @@
 import XLSX from "xlsx";
 import ExcelJS from "exceljs";
+import mongoose from "mongoose";
 import { Lead, resolveLeadStatus } from "../../Models/leads.model.js";
 import { Category } from "../../Models/category.model.js";
 import { UploadLog } from "../../Models/uploadLog.model.js";
 import { Order } from "../../Models/orders.models.js";
-import mongoose from "mongoose";
 
 const getAllLeads = async (req, res) => {
   try {
@@ -24,7 +24,7 @@ const getAllLeads = async (req, res) => {
     const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
 
     const query = {
-      status: "ACTIVE",
+      // status: "ACTIVE",
       expiresAt: { $gt: new Date() },
     };
 
@@ -53,6 +53,7 @@ const getAllLeads = async (req, res) => {
       .skip(skip);
 
     const modified = leads.map((lead) => {
+      
       const isPurchased = userId
         ? lead.buyers.some((b) => b.user.toString() === userId)
         : false;
@@ -876,6 +877,7 @@ const getUploadStatus = async (req, res) => {
   });
 };
 
+
 const getUserHistory = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -909,25 +911,40 @@ const getUserHistory = async (req, res) => {
     const history = [];
 
     for (const order of orders) {
-      for (const item of order.leads) {
-        if (!item.lead) continue;
+      let totalAmount = 0;
 
-        const lead = item.lead;
+      const items = order.leads
+        .filter((item) => item.lead) 
+        .map((item) => {
+          const lead = item.lead;
 
-        history.push({
-          id: lead._id,
-          orderId: order._id,
-          title: lead.title || "N/A",
-          city: lead.city || "N/A",
-          customerName: lead.customerName || "N/A",
-          address: lead.address || "N/A",
-          phone: lead.phone || "N/A",
-          price: item.price || 0,
-          status: order.status,
-          isDownloaded: order.isDownloaded,
-          paidAt: order.paidAt,
+          const quantity = item.quantity || 1;
+          const price = item.price || 0;
+
+          totalAmount += price * quantity;
+
+          return {
+            leadId: lead._id,
+            title: lead.title || "N/A",
+            city: lead.city || "N/A",
+            customerName: lead.customerName || "N/A",
+            address: lead.address || "N/A",
+            phone: lead.phone || "N/A",
+            price,
+            quantity,
+            total: price * quantity, 
+          };
         });
-      }
+
+      history.push({
+        orderId: order._id,
+        status: order.status,
+        isDownloaded: order.isDownloaded,
+        paidAt: order.paidAt,
+        totalAmount, 
+        totalItems: items.reduce((sum, i) => sum + i.quantity, 0), 
+        items, 
+      });
     }
 
     return res.status(200).json({
@@ -945,6 +962,76 @@ const getUserHistory = async (req, res) => {
     });
   }
 };
+
+// const getUserHistory = async (req, res) => {
+//   try {
+//     if (!req.user || !req.user.id) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "User not authenticated",
+//       });
+//     }
+
+//     const userId = req.user.id;
+
+//     const orders = await Order.find({
+//       user: userId,
+//       status: "PAID",
+//     })
+//       .populate({
+//         path: "leads.lead",
+//         select: "title city customerName address phone image",
+//       })
+//       .sort({ createdAt: -1 });
+
+//     if (!orders.length) {
+//       return res.status(200).json({
+//         success: true,
+//         message: "No purchase history found",
+//         count: 0,
+//         data: [],
+//       });
+//     }
+
+//     const history = [];
+
+//     for (const order of orders) {
+//       for (const item of order.leads) {
+//         if (!item.lead) continue;
+
+//         const lead = item.lead;
+
+//         history.push({
+//           id: lead._id,
+//           orderId: order._id,
+//           title: lead.title || "N/A",
+//           city: lead.city || "N/A",
+//           customerName: lead.customerName || "N/A",
+//           address: lead.address || "N/A",
+//           phone: lead.phone || "N/A",
+//           price: item.price || 0,
+//           status: order.status,
+//           isDownloaded: order.isDownloaded,
+//           paidAt: order.paidAt,
+//         });
+//       }
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "User purchase history fetched successfully",
+//       count: history.length,
+//       data: history,
+//     });
+//   } catch (error) {
+//     console.error("Get History Error:", error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong while fetching history",
+//     });
+//   }
+// };
 
 const downloadLeads = async (req, res) => {
   try {
