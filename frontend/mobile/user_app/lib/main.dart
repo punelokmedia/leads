@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:user_app/app/user_app.dart';
 
-void main() {
+
+// Change here to use local machine server
+const String _env = 'local';
+// const String _env = 'dev';
+
+void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const UserApp());
+  await dotenv.load(fileName: '.env.$_env');
+  runApp(
+    ProviderScope(
+      child:const UserApp()
+    )
+  );
 }
