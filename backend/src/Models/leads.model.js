@@ -2,15 +2,15 @@ import mongoose, { Schema } from "mongoose";
 
 const LeadSchema = new Schema(
   {
-    // 🔹 Basic Info
     title: {
       type: String,
       required: true,
+      trim: true,
     },
-
     description: {
       type: String,
       required: true,
+      trim: true,
     },
 
     category: {
@@ -19,21 +19,22 @@ const LeadSchema = new Schema(
       required: true,
     },
 
-    // 📍 Location (Important)
     city: {
       type: String,
       required: true,
+      trim: true,
       index: true,
     },
-
     state: {
       type: String,
       required: true,
+      trim: true,
       index: true,
     },
 
     address: {
-      type: String, // full address (hidden initially)
+      type: String,
+      trim: true,
     },
 
     location: {
@@ -43,14 +44,19 @@ const LeadSchema = new Schema(
         default: "Point",
       },
       coordinates: {
-        type: [Number], // [lng, lat]
+        type: [Number],
+        required: true,
       },
     },
 
-    // 💰 Pricing
     price: {
       type: Number,
       required: true,
+      min: 1,
+    },
+    originalPrice: {
+      type: Number,
+      min: 1,
     },
 
     budget: {
@@ -58,54 +64,64 @@ const LeadSchema = new Schema(
       max: Number,
     },
 
-    // 👤 Customer Info (hidden before purchase)
     customerName: String,
-    phone: String,
 
-    // 🔐 Lead Access Logic
-    buyers: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        purchasedAt: {
-          type: Date,
-          default: Date.now,
-        },
+    phone: {
+      type: String,
+      validate: {
+        validator: (v) => !v || /^[6-9]\d{9}$/.test(v),
       },
-    ],
+    },
+
+    buyersCount: {
+      type: Number,
+      default: 0,
+    },
 
     maxBuyers: {
       type: Number,
       default: 3,
+      min: 1,
     },
 
-    // ⏳ Expiry
     expiresAt: {
       type: Date,
       required: true,
     },
 
-    // 📊 Status
     status: {
       type: String,
       enum: ["ACTIVE", "SOLD_OUT", "EXPIRED"],
       default: "ACTIVE",
+      index: true,
     },
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // admin
+      ref: "User",
+      required: true,
     },
   },
   { timestamps: true },
 );
 
 LeadSchema.index({ location: "2dsphere" });
-LeadSchema.index({ category: 1 });
-LeadSchema.index({ city: 1, state: 1 });
 LeadSchema.index({ expiresAt: 1 });
-LeadSchema.index({ status: 1 });
+LeadSchema.index({ maxBuyers: 1, buyersCount: 1 });
+
+LeadSchema.virtual("remainingSlots").get(function () {
+  return this.maxBuyers - this.buyersCount;
+});
+
+const resolveLeadStatus = (lead) => {
+  if (lead.expiresAt < new Date()) return "EXPIRED";
+  if (lead.buyersCount >= lead.maxBuyers) return "SOLD_OUT";
+  return "ACTIVE";
+};
+
+LeadSchema.pre("save", function () {
+  this.status = resolveLeadStatus(this);
+});
 
 export const Lead = mongoose.model("Lead", LeadSchema);
+export { resolveLeadStatus };

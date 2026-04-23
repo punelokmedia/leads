@@ -7,43 +7,32 @@ const AddressSchema = new Schema(
       enum: ["HOME", "OFFICE", "OTHER"],
       default: "HOME",
     },
-
     street: {
       type: String,
       required: true,
       trim: true,
     },
-
     landmark: {
       type: String,
       trim: true,
     },
-
     city: {
       type: String,
       required: true,
       trim: true,
     },
-
     state: {
       type: String,
       required: true,
       trim: true,
     },
-
     country: {
       type: String,
       default: "India",
     },
-
     zipcode: {
       type: String,
       required: true,
-    },
-
-    isDefault: {
-      type: Boolean,
-      default: false,
     },
   },
   { _id: false },
@@ -66,55 +55,57 @@ const UserSchema = new Schema(
     email: {
       type: String,
       required: true,
+      unique: true,
       lowercase: true,
       trim: true,
     },
 
     password: {
       type: String,
-      required: function () {
-        return this.provider === "LOCAL";
-      },
+      default: null,
     },
-
-    phoneNumber: {
+    googleId: {
       type: String,
     },
+
+    providers: {
+      type: [String],
+      enum: ["LOCAL", "GOOGLE"],
+      default: [],
+    },
+
+    phoneNumber: String,
+    profilePic: String,
 
     role: {
       type: String,
       enum: ["ADMIN", "USER"],
       default: "USER",
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
 
     address: {
-      type: [AddressSchema],
-      default: [],
+      type: AddressSchema,
+      default: null,
     },
 
-    provider: {
-      type: String,
-      enum: ["LOCAL", "GOOGLE"],
-      default: "LOCAL",
-    },
-
-    googleId: {
-      type: String,
-    },
-    resetOtp: {
-      type: String,
-    },
-    resetOtpExpire: {
-      type: Date,
-    },
+    resetOtp: String,
+    resetOtpExpire: Date,
   },
+  { timestamps: true },
+);
+
+UserSchema.index(
+  { googleId: 1 },
   {
-    timestamps: true,
+    unique: true,
+    partialFilterExpression: { googleId: { $exists: true } },
   },
 );
 
-UserSchema.index({ email: 1 });
-UserSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 UserSchema.index({ "address.city": 1, "address.state": 1 });
 
 export const User = mongoose.model("User", UserSchema);

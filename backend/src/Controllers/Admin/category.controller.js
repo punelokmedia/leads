@@ -1,4 +1,5 @@
 import { Category } from "../../Models/category.model.js";
+import { Lead } from "../../Models/leads.model.js";
 
 const createCategory = async (req, res) => {
   try {
@@ -90,8 +91,7 @@ const getCategoryById = async (req, res) => {
 
 const updateCategory = async (req, res) => {
   try {
-    const { categoryId } = req.body;
-    const { name, icon } = req.body;
+    const { categoryId, name, icon } = req.body;
 
     if (!categoryId) {
       return res.status(404).json({
