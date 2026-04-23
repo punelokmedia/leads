@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import '../domain/history_model.dart';
 import 'history_repository.dart';
@@ -46,6 +45,10 @@ class HistoryController extends StateNotifier<HistoryState> {
         errorMessage: 'Failed to load history. Please try again.',
       );
     }
+  }
+
+  void reset() {
+    state = const HistoryState();
   }
 
   void clearError() => state = state.copyWith(errorMessage: null);

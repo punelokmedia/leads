@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:user_app/app/app_router.dart';
@@ -18,12 +18,17 @@ class HistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  bool _hasRequestedHistoryForCurrentSession = false;
+  bool _didResetForLoggedOut = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final isLoggedIn = ref.read(isLoggedInProvider);
       if (isLoggedIn) {
+        _hasRequestedHistoryForCurrentSession = true;
+        _didResetForLoggedOut = false;
         ref.read(historyControllerProvider.notifier).loadHistory();
       }
     });
@@ -31,6 +36,30 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoggedIn = ref.watch(isLoggedInProvider);
+
+    // If user logs in after landing here, trigger history fetch once.
+    if (isLoggedIn && !_hasRequestedHistoryForCurrentSession) {
+      _hasRequestedHistoryForCurrentSession = true;
+      _didResetForLoggedOut = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(historyControllerProvider.notifier).loadHistory();
+        }
+      });
+    }
+
+    // If user logs out, clear stale history and allow next auto-fetch after login.
+    if (!isLoggedIn && !_didResetForLoggedOut) {
+      _didResetForLoggedOut = true;
+      _hasRequestedHistoryForCurrentSession = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(historyControllerProvider.notifier).reset();
+        }
+      });
+    }
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: _HistoryAppBar(),
@@ -76,6 +105,8 @@ class _HistoryBody extends ConsumerWidget {
     final error = ref.watch(historyErrorProvider);
     final items = ref.watch(historyItemsProvider);
     final isEmpty = ref.watch(historyIsEmptyProvider);
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final bottomScrollSpace = 120.h + bottomInset;
 
 
     if (!isLoggedIn) {
@@ -99,7 +130,10 @@ class _HistoryBody extends ConsumerWidget {
       onRefresh: () =>
           ref.read(historyControllerProvider.notifier).loadHistory(),
       child: ListView.builder(
-        padding: EdgeInsets.only(top: 10.h, bottom: 24.h),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        padding: EdgeInsets.only(top: 10.h, bottom: bottomScrollSpace),
         itemCount: items.length,
         itemBuilder: (_, index) =>
             HistoryCard(item: items[index], isHighlighted: index == 0),

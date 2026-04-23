@@ -665,6 +665,13 @@ export function PublicHeader() {
       link.click()
       link.remove()
       URL.revokeObjectURL(objectUrl)
+
+      // Reflect one-time download state immediately in history UI.
+      setHistoryLeads((prev) =>
+        prev.map((lead) =>
+          (lead.orderId || lead.id) === orderId ? { ...lead, isDownloaded: true } : lead,
+        ),
+      )
       setAuthSuccess('Leads downloaded successfully.')
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Download failed.')
@@ -1523,12 +1530,17 @@ export function PublicHeader() {
                       <div className="mt-3">
                         <button
                           type="button"
+                          disabled={lead.isDownloaded}
                           onClick={() => {
                             void handleDownloadLead(lead.orderId || lead.id)
                           }}
-                          className="w-full rounded-xl border border-[#B3BA70] bg-white px-4 py-2 text-sm font-semibold text-[#99A13E] transition hover:bg-[#F8FADF]"
+                          className={`w-full rounded-xl border px-4 py-2 text-sm font-semibold transition ${
+                            lead.isDownloaded
+                              ? 'cursor-not-allowed border-stone-300 bg-stone-100 text-stone-500'
+                              : 'border-[#B3BA70] bg-white text-[#99A13E] hover:bg-[#F8FADF]'
+                          }`}
                         >
-                          Download Leads
+                          {lead.isDownloaded ? 'Already Downloaded' : 'Download Leads'}
                         </button>
                       </div>
                     </article>

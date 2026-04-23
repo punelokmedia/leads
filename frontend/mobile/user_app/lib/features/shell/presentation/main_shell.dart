@@ -7,47 +7,52 @@ class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
+  static const double _navDesignHeight = 74;
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
     return Scaffold(
       body: navigationShell,
-      extendBody: true,
-      bottomNavigationBar: Container(
-        height: 85.h,
-        margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(40.r), 
-          border: Border.all(color: const Color(0xFFFFB800), width: 1.5), 
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            _buildNavItem(
-              index: 0,
-              label: 'History',
-              iconPath: "assets/Icons/svg/navbar/history.svg",
-            ),
-            _buildDivider(),
-            _buildNavItem(
-              index: 1,
-              label: 'Home',
-              iconPath: "assets/Icons/svg/navbar/home.svg",
-            ),
-            _buildDivider(),
-            _buildNavItem(
-              index: 2,
-              label: 'My Account',
-              iconPath: "assets/Icons/svg/navbar/profile.svg",
-            ),
-          ],
+      extendBody: false,
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(10.w, 0, 10.w, (8.h + bottomInset)),
+        child: Container(
+          height: _navDesignHeight.h,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(32.r),
+            border: Border.all(color: const Color(0xFFFFB800), width: 1.2),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x1A000000),
+                blurRadius: 14,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _buildNavItem(
+                index: 0,
+                label: 'History',
+                iconPath: "assets/Icons/svg/navbar/history.svg",
+              ),
+              _buildDivider(),
+              _buildNavItem(
+                index: 1,
+                label: 'Home',
+                iconPath: "assets/Icons/svg/navbar/home.svg",
+              ),
+              _buildDivider(),
+              _buildNavItem(
+                index: 2,
+                label: 'My Account',
+                iconPath: "assets/Icons/svg/navbar/profile.svg",
+              ),
+            ],
+          ),
         ),
       ),
     );

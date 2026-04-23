@@ -5,13 +5,15 @@ import 'package:user_app/core/theme/app_text_styles.dart';
 
 class SupportOptionTile extends StatelessWidget {
   final String title;
+  final String subtitle;
   final IconData icon;
   final VoidCallback onTap;
 
   const SupportOptionTile({
     super.key, 
-    required this.title, 
-    required this.icon, 
+    required this.title,
+    required this.subtitle,
+    required this.icon,
     required this.onTap,
   });
 
@@ -21,51 +23,70 @@ class SupportOptionTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          
-          boxShadow: [
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: AppColors.grey229),
+          boxShadow: const [
             BoxShadow(
-              color: Color.fromRGBO(0,0,0,0.25), 
-              blurRadius: 4,
-              offset: const Offset(0, 4),
-            )
+              color: Color(0x12000000),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
           ],
         ),
         child: Row(
           children: [
-            
             Container(
-              width: 54.r,
-              height: 54.r,
+              width: 44.r,
+              height: 44.r,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE8E8E8), 
+                color: const Color(0xFFF3F3F3),
                 border: Border.all(
-                  color: const Color(0xFFF8B020), 
+                  color: const Color(0xFFF8B020),
                   width: 1.2,
                 ),
               ),
               child: Icon(
-                icon, 
-                color: const Color(0xFF636363), 
-                size: 28.r,
+                icon,
+                color: const Color(0xFF636363),
+                size: 22.r,
               ),
             ),
-            SizedBox(width: 16.w),
-          
+            SizedBox(width: 12.w),
             Expanded(
-              child: Text(
-                title, 
-                style: AppTextStyles.poppins(
-                  fontSize: 22.sp, 
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.black,
-                  height: 1,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.poppins(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.black,
+                      height: 1.2,
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.poppins(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.grey117,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
               ),
+            ),
+            SizedBox(width: 8.w),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14.r,
+              color: AppColors.grey143,
             ),
           ],
         ),
