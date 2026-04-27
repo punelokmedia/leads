@@ -12,6 +12,7 @@ class HomeState {
   final String? errorMessage;
   final String searchQuery;
   final String? selectedCity;
+  final String? selectedCategoryId;
 
   const HomeState({
     this.leads = const [],
@@ -20,6 +21,7 @@ class HomeState {
     this.errorMessage,
     this.searchQuery = '',
     this.selectedCity,
+    this.selectedCategoryId,
   });
 
   HomeState copyWith({
@@ -29,6 +31,7 @@ class HomeState {
     String? errorMessage,
     String? searchQuery,
     String? selectedCity,
+    String? selectedCategoryId,
   }) {
     return HomeState(
       leads: leads ?? this.leads,
@@ -37,6 +40,7 @@ class HomeState {
       errorMessage: errorMessage,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedCity: selectedCity ?? this.selectedCity,
+      selectedCategoryId: selectedCategoryId ?? this.selectedCategoryId,
     );
   }
 
@@ -50,17 +54,19 @@ class HomeController extends StateNotifier<HomeState> {
 
   HomeController(this._repository) : super(const HomeState());
 
-  Future<void> loadLeads({String? city, bool isReset = false}) async {
+  Future<void> loadLeads({String? city, String? categoryId, bool isReset = false}) async {
     final cityToFetch = isReset ? null : (city ?? state.selectedCity);
+    final categoryToFetch = isReset ? null : (categoryId ?? state.selectedCategoryId);
     
     state = state.copyWith(
       isLoading: true, 
       errorMessage: null, 
-      selectedCity: isReset ? "" : cityToFetch
+      selectedCity: isReset ? "" : cityToFetch,
+      selectedCategoryId: isReset ? "" : categoryToFetch,
     );
 
     try {
-      final leads = await _repository.fetchLeads(city: cityToFetch);
+      final leads = await _repository.fetchLeads(city: cityToFetch, categoryId: categoryToFetch);
       state = state.copyWith(leads: leads, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());

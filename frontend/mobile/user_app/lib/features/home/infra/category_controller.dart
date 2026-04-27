@@ -1,31 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
-import 'package:user_app/features/home/domain/lead_category.dart' show LeadCategory;
+import 'package:user_app/features/home/domain/lead_category.dart';
+import 'package:user_app/core/network/api_endpoints.dart';
+import 'package:user_app/core/network/dio_provider.dart';
 
 final categorySearchProvider = StateProvider<String>((ref) => "");
 
-final categoryListProvider = Provider<List<LeadCategory>>((ref) {
+final categoryListProvider = FutureProvider<List<LeadCategory>>((ref) async {
   final searchQuery = ref.watch(categorySearchProvider).toLowerCase();
-  
-  // Static list based on Figma
-  final allCategories = [
-    LeadCategory(id: '1', title: 'Instagram Reels', subtitle: 'Bengaluru, 560091', iconPath: 'reels_icon', iconColor: Colors.orange, newCount: 12, isPopular: true),
-    LeadCategory(id: '2', title: 'Mumbai / Thane\nNavi Mumbai Leads', iconPath: 'loc_pin', iconColor: Colors.green, newCount: 5),
-    LeadCategory(id: '3', title: 'Bengaluru Leads', iconPath: 'loc_pin', iconColor: Colors.yellow, newCount: 6),
-    LeadCategory(id: '4', title: 'Hydrabad / Secundarabad Lead', iconPath: 'loc_pin', iconColor: Colors.purple, newCount: 6),
-    LeadCategory(id: '5', title: 'Pune Leads', iconPath: 'loc_pin', iconColor: Colors.blue),
-    LeadCategory(id: '6', title: 'Delhi / NCR Leads', iconPath: 'loc_pin', iconColor: Colors.pink),
-    LeadCategory(id: '7', title: 'Kolkata Leads', iconPath: 'loc_pin', iconColor: Colors.blue),
-    LeadCategory(id: '8', title: 'Chennai Leads', iconPath: 'loc_pin', iconColor: Colors.yellow),
-    LeadCategory(id: '9', title: 'Lucknow Leads', iconPath: 'loc_pin', iconColor: Colors.purple),
-    LeadCategory(id: '10', title: 'Ahmedabad Leads', iconPath: 'loc_pin', iconColor: Colors.orange),
-    LeadCategory(id: '11', title: 'Nagpur Leads', iconPath: 'loc_pin', iconColor: Colors.green),
-    LeadCategory(id: '12', title: 'Jaipur Leads', iconPath: 'loc_pin', iconColor: Colors.purple),
-    LeadCategory(id: '13', title: 'Surat Leads', iconPath: 'loc_pin', iconColor: Colors.yellow),
-    
-  ];
+  final dio = ref.watch(dioProvider);
 
-  if (searchQuery.isEmpty) return allCategories;
-  return allCategories.where((c) => c.title.toLowerCase().contains(searchQuery)).toList();
+  try {
+    final response = await dio.get(ApiEndpoints.getAllCategories);
+    if (response.statusCode == 200) {
+      final List data = response.data['data'] ?? [];
+      final allCategories = data.map((json) {
+        return LeadCategory(
+          id: json['_id'] ?? '',
+          title: json['name'] ?? '',
+          iconPath: json['icon'] ?? 'loc_pin',
+          iconColor: Colors.blue, // Default color for backend categories
+          isPopular: false,
+        );
+      }).toList();
+
+      if (searchQuery.isEmpty) return allCategories;
+      return allCategories.where((c) => c.title.toLowerCase().contains(searchQuery)).toList();
+    }
+  } catch (e) {
+    debugPrint('Error fetching categories: $e');
+  }
+
+  return [];
 });

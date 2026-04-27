@@ -81,7 +81,7 @@ class _LeadImage extends StatelessWidget {
               height: 190.h,
               width: double.infinity,
               fit: BoxFit.cover,
-              cacheWidth: 700,
+              cacheWidth: 400,
               filterQuality: FilterQuality.medium,
               errorBuilder: (context, error, stackTrace) => Container(
                 height: 190.h,

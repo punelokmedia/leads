@@ -3,7 +3,7 @@ import 'package:user_app/core/network/api_endpoints.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
 
 abstract class IHomeRepository {
-  Future<List<LeadModel>> fetchLeads({String? city});
+  Future<List<LeadModel>> fetchLeads({String? city, String? categoryId});
   Future<List<LeadModel>> searchLeads(String query);
 }
 
@@ -13,12 +13,13 @@ class HomeRepository implements IHomeRepository {
   HomeRepository(this._dio);
 
   @override
-  Future<List<LeadModel>> fetchLeads({String? city}) async {
+  Future<List<LeadModel>> fetchLeads({String? city, String? categoryId}) async {
     try {
       final response = await _dio.get(
         ApiEndpoints.getAllLeads,
         queryParameters: {
           if (city != null && city.isNotEmpty) 'city': city.toLowerCase(),
+          if (categoryId != null && categoryId.isNotEmpty) 'category': categoryId,
         },
       );
 

@@ -12,8 +12,9 @@ class AppTextStyles {
     double? height,
     double? letterSpacing,
   }) {
+    final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
     return GoogleFonts.instrumentSans(
-      fontSize: fontSize,
+      fontSize: safeFontSize,
       fontWeight: fontWeight,
       color: color,
       height: height,
@@ -29,8 +30,9 @@ class AppTextStyles {
     double? height,
     double? letterSpacing,
   }) {
+    final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
     return GoogleFonts.inter(
-      fontSize: fontSize,
+      fontSize: safeFontSize,
       fontWeight: fontWeight,
       color: color,
       height: height,
@@ -49,8 +51,11 @@ class AppTextStyles {
     Color? decorationColor, //  OPTIONAL (good practice)
     TextDecorationStyle? decorationStyle, //  OPTIONAL
   }) {
+    // Safety check for fontSize to prevent StrutStyle assertion failures
+    final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
+
     return GoogleFonts.poppins(
-      fontSize: fontSize,
+      fontSize: safeFontSize,
       fontWeight: fontWeight,
       color: color,
       height: height,
@@ -72,8 +77,9 @@ class AppTextStyles {
     Color? decorationColor, //  OPTIONAL (good practice)
     TextDecorationStyle? decorationStyle, //  OPTIONAL
   }) {
+    final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
     return GoogleFonts.roboto(
-      fontSize: fontSize,
+      fontSize: safeFontSize,
       fontWeight: fontWeight,
       color: color,
       height: height,

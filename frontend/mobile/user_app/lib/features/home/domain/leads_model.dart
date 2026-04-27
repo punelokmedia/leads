@@ -34,9 +34,9 @@ class LeadModel {
   factory LeadModel.fromJson(Map<String, dynamic> json) {
 
   final fallbackImages = [
-      'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600',
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600',
-      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600',
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200&q=60',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=200&q=60',
+      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=200&q=60',
     ];
 
   return LeadModel(

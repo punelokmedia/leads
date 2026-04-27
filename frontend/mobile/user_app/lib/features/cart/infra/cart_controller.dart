@@ -60,21 +60,25 @@ class CartController extends StateNotifier<CartState> {
 
     if (_isLoggedIn) {
       try {
-        // Capture the message from the repo
         resultMessage = await _repo.addToCartRemote(
           newItem.id,
           newItem.quantity,
         );
       } catch (e) {
-        // Extract backend error message if available
-        if (e is DioException && e.response?.data != null) {
-          resultMessage = e.response?.data['message'];
+        if (e is DioException) {
+          final data = e.response?.data;
+          if (data is Map) {
+            resultMessage = data['message']?.toString() ?? "Failed to add to cart";
+          } else {
+            resultMessage = "Failed to add to cart";
+          }
+        } else {
+          resultMessage = "Failed to add to cart";
         }
-        resultMessage ??= "Failed to add to remote cart";
         state = state.copyWith(error: resultMessage);
+        return resultMessage;
       }
     } else {
-      // Guest logic
       final currentItems = await _repo.fetchLocalCart();
       if (!currentItems.any((e) => e.id == newItem.id)) {
         final updated = [...currentItems, newItem];
@@ -94,7 +98,6 @@ class CartController extends StateNotifier<CartState> {
     return item?.quantity ?? 0;
   }
 
-  // ── INCREMENT / ADD TO CART ──
   Future<String?> incrementLead(LeadModel lead) async {
     final existingItem = state.items
         .where((e) => e.id == lead.id.toString())
@@ -108,9 +111,10 @@ class CartController extends StateNotifier<CartState> {
         resultMessage = await _repo.addToCartRemote(lead.id.toString(), 1);
       } catch (e) {
         String errMsg = "Failed to update cart";
-        if (e is DioException && e.response?.data != null) {
-          if (e.response?.data is Map) {
-            errMsg = e.response?.data['message'] ?? errMsg;
+        if (e is DioException) {
+          final data = e.response?.data;
+          if (data is Map) {
+            errMsg = data['message']?.toString() ?? errMsg;
           }
         }
         state = state.copyWith(error: errMsg);

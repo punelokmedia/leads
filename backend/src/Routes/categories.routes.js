@@ -10,8 +10,8 @@ import {
 
 const router = express.Router();
 
-router.get("/get-all-categories", auth, getAllCategories);
-router.get("/get-category/:id", auth, getCategoryById);
+router.get("/get-all-categories", getAllCategories);
+router.get("/get-category/:id", getCategoryById);
 
 router.post("/add-category", auth, isAdmin, createCategory);
 router.put("/update-category", auth, isAdmin, updateCategory);

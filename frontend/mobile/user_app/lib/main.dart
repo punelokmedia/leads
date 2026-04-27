@@ -8,12 +8,8 @@ import 'package:user_app/app/user_app.dart';
 const String _env = 'local';
 // const String _env = 'dev';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env.$_env');
-  runApp(
-    ProviderScope(
-      child:const UserApp()
-    )
-  );
+  runApp(const ProviderScope(child: UserApp()));
 }

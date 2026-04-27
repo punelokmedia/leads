@@ -5,8 +5,11 @@
     <application
         android:label="Leads Sell"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
-        android:hardwareAccelerated="true"
+        android:icon="@mipmap/launcher_icon"
+        android:hardwareAccelerated="true">
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
         <meta-data
             android:name="com.google.android.gms.wallet.api.enabled"
             android:value="true" />

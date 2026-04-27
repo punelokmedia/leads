@@ -56,8 +56,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         .read(cartControllerProvider.notifier)
         .addLeadToCart(lead);
     if (message != null && mounted) {
-      final isError = message.contains("already") || message.contains("Failed");
-
+      final lower = message.toLowerCase();
+      final isError = lower.contains('already') ||
+          lower.contains('failed') ||
+          lower.contains('sold') ||
+          lower.contains('max') ||
+          lower.contains('not') ||
+          lower.contains('error');
       if (isError) {
         SnackbarHelper.showError(context, message);
       } else {
@@ -103,8 +108,9 @@ class _HomeLeadList extends ConsumerWidget {
       onRefresh: () => ref.read(homeControllerProvider.notifier).loadLeads(),
       child: ListView.builder(
         itemCount: leads.length,
-        padding: EdgeInsets.only(bottom: 20.h),
-        
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.paddingOf(context).bottom + 90.h,
+        ),
         cacheExtent: 500,
         itemBuilder: (context, index) {
           final lead = leads[index];

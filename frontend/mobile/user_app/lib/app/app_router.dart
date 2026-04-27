@@ -11,6 +11,7 @@ import 'package:user_app/features/cart/presentation/screens/payment_successful.d
 import 'package:user_app/features/history/presentation/history_screen.dart';
 import 'package:user_app/features/home/presentation/screens/home_screen.dart';
 import 'package:user_app/features/home/presentation/screens/select_category_screen.dart';
+import 'package:user_app/features/home/presentation/screens/select_city_screen.dart';
 import 'package:user_app/features/profile/presentation/screens/change_password_screen.dart';
 import 'package:user_app/features/profile/presentation/screens/edit_profile_screen.dart';
 
@@ -33,6 +34,7 @@ abstract final class AppRouter {
   static const String termsPath = '/terms-conditions';
   static const String helpSupportPath = '/help-support';
   static const String selectCategoryPath = '/select-category';
+  static const String selectCityPath = '/select-city';
   static const String forgotPasswordPath = '/forgot-password';
   static const String otpVerificationPath = '/otp-verification';
   static const String forgotChangePasswordPath = '/forgot-change-password';
@@ -87,10 +89,7 @@ abstract final class AppRouter {
         path: helpSupportPath,
         builder: (context, state) => const HelpSupportScreen(),
       ),
-      GoRoute(
-        path: selectCategoryPath,
-        builder: (context, state) => const SelectCategoryScreen(),
-      ),
+
       StatefulShellRoute.indexedStack(
         builder:
             (
@@ -104,18 +103,36 @@ abstract final class AppRouter {
           StatefulShellBranch(
             routes: <RouteBase>[
               GoRoute(
-                path: leadsPath,
+                path: homePath,
                 builder: (BuildContext context, GoRouterState state) =>
-                    const HistoryScreen(),
+                    const HomeScreen(),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: <RouteBase>[
               GoRoute(
-                path: homePath,
+                path: selectCategoryPath,
                 builder: (BuildContext context, GoRouterState state) =>
-                    const HomeScreen(),
+                    const SelectCategoryScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: selectCityPath,
+                builder: (BuildContext context, GoRouterState state) =>
+                    const SelectCityScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: leadsPath,
+                builder: (BuildContext context, GoRouterState state) =>
+                    const HistoryScreen(),
               ),
             ],
           ),

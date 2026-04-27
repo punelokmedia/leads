@@ -24,14 +24,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppColors.white,
       elevation: 0,
-      leadingWidth: 25.w,
-      leading: Padding(
-        padding: EdgeInsets.only(left: 10.w),
-        child: GestureDetector(
-          onTap: () => context.push(AppRouter.selectCategoryPath),
-          child: Icon(Icons.menu, color: Colors.black87, size: 24.r)
-        ),
-      ),
+      automaticallyImplyLeading: false,
       title: _LogoTitle(),
       actions: [
         _CartButton(count: cartCount, onTap: onCartTap),

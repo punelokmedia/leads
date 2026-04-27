@@ -8,17 +8,17 @@ import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/features/home/domain/lead_category.dart';
-import 'package:user_app/features/home/infra/category_controller.dart';
+import 'package:user_app/features/home/infra/city_controller.dart';
 import 'package:user_app/features/home/shared/home_providers.dart';
 
-class SelectCategoryScreen extends HookConsumerWidget { 
-  const SelectCategoryScreen({super.key});
+class SelectCityScreen extends HookConsumerWidget { 
+  const SelectCityScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final searchController = useTextEditingController();
-    final categoriesAsync = ref.watch(categoryListProvider);
-    final searchQuery = ref.watch(categorySearchProvider);
+    final cities = ref.watch(cityListProvider);
+    final searchQuery = ref.watch(citySearchProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F1F1),
@@ -28,7 +28,7 @@ class SelectCategoryScreen extends HookConsumerWidget {
         centerTitle: true,
         automaticallyImplyLeading: false,
         title: Text(
-          "Select Lead Category",
+          "Select City",
           style: AppTextStyles.poppins(
             fontWeight: FontWeight.w600,
             color: AppColors.black,
@@ -61,7 +61,7 @@ class SelectCategoryScreen extends HookConsumerWidget {
                 TextField(
                   controller: searchController,
                   onChanged: (value) {
-                    ref.read(categorySearchProvider.notifier).state = value;
+                    ref.read(citySearchProvider.notifier).state = value;
                   },
                   style: AppTextStyles.poppins(
                     fontSize: 20.sp,
@@ -83,7 +83,7 @@ class SelectCategoryScreen extends HookConsumerWidget {
                               icon: Icon(Icons.close, size: 20.r, color: Colors.grey),
                               onPressed: () {
                                 searchController.clear();
-                                ref.read(categorySearchProvider.notifier).state = "";
+                                ref.read(citySearchProvider.notifier).state = "";
                               },
                             ),
                           SvgPicture.asset(
@@ -100,7 +100,6 @@ class SelectCategoryScreen extends HookConsumerWidget {
                     ),
                   ),
                 ),
-
 
                 if (searchQuery.isEmpty)
                   Padding(
@@ -130,44 +129,42 @@ class SelectCategoryScreen extends HookConsumerWidget {
           ),
 
           Expanded(
-            child: categoriesAsync.when(
-              data: (categories) {
-                if (categories.isEmpty) {
-                  return Padding(
+            child: cities.isEmpty
+                ? Padding(
                     padding: EdgeInsets.only(top: 50.h),
-                    child: Center(child: Text("No categories found for '$searchQuery'")),
-                  );
-                }
+                    child: Center(child: Text("No cities found for '$searchQuery'")),
+                  )
+                : (() {
+                    // Flatten list for ListView.builder
+                    final List<dynamic> items = [];
+                    final popular = cities.where((e) => e.isPopular).toList();
+                    final others = cities.where((e) => !e.isPopular).toList();
 
-                // Flatten list for ListView.builder
-                final List<dynamic> items = [];
-                final popular = categories.where((e) => e.isPopular).toList();
-                final others = categories.where((e) => !e.isPopular).toList();
-
-                if (popular.isNotEmpty) {
-                  items.add("Popular");
-                  items.addAll(popular);
-                }
-                if (others.isNotEmpty) {
-                  items.add("City Leads");
-                  items.addAll(others);
-                }
-
-                return ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    if (item is String) {
-                      return _buildHeader(item);
+                    if (popular.isNotEmpty) {
+                      items.add("Popular");
+                      items.addAll(popular);
                     }
-                    return _CategoryTile(item: item as LeadCategory);
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text("Failed to load categories: $err")),
-            ),
+                    if (others.isNotEmpty) {
+                      items.add("City Leads");
+                      items.addAll(others);
+                    }
+
+                    return ListView.builder(
+                      padding: EdgeInsets.only(
+                        left: 16.w,
+                        right: 16.w,
+                        bottom: MediaQuery.paddingOf(context).bottom + 90.h,
+                      ),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        if (item is String) {
+                          return _buildHeader(item);
+                        }
+                        return _CityTile(item: item as LeadCategory);
+                      },
+                    );
+                  })(),
           ),
         ],
       ),
@@ -189,15 +186,16 @@ class SelectCategoryScreen extends HookConsumerWidget {
   }
 }
 
-class _CategoryTile extends ConsumerWidget {
+class _CityTile extends ConsumerWidget {
   final LeadCategory item;
-  const _CategoryTile({required this.item});
+  const _CityTile({required this.item});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () {
-        ref.read(homeControllerProvider.notifier).loadLeads(categoryId: item.id, city: "");
+        final cityName = item.title.split(' ').first;
+        ref.read(homeControllerProvider.notifier).loadLeads(city: cityName, categoryId: ""); 
         context.go(AppRouter.homePath);
       },
 
@@ -259,7 +257,6 @@ class _CategoryTile extends ConsumerWidget {
               ),
             ),
 
-            // Badge
             if (item.newCount != null)
               Container(
                 padding:

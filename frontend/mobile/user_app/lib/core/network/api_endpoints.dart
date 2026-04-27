@@ -14,6 +14,7 @@ class ApiEndpoints {
   static const String _user = '$_apiV1/user';
   static const String _auth = '$_apiV1/auth';
   static const String _cart = '$_apiV1/cart';
+  static const String _categories = '$_apiV1/categories';
   
 
   // ── Auth endpoints ─────────────────────────────────────────────────────────
@@ -39,6 +40,8 @@ class ApiEndpoints {
   static const String checkoutCart = '$_cart/checkout'; // POST
   static const String history='$_apiV1/leads/history';
   
+  // ── Categories ───────────────────────────────────────
+  static const String getAllCategories = '$_categories/get-all-categories';
 
   //──Profile───────────────────────────────────────
   static const String fetchProfile='$_auth/profile';

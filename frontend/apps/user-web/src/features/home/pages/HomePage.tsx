@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useSearchParams } from 'react-router-dom'
 
 const PAGE_LIMIT = 10
 const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
@@ -115,6 +116,8 @@ export function HomePage() {
   const firstRowCategories = categoryLinks.slice(0, 6)
   const secondRowCategories = categoryLinks.slice(6)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
+  const categoryIdParam = searchParams.get('category')
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [selectedSort, setSelectedSort] = useState<'latest' | 'cheapest' | 'expensive'>('latest')
@@ -150,6 +153,7 @@ export function HomePage() {
           })
           if (appliedSearch.trim()) params.set('search', appliedSearch.trim())
           if (selectedCity) params.set('city', selectedCity)
+          if (categoryIdParam) params.set('category', categoryIdParam)
 
           const response = await fetch(
             `${baseUrl}/api/v1/leads/get-all-leads?${params.toString()}`,
@@ -193,7 +197,7 @@ export function HomePage() {
     }
 
     void fetchLeads(1, false)
-  }, [appliedSearch, selectedCity, selectedSort])
+  }, [appliedSearch, selectedCity, selectedSort, categoryIdParam])
 
   const handleLoadMore = () => {
     if (isLeadsLoading || isLoadingMore || !hasMoreLeads) return
@@ -215,6 +219,7 @@ export function HomePage() {
           })
           if (appliedSearch.trim()) params.set('search', appliedSearch.trim())
           if (selectedCity) params.set('city', selectedCity)
+          if (categoryIdParam) params.set('category', categoryIdParam)
 
           const response = await fetch(
             `${baseUrl}/api/v1/leads/get-all-leads?${params.toString()}`,

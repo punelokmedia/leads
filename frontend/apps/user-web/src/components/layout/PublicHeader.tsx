@@ -90,6 +90,12 @@ type CartLead = {
   expiresAt: string
 }
 
+type Category = {
+  _id: string
+  name: string
+  icon?: string
+}
+
 export function PublicHeader() {
   const navigate = useNavigate()
   const [panelMode, setPanelMode] = useState<
@@ -163,6 +169,9 @@ export function PublicHeader() {
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false)
   const [downloadOrderId, setDownloadOrderId] = useState<string | null>(null)
   const [isDownloadPopupOpen, setIsDownloadPopupOpen] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(false)
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
   const isPanelOpen = panelMode !== null
   const userToken = localStorage.getItem('user_token')
   const hasSavedAddress = Boolean(
@@ -888,6 +897,24 @@ export function PublicHeader() {
   }, [navigate])
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsCategoriesLoading(true)
+        const response = await requestApi('/categories/get-all-categories')
+        const payload = await response.json()
+        if (response.ok && payload?.success) {
+          setCategories(payload?.data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error)
+      } finally {
+        setIsCategoriesLoading(false)
+      }
+    }
+    fetchCategories()
+  }, [])
+
+  useEffect(() => {
     if (panelMode === 'account' && userToken) {
       fetchProfile()
     }
@@ -1151,6 +1178,56 @@ export function PublicHeader() {
             >
               Home
             </NavLink>
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsCategoryDropdownOpen(true)}
+              onMouseLeave={() => setIsCategoryDropdownOpen(false)}
+            >
+              <button
+                type="button"
+                className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  isCategoryDropdownOpen
+                    ? 'bg-stone-200 text-stone-900'
+                    : 'text-stone-600 hover:bg-white hover:text-stone-900'
+                }`}
+              >
+                Categories
+                <svg viewBox="0 0 24 24" className={`h-4 w-4 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {isCategoryDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-56 rounded-2xl border border-stone-200 bg-white py-2 shadow-xl">
+                  {isCategoriesLoading ? (
+                    <div className="px-4 py-3 text-sm text-stone-500">Loading categories...</div>
+                  ) : categories.length > 0 ? (
+                    <div className="max-h-80 overflow-y-auto">
+                      {categories.map((category) => (
+                        <NavLink
+                          key={category._id}
+                          to={`/?category=${category._id}`}
+                          className="block px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50 hover:text-stone-900"
+                        >
+                          <div className="flex items-center gap-2">
+                            {category.icon && (
+                              category.icon.startsWith('http') ? (
+                                <img src={category.icon} alt="" className="h-5 w-5 object-contain opacity-80" />
+                              ) : (
+                                <span className="text-lg">{category.icon}</span>
+                              )
+                            )}
+                            <span>{category.name}</span>
+                          </div>
+                        </NavLink>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-stone-500">No categories found</div>
+                  )}
+                </div>
+              )}
+            </div>
             <NavLink
               to="/pricing"
               className={({ isActive }) =>
@@ -1290,6 +1367,53 @@ export function PublicHeader() {
               >
                 Home
               </NavLink>
+              
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-stone-700 hover:bg-stone-100"
+                >
+                  <span>Categories</span>
+                  <svg viewBox="0 0 24 24" className={`h-4 w-4 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isCategoryDropdownOpen && (
+                  <div className="pl-6 space-y-1">
+                    {isCategoriesLoading ? (
+                      <div className="px-3 py-2 text-sm text-stone-500">Loading...</div>
+                    ) : categories.length > 0 ? (
+                      categories.map((category) => (
+                        <NavLink
+                          key={category._id}
+                          to={`/?category=${category._id}`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={({ isActive }) =>
+                            `block rounded-lg px-3 py-2 text-sm font-medium ${
+                              isActive ? 'bg-stone-200 text-stone-900' : 'text-stone-600 hover:bg-stone-50'
+                            }`
+                          }
+                        >
+                          <div className="flex items-center gap-2">
+                            {category.icon && (
+                              category.icon.startsWith('http') ? (
+                                <img src={category.icon} alt="" className="h-5 w-5 object-contain opacity-80" />
+                              ) : (
+                                <span className="text-lg">{category.icon}</span>
+                              )
+                            )}
+                            <span>{category.name}</span>
+                          </div>
+                        </NavLink>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-stone-500">No categories</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <NavLink
                 to="/pricing"
                 onClick={() => setIsMobileMenuOpen(false)}
