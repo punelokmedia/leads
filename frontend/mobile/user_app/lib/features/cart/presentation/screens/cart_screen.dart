@@ -50,7 +50,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         .verifyFinalPayment(response);
 
     if (internalId != null && mounted) {
-      context.push(AppRouter.paymentsuccessPath, extra: internalId);
+      context.go(AppRouter.paymentsuccessPath, extra: internalId);
     } else if (mounted) {
       _showSnack("Payment verification failed", isError: true);
     }
