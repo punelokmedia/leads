@@ -8,7 +8,7 @@ export function PublicFooter() {
           <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-start">
             <div>
               <img
-                src="/interiorwala-logo.png"
+                src="/logo.png"
                 alt="Interiorwala"
                 className="h-12 w-auto rounded-md bg-white px-2 py-1"
               />

@@ -1,21 +1,20 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useAdminAuth } from '@/features/auth/context/AdminAuthContext'
 
 type AdminNavItem = {
   to: string
   label: string
   end?: boolean
-  icon: 'dashboard' | 'leads' | 'settings' | 'create' | 'category' | 'admin' | 'payment' | 'analytics'
+  icon: 'dashboard' | 'leads' | 'settings' | 'create' | 'category' | 'admin' | 'payment' | 'analytics' | 'city'
   hint?: string
 }
 
 const primaryNav: AdminNavItem[] = [
   { to: '/', label: 'Dashboard', end: true, icon: 'dashboard', hint: 'Overview' },
   { to: '/leads', label: 'Leads', icon: 'leads', hint: 'Records' },
-  { to: '/leads?create=1', label: 'Create Lead', icon: 'create', hint: 'Open side form' },
-  { to: '/leads?upload=1', label: 'Bulk Upload', icon: 'create', hint: 'Excel upload' },
   { to: '/categories', label: 'Categories', icon: 'category', hint: 'Category manager' },
-  { to: '/categories?create=1', label: 'Add Category', icon: 'create', hint: 'Open side form' },
+  { to: '/cities', label: 'City Manager', icon: 'city', hint: 'Add / edit cities' },
   { to: '/admins/add', label: 'Add Admin', icon: 'admin', hint: 'Promote user role' },
   { to: '/web-analytics', label: 'Web Analytics', icon: 'analytics', hint: 'Charts & trends' },
   { to: '/payments', label: 'Payment History', icon: 'payment', hint: 'Transaction logs' },
@@ -29,6 +28,22 @@ type AdminSidebarProps = {
 export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const { userEmail, logout } = useAdminAuth()
   const location = useLocation()
+  const [cities, setCities] = useState<Array<{ _id: string; name: string }>>([])
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/v1/cities/get-all-cities')
+        const payload = (await response.json()) as { success?: boolean; data?: Array<{ _id: string; name: string }> }
+        if (response.ok && payload.success) {
+          setCities(payload.data ?? [])
+        }
+      } catch {
+        setCities([])
+      }
+    }
+    void fetchCities()
+  }, [])
 
   function renderIcon(icon: AdminNavItem['icon']) {
     const iconClass = 'h-4 w-4'
@@ -92,6 +107,14 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         </svg>
       )
     }
+    if (icon === 'city') {
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
+          <path d="M12 20c4-4 6-7 6-10a6 6 0 1 0-12 0c0 3 2 6 6 10Z" stroke="currentColor" strokeWidth="1.8" />
+          <circle cx="12" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+        </svg>
+      )
+    }
     return (
       <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
         <path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -102,6 +125,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   function resolveItemActive(item: AdminNavItem, isActive: boolean) {
     if (item.to === '/leads') return location.pathname === '/leads'
     if (item.to === '/categories') return location.pathname === '/categories'
+    if (item.to === '/cities') return location.pathname === '/cities'
     if (item.to === '/admins/add') return location.pathname === '/admins/add'
     if (item.to === '/web-analytics') return location.pathname === '/web-analytics'
     if (item.to === '/payments') return location.pathname === '/payments'
@@ -230,6 +254,23 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               Main
             </p>
             <nav className="flex flex-col gap-1.5">{primaryNav.map((item) => renderNavItem(item, 'main'))}</nav>
+          </div>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Listed Cities</p>
+            {cities.length === 0 ? (
+              <p className="mt-2 text-xs text-slate-400">No cities listed yet.</p>
+            ) : (
+              <div className="mt-2 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto">
+                {cities.map((city) => (
+                  <span
+                    key={city._id}
+                    className="rounded-full border border-violet-300/40 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-100"
+                  >
+                    {city.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

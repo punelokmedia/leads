@@ -6,6 +6,9 @@ import { Category } from "../../Models/category.model.js";
 import { UploadLog } from "../../Models/uploadLog.model.js";
 import { Order } from "../../Models/orders.models.js";
 
+const buildLeadDisplayId = (leadId) =>
+  `NL${String(leadId || "").slice(-8).toUpperCase()}`;
+
 const getAllLeads = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -50,20 +53,30 @@ const getAllLeads = async (req, res) => {
       .skip(skip);
 
     const modified = leads.map((lead) => {
-      
+      const buyers = Array.isArray(lead.buyers) ? lead.buyers : [];
       const isPurchased = userId
-        ? lead.buyers.some((b) => b.user.toString() === userId)
+        ? buyers.some((b) => b?.user?.toString?.() === userId)
         : false;
 
       const obj = lead.toObject();
 
       delete obj.buyers;
       delete obj.phone;
+      delete obj.primaryPhone;
+      delete obj.alternatePhone;
+      delete obj.email;
       delete obj.customerName;
       delete obj.address;
+      const resolvedLeadDisplayId = buildLeadDisplayId(obj._id);
+
+      if (lead.leadDisplayId !== resolvedLeadDisplayId) {
+        lead.leadDisplayId = resolvedLeadDisplayId;
+        void lead.save().catch(() => {});
+      }
 
       return {
         ...obj,
+        leadDisplayId: resolvedLeadDisplayId,
         isPurchased,
         price: obj.price,
         originalPrice: obj.originalPrice || null,
@@ -110,21 +123,31 @@ const getLeadDetailsById = async (req, res) => {
       });
     }
 
+    const buyers = Array.isArray(lead.buyers) ? lead.buyers : [];
     const isPurchased = userId
-      ? lead.buyers.some((b) => b.user.toString() === userId)
+      ? buyers.some((b) => b?.user?.toString?.() === userId)
       : false;
 
     const status =
       lead.expiresAt < new Date()
         ? "EXPIRED"
-        : lead.buyers.length >= lead.maxBuyers
+        : buyers.length >= lead.maxBuyers
           ? "SOLD_OUT"
           : "ACTIVE";
 
     const responseLead = lead.toObject();
+    const resolvedLeadDisplayId = buildLeadDisplayId(responseLead._id);
+
+    if (lead.leadDisplayId !== resolvedLeadDisplayId) {
+      lead.leadDisplayId = resolvedLeadDisplayId;
+      await lead.save();
+    }
 
     if (!isPurchased) {
       responseLead.phone = null;
+      responseLead.primaryPhone = null;
+      responseLead.alternatePhone = null;
+      responseLead.email = null;
       responseLead.address = null;
       responseLead.customerName = null;
     }
@@ -134,6 +157,7 @@ const getLeadDetailsById = async (req, res) => {
       message: "Lead details fetched successfully",
       data: {
         ...responseLead,
+        leadDisplayId: resolvedLeadDisplayId,
 
         isPurchased,
         status,
@@ -165,10 +189,20 @@ const createLead = async (req, res) => {
       city,
       state,
       address,
+      customerName,
+      clientType,
+      primaryPhone,
+      alternatePhone,
+      email,
+      areaLocality,
+      requirement,
+      propertyType,
+      areaSize,
+      budgetRange,
+      timeline,
       price,
       originalPrice,
       expiresAt,
-      coordinates,
     } = req.body;
 
     const normalizedTitle = String(title ?? "").trim();
@@ -177,6 +211,17 @@ const createLead = async (req, res) => {
     const normalizedCity = String(city ?? "").trim();
     const normalizedState = String(state ?? "").trim();
     const normalizedAddress = address ? String(address).trim() : "";
+    const normalizedCustomerName = String(customerName ?? "").trim();
+    const normalizedClientType = String(clientType ?? "").trim();
+    const normalizedPrimaryPhone = String(primaryPhone ?? "").trim();
+    const normalizedAlternatePhone = String(alternatePhone ?? "").trim();
+    const normalizedEmail = String(email ?? "").trim().toLowerCase();
+    const normalizedAreaLocality = String(areaLocality ?? "").trim();
+    const normalizedRequirement = String(requirement ?? "").trim();
+    const normalizedPropertyType = String(propertyType ?? "").trim();
+    const normalizedAreaSize = String(areaSize ?? "").trim();
+    const normalizedBudgetRange = String(budgetRange ?? "").trim();
+    const normalizedTimeline = String(timeline ?? "").trim();
     const parsedPrice = Number(price);
     const parsedOriginalPrice =
       originalPrice !== undefined && originalPrice !== null && originalPrice !== ""
@@ -189,6 +234,14 @@ const createLead = async (req, res) => {
       !normalizedCategory ||
       !normalizedCity ||
       !normalizedState ||
+      !normalizedCustomerName ||
+      !normalizedClientType ||
+      !normalizedPrimaryPhone ||
+      !normalizedAreaLocality ||
+      !normalizedRequirement ||
+      !normalizedPropertyType ||
+      !normalizedBudgetRange ||
+      !normalizedTimeline ||
       Number.isNaN(parsedPrice) ||
       parsedPrice <= 0 ||
       !expiresAt
@@ -232,27 +285,27 @@ const createLead = async (req, res) => {
       });
     }
 
-    if (!Array.isArray(coordinates) || coordinates.length !== 2) {
+    if (!/^[6-9]\d{9}$/.test(normalizedPrimaryPhone)) {
       return res.status(400).json({
         success: false,
-        message: "Coordinates must be [lng, lat]",
+        message: "Invalid primary phone number",
       });
     }
 
-    const parsedLng = Number(coordinates[0]);
-    const parsedLat = Number(coordinates[1]);
+    if (normalizedAlternatePhone && !/^[6-9]\d{9}$/.test(normalizedAlternatePhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid alternate phone number",
+      });
+    }
 
     if (
-      Number.isNaN(parsedLng) ||
-      Number.isNaN(parsedLat) ||
-      parsedLng < -180 ||
-      parsedLng > 180 ||
-      parsedLat < -90 ||
-      parsedLat > 90
+      normalizedEmail &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
     ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid coordinates",
+        message: "Invalid email",
       });
     }
 
@@ -263,20 +316,37 @@ const createLead = async (req, res) => {
       city: normalizedCity,
       state: normalizedState,
       address: normalizedAddress,
+      customerName: normalizedCustomerName,
+      clientType: normalizedClientType,
+      primaryPhone: normalizedPrimaryPhone,
+      alternatePhone: normalizedAlternatePhone,
+      email: normalizedEmail,
+      areaLocality: normalizedAreaLocality,
+      requirement: normalizedRequirement,
+      propertyType: normalizedPropertyType,
+      areaSize: normalizedAreaSize,
+      budgetRange: normalizedBudgetRange,
+      timeline: normalizedTimeline,
+      phone: normalizedPrimaryPhone,
       price: parsedPrice,
       originalPrice: parsedOriginalPrice,
       expiresAt: expiryDate,
-      location: {
-        type: "Point",
-        coordinates: [parsedLng, parsedLat],
-      },
       createdBy: req.user.id,
     });
+    const resolvedLeadDisplayId = buildLeadDisplayId(lead._id);
+
+    if (lead.leadDisplayId !== resolvedLeadDisplayId) {
+      lead.leadDisplayId = resolvedLeadDisplayId;
+      await lead.save();
+    }
 
     return res.status(201).json({
       success: true,
       message: "Lead created successfully",
-      data: lead,
+      data: {
+        ...lead.toObject(),
+        leadDisplayId: resolvedLeadDisplayId,
+      },
     });
   } catch (error) {
     console.error("Create Lead Error:", error);
@@ -307,11 +377,22 @@ const updateLead = async (req, res) => {
       "city",
       "state",
       "address",
+      "customerName",
+      "clientType",
+      "primaryPhone",
+      "alternatePhone",
+      "email",
+      "areaLocality",
+      "requirement",
+      "propertyType",
+      "areaSize",
+      "budgetRange",
+      "timeline",
       "price",
       "originalPrice", 
       "budget",
       "expiresAt",
-      "location",
+      "phone",
     ];
 
     const updates = {};
@@ -692,12 +773,18 @@ const processLeadsInBackground = async (
         const budgetMax = get(["Budget Max", "budgetMax"]);
 
         const customerName = get(["Customer Name", "customerName"]);
-        const phone = get(["Phone", "phone"]);
+        const clientType = get(["Client Type", "clientType"]);
+        const primaryPhone = get(["Mobile Number (Primary)", "Primary Phone", "primaryPhone", "phone"]);
+        const alternatePhone = get(["Alternate Number", "alternatePhone"]);
+        const email = get(["Email", "email"]);
+        const areaLocality = get(["Area / Locality", "Area Locality", "areaLocality"]);
+        const requirement = get(["Requirement", "requirement"]);
+        const propertyType = get(["Property Type", "propertyType"]);
+        const areaSize = get(["Area Size (Sq. Ft.)", "Area Size", "areaSize"]);
+        const budgetRange = get(["Budget Range", "budgetRange"]);
+        const timeline = get(["Timeline", "timeline"]);
 
         const expiresAt = get(["Expires At", "expiresAt"]);
-
-        const lng = Number(get(["Longitude", "lng"]));
-        const lat = Number(get(["Latitude", "lat"]));
 
         const maxBuyers = Number(get(["Max Buyers"]) || 3);
         const image = get(["Image"]) || "";
@@ -708,6 +795,14 @@ const processLeadsInBackground = async (
           !categoryValue ||
           !city ||
           !state ||
+          !customerName ||
+          !clientType ||
+          !primaryPhone ||
+          !areaLocality ||
+          !requirement ||
+          !propertyType ||
+          !budgetRange ||
+          !timeline ||
           price === undefined ||
           expiresAt === undefined
         ) {
@@ -746,21 +841,13 @@ const processLeadsInBackground = async (
           throw new Error("Expiry date must be in future");
         }
 
-        if (
-          isNaN(lng) ||
-          isNaN(lat) ||
-          lng < -180 ||
-          lng > 180 ||
-          lat < -90 ||
-          lat > 90
-        ) {
-          throw new Error("Invalid coordinates");
+        if (!/^[6-9]\d{9}$/.test(String(primaryPhone))) {
+          throw new Error("Invalid primary phone");
         }
 
-        const location = {
-          type: "Point",
-          coordinates: [lng, lat],
-        };
+        if (alternatePhone && !/^[6-9]\d{9}$/.test(String(alternatePhone))) {
+          throw new Error("Invalid alternate phone");
+        }
 
         leadsToInsert.push({
           title,
@@ -769,7 +856,18 @@ const processLeadsInBackground = async (
           city,
           state,
           address,
-          location,
+          customerName: String(customerName).trim(),
+          clientType: String(clientType).trim(),
+          primaryPhone: String(primaryPhone).trim(),
+          alternatePhone: alternatePhone ? String(alternatePhone).trim() : "",
+          email: email ? String(email).trim().toLowerCase() : "",
+          areaLocality: String(areaLocality).trim(),
+          requirement: String(requirement).trim(),
+          propertyType: String(propertyType).trim(),
+          areaSize: areaSize ? String(areaSize).trim() : "",
+          budgetRange: String(budgetRange).trim(),
+          timeline: String(timeline).trim(),
+          phone: String(primaryPhone).trim(),
           price,
           originalPrice,
           budget: {

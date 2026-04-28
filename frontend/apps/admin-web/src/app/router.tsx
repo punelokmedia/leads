@@ -9,6 +9,7 @@ import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { LeadsPage } from '@/features/leads/pages/LeadsPage'
 import { CreateLeadPage } from '@/features/leads/pages/CreateLeadPage'
 import { CategoriesPage } from '@/features/categories/pages/CategoriesPage'
+import { CitiesPage } from '@/features/cities/pages/CitiesPage'
 import { AddAdminPage } from '@/features/admins/pages/AddAdminPage'
 import { PaymentHistoryPage } from '@/features/payments/pages/PaymentHistoryPage'
 import { WebAnalyticsPage } from '@/features/analytics/pages/WebAnalyticsPage'
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
           { path: 'leads', element: <LeadsPage /> },
           { path: 'leads/create', element: <CreateLeadPage /> },
           { path: 'categories', element: <CategoriesPage /> },
+          { path: 'cities', element: <CitiesPage /> },
           { path: 'admins/add', element: <AddAdminPage /> },
           { path: 'payments', element: <PaymentHistoryPage /> },
           { path: 'web-analytics', element: <WebAnalyticsPage /> },
