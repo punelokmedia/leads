@@ -2,6 +2,11 @@ import mongoose, { Schema } from "mongoose";
 
 const LeadSchema = new Schema(
   {
+    leadDisplayId: {
+      type: String,
+      unique: true,
+      index: true,
+    },
     title: {
       type: String,
       required: true,
@@ -37,18 +42,6 @@ const LeadSchema = new Schema(
       trim: true,
     },
 
-    location: {
-      type: {
-        type: String,
-        enum: ["Point"],
-        default: "Point",
-      },
-      coordinates: {
-        type: [Number],
-        required: true,
-      },
-    },
-
     price: {
       type: Number,
       required: true,
@@ -64,8 +57,64 @@ const LeadSchema = new Schema(
       max: Number,
     },
 
-    customerName: String,
-
+    customerName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    clientType: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    primaryPhone: {
+      type: String,
+      validate: {
+        validator: (v) => !v || /^[6-9]\d{9}$/.test(v),
+      },
+    },
+    alternatePhone: {
+      type: String,
+      validate: {
+        validator: (v) => !v || /^[6-9]\d{9}$/.test(v),
+      },
+    },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: "",
+    },
+    areaLocality: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    requirement: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    propertyType: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    areaSize: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    budgetRange: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    timeline: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     phone: {
       type: String,
       validate: {
@@ -105,7 +154,6 @@ const LeadSchema = new Schema(
   { timestamps: true },
 );
 
-LeadSchema.index({ location: "2dsphere" });
 LeadSchema.index({ expiresAt: 1 });
 LeadSchema.index({ maxBuyers: 1, buyersCount: 1 });
 
@@ -118,6 +166,15 @@ const resolveLeadStatus = (lead) => {
   if (lead.buyersCount >= lead.maxBuyers) return "SOLD_OUT";
   return "ACTIVE";
 };
+
+const buildLeadDisplayId = (leadId) =>
+  `NL${String(leadId || "").slice(-8).toUpperCase()}`;
+
+LeadSchema.pre("validate", function () {
+  if (this._id) {
+    this.leadDisplayId = buildLeadDisplayId(this._id);
+  }
+});
 
 LeadSchema.pre("save", function () {
   this.status = resolveLeadStatus(this);

@@ -29,7 +29,17 @@ type Lead = {
   originalPrice?: number
   expiresAt?: string
   category?: LeadCategory
-  location?: { coordinates?: number[] }
+  customerName?: string
+  clientType?: string
+  primaryPhone?: string
+  alternatePhone?: string
+  email?: string
+  areaLocality?: string
+  requirement?: string
+  propertyType?: string
+  areaSize?: string
+  budgetRange?: string
+  timeline?: string
 }
 
 type UploadStatus = {
@@ -53,8 +63,17 @@ type LeadFormState = {
   price: string
   originalPrice: string
   expiresAt: string
-  latitude: string
-  longitude: string
+  customerName: string
+  clientType: string
+  primaryPhone: string
+  alternatePhone: string
+  email: string
+  areaLocality: string
+  requirement: string
+  propertyType: string
+  areaSize: string
+  budgetRange: string
+  timeline: string
 }
 
 const initialLeadForm: LeadFormState = {
@@ -67,8 +86,17 @@ const initialLeadForm: LeadFormState = {
   price: '',
   originalPrice: '',
   expiresAt: '',
-  latitude: '',
-  longitude: '',
+  customerName: '',
+  clientType: '',
+  primaryPhone: '',
+  alternatePhone: '',
+  email: '',
+  areaLocality: '',
+  requirement: '',
+  propertyType: '',
+  areaSize: '',
+  budgetRange: '',
+  timeline: '',
 }
 
 function getToken() {
@@ -222,8 +250,6 @@ export function CreateLeadPage() {
   async function handleLeadSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const latitude = Number(leadForm.latitude)
-    const longitude = Number(leadForm.longitude)
     const price = Number(leadForm.price)
     const originalPrice = leadForm.originalPrice
       ? Number(leadForm.originalPrice)
@@ -238,14 +264,18 @@ export function CreateLeadPage() {
       !leadForm.category ||
       !leadForm.city ||
       !leadForm.state ||
+      !leadForm.customerName ||
+      !leadForm.clientType ||
+      !leadForm.primaryPhone ||
+      !leadForm.areaLocality ||
+      !leadForm.requirement ||
+      !leadForm.propertyType ||
+      !leadForm.budgetRange ||
+      !leadForm.timeline ||
       !leadForm.price ||
       !leadForm.expiresAt
     ) {
       setErrorMessage('Please fill all required lead fields')
-      return
-    }
-    if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
-      setErrorMessage('Latitude and longitude are required')
       return
     }
 
@@ -263,13 +293,20 @@ export function CreateLeadPage() {
             city: leadForm.city.trim(),
             state: leadForm.state.trim(),
             address: leadForm.address.trim(),
+            customerName: leadForm.customerName.trim(),
+            clientType: leadForm.clientType.trim(),
+            primaryPhone: leadForm.primaryPhone.trim(),
+            alternatePhone: leadForm.alternatePhone.trim(),
+            email: leadForm.email.trim(),
+            areaLocality: leadForm.areaLocality.trim(),
+            requirement: leadForm.requirement.trim(),
+            propertyType: leadForm.propertyType,
+            areaSize: leadForm.areaSize.trim(),
+            budgetRange: leadForm.budgetRange.trim(),
+            timeline: leadForm.timeline.trim(),
             price,
             originalPrice,
             expiresAt: expiresAtIso,
-            location: {
-              type: 'Point',
-              coordinates: [longitude, latitude],
-            },
           }),
         })
         setSuccessMessage('Lead updated successfully')
@@ -284,10 +321,20 @@ export function CreateLeadPage() {
             city: leadForm.city.trim(),
             state: leadForm.state.trim(),
             address: leadForm.address.trim(),
+            customerName: leadForm.customerName.trim(),
+            clientType: leadForm.clientType.trim(),
+            primaryPhone: leadForm.primaryPhone.trim(),
+            alternatePhone: leadForm.alternatePhone.trim(),
+            email: leadForm.email.trim(),
+            areaLocality: leadForm.areaLocality.trim(),
+            requirement: leadForm.requirement.trim(),
+            propertyType: leadForm.propertyType,
+            areaSize: leadForm.areaSize.trim(),
+            budgetRange: leadForm.budgetRange.trim(),
+            timeline: leadForm.timeline.trim(),
             price,
             originalPrice,
             expiresAt: expiresAtIso,
-            coordinates: [longitude, latitude],
           }),
         })
         setSuccessMessage('Lead created successfully')
@@ -303,7 +350,6 @@ export function CreateLeadPage() {
   }
 
   function startEditLead(lead: Lead) {
-    const coordinates = lead.location?.coordinates ?? [0, 0]
     clearMessages()
     setEditingLeadId(lead._id)
     setLeadForm({
@@ -316,8 +362,17 @@ export function CreateLeadPage() {
       price: lead.price ? String(lead.price) : '',
       originalPrice: lead.originalPrice ? String(lead.originalPrice) : '',
       expiresAt: toDateTimeLocal(lead.expiresAt),
-      latitude: coordinates[1] ? String(coordinates[1]) : '',
-      longitude: coordinates[0] ? String(coordinates[0]) : '',
+      customerName: lead.customerName ?? '',
+      clientType: lead.clientType ?? '',
+      primaryPhone: lead.primaryPhone ?? '',
+      alternatePhone: lead.alternatePhone ?? '',
+      email: lead.email ?? '',
+      areaLocality: lead.areaLocality ?? '',
+      requirement: lead.requirement ?? '',
+      propertyType: lead.propertyType ?? '',
+      areaSize: lead.areaSize ?? '',
+      budgetRange: lead.budgetRange ?? '',
+      timeline: lead.timeline ?? '',
     })
   }
 
@@ -521,26 +576,140 @@ export function CreateLeadPage() {
             />
           </label>
           <label className="text-xs font-medium text-slate-600">
-            Latitude <span className="text-rose-500">*</span>
+            Customer Name <span className="text-rose-500">*</span>
             <input
               type="text"
-              value={leadForm.latitude}
+              value={leadForm.customerName}
               onChange={(event) =>
-                setLeadForm((previous) => ({ ...previous, latitude: event.target.value }))
+                setLeadForm((previous) => ({ ...previous, customerName: event.target.value }))
               }
-              placeholder="18.559"
+              placeholder="Rahul Sharma"
               className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
             />
           </label>
           <label className="text-xs font-medium text-slate-600">
-            Longitude <span className="text-rose-500">*</span>
+            Mobile Number (Primary) <span className="text-rose-500">*</span>
             <input
               type="text"
-              value={leadForm.longitude}
+              value={leadForm.primaryPhone}
               onChange={(event) =>
-                setLeadForm((previous) => ({ ...previous, longitude: event.target.value }))
+                setLeadForm((previous) => ({ ...previous, primaryPhone: event.target.value }))
               }
-              placeholder="73.786"
+              placeholder="9876543210"
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <label className="text-xs font-medium text-slate-600">
+            Client Type <span className="text-rose-500">*</span>
+            <select
+              value={leadForm.clientType}
+              onChange={(event) =>
+                setLeadForm((previous) => ({ ...previous, clientType: event.target.value }))
+              }
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            >
+              <option value="">Select client type</option>
+              <option value="Individual">Individual</option>
+              <option value="Business">Business</option>
+              <option value="Any">Any</option>
+            </select>
+          </label>
+          <label className="text-xs font-medium text-slate-600">
+            Alternate Number
+            <input
+              type="text"
+              value={leadForm.alternatePhone}
+              onChange={(event) =>
+                setLeadForm((previous) => ({ ...previous, alternatePhone: event.target.value }))
+              }
+              placeholder="Optional"
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <label className="text-xs font-medium text-slate-600">
+            Email
+            <input
+              type="email"
+              value={leadForm.email}
+              onChange={(event) =>
+                setLeadForm((previous) => ({ ...previous, email: event.target.value }))
+              }
+              placeholder="Optional"
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <label className="text-xs font-medium text-slate-600">
+            Area / Locality <span className="text-rose-500">*</span>
+            <input
+              type="text"
+              value={leadForm.areaLocality}
+              onChange={(event) =>
+                setLeadForm((previous) => ({ ...previous, areaLocality: event.target.value }))
+              }
+              placeholder="Baner"
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <label className="text-xs font-medium text-slate-600">
+            Property Type <span className="text-rose-500">*</span>
+            <input
+              type="text"
+              value={leadForm.propertyType}
+              onChange={(event) =>
+                setLeadForm((previous) => ({
+                  ...previous,
+                  propertyType: event.target.value,
+                }))
+              }
+              placeholder="2BHK / 10 CCTV / N/A"
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <label className="text-xs font-medium text-slate-600">
+            Area Size (Sq. Ft.)
+            <input
+              type="text"
+              value={leadForm.areaSize}
+              onChange={(event) =>
+                setLeadForm((previous) => ({ ...previous, areaSize: event.target.value }))
+              }
+              placeholder="1200"
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <label className="text-xs font-medium text-slate-600">
+            Budget Range <span className="text-rose-500">*</span>
+            <input
+              type="text"
+              value={leadForm.budgetRange}
+              onChange={(event) =>
+                setLeadForm((previous) => ({ ...previous, budgetRange: event.target.value }))
+              }
+              placeholder="10L - 15L"
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <label className="text-xs font-medium text-slate-600 md:col-span-2">
+            Requirement <span className="text-rose-500">*</span>
+            <textarea
+              value={leadForm.requirement}
+              onChange={(event) =>
+                setLeadForm((previous) => ({ ...previous, requirement: event.target.value }))
+              }
+              rows={2}
+              placeholder="2BHK full interior"
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <label className="text-xs font-medium text-slate-600">
+            Timeline <span className="text-rose-500">*</span>
+            <input
+              type="text"
+              value={leadForm.timeline}
+              onChange={(event) =>
+                setLeadForm((previous) => ({ ...previous, timeline: event.target.value }))
+              }
+              placeholder="Within 2 weeks"
               className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
             />
           </label>

@@ -9,6 +9,7 @@ import Payment from "./Routes/payment.routes.js";
 import Lead from "./Routes/lead.routes.js";
 import category from "./Routes/categories.routes.js";
 import cart from "./Routes/cart.routes.js";
+import city from "./Routes/city.routes.js";
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use(`/api/${API_VERSION}/admin`, Admin);
 app.use(`/api/${API_VERSION}/payments`, Payment);
 app.use(`/api/${API_VERSION}/leads`, Lead);
 app.use(`/api/${API_VERSION}/categories`, category);
+app.use(`/api/${API_VERSION}/cities`, city);
 app.use(`/api/${API_VERSION}/cart`, cart);
 
 app.get("/", (req, res) => {

@@ -75,6 +75,21 @@ const UserSchema = new Schema(
     },
 
     phoneNumber: String,
+    businessName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    workType: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    city: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     profilePic: String,
 
     role: {
@@ -94,6 +109,24 @@ const UserSchema = new Schema(
 
     resetOtp: String,
     resetOtpExpire: Date,
+    loginOtp: String,
+    loginOtpExpire: Date,
+    pendingPhoneNumber: {
+      type: String,
+      default: "",
+    },
+    registrationFeePaid: {
+      type: Boolean,
+      default: false,
+    },
+    registrationFeePaidAt: Date,
+    registrationPayment: {
+      razorpayOrderId: String,
+      razorpayPaymentId: String,
+      razorpaySignature: String,
+      amount: Number,
+      currency: String,
+    },
   },
   { timestamps: true },
 );
@@ -107,5 +140,12 @@ UserSchema.index(
 );
 
 UserSchema.index({ "address.city": 1, "address.state": 1 });
+UserSchema.index(
+  { phoneNumber: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { phoneNumber: { $type: "string", $ne: "" } },
+  },
+);
 
 export const User = mongoose.model("User", UserSchema);

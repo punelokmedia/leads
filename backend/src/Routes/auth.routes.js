@@ -5,7 +5,6 @@ import {
   googleCallback,
   registerUser,
   loginUser,
-  changePassword,
   forgetPassword,
   resetPassword,
   addAddress,
@@ -13,6 +12,13 @@ import {
   getUserProfile,
   updateUserProfile,
   verifyOtp,
+  requestMobileOtp,
+  requestSessionMobileOtp,
+  verifyMobileOtp,
+  verifySessionMobileOtp,
+  completeMobileProfile,
+  createMobileRegistrationOrder,
+  verifyMobileRegistrationPayment,
 } from "../Controllers/auth.controller.js";
 
 const router = express.Router();
@@ -59,11 +65,17 @@ router.get("/profile", auth, getUserProfile);
 router.get("/logout", auth, logOutUser);
 router.put("/update-profile", auth, updateUserProfile);
 
-router.post("/change-password", auth, changePassword);
 router.post("/add-address", auth, addAddress);
 
 router.post("/forgot-password", forgetPassword);
 router.post("/verify-otp", verifyOtp);
 router.post("/reset-password", resetPassword);
+router.post("/mobile/request-otp", requestMobileOtp);
+router.post("/mobile/verify-otp", verifyMobileOtp);
+router.post("/mobile/request-otp-session", auth, requestSessionMobileOtp);
+router.post("/mobile/verify-otp-session", auth, verifySessionMobileOtp);
+router.post("/mobile/complete-profile", auth, completeMobileProfile);
+router.post("/mobile/create-registration-order", auth, createMobileRegistrationOrder);
+router.post("/mobile/verify-registration-payment", auth, verifyMobileRegistrationPayment);
 
 export default router;

@@ -96,6 +96,11 @@ type Category = {
   icon?: string
 }
 
+type City = {
+  _id: string
+  name: string
+}
+
 export function PublicHeader() {
   const navigate = useNavigate()
   const [panelMode, setPanelMode] = useState<
@@ -107,7 +112,6 @@ export function PublicHeader() {
     | 'forgot-email'
     | 'forgot-otp'
     | 'forgot-reset'
-    | 'change-password'
     | null
   >(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -131,11 +135,6 @@ export function PublicHeader() {
   const [forgotForm, setForgotForm] = useState({
     email: '',
     otpDigits: ['', '', '', ''],
-    newPassword: '',
-    confirmPassword: '',
-  })
-  const [changePasswordForm, setChangePasswordForm] = useState({
-    oldPassword: '',
     newPassword: '',
     confirmPassword: '',
   })
@@ -170,8 +169,11 @@ export function PublicHeader() {
   const [downloadOrderId, setDownloadOrderId] = useState<string | null>(null)
   const [isDownloadPopupOpen, setIsDownloadPopupOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
+  const [cities, setCities] = useState<City[]>([])
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(false)
+  const [isCitiesLoading, setIsCitiesLoading] = useState(false)
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
   const isPanelOpen = panelMode !== null
   const userToken = localStorage.getItem('user_token')
   const hasSavedAddress = Boolean(
@@ -859,8 +861,9 @@ export function PublicHeader() {
       setRemovedCartLeads([])
       setCartSummary({ totalItems: 0, totalAmount: 0 })
       setHistoryLeads([])
-      setPanelMode('login')
-      setAuthSuccess('Logged out successfully.')
+      setPanelMode(null)
+      setIsMobileMenuOpen(false)
+      navigate('/auth/mobile')
     }
   }
 
@@ -890,6 +893,15 @@ export function PublicHeader() {
       storeUserSession(token, parsedUser)
       setPanelMode(null)
       setIsMobileMenuOpen(false)
+      const profile = (parsedUser ?? {}) as {
+        registrationFeePaid?: boolean
+      }
+
+      if (!profile.registrationFeePaid) {
+        navigate('/auth/mobile?flow=google', { replace: true })
+        return
+      }
+
       setAuthSuccess('Logged in successfully using Google.')
     }
 
@@ -912,6 +924,24 @@ export function PublicHeader() {
       }
     }
     fetchCategories()
+  }, [])
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setIsCitiesLoading(true)
+        const response = await requestApi('/cities/get-all-cities')
+        const payload = await response.json()
+        if (response.ok && payload?.success) {
+          setCities(payload?.data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch cities:', error)
+      } finally {
+        setIsCitiesLoading(false)
+      }
+    }
+    fetchCities()
   }, [])
 
   useEffect(() => {
@@ -1088,64 +1118,6 @@ export function PublicHeader() {
     }
   }
 
-  const handleChangePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    resetAuthMessages()
-
-    if (!userToken) {
-      setAuthError('Please login first.')
-      setPanelMode('login')
-      return
-    }
-
-    if (
-      !changePasswordForm.oldPassword ||
-      !changePasswordForm.newPassword ||
-      !changePasswordForm.confirmPassword
-    ) {
-      setAuthError('Please fill all password fields.')
-      return
-    }
-
-    if (changePasswordForm.newPassword !== changePasswordForm.confirmPassword) {
-      setAuthError('New password and confirm password must match.')
-      return
-    }
-
-    try {
-      setIsLoading(true)
-      const response = await requestAuth('/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${userToken}`,
-        },
-        body: JSON.stringify({
-          oldPassword: changePasswordForm.oldPassword,
-          newPassword: changePasswordForm.newPassword,
-          confirmPassword: changePasswordForm.confirmPassword,
-        }),
-      })
-      const payload = await response.json()
-
-      if (!response.ok || !payload?.success) {
-        throw new Error(payload?.message ?? 'Unable to change password.')
-      }
-
-      setAuthSuccess(payload?.message ?? 'Password updated successfully.')
-      setChangePasswordForm({
-        oldPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      })
-      setPanelMode('account')
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Password change failed.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 shadow-sm backdrop-blur">
@@ -1159,13 +1131,13 @@ export function PublicHeader() {
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
           <NavLink to="/" className="shrink-0">
             <img
-              src="/interiorwala-logo.png"
-              alt="Interiorwala"
-              className="h-10 w-auto sm:h-12"
+              src="/logo.png"
+              alt="Logo"
+              className="h-14 w-auto sm:h-16"
             />
           </NavLink>
 
-          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-2 py-1 md:flex">
+          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-transparent px-2 py-1 md:flex">
             <NavLink
               to="/"
               className={({ isActive }) =>
@@ -1228,6 +1200,53 @@ export function PublicHeader() {
                 </div>
               )}
             </div>
+            <div
+              className="relative"
+              onMouseEnter={() => setIsCityDropdownOpen(true)}
+              onMouseLeave={() => setIsCityDropdownOpen(false)}
+            >
+              <button
+                type="button"
+                className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  isCityDropdownOpen
+                    ? 'bg-stone-200 text-stone-900'
+                    : 'text-stone-600 hover:bg-white hover:text-stone-900'
+                }`}
+              >
+                Cities
+                <svg
+                  viewBox="0 0 24 24"
+                  className={`h-4 w-4 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isCityDropdownOpen ? (
+                <div className="absolute top-full left-0 mt-2 w-52 rounded-2xl border border-stone-200 bg-white py-2 shadow-xl">
+                  {isCitiesLoading ? (
+                    <div className="px-4 py-3 text-sm text-stone-500">Loading cities...</div>
+                  ) : cities.length > 0 ? (
+                    <div className="max-h-72 overflow-y-auto">
+                      {cities.map((city) => (
+                        <NavLink
+                          key={city._id}
+                          to={`/?city=${encodeURIComponent(city.name)}`}
+                          className="block px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50 hover:text-stone-900"
+                        >
+                          {city.name}
+                        </NavLink>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-stone-500">No cities found</div>
+                  )}
+                </div>
+              ) : null}
+            </div>
             <NavLink
               to="/pricing"
               className={({ isActive }) =>
@@ -1258,6 +1277,10 @@ export function PublicHeader() {
             <button
               type="button"
               onClick={() => {
+                if (!userToken) {
+                  navigate('/auth/mobile')
+                  return
+                }
                 resetAuthMessages()
                 setPanelMode('cart')
               }}
@@ -1278,6 +1301,10 @@ export function PublicHeader() {
             <button
               type="button"
               onClick={() => {
+                if (!userToken) {
+                  navigate('/auth/mobile')
+                  return
+                }
                 resetAuthMessages()
                 setPanelMode('account')
               }}
@@ -1316,21 +1343,11 @@ export function PublicHeader() {
                   type="button"
                   onClick={() => {
                     resetAuthMessages()
-                    setPanelMode('login')
+                    navigate('/auth/mobile')
                   }}
-                  className="hidden rounded-full border border-[#F8B020] bg-white px-4 py-1.5 text-sm font-semibold text-[#F8B020] transition hover:bg-[#FFF7E8] sm:inline-flex"
+                  className="hidden rounded-full border border-[#4B2CF5] bg-white px-4 py-1.5 text-sm font-semibold text-[#4B2CF5] transition hover:bg-[#F3EEFF] sm:inline-flex"
                 >
-                  Login
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetAuthMessages()
-                    setPanelMode('signup')
-                  }}
-                  className="hidden rounded-full bg-[#F8B020] px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#E2A11D] md:inline-flex"
-                >
-                  Sign Up
+                  Login / Signup
                 </button>
               </>
             )}
@@ -1367,6 +1384,19 @@ export function PublicHeader() {
               >
                 Home
               </NavLink>
+              {!userToken ? (
+                <NavLink
+                  to="/auth/mobile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `block rounded-xl px-3 py-2 text-sm font-semibold ${
+                      isActive ? 'bg-[#5A35F0] text-white' : 'text-[#5A35F0] hover:bg-[#F3EEFF]'
+                    }`
+                  }
+                >
+                  Login / Signup
+                </NavLink>
+              ) : null}
               
               <div className="space-y-1">
                 <button
@@ -1412,6 +1442,48 @@ export function PublicHeader() {
                     )}
                   </div>
                 )}
+              </div>
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-stone-700 hover:bg-stone-100"
+                >
+                  <span>Cities</span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className={`h-4 w-4 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isCityDropdownOpen ? (
+                  <div className="pl-6 space-y-1">
+                    {isCitiesLoading ? (
+                      <div className="px-3 py-2 text-sm text-stone-500">Loading...</div>
+                    ) : cities.length > 0 ? (
+                      cities.map((city) => (
+                        <NavLink
+                          key={city._id}
+                          to={`/?city=${encodeURIComponent(city.name)}`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={({ isActive }) =>
+                            `block rounded-lg px-3 py-2 text-sm font-medium ${
+                              isActive ? 'bg-stone-200 text-stone-900' : 'text-stone-600 hover:bg-stone-50'
+                            }`
+                          }
+                        >
+                          {city.name}
+                        </NavLink>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-stone-500">No cities</div>
+                    )}
+                  </div>
+                ) : null}
               </div>
 
               <NavLink
@@ -1478,23 +1550,12 @@ export function PublicHeader() {
                       type="button"
                       onClick={() => {
                         resetAuthMessages()
-                        setPanelMode('login')
+                        navigate('/auth/mobile')
                         setIsMobileMenuOpen(false)
                       }}
-                      className="w-full rounded-xl border border-[#F8B020] bg-white px-4 py-2 text-sm font-semibold text-[#F8B020]"
+                      className="w-full rounded-xl border border-[#4B2CF5] bg-white px-4 py-2 text-sm font-semibold text-[#4B2CF5]"
                     >
-                      Login
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        resetAuthMessages()
-                        setPanelMode('signup')
-                        setIsMobileMenuOpen(false)
-                      }}
-                      className="w-full rounded-xl bg-[#F8B020] px-4 py-2 text-sm font-semibold text-white"
-                    >
-                      Sign Up
+                      Login / Signup
                     </button>
                   </div>
                 )}
@@ -1536,7 +1597,7 @@ export function PublicHeader() {
           </div>
 
           <div className="-mt-2 bg-[#efefef] px-4 pb-5 text-center">
-            <img src="/interiorwala-logo.png" alt="Interiorwala" className="mx-auto h-16 w-auto" />
+            <img src="/logo.png" alt="Interiorwala" className="mx-auto h-16 w-auto" />
             {panelMode === 'account' ? (
               <>
                 <h2 className="mt-2 text-4xl font-black text-stone-900">My Account</h2>
@@ -1566,13 +1627,6 @@ export function PublicHeader() {
               <>
                 <h2 className="mt-2 text-4xl font-black text-stone-900">Change Password</h2>
                 <p className="mt-1 text-sm text-stone-600">Set a new password for your account</p>
-              </>
-            ) : panelMode === 'change-password' ? (
-              <>
-                <h2 className="mt-2 text-4xl font-black text-stone-900">Change Password</h2>
-                <p className="mt-1 text-sm text-stone-600">
-                  Update your password securely
-                </p>
               </>
             ) : panelMode === 'login' ? (
               <>
@@ -1977,7 +2031,7 @@ export function PublicHeader() {
                           <div className="flex justify-center">
                             <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-[#F8B020] bg-white">
                               <img
-                                src={profilePic || '/interiorwala-logo.png'}
+                                src={profilePic || '/logo.png'}
                                 alt="Profile"
                                 className="h-full w-full object-cover"
                               />
@@ -2050,20 +2104,6 @@ export function PublicHeader() {
                             <p className="text-sm font-semibold text-stone-700">Password</p>
                             <div className="mt-1 flex items-center justify-between">
                               <p className="text-sm text-stone-500">********</p>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setChangePasswordForm({
-                                    oldPassword: '',
-                                    newPassword: '',
-                                    confirmPassword: '',
-                                  })
-                                  setPanelMode('change-password')
-                                }}
-                                className="rounded-lg bg-[#F8B020] px-3 py-1 text-xs font-semibold text-white hover:bg-[#E2A11D]"
-                              >
-                                Change Password
-                              </button>
                             </div>
                           </div>
 
@@ -2253,71 +2293,6 @@ export function PublicHeader() {
 
               <div className="flex justify-center pt-3">
                 <img src="/trust-team.jpg" alt="" className="h-36 w-44 rounded-full object-cover opacity-90" />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="mt-2 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
-              >
-                {isLoading ? 'Please wait...' : 'Update'}
-              </button>
-            </form>
-          ) : panelMode === 'change-password' ? (
-            <form
-              className="space-y-4 rounded-t-[34px] bg-gradient-to-b from-[#efe7b8] via-[#f2db72] to-[#f4cd2f] px-4 pt-6 pb-8"
-              onSubmit={handleChangePasswordSubmit}
-            >
-              <label className="block text-sm font-semibold text-stone-700">
-                Existing Password
-                <input
-                  type="password"
-                  placeholder="*******"
-                  value={changePasswordForm.oldPassword}
-                  onChange={(event) =>
-                    setChangePasswordForm((prev) => ({
-                      ...prev,
-                      oldPassword: event.target.value,
-                    }))
-                  }
-                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#F8B020] focus:ring-2 focus:ring-[#F8B020]/40"
-                />
-              </label>
-
-              <label className="block text-sm font-semibold text-stone-700">
-                New Password
-                <input
-                  type="password"
-                  placeholder="*******"
-                  value={changePasswordForm.newPassword}
-                  onChange={(event) =>
-                    setChangePasswordForm((prev) => ({
-                      ...prev,
-                      newPassword: event.target.value,
-                    }))
-                  }
-                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#F8B020] focus:ring-2 focus:ring-[#F8B020]/40"
-                />
-              </label>
-
-              <label className="block text-sm font-semibold text-stone-700">
-                Confirm Password
-                <input
-                  type="password"
-                  placeholder="*******"
-                  value={changePasswordForm.confirmPassword}
-                  onChange={(event) =>
-                    setChangePasswordForm((prev) => ({
-                      ...prev,
-                      confirmPassword: event.target.value,
-                    }))
-                  }
-                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#F8B020] focus:ring-2 focus:ring-[#F8B020]/40"
-                />
-              </label>
-
-              <div className="flex justify-center pt-3">
-                <img src="/trust-team.jpg" alt="" className="h-36 w-44 rounded-2xl object-cover opacity-90" />
               </div>
 
               <button

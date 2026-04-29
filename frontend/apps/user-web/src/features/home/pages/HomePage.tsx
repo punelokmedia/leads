@@ -7,27 +7,24 @@ const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/
 const API_BASE_URL_CANDIDATES = Array.from(
   new Set(['http://localhost:5000', CONFIGURED_API_BASE_URL].filter(Boolean)),
 )
-const CATEGORY_CITY_MAP: Record<string, string> = {
-  'Bengaluru Leads': 'Bangalore',
-  'Mumbai/Thane/Navi Leads': 'Mumbai',
-  'Pune Leads': 'Pune',
-  'Delhi/NCR': 'Delhi',
-  Kolkata: 'Kolkata',
-  'Hyderabad/Secunderabad': 'Hyderabad',
-  'Chennai Leads': 'Chennai',
-  Lucknow: 'Lucknow',
-  Ahmedabad: 'Ahmedabad',
-  Nagpur: 'Nagpur',
-  Jaipur: 'Jaipur',
-  Surat: 'Surat',
+type CityOption = {
+  _id: string
+  name: string
 }
 
 type LeadsApiItem = {
   _id: string
+  leadDisplayId?: string
   title: string
   city: string
   state: string
   description?: string
+  clientType?: string
+  propertyType?: string
+  areaSize?: string
+  budgetRange?: string
+  timeline?: string
+  requirement?: string
   price: number
   originalPrice?: number | null
   buyersCount: number
@@ -38,6 +35,7 @@ type LeadsApiItem = {
 
 type HomeLead = {
   id: string
+  leadDisplayId?: string
   title: string
   image: string
   location: string
@@ -47,8 +45,47 @@ type HomeLead = {
   remainingSlots: number
   oldPrice: number
   price: number
+  clientType?: string
+  propertyType?: string
+  areaSize?: string
+  budgetRange?: string
+  timeline?: string
+  requirement?: string
   createdAt: string
   isSoldOut: boolean
+}
+
+type LeadDetails = {
+  _id: string
+  leadDisplayId?: string
+  title: string
+  city?: string
+  state?: string
+  description?: string
+  clientType?: string
+  propertyType?: string
+  areaSize?: string
+  budgetRange?: string
+  timeline?: string
+  requirement?: string
+  buyersCount?: number
+  maxBuyers?: number
+  price?: number
+}
+
+const formatBudgetValue = (value?: string) => {
+  const raw = String(value ?? '').trim()
+  if (!raw) return 'N/A'
+  const digitsOnly = raw.replace(/[^\d]/g, '')
+  if (!digitsOnly) return raw
+  return `₹${Number(digitsOnly).toLocaleString('en-IN')}`
+}
+
+const formatAreaValue = (value?: string) => {
+  const raw = String(value ?? '').trim()
+  if (!raw) return '-'
+  if (/sq\.?\s*ft|square\s*feet|sqft/i.test(raw)) return raw
+  return `${raw} Sq. Ft.`
 }
 
 type LeadsPagination = {
@@ -59,6 +96,11 @@ type LeadsPagination = {
 const mapLeadsForCards = (items: LeadsApiItem[], startIndex: number): HomeLead[] =>
   items.map((lead, index) => ({
     id: lead._id,
+    leadDisplayId:
+      lead.leadDisplayId ||
+      `NL${String(lead._id || '')
+        .slice(-8)
+        .toUpperCase()}`,
     title: lead.title,
     image: `/lead-room-${((startIndex + index) % 3) + 1}.jpg`,
     location: `${lead.city}, ${lead.state}`,
@@ -71,6 +113,12 @@ const mapLeadsForCards = (items: LeadsApiItem[], startIndex: number): HomeLead[]
         ? lead.originalPrice
         : lead.price,
     price: lead.price,
+    clientType: lead.clientType,
+    propertyType: lead.propertyType,
+    areaSize: lead.areaSize,
+    budgetRange: lead.budgetRange,
+    timeline: lead.timeline,
+    requirement: lead.requirement,
     createdAt: lead.createdAt,
     isSoldOut: lead.status === 'SOLD_OUT',
   }))
@@ -98,26 +146,13 @@ const fadeUp = {
 }
 
 export function HomePage() {
-  const categoryLinks = [
-    'Instagram Reels',
-    'Bengaluru Leads',
-    'Mumbai/Thane/Navi Leads',
-    'Pune Leads',
-    'Delhi/NCR',
-    'Kolkata',
-    'Hyderabad/Secunderabad',
-    'Chennai Leads',
-    'Lucknow',
-    'Ahmedabad',
-    'Nagpur',
-    'Jaipur',
-    'Surat',
-  ]
-  const firstRowCategories = categoryLinks.slice(0, 6)
-  const secondRowCategories = categoryLinks.slice(6)
+  const [cityLinks, setCityLinks] = useState<string[]>([])
+  const firstRowCategories = cityLinks.slice(0, 6)
+  const secondRowCategories = cityLinks.slice(6)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
   const categoryIdParam = searchParams.get('category')
+  const cityParam = searchParams.get('city')
   const [searchInput, setSearchInput] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [selectedSort, setSelectedSort] = useState<'latest' | 'cheapest' | 'expensive'>('latest')
@@ -128,9 +163,43 @@ export function HomePage() {
   const [cartFeedback, setCartFeedback] = useState('')
   const [leadQuantities, setLeadQuantities] = useState<Record<string, number>>({})
   const [leadsError, setLeadsError] = useState('')
+  const [selectedLeadDetails, setSelectedLeadDetails] = useState<LeadDetails | null>(null)
+  const [isLeadDetailsLoading, setIsLeadDetailsLoading] = useState(false)
   const [pagination, setPagination] = useState<LeadsPagination>({ page: 1, totalPages: 1 })
-  const selectedCity = selectedCategory ? CATEGORY_CITY_MAP[selectedCategory] ?? '' : ''
+  const selectedCity = cityParam ? cityParam.trim() : selectedCategory ? selectedCategory : ''
   const hasMoreLeads = pagination.page < pagination.totalPages
+  const userToken = localStorage.getItem('user_token')
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      let networkError: Error | null = null
+      for (const baseUrl of API_BASE_URL_CANDIDATES) {
+        try {
+          const response = await fetch(`${baseUrl}/api/v1/cities/get-all-cities`, { method: 'GET' })
+          const payload = await response.json()
+          if (!response.ok || !payload?.success) {
+            throw new Error(payload?.message ?? 'Unable to fetch cities right now.')
+          }
+          const cityNames = Array.isArray(payload?.data)
+            ? (payload.data as CityOption[]).map((item) =>
+                item.name
+                  .split(' ')
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' '),
+              )
+            : []
+          setCityLinks(cityNames)
+          return
+        } catch (error) {
+          networkError = error instanceof Error ? error : new Error('Unable to fetch cities right now.')
+        }
+      }
+      console.error(networkError?.message ?? 'Unable to fetch cities right now.')
+      setCityLinks([])
+    }
+
+    void fetchCities()
+  }, [])
 
   useEffect(() => {
     const fetchLeads = async (page: number, append: boolean) => {
@@ -267,7 +336,6 @@ export function HomePage() {
   }, [allLeads])
 
   const handleAddToCart = async (leadId: string, quantity: number) => {
-    const userToken = localStorage.getItem('user_token')
     if (!userToken) {
       setCartFeedback('Please login first to add leads in cart.')
       return
@@ -304,6 +372,36 @@ export function HomePage() {
 
     setCartFeedback(networkError?.message ?? 'Unable to add lead in cart.')
     setActiveCartLeadId(null)
+  }
+
+  const handleViewDetails = async (leadId: string) => {
+    if (!userToken) return
+    setIsLeadDetailsLoading(true)
+    setLeadsError('')
+    let networkError: Error | null = null
+
+    for (const baseUrl of API_BASE_URL_CANDIDATES) {
+      try {
+        const response = await fetch(`${baseUrl}/api/v1/leads/get-lead/${leadId}`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        })
+        const payload = await response.json()
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.message ?? 'Unable to fetch lead details.')
+        }
+        setSelectedLeadDetails((payload?.data as LeadDetails) ?? null)
+        setIsLeadDetailsLoading(false)
+        return
+      } catch (error) {
+        networkError = error instanceof Error ? error : new Error('Unable to fetch lead details.')
+      }
+    }
+
+    setLeadsError(networkError?.message ?? 'Unable to fetch lead details.')
+    setIsLeadDetailsLoading(false)
   }
 
   return (
@@ -382,7 +480,6 @@ export function HomePage() {
               Find Leads
             </button>
           </motion.div>
-
           <motion.div
             className="mt-9 space-y-3.5"
             variants={fadeUp}
@@ -501,7 +598,7 @@ export function HomePage() {
                         <img
                           src="/sold-out-stamp.png"
                           alt="Sold Out"
-                          className="h-24 w-24 rotate-[-16deg] object-contain opacity-95 sm:h-28 sm:w-28"
+                          className="h-20 w-20 object-contain sm:h-24 sm:w-24"
                         />
                       </div>
                     ) : null}
@@ -510,6 +607,12 @@ export function HomePage() {
                     <h3 className="text-[22px] leading-tight font-extrabold text-stone-900">
                       {lead.title}
                     </h3>
+                    <p className="text-[11px] font-semibold tracking-wide text-stone-500">
+                      Lead ID: {lead.leadDisplayId || '-'}
+                    </p>
+                    <p className="text-xs font-semibold text-indigo-700">
+                      Budget Range: {lead.budgetRange || 'N/A'}
+                    </p>
                     <p className="text-xs leading-relaxed text-stone-600">
                       {lead.location}
                       <br />
@@ -583,6 +686,15 @@ export function HomePage() {
                               ? 'Adding...'
                               : 'Add'}
                         </motion.button>
+                        {userToken ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleViewDetails(lead.id)}
+                            className="rounded-lg border border-[#4B2CF5] bg-white px-3 py-1.5 text-xs font-semibold text-[#4B2CF5] transition hover:bg-[#F3EEFF]"
+                          >
+                            View Details
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                     <p className="text-xs text-stone-400">{new Date(lead.createdAt).toLocaleDateString()}</p>
@@ -613,6 +725,93 @@ export function HomePage() {
           </div>
         ) : null}
       </motion.section>
+
+      {userToken && (selectedLeadDetails || isLeadDetailsLoading) ? (
+        <div
+          className="fixed inset-0 z-40 bg-black/45 p-4"
+          onClick={() => setSelectedLeadDetails(null)}
+        >
+          <div
+            className="mx-auto mt-5 w-full max-w-md overflow-hidden rounded-2xl border border-indigo-200 bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {isLeadDetailsLoading ? (
+              <div className="p-6 text-sm font-semibold text-stone-600">Loading details...</div>
+            ) : selectedLeadDetails ? (
+              <>
+                <div className="bg-gradient-to-r from-indigo-800 to-violet-700 px-4 py-3 text-white">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-bold">{selectedLeadDetails.title}</p>
+                      <p className="mt-0.5 text-[11px] opacity-90">
+                        {selectedLeadDetails.city || '-'}
+                        {selectedLeadDetails.state ? `, ${selectedLeadDetails.state}` : ''}
+                      </p>
+                    </div>
+                    <span className="rounded-md border border-white/40 bg-white/15 px-2 py-1 text-[10px] font-semibold">
+                      {selectedLeadDetails.buyersCount ?? 0}/{selectedLeadDetails.maxBuyers ?? 0} Vendors
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 p-4">
+                  <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2">
+                    <p className="text-[11px] font-semibold text-indigo-700">Project Budget</p>
+                    <p className="text-xl font-black text-indigo-900">
+                      {formatBudgetValue(selectedLeadDetails.budgetRange)}
+                    </p>
+                    <p className="text-[11px] text-indigo-600">
+                      Lead ID:{' '}
+                      {selectedLeadDetails.leadDisplayId ||
+                        `NL${String(selectedLeadDetails._id || '')
+                          .slice(-8)
+                          .toUpperCase()}`}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-stone-200 bg-white text-[12px] text-stone-700">
+                    <div className="flex items-center justify-between border-b border-stone-100 px-3 py-2">
+                      <span>Client Type</span>
+                      <span className="font-semibold">{selectedLeadDetails.clientType || '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-stone-100 px-3 py-2">
+                      <span>Property Type</span>
+                      <span className="font-semibold">{selectedLeadDetails.propertyType || '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-stone-100 px-3 py-2">
+                      <span>Area (Sq. Ft.)</span>
+                      <span className="font-semibold">{formatAreaValue(selectedLeadDetails.areaSize)}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-stone-100 px-3 py-2">
+                      <span>Project Timeline</span>
+                      <span className="font-semibold">{selectedLeadDetails.timeline || '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span>Budget Range</span>
+                      <span className="font-semibold">{formatBudgetValue(selectedLeadDetails.budgetRange)}</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2">
+                    <p className="text-[11px] font-semibold text-stone-600">Project Requirements</p>
+                    <p className="mt-1 text-xs text-stone-700">
+                      {selectedLeadDetails.requirement || selectedLeadDetails.description || '-'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLeadDetails(null)}
+                    className="w-full rounded-xl bg-indigo-700 py-2.5 text-sm font-bold text-white hover:bg-indigo-800"
+                  >
+                    Close Details
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       <motion.section
         className="mx-auto max-w-7xl px-4 pb-14 sm:px-6"

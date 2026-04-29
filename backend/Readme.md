@@ -44,32 +44,47 @@ src/
 
 # 🔐 Environment Variables
 
-Create a `.env` file:
+Create a backend `.env` file:
 
 ```env
-PORT=3000
+PORT=5000
 API_VERSION=v1
 NODE_ENV=development
+API_BASE_URL=http://localhost:5000
 DATABASE_URL=mongodb://localhost:27017/dash-leads
-JWT_SECRET=Le@ds
+JWT_SECRET=your_jwt_secret
 
-EMAIL_USER=demo@gmail.com
-EMAIL_PASSWORD=bscd pqen wjix caem  
+# Email (optional)
+EMAIL_USER=
+EMAIL_PASSWORD=
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=
 
-RESEND_API_KEY=re_TJc2F2gS_5nzMYezxq6mSYtwG 
+# Razorpay (any one naming style works)
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxx
+# OR (legacy supported)
+RAZORPAY_KEY=rzp_test_xxxxxxxxxxxx
+RAZORPAY_SECRET=xxxxxxxxxxxxxxxx
+RAZORPAY_WEBHOOK_SECRET=
 
-RAZORPAY_KEY=DEMO_test_SSbtfEMzhQazC4
-RAZORPAY_SECRET=DEMO_rDqIcNTyATWoIXS3HXEF0
-RAZORPAY_WEBHOOK_SECRET=DEMO_test_SbtfEMzhQazC4
+# Google OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/v1/auth/google/callback
 
-GOOGLE_CLIENT_ID=DEMO-b4d70qstp21qfpingbn9j4ucne.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=DEMO-1kThon3zFHjwNktAygMBlKlVrWi1
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/v1/auth/google/callback
+# Seeder admin
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=ADMIN#123
+ADMIN_FIRSTNAME=Super
+ADMIN_LASTNAME=Admin
+```
 
-ADMIN_EMAIL=admin@gmail.com
-ADMIN_PASSWORD=ADMIN123
-ADMIN_FIRSTNAME=super
-ADMIN_LASTNAME=admin
+Frontend env (`frontend/apps/user-web/.env`) for API keys:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000
+VITE_RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
 ```
 
 ---
@@ -93,6 +108,7 @@ Detailed module-wise APIs:
 * 📄 `cart.readme.md`
 * 📄 `category.readme.md`
 * 📄 `payment.readme.md`
+* 📄 `web-auth-api.readme.md`
 
 ---
 
