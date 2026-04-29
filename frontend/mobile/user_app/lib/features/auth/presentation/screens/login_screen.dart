@@ -1,6 +1,7 @@
 // auth/presentation/screens/login_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,7 +10,6 @@ import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
-import 'package:user_app/features/auth/presentation/widgets/auth_field_widgets.dart';
 import '../../shared/auth_providers.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -21,15 +21,11 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  bool _rememberMe = false;
+  final _phoneCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(authControllerProvider.notifier).clearError();
     });
@@ -37,35 +33,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
-    _passwordCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _onLogin() async {
-    if (!_formKey.currentState!.validate()) {
-      // 2. Show a SnackBar or Toast for immediate feedback
-      SnackbarHelper.showError(
-        context,
-        'Please fill all required fields correctly',
-      );
+  Future<void> _onContinue() async {
+    final phone = _phoneCtrl.text.trim();
 
+    // ── Manual Validation (Prevents ugly red text in the TextField) ──
+    if (phone.isEmpty) {
+      SnackbarHelper.showError(context, 'Mobile number is required');
+      return;
+    }
+    if (phone.length < 10) {
+      SnackbarHelper.showError(context, 'Please enter a valid 10-digit mobile number');
       return;
     }
 
-    await ref
-        .read(authControllerProvider.notifier)
-        .login(
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text.trim(),
-          onSuccess: () => context.go(AppRouter.homePath), // adjust route
-        );
+    // Proceed to next screen
+    context.push(
+      AppRouter.verifyNumberPath,
+      extra: phone, 
+    );
   }
 
   void _onGoogleLogin() {
     ref
         .read(authControllerProvider.notifier)
-        .googleAuth(onSuccess: () => context.go(AppRouter.homePath));
+        .googleAuth(onSuccess: () => context.go(AppRouter.verifyNumberPath));
   }
 
   @override
@@ -74,8 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final error = ref.watch(authErrorProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
+      // ── Background Gradient ──
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -84,182 +78,213 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFF0F0F0),
-              Color(0xFFF0F0F0),
-              Color.fromARGB(255, 255, 198, 28),
+              Colors.white, // Top is white
+              Colors.white, // Middle is white
+              Color(0xFF9F75FF), // Bottom fades into light purple
             ],
-            stops: [0.40, 0.70, 1.0],
+            stops: [
+              0.0,
+              0.65,
+              1.0,
+            ], // Controls where the gradient starts blending
           ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Logo
-                  Center(child: const AuthLogo()),
-                  SizedBox(height: 32.h),
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 22.h),
 
-                  // Title
-                  Center(
-                    child: Text(
-                      'Welcome Back',
-                      style: AppTextStyles.poppins(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.black,
-                        height: 20 / 24,
-                        letterSpacing: 0.1,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Center(
-                    child: Text(
-                      'Login to access your account',
-                      style: AppTextStyles.poppins(
-                        fontSize: 16.sp,
-                        color: AppColors.grey77,
-                        fontWeight: FontWeight.w500,
-                        height: 20 / 16,
-                        letterSpacing: 0.1,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 28.h),
+                // ── Logo ──
+                Image.asset(
+                  'assets/Images/login/lead_logo.png',
+                  width: 150.w,
+                ),
+                SizedBox(height: 24.h),
 
-                  // Error banner
-                  if (error != null) ...[
-                    AuthErrorBanner(message: error),
-                    SizedBox(height: 12.h),
-                  ],
-
-                  // Email
-                  AuthTextField(
-                    label: 'Email ID',
-                    hint: 'Enter your email',
-                    controller: _emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Required';
-                      if (!v.contains('@')) return 'Invalid email';
-                      return null;
-                    },
+                // ── Title ──
+                Text(
+                  'Welcome Back',
+                  style: AppTextStyles.poppins(
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 20 / 24,
+                    letterSpacing: 0.01,
+                    color: AppColors.black,
                   ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  'Login to access your account',
+                  style: AppTextStyles.poppins(
+                    fontSize: 16.sp,
+                    color: AppColors.grey77,
+                    fontWeight: FontWeight.w500,
+                    height: 20 / 16,
+                    letterSpacing: 0.01,
+                  ),
+                ),
+                SizedBox(height: 44.h),
+
+                // ── Backend Error Banner ──
+                if (error != null) ...[
+                  AuthErrorBanner(message: error),
                   SizedBox(height: 16.h),
+                ],
 
-                  // Password
-                  PasswordField(
-                    controller: _passwordCtrl,
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Required' : null,
+                // ── Mobile Number Label ──
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Enter Mobile Number',
+                    style: AppTextStyles.poppins(
+                      fontSize: 18.sp,
+                      color: AppColors.grey77,
+                      height: 20 / 18,
+                      letterSpacing: 0.1,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  SizedBox(height: 10.h),
+                ),
+                SizedBox(height: 8.h),
 
-                  // Remember me + Forgot password
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 20.r,
-                        height: 20.r,
-                        child: Checkbox(
-                          value: _rememberMe,
-                          onChanged: (v) =>
-                              setState(() => _rememberMe = v ?? false),
-                          activeColor: const Color(0xFFFFC107),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4.r),
-                          ),
-                          side: BorderSide(color: Colors.grey[400]!),
-                        ),
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'Remember me',
-                        style: AppTextStyles.poppins(
-                          fontSize: 14.sp,
-                          color: AppColors.grey77,
-                          fontWeight: FontWeight.w500,
-                          height: 20 / 14,
-                          letterSpacing: 0.1,
-                        ),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => context.push(AppRouter.forgotPasswordPath),
-                        child: Text(
-                          'Forget password ?',
-                          style: AppTextStyles.poppins(
-                            fontSize: 14.sp,
-                            color: AppColors.grey77,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.1,
-                            height: 20 / 14,
-                          ),
-                        ),
+                // ── Custom Mobile Number Field with Soft Shadow ──
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color.fromRGBO(0, 0, 0, 0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  SizedBox(height: 24.h),
-
-                  // Login button
-                  AuthPrimaryButton(
-                    label: 'Login',
-                    isLoading: isLoading,
-                    onTap: _onLogin,
-                  ),
-                  SizedBox(height: 33.h),
-
-                  // Or divider
-                  const OrDivider(),
-                  SizedBox(height: 16.h),
-
-                  // Google button
-                  Center(child: GoogleSignInButton(onTap: _onGoogleLogin)),
-                  SizedBox(height: 24.h),
-
-                  // Sign up link
-                  Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Don't have an account? ",
-                          style: AppTextStyles.poppins(
-                            fontSize: 14.sp,
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w500,
-                            height: 20 / 14,
-                            letterSpacing: 0.1,
-                          ),
+                  child: TextFormField(
+                    controller: _phoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    style: AppTextStyles.poppins(
+                      fontSize: 16.sp,
+                      color: Colors.black87,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: '9845 372784',
+                      hintStyle: AppTextStyles.poppins(
+                        fontSize: 16.sp,
+                        color: AppColors.grey163,
+                        height: 20 / 16,
+                        letterSpacing: 0.01,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(vertical: 18.h),
+                      border: InputBorder.none, // Kept clean
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF4522C2),
+                          width: 1.5,
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            ref
-                                .read(authControllerProvider.notifier)
-                                .clearError();
-                            context.push(AppRouter.register);
-                          },
-                          child: Text(
-                            'Sign Up',
-                            style: AppTextStyles.poppins(
-                              fontSize: 14.sp,
-                              color: AppColors.red237,
-                              fontWeight: FontWeight.w500,
-                              height: 20 / 14,
-                              letterSpacing: 0.1,
+                      ),
+                      prefixIcon: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '+91',
+                              style: AppTextStyles.poppins(
+                                fontSize: 16.sp,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
+                            SizedBox(width: 8.w),
+                            Container(
+                              width: 1.w,
+                              height: 24.h,
+                              color: Colors.grey[300],
+                            ),
+                            SizedBox(width: 8.w),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                  SizedBox(height: 16.h),
-                ],
-              ),
+                ),
+                SizedBox(height: 50.h),
+
+                // ── Continue Button ──
+                AuthPrimaryButton(
+                  label: 'Continue',
+                  isLoading: isLoading,
+                  onTap: _onContinue,
+                ),
+                SizedBox(height: 61.h),
+
+                // ── Or Divider ──
+                const OrDivider(),
+                SizedBox(height: 93.h),
+
+                // ── Google Button ──
+                GoogleSignInButton(onTap: _onGoogleLogin),
+                SizedBox(height: 39.h),
+                
+                // ── Terms & Conditions ──
+                Text(
+                  "By continuing, you agree to our\nTerms & Conditions and Privacy Policy",
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.poppins(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.white,
+                    height: 21 / 14,
+                  ),
+                ),
+                SizedBox(height: 34.h),
+
+                // ── Sign Up Link ──
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Don't have an account? ",
+                      style: AppTextStyles.poppins(
+                        fontSize: 16.sp,
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w500,
+                        height: 20 / 16,
+                        letterSpacing: 0.01,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        ref
+                            .read(authControllerProvider.notifier)
+                            .clearError();
+                        context.push(AppRouter.register);
+                      },
+                      child: Text(
+                        'Sign Up',
+                        style: AppTextStyles.poppins(
+                          fontSize: 14.sp,
+                          color: AppColors.red237, // Red text
+                          fontWeight: FontWeight.w500,
+                          height: 20 / 16,
+                          letterSpacing: 0.01,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 30.h),
+              ],
             ),
           ),
         ),

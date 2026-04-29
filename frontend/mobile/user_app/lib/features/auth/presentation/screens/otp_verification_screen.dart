@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
@@ -10,10 +11,14 @@ import 'package:user_app/features/auth/domain/forgot_state.dart'
     show ForgotPasswordState, ForgotPasswordStep;
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
 import 'package:user_app/features/auth/shared/forgot_password_provider.dart';
-import '../widgets/auth_widgets.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
-  const OtpVerificationScreen({super.key});
+  final String phoneNumber; // Added to display the dynamic phone number
+
+  const OtpVerificationScreen({
+    super.key,
+    required this.phoneNumber,
+  });
 
   @override
   ConsumerState<OtpVerificationScreen> createState() =>
@@ -21,23 +26,51 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
+  // Updated to 6 controllers for a 6-digit OTP
   final List<TextEditingController> _controllers = List.generate(
-    4,
+    6,
     (_) => TextEditingController(),
   );
-  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+
+  // Timer state
+  Timer? _timer;
+  int _start = 25;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    setState(() => _start = 25);
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_start == 0) {
+        setState(() => timer.cancel());
+      } else {
+        setState(() => _start--);
+      }
+    });
+  }
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    _timer?.cancel();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
   String get _otp => _controllers.map((c) => c.text).join();
 
   void _onOtpChanged(String value, int index) {
-    if (value.length == 1 && index < 3) {
+    if (value.length == 1 && index < 5) {
       _focusNodes[index + 1].requestFocus();
     }
     if (value.isEmpty && index > 0) {
@@ -64,195 +97,187 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.white, // ✅ Plain white background
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Verification',
+          'Enter OTP',
           style: AppTextStyles.poppins(
-            color: AppColors.black,
+            color: Colors.black,
             fontWeight: FontWeight.w600,
             fontSize: 24.sp,
-            height: 22/24
+            height: 20/24,
+            letterSpacing: 0.01
           ),
         ),
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            size: 20.r,
-            color: Colors.black,
+            size: 25.r,
+            color: AppColors.grey102,
           ),
           onPressed: () => context.pop(),
         ),
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF0F0F0),
-              Color(0xFFF0F0F0),
-              Color.fromARGB(255, 255, 198, 28),
-            ],
-            stops: [0.40, 0.70, 1.0],
-          ),
-        ),
-        child: SafeArea(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 34.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 40.h),
-                      Text(
-                        'Enter your Verification Code',
+              SizedBox(height: 89.h),
+
+              // ── Subtitle ──
+              Text(
+                'We have sent a 6 digit OTP ON',
+                style: AppTextStyles.poppins(
+                  color: AppColors.grey137,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w500,
+                  height: 20/16,
+                  letterSpacing: 0.01
+                ),
+              ),
+              SizedBox(height: 12.h),
+
+              // ── Phone Number ──
+              Text(
+                widget.phoneNumber, 
+                style: AppTextStyles.poppins(
+                  color: AppColors.purple73, 
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.01,
+                  height:20/24
+                ),
+              ),
+              SizedBox(height: 40.h),
+
+              // ── 6 OTP Boxes Row ──
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(6, (index) {
+                  return Container(
+                    width: 48.w, // Adjusted width to fit 6 boxes
+                    height: 52.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(
+                        color: _focusNodes[index].hasFocus
+                            ? const Color(0xFF4522C2)
+                            : Colors.grey[300]!,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: TextField(
+                        controller: _controllers[index],
+                        focusNode: _focusNodes[index],
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        maxLength: 1,
                         style: AppTextStyles.poppins(
-                          fontSize: 20.sp,
+                          fontSize: 22.sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.black,
-                          height: 34/20
+                          color: Colors.black,
                         ),
-                      ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        'Enter the verification code to confirm your identity.',
-                        style: AppTextStyles.poppins(
-                          color: AppColors.grey77,
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w400,
+                        decoration: const InputDecoration(
+                          counterText: '',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
                         ),
-                      ),
-                      SizedBox(height: 48.h),
-
-                      // OTP Boxes Row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment
-                            .spaceBetween, // Spacing like Figma
-                        children: List.generate(4, (index) {
-                          return Container(
-                            width: 70
-                                .w, // Slightly wider to match Figma proportion
-                            height: 70.h,
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(
-                                15.r,
-                              ), // Rounded corners from Figma
-                              border: Border.all(
-                                color:
-                                    AppColors.grey163, // Light grey border
-                                width: 1,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.03),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: TextField(
-                                controller: _controllers[index],
-                                focusNode: _focusNodes[index],
-                                textAlign: TextAlign.center,
-                                keyboardType: TextInputType.number,
-                                maxLength: 1,
-                                style: AppTextStyles.poppins(
-                                  fontSize: 28.sp, // Larger text for OTP
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
-                                ),
-                                decoration: const InputDecoration(
-                                  counterText: '',
-                                  border: InputBorder
-                                      .none, // Hide default border to use Container's border
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                onChanged: (v) => _onOtpChanged(v, index),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-
-                      SizedBox(height: 24.h),
-
-                      // Resend Code logic
-                      Row(
-                        children: [
-                          Text(
-                            "I didn't received the code? ",
-                            style: AppTextStyles.poppins(
-                              color: AppColors.grey77,
-                              fontSize: 13.sp,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              final email = ref
-                                  .read(forgotPasswordControllerProvider)
-                                  .email;
-                              ref
-                                  .read(
-                                    forgotPasswordControllerProvider.notifier,
-                                  )
-                                  .sendOtp(email);
-                            },
-                            child: Text(
-                              'Send again',
-                              style: AppTextStyles.poppins(
-                                color: const Color(
-                                  0xFFE65100,
-                                ), // Darker orange for visibility
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13.sp,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: 48.h),
-
-                      // Primary Verify Button
-                      AuthPrimaryButton(
-                        label: 'Verify',
-                        isLoading: state.isLoading,
-                        onTap: () {
-                          if (_otp.length == 4) {
-                            ref
-                                .read(forgotPasswordControllerProvider.notifier)
-                                .verifyOtp(_otp);
-                          } else {
-                            SnackbarHelper.showWarning(context, 'Enter complete OTP');
-                            
-                          }
+                        onChanged: (v) {
+                          setState(() {}); // Trigger rebuild to update border color
+                          _onOtpChanged(v, index);
                         },
                       ),
-                    ],
-                  ),
+                    ),
+                  );
+                }),
+              ),
+              SizedBox(height: 18.h),
+
+              // ── Timer ──
+              Text(
+                'Resend OTP IN 00:${_start.toString().padLeft(2, '0')}',
+                style: AppTextStyles.poppins(
+                  color: AppColors.grey137,
+                  fontSize: 20.sp,
+                  height: 20/20,
+                  letterSpacing: 0.01,
+                  fontWeight: FontWeight.w500,
                 ),
+              ),
+              SizedBox(height: 30.h),
+
+              // ── Primary Button ──
+              AuthPrimaryButton(
+                label: 'Send OTP', // Note: Image says "Send OTP", but this acts as Verify
+                isLoading: state.isLoading,
+                onTap: () {
+                  if (_otp.length == 6) {
+                    ref
+                        .read(forgotPasswordControllerProvider.notifier)
+                        .verifyOtp(_otp);
+                        onSuccess: () => context.push(AppRouter.tellUsAboutYourselfPath);
+                  } else {
+                    SnackbarHelper.showWarning(context, 'Enter complete 6-digit OTP');
+                  }
+                },
+              ),
+              SizedBox(height: 24.h),
+
+              // ── Resend Code Text ──
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Didn't recieve OTP? ",
+                    style: AppTextStyles.poppins(
+                      color: AppColors.grey102,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w400,
+                      height: 20/16,
+                      letterSpacing: 0.01
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _start == 0
+                        ? () {
+                            // Trigger resend logic
+                            _startTimer();
+                            // final email = ref.read(forgotPasswordControllerProvider).email;
+                            // ref.read(forgotPasswordControllerProvider.notifier).sendOtp(email);
+                          }
+                        : null, // Disabled if timer is still running
+                    child: Text(
+                      'Resend',
+                      style: AppTextStyles.poppins(
+                        color: _start == 0 
+                            ? AppColors.purple72 
+                            : Colors.grey[400], // Greyed out while timer is active
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        height: 20/16,
+                        letterSpacing: 0.01
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
-              // Bottom Illustration (from Figma)
-              Padding(
-                padding: EdgeInsets.only(bottom: 24.h),
-                child: Image.asset(
-                  'assets/Images/profile/change_password_illustration.png', // Ensure path is correct
-                  height: 180.h,
-                  fit: BoxFit.contain,
-                ),
+              SizedBox(height: 50.h),
+
+              // ── Bottom Illustration ──
+              Image.asset(
+                'assets/Images/login/otp_illustration.png', // Ensure you save your image here
+                height: 212.h,
+                fit: BoxFit.contain,
               ),
+              SizedBox(height: 20.h),
             ],
           ),
         ),

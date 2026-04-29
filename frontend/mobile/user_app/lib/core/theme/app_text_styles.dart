@@ -50,6 +50,7 @@ class AppTextStyles {
     TextDecoration? decoration, //  ADD THIS
     Color? decorationColor, //  OPTIONAL (good practice)
     TextDecorationStyle? decorationStyle, //  OPTIONAL
+    FontStyle? fontStyle
   }) {
     // Safety check for fontSize to prevent StrutStyle assertion failures
     final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
@@ -59,6 +60,7 @@ class AppTextStyles {
       fontWeight: fontWeight,
       color: color,
       height: height,
+      fontStyle: fontStyle,
       letterSpacing: letterSpacing,
       decoration: decoration, //  APPLY
       decorationColor: decorationColor,
