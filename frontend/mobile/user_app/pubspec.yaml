@@ -49,6 +49,7 @@ dependencies:
   path_provider: ^2.1.2
   open_filex: ^4.5.0
   google_sign_in: ^6.2.1
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -87,8 +88,10 @@ flutter:
     - assets/Images/login/
     - assets/Images/cart/
     - assets/Icons/appIcon/
+    - assets/Icons/svg/onboard/
+    
 
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/Icons/appIcon/leads_logo.png"
+  image_path: "assets/Icons/appIcon/nextLeads_logo_resize.png"

@@ -11,6 +11,7 @@ import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_field_widgets.dart';
+import 'package:user_app/features/auth/presentation/widgets/payment_bottom_sheet.dart';
 import '../../shared/auth_providers.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -74,22 +75,36 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       _formKey.currentState!.validate(); // This makes the textfields turn red
       return;
     }
-    await ref
-        .read(authControllerProvider.notifier)
-        .register(
-          firstname: _firstNameCtrl.text.trim(),
-          lastname: _lastNameCtrl.text.trim(),
-          email: _emailCtrl.text.trim(),
-          phoneNumber: _phoneCtrl.text.trim(),
-          password: _passwordCtrl.text.trim(),
-          onSuccess: (message) {
-            //  Show Snackbar
-            ref.read(authControllerProvider.notifier).clearError();
-            SnackbarHelper.showSuccess(context, message);
-
-            context.push(AppRouter.login);
-          },
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Allows the sheet to resize with content
+      backgroundColor: Colors.transparent, // Required to see the rounded corners
+      builder: (context) {
+        return FractionallySizedBox(
+          heightFactor: 0.9,
+          child: PaymentBottomSheet(
+            userPhone: _phoneCtrl.text.trim(),
+            userEmail: _emailCtrl.text.trim(),
+            onPaymentSuccess: () async {
+              // ✅ THIS ONLY RUNS IF PAYMENT SUCCEEDS
+              await ref.read(authControllerProvider.notifier).register(
+                    firstname: _firstNameCtrl.text.trim(),
+                    lastname: _lastNameCtrl.text.trim(),
+                    email: _emailCtrl.text.trim(),
+                    phoneNumber: _phoneCtrl.text.trim(),
+                    password: _passwordCtrl.text.trim(),
+                    onSuccess: (message) {
+                      ref.read(authControllerProvider.notifier).clearError();
+                      SnackbarHelper.showSuccess(context, message);
+                      context.push(AppRouter.login);
+                    },
+                  );
+            },
+          ),
         );
+      }
+    );
+  
   }
 
   @override
@@ -294,7 +309,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                   // Sign Up button
                   AuthPrimaryButton(
-                    label: 'Sign Up',
+                    label: 'Proceed to Pay',
                     isLoading: isLoading,
                     onTap: _onRegister,
                   ),

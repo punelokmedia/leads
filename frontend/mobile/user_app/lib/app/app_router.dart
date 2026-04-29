@@ -6,6 +6,8 @@ import 'package:user_app/features/auth/presentation/screens/forgot_password_scre
 import 'package:user_app/features/auth/presentation/screens/login_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/register_screen.dart';
+import 'package:user_app/features/auth/presentation/screens/tell_us_about_yourself_screen.dart';
+import 'package:user_app/features/auth/presentation/screens/verify_number_screen.dart';
 import 'package:user_app/features/cart/presentation/screens/cart_screen.dart';
 import 'package:user_app/features/cart/presentation/screens/payment_successful.dart';
 import 'package:user_app/features/history/presentation/history_screen.dart';
@@ -17,12 +19,18 @@ import 'package:user_app/features/profile/presentation/screens/edit_profile_scre
 
 import 'package:user_app/features/profile/presentation/screens/profile_screen.dart';
 import 'package:user_app/features/shell/presentation/main_shell.dart';
+import 'package:user_app/features/splash/presentation/onboarding_screen.dart';
+import 'package:user_app/features/splash/presentation/splash_screen.dart';
 import 'package:user_app/features/support/presentation/screens/help_support_screen.dart';
 import 'package:user_app/features/support/presentation/screens/terms_conditions_screen.dart';
 
 abstract final class AppRouter {
+  static const String splashPath = '/';
+  static const String onboardingPath = '/onboarding';
   static const login = '/login';
+  static const String verifyNumberPath = '/verify-number';
   static const register = '/register';
+  static const String tellUsAboutYourselfPath = '/tell-us-about-yourself';
   static const String homePath = '/home';
   static const String leadsPath = '/history';
   static const String profilePath = '/profile';
@@ -40,14 +48,34 @@ abstract final class AppRouter {
   static const String forgotChangePasswordPath = '/forgot-change-password';
 
   static final GoRouter router = GoRouter(
-    initialLocation: homePath,
+    initialLocation: splashPath,
     routes: [
+      GoRoute(
+        path: splashPath,
+        builder: (context, state) => const SplashScreen(),
+      ),
+
+      GoRoute(
+        path: onboardingPath,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+
       // ── Auth ────────────────────────────────────────────────────────────────
       GoRoute(path: login, builder: (context, state) => const LoginScreen()),
       GoRoute(
+        path: verifyNumberPath,
+        builder: (context, state) {
+          final phoneString = state.extra as String? ?? '';
+          return VerifyNumberScreen(phoneNumber: phoneString);
+        },
+      ),
+      GoRoute(
         path: register,
-
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: tellUsAboutYourselfPath,
+        builder: (context, state) => const TellUsAboutYourselfScreen(),
       ),
       GoRoute(
         path: changePasswordPath,
@@ -59,7 +87,10 @@ abstract final class AppRouter {
       ),
       GoRoute(
         path: otpVerificationPath,
-        builder: (context, state) => const OtpVerificationScreen(),
+        builder: (context, state) {
+          final phoneString = state.extra as String? ?? '';
+          return OtpVerificationScreen(phoneNumber: phoneString);
+        },
       ),
       GoRoute(
         path: editProfilePath,

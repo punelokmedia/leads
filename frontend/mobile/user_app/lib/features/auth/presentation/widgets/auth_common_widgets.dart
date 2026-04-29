@@ -38,25 +38,31 @@ class AuthPrimaryButton extends StatelessWidget {
         onTap: isLoading ? null : onTap,
         child: Container(
           width: double.infinity,
-          height: 62.h,
+          height: 56.h,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [
-              Color.fromRGBO(253, 255, 29, 1),
-              Color.fromRGBO(248, 176, 32, 1),
-            ]),
-            borderRadius: BorderRadius.circular(14.r),
+            color: AppColors.purple73,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Color.fromRGBO(248,182,31,0.58)),
             boxShadow: [
-              BoxShadow(color: const Color(0xFFFFC107).withOpacity(0.4),
-                  blurRadius: 12, offset: const Offset(0, 4))
+              BoxShadow(
+                color: const Color(0xFF4522C2).withOpacity(0.35),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
             ],
           ),
           child: Center(
             child: isLoading
                 ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                : Text(label,
+                : Text(
+                    label,
                     style: AppTextStyles.poppins(
-                        fontSize: 24.sp, fontWeight: FontWeight.w600,
-                        color: AppColors.white, height: 20 / 24, letterSpacing: 0.1)),
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
           ),
         ),
       );
@@ -73,12 +79,8 @@ class GoogleSignInButton extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
           decoration: BoxDecoration(
-            color: AppColors.white239,
-            borderRadius: BorderRadius.circular(20.r),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.08),
-                  blurRadius: 10, offset: const Offset(0, 2))
-            ],
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(30.r),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

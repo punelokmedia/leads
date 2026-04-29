@@ -12,6 +12,11 @@ class AppColors {
   static final color161=Color.fromRGBO(161,184,17,1);
 
 
+  //purple
+  static final purple72=Color.fromRGBO(72,33,202,1);
+  static final purple73=Color.fromRGBO(73,33,208,1);
+  static final purple86=Color.fromRGBO(86,53,198,1);
+
 
   static const inputBg = Color.fromRGBO(247, 247, 247, 1);
   static const googleBlue = Color.fromRGBO(66, 133, 244, 1);
@@ -56,6 +61,7 @@ class AppColors {
   static const grey137=Color.fromRGBO(137, 137, 137, 1);
   static const grey143=Color.fromRGBO(143, 147, 148, 1);
   static const grey163=Color.fromRGBO(163, 163, 163, 1);
+  static const grey175=Color.fromRGBO(175,175,175,1);
   static const grey180=Color.fromRGBO(180, 176, 176, 1);
   static const grey198=Color.fromRGBO(198, 198, 198, 1);
   static const grey217=Color.fromRGBO(217, 217, 217, 1);
