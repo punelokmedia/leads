@@ -54,8 +54,12 @@ class CustomProfileDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return _buildContainer(
       child: DropdownButtonFormField<String>(
-        value: value,
-        icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 24.r),
+        initialValue: value,
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: Colors.grey[600],
+          size: 24.r,
+        ),
         style: AppTextStyles.poppins(fontSize: 16.sp, color: Colors.black),
         decoration: _buildInputDecoration(label, hintText, null),
         items: items.map((String item) {
@@ -89,7 +93,11 @@ Widget _buildContainer({required Widget child}) {
   );
 }
 
-InputDecoration _buildInputDecoration(String label, String hint, Color? labelColor) {
+InputDecoration _buildInputDecoration(
+  String label,
+  String hint,
+  Color? labelColor,
+) {
   return InputDecoration(
     labelText: label,
     labelStyle: AppTextStyles.poppins(
@@ -98,10 +106,7 @@ InputDecoration _buildInputDecoration(String label, String hint, Color? labelCol
       fontWeight: FontWeight.w400,
     ),
     hintText: hint,
-    hintStyle: AppTextStyles.poppins(
-      fontSize: 15.sp,
-      color: AppColors.grey163,
-    ),
+    hintStyle: AppTextStyles.poppins(fontSize: 15.sp, color: AppColors.grey163),
     floatingLabelBehavior: FloatingLabelBehavior.always,
     contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
     border: InputBorder.none,

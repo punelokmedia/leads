@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 
 class ProfileHeaderShimmer extends StatelessWidget {
   const ProfileHeaderShimmer({super.key});
@@ -13,7 +12,12 @@ class ProfileHeaderShimmer extends StatelessWidget {
       highlightColor: Colors.grey[100]!,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.only(top: 60.h, bottom: 30.h, left: 24.w, right: 24.w),
+        padding: EdgeInsets.only(
+          top: 60.h,
+          bottom: 30.h,
+          left: 24.w,
+          right: 24.w,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(32.r)),
@@ -35,18 +39,10 @@ class ProfileHeaderShimmer extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Name line
-                Container(
-                  width: 120.w,
-                  height: 20.h,
-                  color: Colors.white,
-                ),
+                Container(width: 120.w, height: 20.h, color: Colors.white),
                 SizedBox(height: 8.h),
                 // Email line
-                Container(
-                  width: 150.w,
-                  height: 14.h,
-                  color: Colors.white,
-                ),
+                Container(width: 150.w, height: 14.h, color: Colors.white),
               ],
             ),
           ],

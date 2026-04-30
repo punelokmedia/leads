@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:go_router/go_router.dart';
-import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 
@@ -47,6 +45,7 @@ class _LogoTitle extends StatelessWidget {
     );
   }
 }
+
 class _CartButton extends StatelessWidget {
   final int count;
   final VoidCallback onTap;
@@ -61,19 +60,16 @@ class _CartButton extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Container(
-            width: 46.r,   
+            width: 46.r,
             height: 45.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.red237,
-                width: 1.5,
-              ),
+              border: Border.all(color: AppColors.red237, width: 1.5),
             ),
             child: Center(
               child: SvgPicture.asset(
                 "assets/Icons/svg/home/cart_icon.svg",
-                width: 24.w, 
+                width: 24.w,
                 height: 25.h,
                 fit: BoxFit.contain,
                 colorFilter: ColorFilter.mode(
@@ -95,10 +91,7 @@ class _CartButton extends StatelessWidget {
                   color: Color(0xFFE53935),
                   shape: BoxShape.circle,
                 ),
-                constraints: BoxConstraints(
-                  minWidth: 16.r,
-                  minHeight: 16.r,
-                ),
+                constraints: BoxConstraints(minWidth: 16.r, minHeight: 16.r),
                 child: Text(
                   '$count',
                   style: AppTextStyles.poppins(

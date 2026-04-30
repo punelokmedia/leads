@@ -78,7 +78,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // Allows the sheet to resize with content
-      backgroundColor: Colors.transparent, // Required to see the rounded corners
+      backgroundColor:
+          Colors.transparent, // Required to see the rounded corners
       builder: (context) {
         return FractionallySizedBox(
           heightFactor: 0.9,
@@ -87,7 +88,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             userEmail: _emailCtrl.text.trim(),
             onPaymentSuccess: () async {
               // ✅ THIS ONLY RUNS IF PAYMENT SUCCEEDS
-              await ref.read(authControllerProvider.notifier).register(
+              await ref
+                  .read(authControllerProvider.notifier)
+                  .register(
                     firstname: _firstNameCtrl.text.trim(),
                     lastname: _lastNameCtrl.text.trim(),
                     email: _emailCtrl.text.trim(),
@@ -102,9 +105,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             },
           ),
         );
-      }
+      },
     );
-  
   }
 
   @override
@@ -268,8 +270,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     controller: _confirmPasswordCtrl,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
-                      if (v != _passwordCtrl.text)
+                      if (v != _passwordCtrl.text) {
                         return 'Passwords do not match';
+                      }
                       return null;
                     },
                   ),

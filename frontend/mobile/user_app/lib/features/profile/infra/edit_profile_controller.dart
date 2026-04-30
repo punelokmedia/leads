@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import '../domain/edit_profile_model.dart';
 import 'edit_profile_repository.dart';
@@ -95,31 +94,37 @@ class EditProfileController extends StateNotifier<EditProfileState> {
   }
 
   Future<void> changePassword({
-  required String current,
-  required String newPass,
-  required void Function() onSuccess,
-}) async {
-  state = state.copyWith(isChangingPassword: true, errorMessage: null);
-  try {
-    await _repository.changePassword(
-      currentPassword: current,
-      newPassword: newPass,
-    );
-    state = state.copyWith(isChangingPassword: false, successMessage: 'Password changed!');
-    onSuccess();
-  } on DioException catch (e) {
-    final responseData = e.response?.data;
-    String msg = 'Password change failed';
-    
-    if (responseData is Map && responseData.containsKey('message')) {
-      msg = responseData['message'];
+    required String current,
+    required String newPass,
+    required void Function() onSuccess,
+  }) async {
+    state = state.copyWith(isChangingPassword: true, errorMessage: null);
+    try {
+      await _repository.changePassword(
+        currentPassword: current,
+        newPassword: newPass,
+      );
+      state = state.copyWith(
+        isChangingPassword: false,
+        successMessage: 'Password changed!',
+      );
+      onSuccess();
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      String msg = 'Password change failed';
+
+      if (responseData is Map && responseData.containsKey('message')) {
+        msg = responseData['message'];
+      }
+
+      state = state.copyWith(isChangingPassword: false, errorMessage: msg);
+    } catch (e) {
+      state = state.copyWith(
+        isChangingPassword: false,
+        errorMessage: 'An unexpected error occurred',
+      );
     }
-    
-    state = state.copyWith(isChangingPassword: false, errorMessage: msg);
-  } catch (e) {
-    state = state.copyWith(isChangingPassword: false, errorMessage: 'An unexpected error occurred');
   }
-}
 
   void clearMessages() =>
       state = state.copyWith(errorMessage: null, successMessage: null);

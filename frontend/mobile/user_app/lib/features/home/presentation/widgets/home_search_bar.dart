@@ -29,6 +29,7 @@ class HomeSearchBar extends HookConsumerWidget {
           hasText.value = controller.text.isNotEmpty;
         }
       }
+
       controller.addListener(listener);
       return () => controller.removeListener(listener);
     }, [controller]);
@@ -36,9 +37,10 @@ class HomeSearchBar extends HookConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (homeState.selectedCity != null && homeState.selectedCity!.isNotEmpty)
+        if (homeState.selectedCity != null &&
+            homeState.selectedCity!.isNotEmpty)
           Padding(
-            padding: EdgeInsets.only(left: 16.w, bottom: 4.h),
+            padding: EdgeInsets.only(left: 10.w, bottom: 4.h),
             child: Chip(
               visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
               label: Text(
@@ -50,10 +52,14 @@ class HomeSearchBar extends HookConsumerWidget {
                 ),
               ),
               backgroundColor: const Color(0xFFF7E9A6),
-              side: BorderSide(color: AppColors.color159.withValues(alpha: 0.35)),
+              side: BorderSide(
+                color: AppColors.color159.withValues(alpha: 0.35),
+              ),
               deleteIcon: Icon(Icons.close_rounded, size: 16.r),
               onDeleted: () {
-                ref.read(homeControllerProvider.notifier).loadLeads(isReset: true);
+                ref
+                    .read(homeControllerProvider.notifier)
+                    .loadLeads(isReset: true);
               },
             ),
           ),
@@ -83,9 +89,14 @@ class HomeSearchBar extends HookConsumerWidget {
                   controller: controller,
                   onChanged: (value) {
                     debounce.value?.cancel();
-                    debounce.value = Timer(const Duration(milliseconds: 450), () {
-                      ref.read(homeControllerProvider.notifier).searchLeads(value);
-                    });
+                    debounce.value = Timer(
+                      const Duration(milliseconds: 450),
+                      () {
+                        ref
+                            .read(homeControllerProvider.notifier)
+                            .searchLeads(value);
+                      },
+                    );
                   },
                   style: AppTextStyles.poppins(
                     fontSize: 14.sp,
@@ -96,7 +107,7 @@ class HomeSearchBar extends HookConsumerWidget {
                   decoration: InputDecoration(
                     isCollapsed: true,
                     border: InputBorder.none,
-                    hintText: 'Search leads, city, address...',
+                    hintText: 'Search leads,...',
                     hintStyle: AppTextStyles.poppins(
                       fontSize: 13.sp,
                       color: AppColors.grey137,
@@ -111,7 +122,11 @@ class HomeSearchBar extends HookConsumerWidget {
                     controller.clear();
                     ref.read(homeControllerProvider.notifier).searchLeads("");
                   },
-                  icon: Icon(Icons.close_rounded, color: AppColors.grey117, size: 20.r),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: AppColors.grey117,
+                    size: 20.r,
+                  ),
                   splashRadius: 18.r,
                 )
               else

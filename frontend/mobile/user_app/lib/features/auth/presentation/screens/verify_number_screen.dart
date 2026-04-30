@@ -54,7 +54,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
     print("Sending OTP to: ${_phoneCtrl.text}");
     final fullPhoneNumber = '+91 ${_phoneCtrl.text.trim()}';
     // Simulate moving to the OTP input screen
-    context.push(AppRouter.otpVerificationPath, extra:fullPhoneNumber);
+    context.push(AppRouter.otpVerificationPath, extra: fullPhoneNumber);
   }
 
   @override
@@ -172,8 +172,9 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty)
+                      if (v == null || v.isEmpty) {
                         return 'Mobile number is required';
+                      }
                       if (v.length < 10) return 'Enter a valid 10-digit number';
                       return null;
                     },

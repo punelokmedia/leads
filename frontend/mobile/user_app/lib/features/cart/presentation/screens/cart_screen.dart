@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
@@ -61,9 +59,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   }
 
   void _showSnack(String msg, {bool isError = false}) {
-    if(isError){
+    if (isError) {
       SnackbarHelper.showError(context, msg);
-    }else{
+    } else {
       SnackbarHelper.showSuccess(context, msg);
     }
   }
@@ -194,7 +192,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             '',
                           );
 
-                         
                           if (cleanPhone.startsWith('+91')) {
                             cleanPhone = cleanPhone.substring(3);
                           } else if (cleanPhone.startsWith('91') &&

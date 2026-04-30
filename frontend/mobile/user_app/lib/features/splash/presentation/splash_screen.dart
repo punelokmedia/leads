@@ -6,7 +6,6 @@ import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:user_app/app/app_router.dart';
-import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/features/auth/shared/auth_providers.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -47,8 +46,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
 
     if (!hasSeenOnboarding) {
-      
-      
       context.go(AppRouter.onboardingPath);
       return;
     }
