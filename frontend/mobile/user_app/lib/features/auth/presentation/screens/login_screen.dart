@@ -53,13 +53,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     // Proceed to next screen
-    context.push(AppRouter.verifyNumberPath, extra: phone);
+    context.push(
+          AppRouter.verifyNumberPath,
+          extra: {
+            'isGoogle': false,
+            'phone': phone,
+          }, 
+        );
   }
 
   void _onGoogleLogin() {
     ref
         .read(authControllerProvider.notifier)
-        .googleAuth(onSuccess: () => context.go(AppRouter.verifyNumberPath));
+        .googleAuth(
+          onSuccess: (String token) {
+            context.push(
+              AppRouter.verifyNumberPath,
+              extra: {'isGoogle': true, 'token': token},
+            );
+          },
+        );
   }
 
   @override

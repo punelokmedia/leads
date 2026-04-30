@@ -35,40 +35,38 @@ class AuthPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: isLoading ? null : onTap,
-    child: Container(
-      width: double.infinity,
-      height: 56.h,
-      decoration: BoxDecoration(
-        color: AppColors.purple73,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Color.fromRGBO(248, 182, 31, 0.58)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF4522C2).withOpacity(0.35),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Center(
-        child: isLoading
-            ? const CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
+        onTap: isLoading ? null : onTap,
+        child: Container(
+          width: double.infinity,
+          height: 56.h,
+          decoration: BoxDecoration(
+            color: AppColors.purple73,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(color: Color.fromRGBO(248,182,31,0.58)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4522C2).withOpacity(0.35),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               )
-            : Text(
-                label,
-                style: AppTextStyles.poppins(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
-                ),
-              ),
-      ),
-    ),
-  );
+            ],
+          ),
+          child: Center(
+            child: isLoading
+                ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                : Text(
+                    label,
+                    style: AppTextStyles.poppins(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: 0.01,
+                      height: 20/24
+                    ),
+                  ),
+          ),
+        ),
+      );
 }
 
 // ── Google sign-in button ─────────────────────────────────────────────────────

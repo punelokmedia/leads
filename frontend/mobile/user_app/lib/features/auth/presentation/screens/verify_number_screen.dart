@@ -1,3 +1,5 @@
+// features/auth/presentation/screens/verify_number_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
@@ -8,13 +10,21 @@ import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
-import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart'; // Make sure AuthPrimaryButton is accessible here
+import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
 import '../../shared/auth_providers.dart';
 
 class VerifyNumberScreen extends ConsumerStatefulWidget {
+  
+  final bool isGoogleAuth;
   final String phoneNumber;
+  final String googleToken;
 
-  const VerifyNumberScreen({super.key, required this.phoneNumber});
+  const VerifyNumberScreen({
+    super.key,
+    required this.isGoogleAuth,
+    required this.phoneNumber,
+    required this.googleToken,
+  });
 
   @override
   ConsumerState<VerifyNumberScreen> createState() => _VerifyNumberScreenState();
@@ -27,7 +37,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
   @override
   void initState() {
     super.initState();
-    // ✅ Pre-fill the controller with the passed phone number
+    
     _phoneCtrl = TextEditingController(text: widget.phoneNumber);
   }
 
@@ -43,24 +53,53 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
       return;
     }
 
-    //Riverpod logic to send OTP
-    /*
-    await ref.read(authControllerProvider.notifier).sendOtp(
-      phoneNumber: _phoneCtrl.text.trim(),
-      onSuccess: () => context.push(AppRouter.otpVerificationPath),
-    );
-    */
+    final phone = _phoneCtrl.text.trim();
+    print("Sending OTP to: $phone");
 
-    print("Sending OTP to: ${_phoneCtrl.text}");
-    final fullPhoneNumber = '+91 ${_phoneCtrl.text.trim()}';
-    // Simulate moving to the OTP input screen
-    context.push(AppRouter.otpVerificationPath, extra: fullPhoneNumber);
+    // ── Call the API via Riverpod Controller based on Auth Type ──
+    if (widget.isGoogleAuth) {
+      
+      await ref.read(authControllerProvider.notifier).requestOtpSession(
+        phoneNumber: phone,
+        token: widget.googleToken,
+        onSuccess: (String otpCode) {
+          print("Google OTP Sent successfully! Code is: $otpCode");
+          
+         
+          context.push(
+            AppRouter.otpVerificationPath,
+            extra: {
+              'isGoogle': true,
+              'phone': phone,
+              'token': widget.googleToken,
+            },
+          );
+        },
+      );
+    } else {
+      
+      await ref.read(authControllerProvider.notifier).sendOtp(
+        phoneNumber: phone,
+        onSuccess: (String otpCode) {
+          print("Standard OTP Sent successfully! Code is: $otpCode");
+          
+          context.push(
+            AppRouter.otpVerificationPath,
+            extra: {
+              'isGoogle': false,
+              'phone': phone,
+              'token': '', 
+            },
+          );
+        },
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // final isLoading = ref.watch(authIsLoadingProvider); // Uncomment when wired up
-    final isLoading = false;
+    
+    final isLoading = ref.watch(authIsLoadingProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -81,7 +120,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
             letterSpacing: 0.01,
           ),
         ),
-        titleSpacing: 0, // Aligns title closer to the back button
+        titleSpacing: 0,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -107,7 +146,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                 ),
                 SizedBox(height: 42.h),
 
-                // ── Custom Mobile Number Field (Pre-filled) ──
+                // ── Custom Mobile Number Field ──
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -172,9 +211,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) {
-                        return 'Mobile number is required';
-                      }
+                      if (v == null || v.isEmpty) return 'Mobile number is required';
                       if (v.length < 10) return 'Enter a valid 10-digit number';
                       return null;
                     },
