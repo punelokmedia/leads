@@ -11,7 +11,6 @@ import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
 import '../../shared/auth_providers.dart';
-import '../widgets/auth_widgets.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

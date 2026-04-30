@@ -4,17 +4,22 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 
+class _C {
+  static const purpleLight = Color(0xFF5B34C9);
+  static const inactiveColor = Color(0xFF9E9E9E);
+}
+
 class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
+  /// Matches the design: Home · Leads · Payments · Profile
   static const _items = [
-    _NavItem(label: 'Home', iconPath: 'assets/Icons/svg/navbar/home.svg'),
-    _NavItem(label: 'Category', iconData: Icons.category_rounded),
-    _NavItem(label: 'City', iconData: Icons.location_city_rounded),
-    _NavItem(label: 'History', iconPath: 'assets/Icons/svg/navbar/history.svg'),
-    _NavItem(label: 'Account', iconPath: 'assets/Icons/svg/navbar/profile.svg'),
+    _NavItem(label: 'Home', iconData: Icons.home_rounded),
+    _NavItem(label: 'Leads', iconData: Icons.leaderboard_rounded),
+    _NavItem(label: 'Payments', iconData: Icons.credit_card_rounded),
+    _NavItem(label: 'Profile', iconData: Icons.person_rounded),
   ];
 
   @override
@@ -27,20 +32,19 @@ class MainShell extends StatelessWidget {
       bottomNavigationBar: Padding(
         padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, (12.h + bottomInset)),
         child: Container(
-          height: 68.h,
+          height: 64.h,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28.r),
-            border: Border.all(color: const Color(0xFFFFB800).withValues(alpha: 0.6), width: 1.2),
+            borderRadius: BorderRadius.circular(24.r),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFFB800).withValues(alpha: 0.18),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
+                color: _C.purpleLight.withValues(alpha: 0.14),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 10,
+                blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -75,9 +79,6 @@ class _NavButton extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  static const _activeColor = Color(0xFFFFB800);
-  static const _inactiveColor = Color(0xFF9E9E9E);
-
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -85,12 +86,12 @@ class _NavButton extends StatelessWidget {
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(milliseconds: 220),
           curve: Curves.easeInOut,
           margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
           decoration: BoxDecoration(
             color: isSelected
-                ? _activeColor.withValues(alpha: 0.12)
+                ? _C.purpleLight.withValues(alpha: 0.10)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(16.r),
           ),
@@ -99,7 +100,7 @@ class _NavButton extends StatelessWidget {
             children: [
               AnimatedScale(
                 scale: isSelected ? 1.15 : 1.0,
-                duration: const Duration(milliseconds: 250),
+                duration: const Duration(milliseconds: 220),
                 curve: Curves.easeInOut,
                 child: item.iconPath != null
                     ? SvgPicture.asset(
@@ -107,23 +108,23 @@ class _NavButton extends StatelessWidget {
                         width: 22.w,
                         height: 22.h,
                         colorFilter: ColorFilter.mode(
-                          isSelected ? _activeColor : _inactiveColor,
+                          isSelected ? _C.purpleLight : _C.inactiveColor,
                           BlendMode.srcIn,
                         ),
                       )
                     : Icon(
                         item.iconData,
                         size: 22.r,
-                        color: isSelected ? _activeColor : _inactiveColor,
+                        color: isSelected ? _C.purpleLight : _C.inactiveColor,
                       ),
               ),
               SizedBox(height: 3.h),
               AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 250),
+                duration: const Duration(milliseconds: 220),
                 style: AppTextStyles.poppins(
                   fontSize: 10.sp,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: isSelected ? _activeColor : _inactiveColor,
+                  color: isSelected ? _C.purpleLight : _C.inactiveColor,
                 ),
                 child: Text(item.label, maxLines: 1),
               ),
@@ -140,5 +141,5 @@ class _NavItem {
   final String? iconPath;
   final IconData? iconData;
 
-  const _NavItem({required this.label, this.iconPath, this.iconData});
+  const _NavItem({required this.label, this.iconData, this.iconPath});
 }

@@ -1,12 +1,9 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
@@ -68,7 +65,8 @@ class CartController extends StateNotifier<CartState> {
         if (e is DioException) {
           final data = e.response?.data;
           if (data is Map) {
-            resultMessage = data['message']?.toString() ?? "Failed to add to cart";
+            resultMessage =
+                data['message']?.toString() ?? "Failed to add to cart";
           } else {
             resultMessage = "Failed to add to cart";
           }
@@ -231,7 +229,7 @@ class CartController extends StateNotifier<CartState> {
         await _repo.addToCartRemote(id, quantity);
       } catch (e) {
         state = state.copyWith(error: "Failed to sync with remote cart");
-        return; 
+        return;
       }
     }
     if (existingItem != null) {
@@ -317,7 +315,7 @@ class CartController extends StateNotifier<CartState> {
           lastOrderDetails: {
             'orderId': response.orderId,
             'paymentId': response.paymentId,
-            'amount': savedAmount, 
+            'amount': savedAmount,
             'date': DateTime.now().toIso8601String(),
           },
         );
@@ -330,7 +328,8 @@ class CartController extends StateNotifier<CartState> {
       return null;
     }
   }
-// ✅ Changed to Future<String?> to return the file path to the UI
+
+  // ✅ Changed to Future<String?> to return the file path to the UI
   Future<String?> downloadLeads(String orderId) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -352,31 +351,30 @@ class CartController extends StateNotifier<CartState> {
         }
 
         state = state.copyWith(isLoading: false, error: errorMessage);
-        return null; 
+        return null;
       }
 
       // 2. Handle Successful Download
       final List<int> bytes = response.data ?? [];
       if (bytes.isEmpty) throw Exception("File is empty");
-      
+
       String extension = 'xlsx';
       final contentType = response.headers.value('content-type');
       if (contentType?.contains('pdf') ?? false) extension = 'pdf';
 
       // ✅ Use the custom public Download directory
       Directory dir = await getDownloadDirectory();
-      
+
       final String filePath =
           "${dir.path}/Leads_${orderId}_${DateTime.now().millisecondsSinceEpoch}.$extension";
-      
+
       final File file = File(filePath);
       await file.writeAsBytes(bytes, flush: true);
 
       state = state.copyWith(isLoading: false);
-      
-      // ✅ Return the file path so the UI knows it succeeded
-      return filePath; 
 
+      // ✅ Return the file path so the UI knows it succeeded
+      return filePath;
     } catch (e) {
       debugPrint("Download System Error: $e");
       state = state.copyWith(
@@ -395,7 +393,7 @@ class CartController extends StateNotifier<CartState> {
       if (!await dir.exists()) {
         await dir.create(recursive: true);
       }
-      return dir; 
+      return dir;
     } else {
       // iOS fallback
       return await getApplicationDocumentsDirectory();

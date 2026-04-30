@@ -17,7 +17,7 @@ class HistoryStatusBadge extends StatelessWidget {
       alignment: Alignment.center,
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 5.h),
       decoration: BoxDecoration(
-        color: isPaid ?Color.fromRGBO(79,195,98,1) : Colors.orange,
+        color: isPaid ? Color.fromRGBO(79, 195, 98, 1) : Colors.orange,
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Text(
@@ -26,7 +26,7 @@ class HistoryStatusBadge extends StatelessWidget {
           color: AppColors.white,
           fontSize: 12.sp,
           fontWeight: FontWeight.w500,
-          height: 1.48
+          height: 1.48,
         ),
       ),
     );
@@ -140,24 +140,24 @@ class _HistoryShimmerListState extends State<HistoryShimmerList>
   }
 
   Widget _box({double? width, required double height}) => Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(4.r),
-        ),
-      );
+    width: width,
+    height: height,
+    decoration: BoxDecoration(
+      color: Colors.grey[300],
+      borderRadius: BorderRadius.circular(4.r),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) => Opacity(
+      builder: (_, _) => Opacity(
         opacity: _anim.value,
         child: ListView.builder(
           itemCount: 4,
           physics: const NeverScrollableScrollPhysics(),
-          itemBuilder: (_, __) => Container(
+          itemBuilder: (_, _) => Container(
             margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(

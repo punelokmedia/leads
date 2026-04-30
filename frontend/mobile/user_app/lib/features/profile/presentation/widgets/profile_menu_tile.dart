@@ -184,7 +184,7 @@ class _ProfileShimmerState extends State<ProfileShimmer>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) => Opacity(
+      builder: (_, _) => Opacity(
         opacity: _anim.value,
         child: Column(
           children: [

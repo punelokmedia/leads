@@ -15,7 +15,6 @@ class ApiEndpoints {
   static const String _auth = '$_apiV1/auth';
   static const String _cart = '$_apiV1/cart';
   static const String _categories = '$_apiV1/categories';
-  
 
   // ── Auth endpoints ─────────────────────────────────────────────────────────
 
@@ -35,24 +34,25 @@ class ApiEndpoints {
   static const String logout = '$_auth/logout';
   static const String forgotPassword = '$_auth/forgot-password';
   static const String changePassword = '$_auth/change-password';
-  static const String addAddress='$_auth/add-address';
-  static const String resetPassword='$_auth/reset-password';
-  
-
+  static const String addAddress = '$_auth/add-address';
+  static const String resetPassword = '$_auth/reset-password';
 
   //
-  static const String getAllLeads='$_apiV1/leads/get-all-leads';
+  static const String getAllLeads = '$_apiV1/leads/get-all-leads';
+
+ 
+  // resolves to → api/v1/cities/get-all-cities
   // ── Cart ───────────────────────────────────────
-  static const String cart = '$_cart/get-cart';                     // GET all
+  static const String cart = '$_cart/get-cart'; // GET all
   static const String deleteCartItem = '$_cart/delete-cart-item';
-  static const String addToCart = '$_cart/add-cart';                // POST
+  static const String addToCart = '$_cart/add-cart'; // POST
   static const String checkoutCart = '$_cart/checkout'; // POST
   static const String history='$_apiV1/leads/history';
 
 
   //──Profile───────────────────────────────────────
-  static const String fetchProfile='$_auth/profile';
-  static const String editProfile='$_auth/update-profile';
+  static const String fetchProfile = '$_auth/profile';
+  static const String editProfile = '$_auth/update-profile';
 
    //──Razorpay───────────────────────────────────────
   static const String payCart = '$_apiV1/payments/create';  
@@ -63,4 +63,3 @@ class ApiEndpoints {
 
 
 }
-

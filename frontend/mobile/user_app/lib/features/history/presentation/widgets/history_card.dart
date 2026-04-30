@@ -91,7 +91,7 @@ class _CardHeader extends StatelessWidget {
                 ),
               );
             },
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               width: 65.w,
               height: 45.h,
               color: AppColors.white239,
@@ -245,19 +245,24 @@ class _CardDetails extends ConsumerWidget {
                     if (filePath != null && context.mounted) {
                       // Hide the "Starting download..." snackbar immediately
                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      
+
                       // Show the success snackbar
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
                             "File saved to Downloads!",
-                            style: AppTextStyles.roboto(fontSize: 13.sp, color: Colors.white),
+                            style: AppTextStyles.roboto(
+                              fontSize: 13.sp,
+                              color: Colors.white,
+                            ),
                           ),
                           backgroundColor: const Color(0xFF4CAF50), // Green
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
                           duration: const Duration(seconds: 15),
-                          
+
                           // ✅ Add the "OPEN" action button
                           action: SnackBarAction(
                             label: "OPEN",

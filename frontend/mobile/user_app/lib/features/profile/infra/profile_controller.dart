@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import '../domain/profile_model.dart';
 import 'profile_repository.dart';
@@ -22,13 +21,12 @@ class ProfileState {
     bool? isLoading,
     bool? isLoggingOut,
     String? errorMessage,
-  }) =>
-      ProfileState(
-        profile: profile ?? this.profile,
-        isLoading: isLoading ?? this.isLoading,
-        isLoggingOut: isLoggingOut ?? this.isLoggingOut,
-        errorMessage: errorMessage,
-      );
+  }) => ProfileState(
+    profile: profile ?? this.profile,
+    isLoading: isLoading ?? this.isLoading,
+    isLoggingOut: isLoggingOut ?? this.isLoggingOut,
+    errorMessage: errorMessage,
+  );
 }
 
 // ---------- Controller ----------

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:user_app/core/utils/intl_helper.dart';
 
 class CartLead {
@@ -27,40 +25,48 @@ class CartLead {
     this.quantity = 1,
   });
 
-  CartLead copyWith({bool? isSelected,int? quantity,}) => CartLead(
-        id: id,                     
-        title: title,              
-        location: location,         
-        name: name,                
-        address: address,          
-        time: time,                 
-        sharingCount: sharingCount, 
-        imageUrl: imageUrl,        
-        isSelected: isSelected ?? this.isSelected,
-        quantity: quantity ?? this.quantity,
-      );
+  CartLead copyWith({bool? isSelected, int? quantity}) => CartLead(
+    id: id,
+    title: title,
+    location: location,
+    name: name,
+    address: address,
+    time: time,
+    sharingCount: sharingCount,
+    imageUrl: imageUrl,
+    isSelected: isSelected ?? this.isSelected,
+    quantity: quantity ?? this.quantity,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id, 'title': title, 'location': location, 'name': name,
-        'address': address, 'time': time, 'sharingCount': sharingCount,
-        'imageUrl': imageUrl, 'isSelected': isSelected,'quantity': quantity,
-      };
+    'id': id,
+    'title': title,
+    'location': location,
+    'name': name,
+    'address': address,
+    'time': time,
+    'sharingCount': sharingCount,
+    'imageUrl': imageUrl,
+    'isSelected': isSelected,
+    'quantity': quantity,
+  };
 
   factory CartLead.fromJson(Map<String, dynamic> j) => CartLead(
-      // Map '_id' from backend to 'id'
-      id: (j['id'] ?? j['_id'] ?? '').toString(), 
-      title: j['title'] ?? '',
-      // Map 'city' + 'state' from backend to 'location'
-      location: "${j['city'] ?? ''}, ${j['state'] ?? ''}", 
-      // Handle missing fields with defaults
-      name: j['name'] ?? j['title'] ?? '', 
-      address: j['address'] ?? j['city'] ?? '',
-      time: formatIsoDate(j['expiresAt'] ?? j['time'] ?? ''),
-      sharingCount: j['sharingCount']?.toString() ?? j['remainingSlots']?.toString() ?? '0',
-      imageUrl: j['imageUrl'],
-      isSelected: j['isSelected'] ?? true,
-      quantity: j['quantity'] ?? 1,
-    );
+    // Map '_id' from backend to 'id'
+    id: (j['id'] ?? j['_id'] ?? '').toString(),
+    title: j['title'] ?? '',
+    // Map 'city' + 'state' from backend to 'location'
+    location: "${j['city'] ?? ''}, ${j['state'] ?? ''}",
+    // Handle missing fields with defaults
+    name: j['name'] ?? j['title'] ?? '',
+    address: j['address'] ?? j['city'] ?? '',
+    time: formatIsoDate(j['expiresAt'] ?? j['time'] ?? ''),
+    sharingCount:
+        j['sharingCount']?.toString() ?? j['remainingSlots']?.toString() ?? '0',
+    imageUrl: j['imageUrl'],
+    isSelected: j['isSelected'] ?? true,
+    quantity: j['quantity'] ?? 1,
+  );
 }
 
 // cart_model.dart (or wherever your CartState is defined)
@@ -86,12 +92,12 @@ class CartState {
     Map<String, dynamic>? lastOrderDetails,
     String? activeInternalOrderId,
   }) {
-
     return CartState(
       items: items ?? this.items,
       isLoading: isLoading ?? this.isLoading,
       error: error,
-      activeInternalOrderId: activeInternalOrderId ?? this.activeInternalOrderId,
+      activeInternalOrderId:
+          activeInternalOrderId ?? this.activeInternalOrderId,
       lastOrderDetails: lastOrderDetails ?? this.lastOrderDetails,
     );
   }
