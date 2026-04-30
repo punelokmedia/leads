@@ -1,6 +1,7 @@
 // auth/infra/auth_controller.dart
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import 'package:user_app/core/errors/error_handler.dart'; // Import your error handler
@@ -14,81 +15,148 @@ class AuthController extends StateNotifier<AuthState> {
   final Ref _ref;
   AuthController(this._repo, this._ref) : super(const AuthState());
 
-  // ── Register ──────────────────────────────────────────────────────────────
-  Future<void> register({
-    required String firstname,
-    required String lastname,
+  // ── Complete Profile ──────────────────────────────────────────────────────
+  Future<void> completeProfile({
+    required String fullName,
     required String email,
-    required String phoneNumber,
-    required String password,
-    required void Function(String message) onSuccess,
+    required String city,
+    required List<String> categories,
+    required String businessName,
+    required String workType,
+    required void Function() onSuccess,
   }) async {
-    // _setLoading();
     state = state.copyWith(isLoading: true, clearError: true);
+
     try {
-      final result = await _repo.register(
-        firstname: firstname,
-        lastname: lastname,
+      final updatedUser = await _repo.completeProfile(
+        fullName: fullName,
         email: email,
-        phoneNumber: phoneNumber,
-        password: password,
-      );
-      if (result.token != null) {
-        await _ref.read(isLoggedInProvider.notifier).setLoggedIn(result.token!);
-      }
-      state = state.copyWith(
-        isLoading: false,
-        user: result.user,
-        token: result.token,
+        city: city,
+        categories: categories,
+        businessName: businessName,
+        workType: workType,
       );
 
-      onSuccess("Account created successfully");
+      // Update the state with the newly completed user profile
+      state = state.copyWith(isLoading: false, user: updatedUser);
+
+      onSuccess();
     } catch (e) {
-      // Use centralized ErrorHandler
       final appException = ErrorHandler.handle(e);
       state = state.copyWith(isLoading: false, error: appException.message);
     }
   }
 
-  // ── Login ─────────────────────────────────────────────────────────────────
-  Future<void> login({
-    required String email,
-    required String password,
+  // ── Send OTP ──────────────────────────────────────────────────────────────
+  Future<void> sendOtp({
+    required String phoneNumber,
+    required void Function(String otpCode) onSuccess,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final response = await _repo.sendOtp(phoneNumber: phoneNumber);
+
+      state = state.copyWith(isLoading: false);
+
+      // Since your API returns the OTP in the response (useful for testing),
+      // we can extract it and pass it to the success callback.
+      final data = response['data'] as Map<String, dynamic>;
+      final String otpCode = data['otp'].toString();
+
+      onSuccess(otpCode);
+    } catch (e) {
+      final appException = ErrorHandler.handle(e);
+      state = state.copyWith(isLoading: false, error: appException.message);
+    }
+  }
+
+  // ── Request OTP Session (For Google Auth Flow) ────────────────────────────
+  Future<void> requestOtpSession({
+    required String phoneNumber,
+    required String token,
+    required void Function(String otpCode) onSuccess,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final response = await _repo.requestOtpSession(
+        phoneNumber: phoneNumber,
+        token: token,
+      );
+
+      state = state.copyWith(isLoading: false);
+
+      final data = response['data'] as Map<String, dynamic>;
+      final String otpCode = data['otp'].toString();
+
+      onSuccess(otpCode);
+    } catch (e) {
+      final appException = ErrorHandler.handle(e);
+      state = state.copyWith(isLoading: false, error: appException.message);
+    }
+  }
+
+  // ── Verify OTP (Standard Phone Flow) ──────────────────────────────────────
+  Future<void> verifyOtp({
+    required String phoneNumber,
+    required String otp,
+    // We only really need to know if they need to complete their profile
+    required void Function(bool needsProfile) onSuccess, 
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    try {
+      final result = await _repo.verifyOtp(
+        phoneNumber: phoneNumber,
+        otp: otp,
+      );
+
+      // Save token and user to state
+      state = state.copyWith(
+        isLoading: false,
+        token: result.token,
+        user: result.user,
+      );
+
+      // Trigger UI navigation
+      onSuccess(result.needsProfile);
+
+    } catch (e) {
+      print("VERIFY OTP ERROR: $e"); 
+      final appException = ErrorHandler.handle(e);
+      state = state.copyWith(isLoading: false, error: appException.message);
+    }
+  }
+
+  // ── Verify OTP Session (Google Auth Flow) ─────────────────────────────────
+  Future<void> verifyOtpSession({
+    required String phoneNumber,
+    required String otp,
+    required String token,
     required void Function() onSuccess,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final result = await _repo.login(email: email, password: password);
-
-      // 1. Save Login Status and WAIT for it
-      await _ref.read(isLoggedInProvider.notifier).setLoggedIn(result.token);
-
-      state = state.copyWith(
-        isLoading: false,
-        user: result.user,
-        token: result.token,
+      await _repo.verifyOtpSession(
+        phoneNumber: phoneNumber,
+        otp: otp,
+        token: token,
       );
 
-      // 2. Trigger Navigation
-      onSuccess();
+      state = state.copyWith(isLoading: false);
 
-      // 3. Sync Cart 
-      Future.delayed(const Duration(milliseconds: 500), () async {
-        try {
-          await _ref.read(cartRepositoryProvider).syncLocalToRemote();
-          _ref.invalidate(cartControllerProvider);
-        } catch (e) {
-          print("Silent Cart Sync Error: $e");
-        }
-      });
+      // Successfully linked phone number to Google account
+      onSuccess();
     } catch (e) {
       final appException = ErrorHandler.handle(e);
       state = state.copyWith(isLoading: false, error: appException.message);
     }
   }
 
-  // ── Google Auth ───────────────────────────────────────────────────────────
-  Future<void> googleAuth({required void Function() onSuccess}) async {
+  // ── Google Auth ──
+  Future<void> googleAuth({
+    required void Function(String token)
+    onSuccess, // ✅ Add token parameter here
+  }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final result = await _repo.googleAuth();
@@ -99,18 +167,65 @@ class AuthController extends StateNotifier<AuthState> {
         token: result.token,
       );
 
-      // ↓ Sync local cart → backend, then reload cart from backend
       await _ref.read(cartRepositoryProvider).syncLocalToRemote();
       _ref.invalidate(cartControllerProvider);
 
-      onSuccess();
+      onSuccess(result.token); // ✅ Pass the token back to the UI
     } catch (e) {
-      // Handle the case where the user simply closed the Google popup
       if (e.toString().contains('canceled')) {
         state = state.copyWith(isLoading: false);
         return;
       }
+      final appException = ErrorHandler.handle(e);
+      state = state.copyWith(isLoading: false, error: appException.message);
+    }
+  }
 
+  // ── Create Payment Order ─────────────────────────────────────────────────
+  Future<Map<String, dynamic>?> createPaymentOrder() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final orderData = await _repo.createRegistrationOrder();
+      state = state.copyWith(isLoading: false);
+      return orderData;
+    } catch (e) {
+      final appException = ErrorHandler.handle(e);
+      state = state.copyWith(isLoading: false, error: appException.message);
+      return null;
+    }
+  }
+
+  // ── Verify Payment ───────────────────────────────────────────────────────
+  Future<void> verifyPayment({
+    required String orderId,
+    required String paymentId,
+    required String signature,
+    // ✅ Add Profile Fields
+    required String fullName,
+    required String email,
+    required String city,
+    required List<String> categories,
+    required String businessName,
+    required String workType,
+    required void Function() onSuccess,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repo.verifyPayment(
+        orderId: orderId,
+        paymentId: paymentId,
+        signature: signature,
+        // ✅ Pass to Repo
+        fullName: fullName,
+        email: email,
+        city: city,
+        categories: categories,
+        businessName: businessName,
+        workType: workType,
+      );
+      state = state.copyWith(isLoading: false);
+      onSuccess();
+    } catch (e) {
       final appException = ErrorHandler.handle(e);
       state = state.copyWith(isLoading: false, error: appException.message);
     }

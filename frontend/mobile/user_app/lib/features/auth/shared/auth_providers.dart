@@ -40,9 +40,11 @@ final isLoggedInProvider = StateNotifierProvider<AuthStateNotifier, bool>((ref) 
 });
 
 // 2. API & Controller Logic
-final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => AuthRepository(ref.watch(dioProvider)),
-);
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  final dio = ref.watch(dioProvider);
+  final storage = ref.watch(storageProvider); // ✅ Ensure you fetch the storage provider
+  return AuthRepository(dio, storage); // ✅ Pass both to the repository
+});
 
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   (ref) => AuthController(ref.watch(authRepositoryProvider), ref),

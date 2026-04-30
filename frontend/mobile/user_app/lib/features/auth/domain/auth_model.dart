@@ -40,6 +40,9 @@ class AuthUser {
       };
 
   String get fullName => '$firstname $lastname'.trim();
+  
+  // ✅ FIX: Added the missing getter so `.phone` works seamlessly
+  String? get phone => phoneNumber; 
 }
 
 class AuthState {

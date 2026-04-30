@@ -18,13 +18,22 @@ class ApiEndpoints {
   
 
   // ── Auth endpoints ─────────────────────────────────────────────────────────
+
+  static const String sendOtp = '$_auth/send-otp';
+  static const String requestOtp = '$_auth/mobile/request-otp';
+  static const String googleAuth = '$_auth/google';
+  static const String requestOtpSession = '$_auth/mobile/request-otp-session';
+  static const String verifyOtp = '$_auth/mobile/verify-otp';
+  static const String verifyOtpSession = '$_auth/mobile/verify-otp-session';
+  static const String completeProfile = '$_auth/mobile/complete-profile';
+  static const String getAllCities = '$_apiV1/cities/get-all-cities';
+  static const String getAllCategories = '$_apiV1/categories/get-all-categories';
+  static const String addCity ='$_apiV1/cities/add-city';
+
   static const String register = '$_auth/register';
   static const String login = '$_auth/login';
-  static const String googleAuth = '$_auth/google';
   static const String logout = '$_auth/logout';
   static const String forgotPassword = '$_auth/forgot-password';
-  static const String sendOtp = '$_auth/send-otp';
-  static const String verifyOtp = '$_auth/verify-otp';
   static const String changePassword = '$_auth/change-password';
   static const String addAddress='$_auth/add-address';
   static const String resetPassword='$_auth/reset-password';
@@ -39,9 +48,7 @@ class ApiEndpoints {
   static const String addToCart = '$_cart/add-cart';                // POST
   static const String checkoutCart = '$_cart/checkout'; // POST
   static const String history='$_apiV1/leads/history';
-  
-  // ── Categories ───────────────────────────────────────
-  static const String getAllCategories = '$_categories/get-all-categories';
+
 
   //──Profile───────────────────────────────────────
   static const String fetchProfile='$_auth/profile';
@@ -50,6 +57,8 @@ class ApiEndpoints {
    //──Razorpay───────────────────────────────────────
   static const String payCart = '$_apiV1/payments/create';  
   static const String verifyPayment = '$_apiV1/payments/verify';  
+  static const String createRegistrationOrder = '$_auth/mobile/create-registration-order';
+  static const String verifyRegistrationPayment = '$_auth/mobile/verify-registration-payment';
   static String downloadLead(String internalOrderId)=>'$_apiV1/leads/download/$internalOrderId';
 
 

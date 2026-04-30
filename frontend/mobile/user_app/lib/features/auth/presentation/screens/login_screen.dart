@@ -46,21 +46,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     if (phone.length < 10) {
-      SnackbarHelper.showError(context, 'Please enter a valid 10-digit mobile number');
+      SnackbarHelper.showError(
+        context,
+        'Please enter a valid 10-digit mobile number',
+      );
       return;
     }
 
     // Proceed to next screen
     context.push(
-      AppRouter.verifyNumberPath,
-      extra: phone, 
-    );
+          AppRouter.verifyNumberPath,
+          extra: {
+            'isGoogle': false,
+            'phone': phone,
+          }, 
+        );
   }
 
   void _onGoogleLogin() {
     ref
         .read(authControllerProvider.notifier)
-        .googleAuth(onSuccess: () => context.go(AppRouter.verifyNumberPath));
+        .googleAuth(
+          onSuccess: (String token) {
+            context.push(
+              AppRouter.verifyNumberPath,
+              extra: {'isGoogle': true, 'token': token},
+            );
+          },
+        );
   }
 
   @override
@@ -98,10 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 SizedBox(height: 22.h),
 
                 // ── Logo ──
-                Image.asset(
-                  'assets/Images/login/lead_logo.png',
-                  width: 150.w,
-                ),
+                Image.asset('assets/Images/login/lead_logo.png', width: 150.w),
                 SizedBox(height: 24.h),
 
                 // ── Title ──
@@ -235,7 +245,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // ── Google Button ──
                 GoogleSignInButton(onTap: _onGoogleLogin),
                 SizedBox(height: 39.h),
-                
+
                 // ── Terms & Conditions ──
                 Text(
                   "By continuing, you agree to our\nTerms & Conditions and Privacy Policy",
@@ -265,9 +275,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        ref
-                            .read(authControllerProvider.notifier)
-                            .clearError();
+                        ref.read(authControllerProvider.notifier).clearError();
                         context.push(AppRouter.register);
                       },
                       child: Text(

@@ -41,7 +41,7 @@ class AuthPrimaryButton extends StatelessWidget {
           height: 56.h,
           decoration: BoxDecoration(
             color: AppColors.purple73,
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(20.r),
             border: Border.all(color: Color.fromRGBO(248,182,31,0.58)),
             boxShadow: [
               BoxShadow(
@@ -57,10 +57,11 @@ class AuthPrimaryButton extends StatelessWidget {
                 : Text(
                     label,
                     style: AppTextStyles.poppins(
-                      fontSize: 18.sp,
+                      fontSize: 24.sp,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.01,
+                      height: 20/24
                     ),
                   ),
           ),

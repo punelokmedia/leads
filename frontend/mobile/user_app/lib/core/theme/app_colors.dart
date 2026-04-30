@@ -11,10 +11,14 @@ class AppColors {
   static final color159=Color.fromRGBO(159,177,51,1);
   static final color161=Color.fromRGBO(161,184,17,1);
 
+  static final blue34=Color.fromRGBO(34,9,116,1);
+  static final blue36=Color.fromRGBO(36,24,78,1);
+
 
   //purple
   static final purple72=Color.fromRGBO(72,33,202,1);
   static final purple73=Color.fromRGBO(73,33,208,1);
+  static final purple75=Color.fromRGBO(75,33,205,1);
   static final purple86=Color.fromRGBO(86,53,198,1);
 
 
