@@ -6,7 +6,6 @@ import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import '../widgets/edit_profile_widgets.dart';
-import '../widgets/edit_profile_form_fields.dart';
 import '../../shared/edit_profile_providers.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
@@ -39,7 +38,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           current: _existingPasswordCtrl.text.trim(),
           newPass: _newPasswordCtrl.text.trim(),
           onSuccess: () {
-            SnackbarHelper.showSuccess(context, "Password updated successfully");
+            SnackbarHelper.showSuccess(
+              context,
+              "Password updated successfully",
+            );
             context.pop();
           },
         );
@@ -52,7 +54,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     ref.listen(editProfileErrorProvider, (_, err) {
       if (err != null) {
         SnackbarHelper.showError(context, err);
-  
+
         Future.microtask(
           () =>
               ref.read(editProfileControllerProvider.notifier).clearMessages(),
@@ -63,7 +65,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     ref.listen<String?>(editProfileSuccessProvider, (_, msg) {
       if (msg != null) {
         SnackbarHelper.showSuccess(context, msg);
-        
+
         Future.microtask(
           () =>
               ref.read(editProfileControllerProvider.notifier).clearMessages(),
@@ -139,8 +141,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       hintText: 'Confirm your password',
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Required';
-                        if (v != _newPasswordCtrl.text)
+                        if (v != _newPasswordCtrl.text) {
                           return 'Passwords do not match';
+                        }
                         return null;
                       },
                     ),
@@ -152,7 +155,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         'assets/images/change_password_illustration.png',
                         height: 200.h,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => SizedBox(height: 200.h),
+                        errorBuilder: (_, _, _) => SizedBox(height: 200.h),
                       ),
                     ),
                     SizedBox(height: 20.h),

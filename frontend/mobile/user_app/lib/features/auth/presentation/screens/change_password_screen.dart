@@ -9,7 +9,6 @@ import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/domain/forgot_state.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
 import 'package:user_app/features/auth/shared/forgot_password_provider.dart';
-import '../widgets/auth_widgets.dart';
 
 class ForgotChangePasswordScreen extends ConsumerStatefulWidget {
   const ForgotChangePasswordScreen({super.key});
@@ -44,12 +43,12 @@ class _ForgotChangePasswordScreenState
     ) {
       if (!(prev?.isSuccess ?? false) && next.isSuccess) {
         SnackbarHelper.showSuccess(context, 'Password changed successfully!');
-       
+
         context.go(AppRouter.login);
       }
       if (next.errorMessage != null) {
         SnackbarHelper.showError(context, next.errorMessage!);
-        
+
         ref.read(forgotPasswordControllerProvider.notifier).clearError();
       }
     });

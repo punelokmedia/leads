@@ -1,21 +1,16 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import 'package:user_app/features/auth/domain/forgot_state.dart';
 import 'package:user_app/features/auth/infra/forgot_password_repository.dart';
-
-
-
 
 // ---------------------------------------------------------------------------
 // Controller
 // ---------------------------------------------------------------------------
 
-class ForgotPasswordController
-    extends StateNotifier<ForgotPasswordState> {
+class ForgotPasswordController extends StateNotifier<ForgotPasswordState> {
   final ForgotPasswordRepository _repository;
 
   ForgotPasswordController(this._repository)
-      : super(const ForgotPasswordState());
+    : super(const ForgotPasswordState());
 
   // Step 1 – Send OTP to email
   Future<void> sendOtp(String email) async {
@@ -67,8 +62,7 @@ class ForgotPasswordController
       await _repository.changePassword(
         email: state.email,
         newPassword: newPassword,
-        confirmPassword:confirmPassword
-
+        confirmPassword: confirmPassword,
       );
       state = state.copyWith(isLoading: false, isSuccess: true);
     } catch (e) {

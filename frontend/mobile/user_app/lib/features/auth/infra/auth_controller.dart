@@ -1,6 +1,5 @@
 // auth/infra/auth_controller.dart
 
-import 'package:dio/dio.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import 'package:user_app/core/errors/error_handler.dart'; // Import your error handler
@@ -72,7 +71,7 @@ class AuthController extends StateNotifier<AuthState> {
       // 2. Trigger Navigation
       onSuccess();
 
-      // 3. Sync Cart 
+      // 3. Sync Cart
       Future.delayed(const Duration(milliseconds: 500), () async {
         try {
           await _ref.read(cartRepositoryProvider).syncLocalToRemote();

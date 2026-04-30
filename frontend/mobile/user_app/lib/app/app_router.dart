@@ -10,10 +10,9 @@ import 'package:user_app/features/auth/presentation/screens/tell_us_about_yourse
 import 'package:user_app/features/auth/presentation/screens/verify_number_screen.dart';
 import 'package:user_app/features/cart/presentation/screens/cart_screen.dart';
 import 'package:user_app/features/cart/presentation/screens/payment_successful.dart';
-import 'package:user_app/features/history/presentation/history_screen.dart';
 import 'package:user_app/features/home/presentation/screens/home_screen.dart';
-import 'package:user_app/features/home/presentation/screens/select_category_screen.dart';
-import 'package:user_app/features/home/presentation/screens/select_city_screen.dart';
+import 'package:user_app/features/home/presentation/screens/lead.dart';
+import 'package:user_app/features/payments/presentation/screens/paymets.dart';
 import 'package:user_app/features/profile/presentation/screens/change_password_screen.dart';
 import 'package:user_app/features/profile/presentation/screens/edit_profile_screen.dart';
 
@@ -34,6 +33,8 @@ abstract final class AppRouter {
   static const String homePath = '/home';
   static const String leadsPath = '/history';
   static const String profilePath = '/profile';
+  static const String paymentsPath = '/payments';
+
   static const String changePasswordPath = '/change-password';
   static const String editProfilePath = '/edit-profile';
   static const String addAddressPath = '/add-address';
@@ -48,7 +49,7 @@ abstract final class AppRouter {
   static const String forgotChangePasswordPath = '/forgot-change-password';
 
   static final GoRouter router = GoRouter(
-    initialLocation: splashPath,
+    initialLocation: homePath,
     routes: [
       GoRoute(
         path: splashPath,
@@ -143,27 +144,27 @@ abstract final class AppRouter {
           StatefulShellBranch(
             routes: <RouteBase>[
               GoRoute(
-                path: selectCategoryPath,
-                builder: (BuildContext context, GoRouterState state) =>
-                    const SelectCategoryScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: <RouteBase>[
-              GoRoute(
-                path: selectCityPath,
-                builder: (BuildContext context, GoRouterState state) =>
-                    const SelectCityScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: <RouteBase>[
-              GoRoute(
                 path: leadsPath,
                 builder: (BuildContext context, GoRouterState state) =>
-                    const HistoryScreen(),
+                    const LeadsScreen(),
+              ),
+            ],
+          ),
+          // StatefulShellBranch(
+          //   routes: <RouteBase>[
+          //     GoRoute(
+          //       path: selectCityPath,
+          //       builder: (BuildContext context, GoRouterState state) =>
+          //           const _city(),
+          //     ),
+          //   ],
+          // ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: paymentsPath,
+                builder: (BuildContext context, GoRouterState state) =>
+                    const PaymentsScreen(),
               ),
             ],
           ),

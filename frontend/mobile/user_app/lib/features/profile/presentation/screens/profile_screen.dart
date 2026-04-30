@@ -1,141 +1,357 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:go_router/go_router.dart';
-import 'package:user_app/app/app_router.dart';
-import 'package:user_app/core/theme/app_colors.dart';
-import 'package:user_app/features/auth/shared/auth_providers.dart';
-import 'package:user_app/features/profile/domain/profile_model.dart';
-import 'package:user_app/features/profile/presentation/widgets/logout_bottom_sheet.dart';
-import 'package:user_app/features/profile/presentation/widgets/profile_header.dart';
-import 'package:user_app/features/profile/presentation/widgets/profile_menu_tile.dart';
-import 'package:user_app/features/profile/presentation/widgets/profile_shimmer.dart';
-import 'package:user_app/features/profile/presentation/widgets/profile_signin_header.dart';
-import 'package:user_app/features/profile/shared/profile_providers.dart';
-// Assuming you have an auth provider that checks secure storage
-// import 'package:user_app/features/auth/shared/auth_providers.dart';
+import 'package:user_app/core/theme/app_text_styles.dart';
 
-class ProfileScreen extends ConsumerStatefulWidget {
+class UserProfile {
+  final String name;
+  final String role;
+  final String location;
+  final String businessName;
+  final String phone;
+  final String gst;
+  final String? avatarUrl;
+  final String email;
+
+  const UserProfile({
+    required this.name,
+    required this.role,
+    required this.location,
+    required this.businessName,
+    required this.phone,
+    required this.gst,
+    this.avatarUrl,
+    required this.email,
+  });
+}
+
+final profileProvider = FutureProvider<UserProfile>((ref) async {
+  await Future.delayed(const Duration(milliseconds: 600));
+  return const UserProfile(
+    name: 'Rohit Sharma',
+    role: 'Interior Designer',
+    location: 'Mumbai, Maharashtra',
+    businessName: 'Sharma Interior Works',
+    phone: '+91 98765 43210',
+    gst: '27AABCS1429B1Z6',
+    email: 'rohitsharma@info.com',
+  );
+});
+
+class ProfileScreen extends HookConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(profileProvider);
 
-class _ProfileScreenState extends ConsumerState<ProfileScreen> with RouteAware {
-  @override
-  void initState() {
-    super.initState();
-    _fetchProfile();
-  }
-
-  void _fetchProfile() {
-    final isLoggedIn = ref.read(isLoggedInProvider);
-    if (isLoggedIn) {
-      // Use Future.microtask to avoid state update during build
-      Future.microtask(
-        () => ref.read(profileControllerProvider.notifier).loadProfile(),
-      );
-    }
-  }
-
-  void _onLogout() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent, // Allows custom rounded corners
-      isScrollControlled: true,
-      builder: (_) => LogoutBottomSheet(
-        onConfirm: () async {
-          // 1. Close the bottom sheet first
-          context.pop();
-
-          // 2. Perform the logout logic
-          await ref.read(authControllerProvider.notifier).logout();
-
-          // 3. Optional: Clear specific profile data
-          ref.invalidate(profileDataProvider);
-
-          // 4. Navigate back to login
-          context.go(AppRouter.login);
-        },
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 238, 238, 238), // lavender bg
+      body: SafeArea(
+        child: Column(
+          children: [
+            _ProfileAppBar(onBack: () => Navigator.of(context).pop()),
+            Expanded(
+              child: profileAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Error: $e')),
+                data: (profile) => _ProfileBody(profile: profile),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+}
+
+class _ProfileAppBar extends StatelessWidget {
+  final VoidCallback onBack;
+  const _ProfileAppBar({required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52.h,
+      child: Center(
+        child: Text(
+          'My Profile',
+          style: AppTextStyles.poppins(
+            fontSize: 22.sp,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileBody extends StatelessWidget {
+  final UserProfile profile;
+  const _ProfileBody({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 16.h),
+
+          _AvatarHeader(profile: profile),
+
+          SizedBox(height: 28.h),
+          Divider(
+            height: 0.5.h,
+            color: const Color.fromARGB(255, 137, 133, 133),
+          ),
+          SizedBox(height: 28.h),
+
+          Row(
+            children: [
+              Text(
+                'Business Details',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(width: 28.h),
+              _EditButton(),
+            ],
+          ),
+
+          SizedBox(height: 16.h),
+
+          _LabeledCard(label: 'Business Name', value: profile.businessName),
+          SizedBox(height: 14.h),
+          _LabeledCard(label: 'Address', value: profile.location),
+          SizedBox(height: 14.h),
+          _LabeledCard(label: 'GST Number', value: profile.gst),
+
+          SizedBox(height: 28.h),
+
+          _LogoutTile(),
+
+          SizedBox(height: 30.h),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFF5B4FCF),
+        borderRadius: BorderRadius.circular(24.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Edit',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          SizedBox(width: 6.w),
+          Icon(Icons.edit_outlined, size: 14.r, color: Colors.white),
+        ],
+      ),
+    );
+  }
+}
+
+class _AvatarHeader extends StatelessWidget {
+  final UserProfile profile;
+  const _AvatarHeader({required this.profile});
+
+  String get _initials {
+    final parts = profile.name.trim().split(' ');
+    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}';
+    return parts[0][0];
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Check Auth State (fetched from Secure Storage via provider)
-    final isLoggedIn = ref.watch(isLoggedInProvider);
-    final profileState = ref.watch(profileControllerProvider);
-    
-    final isLoading = profileState.isLoading;
-    final profile = profileState.profile;
-    final isLoggingOut = profileState.isLoggingOut;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF5B4FCF), width: 2.5),
+          ),
+          child: CircleAvatar(
+            radius: 36.r,
+            backgroundColor: const Color(0xFFEEEDFE),
+            backgroundImage: profile.avatarUrl != null
+                ? NetworkImage(profile.avatarUrl!)
+                : null,
+            child: profile.avatarUrl == null
+                ? Text(
+                    _initials,
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF534AB7),
+                      fontFamily: 'Poppins',
+                    ),
+                  )
+                : null,
+          ),
+        ),
 
-    if (isLoggedIn && profile == null && !isLoading && profileState.errorMessage == null) {
-      Future.microtask(() => ref.read(profileControllerProvider.notifier).loadProfile());
-    }
-    
+        SizedBox(width: 16.w),
 
-    return Scaffold(
-      backgroundColor: AppColors.grey241,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            if (isLoggedIn && profile != null) ...[
-              ProfileHeader(
-                profile: profile,
-                onEditProfile: () async {
-                  await context.push(AppRouter.editProfilePath);
-                  if (mounted) {
-                    ref.read(profileControllerProvider.notifier).loadProfile();
-                  }
-                },
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                profile.name,
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Color.fromRGBO(28, 8, 99, 1),
+                  fontFamily: 'Poppins',
+                ),
               ),
-            ] else if (!isLoggedIn) ...[
-              const ProfileSignInHeader(),
-            ] else if (isLoading) ...[
-              const ProfileHeaderShimmer(),
+              SizedBox(height: 2.h),
+              Text(
+                profile.phone,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: const Color(0xFF6B5ECD),
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                profile.location,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.black54,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: 1.h),
+              Text(
+                profile.email,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: Colors.black54,
+                  fontFamily: 'Poppins',
+                ),
+              ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-            SizedBox(height: 30.h),
+class _LabeledCard extends StatelessWidget {
+  final String label;
+  final String value;
 
-            // Common Menu Items
-            ProfileMenuTile(
-              icon: Icons.help_outline_rounded,
-              label: 'Help & Support',
-              onTap: () {
-                context.push(AppRouter.helpSupportPath);
-              },
+  const _LabeledCard({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(left: 4.w, bottom: 6.h),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Colors.black54,
+              fontFamily: 'Poppins',
             ),
-            ProfileMenuTile(
-              icon: Icons.description_outlined,
-              label: 'Terms & Conditions',
-              onTap: () {
-                context.push(AppRouter.termsPath);
-              },
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+              fontFamily: 'Poppins',
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-            // 3. Conditional Logout/Sign-In Tile
-            ProfileLogoutTile(
-              onTap: _onLogout,
-              isLoading: isLoggingOut,
-              isEnabled: isLoggedIn, // Use your provider's state here
+class _LogoutTile extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {},
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-
-            SizedBox(height: 40.h),
-
-            // Illustration at the bottom (conditional based on Figma)
-            Center(
-              child: Image.asset(
-                isLoggedIn
-                    ? 'assets/Images/profile/profile_illustration.png'
-                    : 'assets/Images/profile/no_account_illustration.png',
-                height: 180.h,
-                fit: BoxFit.contain,
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.logout_rounded,
+              color: const Color(0xFFE24B4A),
+              size: 22.r,
+            ),
+            SizedBox(width: 12.w),
+            Text(
+              'Logout',
+              style: TextStyle(
+                color: const Color(0xFFE24B4A),
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Poppins',
               ),
             ),
-            SizedBox(height: 20.h),
           ],
         ),
       ),

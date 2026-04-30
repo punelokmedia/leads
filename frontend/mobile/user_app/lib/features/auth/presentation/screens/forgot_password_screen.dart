@@ -9,13 +9,13 @@ import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/domain/forgot_state.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
 import 'package:user_app/features/auth/shared/forgot_password_provider.dart';
-import '../widgets/auth_widgets.dart'; 
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -33,7 +33,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final state = ref.watch(forgotPasswordControllerProvider);
 
     // Listen for step changes and errors
-    ref.listen<ForgotPasswordState>(forgotPasswordControllerProvider, (prev, next) {
+    ref.listen<ForgotPasswordState>(forgotPasswordControllerProvider, (
+      prev,
+      next,
+    ) {
       if (prev?.step != next.step && next.step == ForgotPasswordStep.otp) {
         context.push(AppRouter.otpVerificationPath);
       }
@@ -57,7 +60,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           fit: BoxFit.contain,
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20.r, color: Colors.black),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 20.r,
+            color: Colors.black,
+          ),
           onPressed: () => context.pop(),
         ),
       ),
@@ -71,7 +78,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             colors: [
               Color(0xFFF0F0F0),
               Color(0xFFF0F0F0),
-              Color.fromARGB(255, 255, 198, 28)
+              Color.fromARGB(255, 255, 198, 28),
             ],
             stops: [0.40, 0.70, 1.0],
           ),
@@ -96,8 +103,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                               fontSize: 24.sp,
                               fontWeight: FontWeight.w700,
                               color: AppColors.black,
-                              height: 20/24,
-                              letterSpacing: 0.01
+                              height: 20 / 24,
+                              letterSpacing: 0.01,
                             ),
                           ),
                         ),
@@ -110,8 +117,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w500,
                             color: AppColors.grey77,
-                            height: 20/18,
-                            letterSpacing: 0.01
+                            height: 20 / 18,
+                            letterSpacing: 0.01,
                           ),
                         ),
                         SizedBox(height: 8.h),
@@ -120,7 +127,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                           style: AppTextStyles.poppins(
                             fontSize: 14.sp,
                             color: AppColors.grey77,
-                            height: 25/14,
+                            height: 25 / 14,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -131,35 +138,42 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           style: AppTextStyles.poppins(
-                              color: AppColors.grey163,
-                              fontSize: 16.sp,
-                              height: 20/16,
-                              letterSpacing: 0.01,
-                              fontWeight: FontWeight.w500
-                            ),
+                            color: AppColors.grey163,
+                            fontSize: 16.sp,
+                            height: 20 / 16,
+                            letterSpacing: 0.01,
+                            fontWeight: FontWeight.w500,
+                          ),
                           decoration: InputDecoration(
                             hintText: 'johndoe@gmail.com',
                             hintStyle: AppTextStyles.poppins(
                               color: AppColors.grey163,
                               fontSize: 16.sp,
-                              height: 20/16,
+                              height: 20 / 16,
                               letterSpacing: 0.01,
-                              fontWeight: FontWeight.w500
+                              fontWeight: FontWeight.w500,
                             ),
                             filled: true,
                             fillColor: Colors.white,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 18.h),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 24.w,
+                              vertical: 18.h,
+                            ),
                             // Floating shadow effect through border
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20.r),
-                              borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade200,
+                                width: 1,
+                              ),
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20.r),
                             ),
                           ),
                           validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Email is required';
+                            if (v == null || v.trim().isEmpty)
+                              return 'Email is required';
                             if (!v.contains('@')) return 'Enter a valid email';
                             return null;
                           },
@@ -172,14 +186,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                           isLoading: state.isLoading,
                           onTap: () {
                             if (_formKey.currentState!.validate()) {
-                              ref.read(forgotPasswordControllerProvider.notifier)
-                                 .sendOtp(_emailController.text.trim());
+                              ref
+                                  .read(
+                                    forgotPasswordControllerProvider.notifier,
+                                  )
+                                  .sendOtp(_emailController.text.trim());
                             }
                           },
                         ),
 
                         SizedBox(height: 20.h),
-                        
+
                         Center(
                           child: GestureDetector(
                             onTap: () => context.pop(),
@@ -189,8 +206,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                 fontSize: 14.sp,
                                 color: AppColors.black,
                                 fontWeight: FontWeight.w500,
-                                height: 20/14,
-                                letterSpacing: 0.01
+                                height: 20 / 14,
+                                letterSpacing: 0.01,
                               ),
                             ),
                           ),
@@ -200,7 +217,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                 ),
               ),
-              
+
               // Figma Illustration at the bottom of the safe area
               Padding(
                 padding: EdgeInsets.only(bottom: 24.h),

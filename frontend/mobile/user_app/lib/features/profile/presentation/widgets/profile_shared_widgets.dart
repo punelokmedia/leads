@@ -4,11 +4,13 @@ import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/features/profile/presentation/widgets/profile_form_fields.dart';
-import 'edit_profile_widgets.dart';
 
 // ── Shared field style ────────────────────────────────────────────────────────
 TextStyle _fieldStyle() => AppTextStyles.poppins(
-    fontSize: 15.sp, color: AppColors.grey137, fontWeight: FontWeight.w400);
+  fontSize: 15.sp,
+  color: AppColors.grey137,
+  fontWeight: FontWeight.w400,
+);
 
 InputDecoration _fieldDeco({required String hint, bool readOnly = false}) =>
     InputDecoration(
@@ -18,9 +20,13 @@ InputDecoration _fieldDeco({required String hint, bool readOnly = false}) =>
       fillColor: Colors.transparent,
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide.none),
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: BorderSide.none,
+      ),
       enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide.none),
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: BorderSide.none,
+      ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.r),
         borderSide: const BorderSide(color: Color(0xFFFFC107), width: 1.5),
@@ -48,17 +54,17 @@ class ProfileTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: cardDeco(radius: 12),
-        child: TextFormField(
-          initialValue: initialValue,
-          onChanged: onChanged,
-          keyboardType: keyboardType,
-          readOnly: readOnly,
-          inputFormatters: inputFormatters,
-          style: _fieldStyle(),
-          decoration: _fieldDeco(hint: hint, readOnly: readOnly),
-        ),
-      );
+    decoration: cardDeco(radius: 12),
+    child: TextFormField(
+      initialValue: initialValue,
+      onChanged: onChanged,
+      keyboardType: keyboardType,
+      readOnly: readOnly,
+      inputFormatters: inputFormatters,
+      style: _fieldStyle(),
+      decoration: _fieldDeco(hint: hint, readOnly: readOnly),
+    ),
+  );
 }
 
 // ── Mobile number field with country code ─────────────────────────────────────
@@ -78,36 +84,40 @@ class MobileNumberField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: cardDeco(radius: 12),
-        child: Row(
-          children: [
-            // Country code picker
-            GestureDetector(
-              onTap: () {}, // hook up picker if needed
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
-                decoration: BoxDecoration(
-                  border: Border(
-                      right: BorderSide(color: Colors.grey[200]!, width: 1)),
-                ),
-                child: Text(countryCode,
-                    style: _fieldStyle().copyWith(fontWeight: FontWeight.w600)),
+    decoration: cardDeco(radius: 12),
+    child: Row(
+      children: [
+        // Country code picker
+        GestureDetector(
+          onTap: () {}, // hook up picker if needed
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+            decoration: BoxDecoration(
+              border: Border(
+                right: BorderSide(color: Colors.grey[200]!, width: 1),
               ),
             ),
-            // Phone input
-            Expanded(
-              child: TextFormField(
-                initialValue: phone,
-                onChanged: onPhoneChanged,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: _fieldStyle(),
-                decoration: _fieldDeco(hint: 'Phone number')
-                    .copyWith(border: InputBorder.none,
-                        enabledBorder: InputBorder.none),
-              ),
+            child: Text(
+              countryCode,
+              style: _fieldStyle().copyWith(fontWeight: FontWeight.w600),
             ),
-          ],
+          ),
         ),
-      );
+        // Phone input
+        Expanded(
+          child: TextFormField(
+            initialValue: phone,
+            onChanged: onPhoneChanged,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: _fieldStyle(),
+            decoration: _fieldDeco(hint: 'Phone number').copyWith(
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }

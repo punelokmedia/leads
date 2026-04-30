@@ -32,10 +32,18 @@ class ErrorStateWidget extends StatelessWidget {
               onPressed: onRetry,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4CAF50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               ),
-              child: Text('Retry', style: AppTextStyles.poppins(color: Colors.white, fontSize: 14.sp)),
+              child: Text(
+                'Retry',
+                style: AppTextStyles.poppins(
+                  color: Colors.white,
+                  fontSize: 14.sp,
+                ),
+              ),
             ),
           ],
         ),
@@ -75,7 +83,7 @@ class LeadListShimmer extends StatelessWidget {
     return ListView.builder(
       itemCount: 3,
       physics: const NeverScrollableScrollPhysics(),
-      itemBuilder: (_, __) => const _ShimmerCard(),
+      itemBuilder: (_, _) => const _ShimmerCard(),
     );
   }
 }
@@ -112,7 +120,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _animation,
-      builder: (_, __) => Opacity(
+      builder: (_, _) => Opacity(
         opacity: _animation.value,
         child: Container(
           margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),

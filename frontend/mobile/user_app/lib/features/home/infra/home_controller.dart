@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
 
@@ -54,28 +53,40 @@ class HomeController extends StateNotifier<HomeState> {
 
   HomeController(this._repository) : super(const HomeState());
 
-  Future<void> loadLeads({String? city, String? categoryId, bool isReset = false}) async {
+  Future<void> loadLeads({
+    String? city,
+    String? categoryId,
+    bool isReset = false,
+  }) async {
     final cityToFetch = isReset ? null : (city ?? state.selectedCity);
-    final categoryToFetch = isReset ? null : (categoryId ?? state.selectedCategoryId);
-    
+    final categoryToFetch = isReset
+        ? null
+        : (categoryId ?? state.selectedCategoryId);
+
     state = state.copyWith(
-      isLoading: true, 
-      errorMessage: null, 
+      isLoading: true,
+      errorMessage: null,
       selectedCity: isReset ? "" : cityToFetch,
       selectedCategoryId: isReset ? "" : categoryToFetch,
     );
 
     try {
-      final leads = await _repository.fetchLeads(city: cityToFetch, categoryId: categoryToFetch);
+      final leads = await _repository.fetchLeads(
+        city: cityToFetch,
+        categoryId: categoryToFetch,
+      );
       state = state.copyWith(leads: leads, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
-  
 
   Future<void> searchLeads(String query) async {
-    state = state.copyWith(searchQuery: query, isLoading: true, errorMessage: null);
+    state = state.copyWith(
+      searchQuery: query,
+      isLoading: true,
+      errorMessage: null,
+    );
     try {
       final leads = query.isEmpty
           ? await _repository.fetchLeads()
@@ -85,7 +96,6 @@ class HomeController extends StateNotifier<HomeState> {
       state = state.copyWith(isLoading: false, errorMessage: 'Search failed.');
     }
   }
-
 
   void clearError() => state = state.copyWith(errorMessage: null);
 }
