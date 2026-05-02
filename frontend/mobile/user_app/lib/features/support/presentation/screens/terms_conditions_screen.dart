@@ -8,28 +8,27 @@ import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/features/support/shared/custom_pill_button.dart';
 import 'package:user_app/features/support/shared/support_provider.dart';
 
-
-class TermsConditionsScreen extends ConsumerWidget { 
+class TermsConditionsScreen extends ConsumerWidget {
   const TermsConditionsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) { 
+  Widget build(BuildContext context, WidgetRef ref) {
     final isAgreed = ref.watch(termsAgreementProvider);
 
     return Scaffold(
       appBar: AppBar(
         leading: GestureDetector(
-          onTap: ()=>context.pop(),
+          onTap: () => context.pop(),
           child: Icon(
             Icons.arrow_back_ios_new,
             size: 18.r,
-            color: AppColors.grey143,
+            color: AppColors.purple86,
           ),
         ),
         title: Text(
           "Terms & Conditions",
           style: AppTextStyles.roboto(
-            color: AppColors.orange248,
+            color: AppColors.purple86,
             fontWeight: FontWeight.w600,
             fontSize: 24.sp,
             height: 1,
@@ -65,8 +64,9 @@ class TermsConditionsScreen extends ConsumerWidget {
               children: [
                 Checkbox(
                   value: isAgreed,
-                  onChanged: (v) => ref.read(termsAgreementProvider.notifier).state = v!,
-                  activeColor: const Color(0xFFF8B020),
+                  onChanged: (v) =>
+                      ref.read(termsAgreementProvider.notifier).state = v!,
+                  activeColor: AppColors.purple72,
                 ),
                 Expanded(
                   child: RichText(
@@ -76,16 +76,16 @@ class TermsConditionsScreen extends ConsumerWidget {
                         fontSize: 16.sp,
                         color: AppColors.black,
                         fontWeight: FontWeight.w400,
-                        height: 1.34
+                        height: 1.34,
                       ),
                       children: [
                         TextSpan(
                           text: "Terms & Conditions",
                           style: AppTextStyles.roboto(
-                            color: AppColors.orange248,
+                            color: AppColors.purple75,
                             fontWeight: FontWeight.w400,
                             fontSize: 16.sp,
-                            height: 1.34
+                            height: 1.34,
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
@@ -102,9 +102,7 @@ class TermsConditionsScreen extends ConsumerWidget {
             CustomPillButton(
               text: "Learn More",
               isEnabled: isAgreed,
-              onTap: () {
-               
-              },
+              onTap: () {},
             ),
           ],
         ),
@@ -122,8 +120,8 @@ class TermsConditionsScreen extends ConsumerWidget {
             title,
             style: AppTextStyles.roboto(
               fontWeight: FontWeight.w600,
-              fontSize: 14.sp,
-              height: 1.34, 
+              fontSize: 18.sp,
+              height: 1.34,
               color: AppColors.black,
             ),
           ),
@@ -132,7 +130,7 @@ class TermsConditionsScreen extends ConsumerWidget {
             body,
             style: AppTextStyles.roboto(
               color: AppColors.grey94,
-              fontSize: 14.sp,
+              fontSize: 16.sp,
               fontWeight: FontWeight.w400,
               height: 1.34,
             ),

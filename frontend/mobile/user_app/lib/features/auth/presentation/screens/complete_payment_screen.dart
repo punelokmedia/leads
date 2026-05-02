@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart'; // ✅ Import Razorpay
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
@@ -19,18 +19,24 @@ class CompletePaymentScreen extends ConsumerStatefulWidget {
   const CompletePaymentScreen({super.key});
 
   @override
-  ConsumerState<CompletePaymentScreen> createState() => _CompletePaymentScreenState();
+  ConsumerState<CompletePaymentScreen> createState() =>
+      _CompletePaymentScreenState();
 }
 
 class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
   late Razorpay _razorpay;
 
+  // ✅ Local loading flag — avoids conflicts with controller's isLoading
+  bool _isPaymentInitializing = false;
+
   @override
   void initState() {
     super.initState();
+    _initRazorpay();
+  }
+
+  void _initRazorpay() {
     _razorpay = Razorpay();
-    
-    // Attach Razorpay Event Listeners
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
@@ -38,82 +44,140 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
 
   @override
   void dispose() {
-    _razorpay.clear(); // Remove listeners when screen is destroyed
+    _razorpay.clear();
     super.dispose();
   }
 
   // ── Razorpay Success Handler ──
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    // ✅ 1. Read all the data collected from the previous screens!
     final draft = ref.read(profileDraftProvider);
 
-    // ✅ 2. Call the verify API with BOTH payment and profile details
-    ref.read(authControllerProvider.notifier).verifyPayment(
-      orderId: response.orderId!,
-      paymentId: response.paymentId!,
-      signature: response.signature!,
-      fullName: draft.fullName,
-      email: draft.email,
-      city: draft.city,
-      categories: draft.categories,
-      businessName: draft.businessName,
-      workType: draft.workType,
-      onSuccess: () {
-        ref.read(authControllerProvider.notifier).clearError();
-        
-        // ✅ 3. ONLY clear the draft once payment is 100% verified
-        ref.read(profileDraftProvider.notifier).clearDraft(); 
-        
-        SnackbarHelper.showSuccess(context, "Payment Verified & Profile Created!");
-        context.go(AppRouter.homePath); 
-      },
-    );
+    ref
+        .read(authControllerProvider.notifier)
+        .verifyPayment(
+          orderId: response.orderId!,
+          paymentId: response.paymentId!,
+          signature: response.signature!,
+          fullName: draft.fullName,
+          email: draft.email,
+          city: draft.city,
+          categories: draft.categories,
+          businessName: draft.businessName,
+          workType: draft.workType,
+          onSuccess: () {
+            ref.read(authControllerProvider.notifier).clearError();
+            ref.read(profileDraftProvider.notifier).clearDraft();
+            SnackbarHelper.showSuccess(
+              context,
+              "Payment Verified & Profile Created!",
+            );
+            context.go(AppRouter.homePath);
+          },
+        );
   }
 
   // ── Razorpay Error Handler ──
   void _handlePaymentError(PaymentFailureResponse response) {
-    SnackbarHelper.showError(context, "Payment Failed: ${response.message}");
+    // ✅ Code 0 = dismissed by user, not a real error
+    if (response.code == Razorpay.PAYMENT_CANCELLED) {
+      SnackbarHelper.showWarning(context, "Payment cancelled.");
+    } else {
+      SnackbarHelper.showError(context, "Payment Failed: ${response.message}");
+    }
   }
 
   // ── Razorpay External Wallet Handler ──
   void _handleExternalWallet(ExternalWalletResponse response) {
-    SnackbarHelper.showWarning(context, "External Wallet selected: ${response.walletName}");
+    SnackbarHelper.showWarning(
+      context,
+      "External Wallet selected: ${response.walletName}",
+    );
   }
 
-  // ── Main Payment Flow ──
   Future<void> _startPayment() async {
-    // 1. Call API to get Order ID & Keys
-    final orderData = await ref.read(authControllerProvider.notifier).createPaymentOrder();
-    
-    if (orderData == null) return; // Error is already handled by the controller
+    if (_isPaymentInitializing) return;
+    setState(() => _isPaymentInitializing = true);
 
-    // Optional: Pre-fill user data if available in your user state
-    final user = ref.read(authControllerProvider).user;
-    log("User No: ${user!.phone}");
-    log("User Number: ${user.phoneNumber}");
-
-    // 2. Setup Razorpay Options
-    var options = {
-      'key': orderData['keyId'],
-      'amount': orderData['amount'],
-      'currency': orderData['currency'],
-      'name': 'Next Leads',
-      'description': 'Registration Fee',
-      'order_id': orderData['orderId'],
-      'prefill': {
-        'contact': user?.phone ?? '', 
-        'email': user?.email ?? '',
-      },
-      'theme': {
-        'color': '#4522C2'
-      }
-    };
-
-    // 3. Open Checkout
     try {
+      final orderData = await ref
+          .read(authControllerProvider.notifier)
+          .createPaymentOrder();
+
+      if (!mounted) return;
+      if (orderData == null) return;
+
+      final user = ref.read(authControllerProvider).user;
+
+      final keyId = orderData['keyId']?.toString();
+      final orderId = orderData['razorpayOrderId']?.toString();
+      final currency = orderData['currency']?.toString() ?? 'INR';
+
+      // ✅ Force amount to int — this is the #1 cause of Razorpay hanging
+      final rawAmount = orderData['amount'];
+      final int amount = (rawAmount is int)
+          ? rawAmount
+          : (rawAmount is double)
+          ? rawAmount.toInt()
+          : int.tryParse(rawAmount.toString()) ?? 0;
+
+      log("=== RAZORPAY OPTIONS ===");
+      log("key: $keyId");
+      log("orderId: $orderId");
+      log("amount: $amount (type: ${amount.runtimeType})");
+      log("currency: $currency");
+      log("=======================");
+
+      if (keyId == null || orderId == null || amount == 0) {
+        SnackbarHelper.showError(
+          context,
+          "Invalid order data. Please try again.",
+        );
+        return;
+      }
+
+      // ✅ Validate orderId format — must start with 'order_'
+      if (!orderId.startsWith('order_')) {
+        SnackbarHelper.showError(context, "Invalid Razorpay order ID format.");
+        return;
+      }
+
+      final options = <String, dynamic>{
+        'key': keyId,
+        'amount': amount,
+        'currency': currency,
+        'name': 'Next Leads',
+        'description': 'Registration Fee',
+        'order_id': orderId,
+        'prefill': <String, dynamic>{
+          'contact': user?.phone ?? user?.phoneNumber ?? '',
+          'email': user?.email ?? '',
+        },
+        'retry': <String, dynamic>{'enabled': false},
+        'send_sms_hash': true,
+        'theme': <String, dynamic>{'color': '#4522C2'},
+      };
+
+      // ✅ Re-init Razorpay fresh every time — prevents stale listener issues
+      _razorpay.clear();
+      _razorpay = Razorpay();
+      _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+      _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+      _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (!mounted) return;
+
       _razorpay.open(options);
     } catch (e) {
-      debugPrint('Error launching Razorpay: $e');
+      debugPrint('Razorpay launch error: $e');
+      if (mounted) {
+        SnackbarHelper.showError(
+          context,
+          "Could not initiate payment. Please try again.",
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPaymentInitializing = false);
     }
   }
 
@@ -121,11 +185,17 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authControllerProvider).isLoading;
 
-    // Listen for backend errors globally
+    // ✅ Combined loading state — either controller is working OR we're initializing
+    final bool showLoader = isLoading || _isPaymentInitializing;
+
     ref.listen(authControllerProvider, (previous, next) {
-      if (next.error != null && next.error!.isNotEmpty && previous?.error != next.error) {
+      if (next.error != null &&
+          next.error!.isNotEmpty &&
+          previous?.error != next.error) {
         SnackbarHelper.showError(context, next.error!);
-        Future.microtask(() => ref.read(authControllerProvider.notifier).clearError());
+        Future.microtask(
+          () => ref.read(authControllerProvider.notifier).clearError(),
+        );
       }
     });
 
@@ -136,8 +206,13 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.grey102, size: 25.r),
-          onPressed: () => context.pop(),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.grey102,
+            size: 25.r,
+          ),
+          // ✅ Disable back during payment init to prevent broken states
+          onPressed: showLoader ? null : () => context.pop(),
         ),
         title: Text(
           'Complete Payment',
@@ -173,26 +248,37 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Payment Button
                   SizedBox(
                     width: double.infinity,
                     height: 52.h,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.purple73,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
                         elevation: 4,
                       ),
-                      // ✅ Trigger Payment Flow
-                      onPressed: isLoading ? null : _startPayment,
-                      child: isLoading 
-                          ? SizedBox(height: 24.r, width: 24.r, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      onPressed: showLoader ? null : _startPayment,
+                      child: showLoader
+                          ? SizedBox(
+                              height: 24.r,
+                              width: 24.r,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
                           : Text(
                               "Pay  ₹499 Securely",
                               style: AppTextStyles.poppins(
@@ -206,8 +292,6 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                     ),
                   ),
                   SizedBox(height: 20.h),
-
-                  // Trust Badges
                   const TrustBadgesRow(),
                 ],
               ),

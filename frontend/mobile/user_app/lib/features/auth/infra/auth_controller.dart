@@ -1,7 +1,5 @@
 // auth/infra/auth_controller.dart
 
-import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import 'package:user_app/core/errors/error_handler.dart'; // Import your error handler
@@ -99,29 +97,22 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> verifyOtp({
     required String phoneNumber,
     required String otp,
-    // We only really need to know if they need to complete their profile
-    required void Function(bool needsProfile) onSuccess, 
+    required void Function(bool needsProfile) onSuccess,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
-
     try {
-      final result = await _repo.verifyOtp(
-        phoneNumber: phoneNumber,
-        otp: otp,
-      );
+      final result = await _repo.verifyOtp(phoneNumber: phoneNumber, otp: otp);
 
-      // Save token and user to state
+      // ✅ ADD THIS LOG
+
       state = state.copyWith(
         isLoading: false,
         token: result.token,
         user: result.user,
       );
 
-      // Trigger UI navigation
       onSuccess(result.needsProfile);
-
     } catch (e) {
-      print("VERIFY OTP ERROR: $e"); 
       final appException = ErrorHandler.handle(e);
       state = state.copyWith(isLoading: false, error: appException.message);
     }

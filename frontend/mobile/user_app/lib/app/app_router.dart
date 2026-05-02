@@ -12,6 +12,8 @@ import 'package:user_app/features/cart/presentation/screens/cart_screen.dart';
 import 'package:user_app/features/cart/presentation/screens/payment_successful.dart';
 import 'package:user_app/features/home/presentation/screens/home_screen.dart';
 import 'package:user_app/features/home/presentation/screens/lead.dart';
+import 'package:user_app/features/splash/presentation/splash_screen.dart';
+import 'package:user_app/features/support/presentation/screens/setting.dart';
 import 'package:user_app/features/payments/presentation/screens/paymets.dart';
 import 'package:user_app/features/profile/presentation/screens/change_password_screen.dart';
 import 'package:user_app/features/profile/presentation/screens/edit_profile_screen.dart';
@@ -19,8 +21,9 @@ import 'package:user_app/features/profile/presentation/screens/edit_profile_scre
 import 'package:user_app/features/profile/presentation/screens/profile_screen.dart';
 import 'package:user_app/features/shell/presentation/main_shell.dart';
 import 'package:user_app/features/splash/presentation/onboarding_screen.dart';
-import 'package:user_app/features/splash/presentation/splash_screen.dart';
+import 'package:user_app/features/support/presentation/screens/about_us_page.dart';
 import 'package:user_app/features/support/presentation/screens/help_support_screen.dart';
+import 'package:user_app/features/support/presentation/screens/notifications_page.dart';
 import 'package:user_app/features/support/presentation/screens/terms_conditions_screen.dart';
 
 abstract final class AppRouter {
@@ -32,6 +35,8 @@ abstract final class AppRouter {
   static const String tellUsAboutYourselfPath = '/tell-us-about-yourself';
   static const String completePaymentPath = '/complete-payment';
   static const String homePath = '/home';
+  static const String drawerPath = '/drawer';
+  static const String settingPath = '/setting';
   static const String leadsPath = '/history';
   static const String chooseWorkCityPath = '/choose-work-city';
   static const String chooseCategoryPath = '/choose-category';
@@ -43,8 +48,11 @@ abstract final class AppRouter {
   static const String addAddressPath = '/add-address';
   static const String cartPath = '/cart-Screen';
   static const String paymentsuccessPath = '/pay-success';
+
   static const String termsPath = '/terms-conditions';
   static const String helpSupportPath = '/help-support';
+  static const String aboutusPath = '/aboutus';
+  static const String notificationPath = '/notification';
   static const String selectCategoryPath = '/select-category';
   static const String selectCityPath = '/select-city';
   static const String forgotPasswordPath = '/forgot-password';
@@ -64,19 +72,16 @@ abstract final class AppRouter {
         builder: (context, state) => const OnboardingScreen(),
       ),
 
-      // ── Auth ────────────────────────────────────────────────────────────────
       GoRoute(path: login, builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: verifyNumberPath,
         builder: (context, state) {
-          // ✅ Safely cast extra as a Map
           final extraData = state.extra as Map<String, dynamic>? ?? {};
 
           final isGoogle = extraData['isGoogle'] as bool? ?? false;
           final phoneString = extraData['phone'] as String? ?? '';
           final tokenString = extraData['token'] as String? ?? '';
 
-          // Pass the values to your screen
           return VerifyNumberScreen(
             isGoogleAuth: isGoogle,
             phoneNumber: phoneString,
@@ -108,7 +113,7 @@ abstract final class AppRouter {
           );
         },
       ),
-      
+
       GoRoute(
         path: tellUsAboutYourselfPath,
         builder: (context, state) => const TellUsAboutYourselfScreen(),
@@ -138,6 +143,10 @@ abstract final class AppRouter {
         path: addAddressPath,
         builder: (context, state) => const AddAddressScreen(),
       ),
+      GoRoute(
+        path: notificationPath,
+        builder: (context, state) => const NotificationScreen(),
+      ),
 
       GoRoute(path: cartPath, builder: (context, state) => const CartScreen()),
       GoRoute(
@@ -154,6 +163,14 @@ abstract final class AppRouter {
       GoRoute(
         path: helpSupportPath,
         builder: (context, state) => const HelpSupportScreen(),
+      ),
+      GoRoute(
+        path: aboutusPath,
+        builder: (context, state) => const AboutUsPage(),
+      ),
+      GoRoute(
+        path: settingPath, // no leading slash — relative to /home
+        builder: (context, state) => const SettingsPage(),
       ),
 
       StatefulShellRoute.indexedStack(
