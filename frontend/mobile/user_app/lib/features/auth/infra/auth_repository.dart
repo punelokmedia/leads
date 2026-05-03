@@ -9,7 +9,7 @@ import '../domain/auth_model.dart';
 
 class AuthRepository {
   final Dio _dio;
-  final FlutterSecureStorage _storage; // ✅ Add storage instance
+  final FlutterSecureStorage _storage;
 
   // ✅ Require storage in the constructor
   AuthRepository(this._dio, this._storage);
@@ -19,7 +19,7 @@ class AuthRepository {
     required String fullName,
     required String email,
     required String city,
-    required List<String> categories, 
+    required List<String> categories,
     required String businessName,
     required String workType,
   }) async {
@@ -29,7 +29,7 @@ class AuthRepository {
         'fullName': fullName,
         'email': email,
         'city': city,
-        'categories': categories, 
+        'categories': categories,
         'businessName': businessName,
         'workType': workType,
       },
@@ -44,10 +44,8 @@ class AuthRepository {
   // ── POST /auth/mobile/request-otp-session ─────────────────────────────────
   Future<Map<String, dynamic>> sendOtp({required String phoneNumber}) async {
     final res = await _dio.post(
-      ApiEndpoints.requestOtp, 
-      data: {
-        'phoneNumber': phoneNumber, 
-      },
+      ApiEndpoints.requestOtp,
+      data: {'phoneNumber': phoneNumber},
     );
 
     return res.data as Map<String, dynamic>;
@@ -56,16 +54,12 @@ class AuthRepository {
   // ── POST /auth/login ──────────────────────────────────────────────────────
   Future<Map<String, dynamic>> requestOtpSession({
     required String phoneNumber,
-    required String token, 
+    required String token,
   }) async {
     final res = await _dio.post(
-      ApiEndpoints.requestOtpSession, 
+      ApiEndpoints.requestOtpSession,
       data: {'phoneNumber': phoneNumber},
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token', 
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
     return res.data as Map<String, dynamic>;
@@ -83,21 +77,23 @@ class AuthRepository {
 
     final body = res.data as Map<String, dynamic>;
 
-    // 1. Token is at the root level
-    final String token = body['token'] as String;
+    // ✅ FIX 1: Token is inside 'data', not at root level
+    final data = body['data'] as Map<String, dynamic>;
+    final String token = data['token'] as String;
 
-    // ✅ SAVE TOKEN IMMEDIATELY TO STORAGE
+    // ✅ SAVE TOKEN
     await _storage.write(key: 'auth_token', value: token);
 
-    // 2. The user object is the 'data' object itself
-    final Map<String, dynamic>? data = body['data'] as Map<String, dynamic>?;
+    // ✅ FIX 2: Use 'code' field to determine if new or existing user
+    // LOGIN_SUCCESS = existing user → no profile needed
+    // Anything else (e.g. REGISTRATION_SUCCESS) = new user → needs profile
+    final String code = body['code'] as String? ?? '';
+    final bool needsProfile = code != 'LOGIN_SUCCESS';
 
+    // ✅ User object may not exist for existing users — that's fine
     AuthUser? user;
-    bool needsProfile = true; 
-
-    if (data != null) {
-      user = AuthUser.fromJson(data);
-      needsProfile = !(data['isProfileCompleted'] as bool? ?? false);
+    if (data['user'] != null) {
+      user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
     }
 
     return (user: user, token: token, needsProfile: needsProfile);
@@ -110,13 +106,13 @@ class AuthRepository {
     required String token, // The Google Bearer token
   }) async {
     final res = await _dio.post(
-      ApiEndpoints.verifyOtpSession, 
+      ApiEndpoints.verifyOtpSession,
       data: {'phoneNumber': phoneNumber, 'otp': otp},
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
     final body = res.data as Map<String, dynamic>;
-    
+
     // ✅ SAVE TOKEN IMMEDIATELY IF PRESENT
     if (body['token'] != null) {
       await _storage.write(key: 'auth_token', value: body['token'] as String);
@@ -136,7 +132,8 @@ class AuthRepository {
     }
 
     // 2. Extract the secure ID Token from Google
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
     final String? idToken = googleAuth.idToken;
 
     if (idToken == null) {
@@ -172,12 +169,12 @@ class AuthRepository {
     debugPrint("Logout response: ${res.data}");
   }
 
-    // ── Create Razorpay Order ──────────────────────────────────────────────────
-    Future<Map<String, dynamic>> createRegistrationOrder() async {
-      final res = await _dio.post(ApiEndpoints.createRegistrationOrder);
-      final body = res.data as Map<String, dynamic>;
-      return body['data']; 
-    }
+  // ── Create Razorpay Order ──────────────────────────────────────────────────
+  Future<Map<String, dynamic>> createRegistrationOrder() async {
+    final res = await _dio.post(ApiEndpoints.createRegistrationOrder);
+    final body = res.data as Map<String, dynamic>;
+    return body['data'];
+  }
 
   // ── Verify Razorpay Payment ────────────────────────────────────────────────
   Future<void> verifyPayment({
@@ -205,7 +202,7 @@ class AuthRepository {
         'workType': workType,
       },
     );
-    
+
     // ✅ If the backend returns a refreshed token after payment/profile completion, save it!
     final body = res.data as Map<String, dynamic>?;
     if (body != null && body['token'] != null) {

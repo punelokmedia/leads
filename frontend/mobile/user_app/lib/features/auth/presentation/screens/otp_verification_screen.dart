@@ -26,11 +26,15 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
+  ConsumerState<OtpVerificationScreen> createState() =>
+      _OtpVerificationScreenState();
 }
 
 class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
-  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   Timer? _timer;
   int _start = 25;
@@ -45,16 +49,22 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     setState(() => _start = 25);
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_start == 0) timer.cancel();
-      else setState(() => _start--);
+      if (_start == 0)
+        timer.cancel();
+      else
+        setState(() => _start--);
     });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    for (final c in _controllers) { c.dispose(); }
-    for (final f in _focusNodes) { f.dispose(); }
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -71,40 +81,54 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       SnackbarHelper.showWarning(context, 'Enter complete 6-digit OTP');
       return;
     }
+
     if (widget.isGoogleAuth) {
-      ref.read(authControllerProvider.notifier).verifyOtpSession(
-        phoneNumber: widget.phoneNumber,
-        otp: _otp,
-        token: widget.googleToken,
-        onSuccess: () => context.go(AppRouter.homePath),
-      );
+      ref
+          .read(authControllerProvider.notifier)
+          .verifyOtpSession(
+            phoneNumber: widget.phoneNumber,
+            otp: _otp,
+            token: widget.googleToken,
+            onSuccess: () => context.go(AppRouter.homePath),
+          );
     } else {
-      ref.read(authControllerProvider.notifier).verifyOtp(
-        phoneNumber: widget.phoneNumber,
-        otp: _otp,
-        // onSuccess: (isNewUser, needsProfile) {
-        onSuccess: (needsProfile) {
-          if (needsProfile) context.push(AppRouter.tellUsAboutYourselfPath);
-          else context.go(AppRouter.homePath);
-        },
-      );
+      ref
+          .read(authControllerProvider.notifier)
+          .verifyOtp(
+            phoneNumber: widget.phoneNumber,
+            otp: _otp,
+            onSuccess: (needsProfile) {
+              // ✅ Only go to profile setup if backend says they need it
+              if (needsProfile) {
+                context.push(AppRouter.tellUsAboutYourselfPath);
+              } else {
+                context.go(AppRouter.homePath); // ✅ Existing user → home
+              }
+            },
+          );
     }
   }
 
   void _onResend() {
     _startTimer();
-    for (var c in _controllers) { c.clear(); }
+    for (var c in _controllers) {
+      c.clear();
+    }
     _focusNodes[0].requestFocus();
     setState(() {});
 
     if (widget.isGoogleAuth) {
-      ref.read(authControllerProvider.notifier).requestOtpSession(
-        phoneNumber: widget.phoneNumber, token: widget.googleToken, onSuccess: (otp) {},
-      );
+      ref
+          .read(authControllerProvider.notifier)
+          .requestOtpSession(
+            phoneNumber: widget.phoneNumber,
+            token: widget.googleToken,
+            onSuccess: (otp) {},
+          );
     } else {
-      ref.read(authControllerProvider.notifier).sendOtp(
-        phoneNumber: widget.phoneNumber, onSuccess: (otp) {},
-      );
+      ref
+          .read(authControllerProvider.notifier)
+          .sendOtp(phoneNumber: widget.phoneNumber, onSuccess: (otp) {});
     }
   }
 
@@ -113,18 +137,38 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     final isLoading = ref.watch(authControllerProvider).isLoading;
 
     ref.listen(authControllerProvider, (previous, next) {
-      if (next.error != null && next.error!.isNotEmpty && previous?.error != next.error) {
+      if (next.error != null &&
+          next.error!.isNotEmpty &&
+          previous?.error != next.error) {
         SnackbarHelper.showError(context, next.error!);
-        Future.microtask(() => ref.read(authControllerProvider.notifier).clearError());
+        Future.microtask(
+          () => ref.read(authControllerProvider.notifier).clearError(),
+        );
       }
     });
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0, centerTitle: true,
-        title: Text('Enter OTP', style: AppTextStyles.poppins(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 24.sp)),
-        leading: IconButton(icon: Icon(Icons.arrow_back_ios_new_rounded, size: 25.r, color: AppColors.grey102), onPressed: () => context.pop()),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          'Enter OTP',
+          style: AppTextStyles.poppins(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 24.sp,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 25.r,
+            color: AppColors.grey102,
+          ),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -134,20 +178,37 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               SizedBox(height: 89.h),
               OtpHeader(phoneNumber: widget.phoneNumber), // ✅ Subtitle & Phone
               SizedBox(height: 40.h),
-              
-              OtpInputRow( // ✅ Fixes Backspace & Handles UI
-                controllers: _controllers, focusNodes: _focusNodes,
-                onChanged: _onOtpChanged, onUpdate: () => setState(() {}),
+
+              OtpInputRow(
+                // ✅ Fixes Backspace & Handles UI
+                controllers: _controllers,
+                focusNodes: _focusNodes,
+                onChanged: _onOtpChanged,
+                onUpdate: () => setState(() {}),
               ),
               SizedBox(height: 18.h),
 
-              Text('Resend OTP IN 00:${_start.toString().padLeft(2, '0')}', style: AppTextStyles.poppins(color: AppColors.grey137, fontSize: 20.sp, fontWeight: FontWeight.w500)),
+              Text(
+                'Resend OTP IN 00:${_start.toString().padLeft(2, '0')}',
+                style: AppTextStyles.poppins(
+                  color: AppColors.grey137,
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               SizedBox(height: 30.h),
 
-              AuthPrimaryButton(label: 'Verify OTP', isLoading: isLoading, onTap: _onVerify),
+              AuthPrimaryButton(
+                label: 'Verify OTP',
+                isLoading: isLoading,
+                onTap: _onVerify,
+              ),
               SizedBox(height: 24.h),
 
-              OtpResendRow(timerStart: _start, onResendTap: _onResend), // ✅ Resend Logic
+              OtpResendRow(
+                timerStart: _start,
+                onResendTap: _onResend,
+              ), // ✅ Resend Logic
               SizedBox(height: 50.h),
 
               const OtpIllustration(), // ✅ Illustration

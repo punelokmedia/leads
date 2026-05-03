@@ -29,7 +29,7 @@ class HelpSupportScreen extends StatelessWidget {
         title: Text(
           "Help & Support",
           style: AppTextStyles.roboto(
-            color: AppColors.orange248,
+            color: AppColors.purple75,
             fontSize: 22.sp,
             height: 1,
             fontWeight: FontWeight.w700,
@@ -115,11 +115,17 @@ class HelpSupportScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _InfoRow(label: "Working Hours", value: "Mon - Sat, 10:00 AM to 7:00 PM"),
+                  _InfoRow(
+                    label: "Working Hours",
+                    value: "Mon - Sat, 10:00 AM to 7:00 PM",
+                  ),
                   SizedBox(height: 8.h),
                   _InfoRow(label: "Email", value: "support@leadssell.com"),
                   SizedBox(height: 8.h),
-                  _InfoRow(label: "Response Time", value: "Usually within 24 hours"),
+                  _InfoRow(
+                    label: "Response Time",
+                    value: "Usually within 24 hours",
+                  ),
                 ],
               ),
             ),
@@ -135,15 +141,18 @@ class HelpSupportScreen extends StatelessWidget {
             SizedBox(height: 8.h),
             const _FaqTile(
               title: "I completed payment but history is empty.",
-              body: "Pull to refresh on History tab. If issue remains, contact support with order ID.",
+              body:
+                  "Pull to refresh on History tab. If issue remains, contact support with order ID.",
             ),
             const _FaqTile(
               title: "Why can't I download leads again?",
-              body: "For security and data policy, lead file download is allowed one time per paid order.",
+              body:
+                  "For security and data policy, lead file download is allowed one time per paid order.",
             ),
             const _FaqTile(
               title: "How can I change my city filter?",
-              body: "Open category or search section and clear selected city chip to load all leads again.",
+              body:
+                  "Open category or search section and clear selected city chip to load all leads again.",
             ),
           ],
         ),
@@ -230,10 +239,7 @@ class _FaqTile extends StatelessWidget {
   final String title;
   final String body;
 
-  const _FaqTile({
-    required this.title,
-    required this.body,
-  });
+  const _FaqTile({required this.title, required this.body});
 
   @override
   Widget build(BuildContext context) {

@@ -8,6 +8,7 @@ import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/cart/shared/cart_providers.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
+import 'package:user_app/features/home/presentation/screens/hamberger.dart';
 import 'package:user_app/features/home/presentation/screens/select_city_screen.dart';
 import 'package:user_app/features/home/presentation/widgets/home_search_bar.dart';
 import 'package:user_app/features/home/presentation/widgets/state_widgets.dart';
@@ -149,7 +150,9 @@ class _NextLeadsAppBar extends StatelessWidget {
               color: AppColors.black19,
               size: 24.r,
             ),
-            onPressed: () {},
+            onPressed: () {
+              AppDrawerController.open(context);
+            },
           ),
           const Spacer(),
           Row(
