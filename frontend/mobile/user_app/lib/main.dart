@@ -5,8 +5,8 @@ import 'package:user_app/app/user_app.dart';
 
 
 // Change here to use local machine server
-const String _env = 'local';
-// const String _env = 'dev';
+// const String _env = 'local';
+const String _env = 'dev';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

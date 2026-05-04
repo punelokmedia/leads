@@ -39,6 +39,7 @@ class ApiEndpoints {
 
   //
   static const String getAllLeads = '$_apiV1/leads/get-all-leads';
+  static const String getPayments = '$_apiV1/payments/get-all-History';
 
  
   // resolves to → api/v1/cities/get-all-cities

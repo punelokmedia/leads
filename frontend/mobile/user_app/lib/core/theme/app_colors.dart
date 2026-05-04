@@ -43,6 +43,7 @@ class AppColors {
   static const blueColor=Color.fromRGBO(22, 86, 225, 1);
   static const blueColor26=Color.fromRGBO(26, 86, 219, 1);
   static final blue10=Color.fromRGBO(10,87,255,1);
+  static final blue28=Color.fromRGBO(28,8,99,1);
   static final darkblue43=Color.fromRGBO(43,43,50,1);
 
   //Orange

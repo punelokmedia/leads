@@ -1,5 +1,4 @@
 // features/auth/shared/profile_draft_provider.dart
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 
@@ -8,18 +7,22 @@ class ProfileDraft {
   final String email;
   final String businessName;
   final String city;
-  final String cityId; // ✅ Added cityId
+  final String cityId;
+  final String address;
   final String workType;
   final List<String> categories;
+  final String profilePicPath; // ✅ ADDED
 
   ProfileDraft({
     this.fullName = '',
     this.email = '',
     this.businessName = '',
     this.city = '',
-    this.cityId = '', // ✅ Initialize
+    this.cityId = '',
     this.workType = '',
+    this.address = '',
     this.categories = const [],
+    this.profilePicPath = '', // ✅ ADDED
   });
 
   ProfileDraft copyWith({
@@ -27,18 +30,22 @@ class ProfileDraft {
     String? email,
     String? businessName,
     String? city,
-    String? cityId, // ✅ Added to copyWith
+    String? cityId, 
+    String? address,
     String? workType,
     List<String>? categories,
+    String? profilePicPath, // ✅ ADDED
   }) {
     return ProfileDraft(
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       businessName: businessName ?? this.businessName,
       city: city ?? this.city,
-      cityId: cityId ?? this.cityId, // ✅ Store it
+      cityId: cityId ?? this.cityId, 
       workType: workType ?? this.workType,
       categories: categories ?? this.categories,
+      address: address ?? this.address,
+      profilePicPath: profilePicPath ?? this.profilePicPath, // ✅ ADDED
     );
   }
 }
@@ -51,8 +58,10 @@ class ProfileDraftNotifier extends StateNotifier<ProfileDraft> {
     required String email,
     required String businessName,
     required String city,
-    String cityId = '', // Optional, in case first screen doesn't have ID yet
+    String cityId = '', 
     required String workType,
+    required String address,
+    required String profilePicPath, 
   }) {
     state = state.copyWith(
       fullName: fullName,
@@ -61,10 +70,11 @@ class ProfileDraftNotifier extends StateNotifier<ProfileDraft> {
       city: city,
       cityId: cityId.isNotEmpty ? cityId : state.cityId,
       workType: workType,
+      address: address,
+      profilePicPath: profilePicPath, 
     );
   }
 
-  // ✅ Updated to accept both name and ID
   void updateCity({required String cityName, required String cityId}) {
     state = state.copyWith(city: cityName, cityId: cityId);
   }

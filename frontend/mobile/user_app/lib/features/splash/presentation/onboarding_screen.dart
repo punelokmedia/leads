@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // ✅ Added flutter_svg import
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
@@ -102,8 +103,8 @@ class OnboardingScreen extends StatelessWidget {
                   ),
                   onPressed: () async {
                     //  1. Mark onboarding as complete in local storage
-                    // final prefs = await SharedPreferences.getInstance();
-                    // await prefs.setBool('has_seen_onboarding', true);
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('has_seen_onboarding', true);
 
                     // 2. Navigate to Login screen
                     if (context.mounted) {

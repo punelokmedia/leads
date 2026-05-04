@@ -1,69 +1,42 @@
-
 class ProfileModel {
   final String id;
-  final String firstName;
-  final String lastName;
+  final String firstname;
+  final String lastname;
   final String email;
-  final String phone;
-  final String countryCode;
-  final String address;
-  final String city;
-  final String? avatarUrl;
+  final String phoneNumber;
+  final String businessName;
+  final String workType;
+  final String cityName;
+  
+  // These aren't in the API response yet, using defaults for UI
+  final String gstNumber; 
+  final String address; 
 
-  const ProfileModel({
+  ProfileModel({
     required this.id,
-    required this.firstName,
-    required this.lastName,
+    required this.firstname,
+    required this.lastname,
     required this.email,
-    required this.phone,
-    this.countryCode = '+91',
-    this.address = '',
-    this.city = '',
-    this.avatarUrl,
+    required this.phoneNumber,
+    required this.businessName,
+    required this.workType,
+    required this.cityName,
+    this.gstNumber = 'Not Available', 
+    this.address = 'Not Available',   
   });
 
- factory ProfileModel.fromJson(Map<String, dynamic> json) => ProfileModel(
-      id: json['_id']?.toString() ?? '', 
-      firstName: json['firstname'] ?? '',
-      lastName: json['lastname'] ?? '',
+  factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    return ProfileModel(
+      id: json['_id'] ?? '',
+      firstname: json['firstname'] ?? '',
+      lastname: json['lastname'] ?? '',
       email: json['email'] ?? '',
-      phone: json['phoneNumber'] ?? '',
-      avatarUrl: json['profilePic'],
+      phoneNumber: json['phoneNumber'] ?? '',
+      businessName: json['businessName'] ?? '',
+      workType: json['workType'] ?? '',
+      cityName: json['city'] != null ? (json['city']['name'] ?? '') : '',
     );
+  }
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'firstname': firstName,     
-        'lastname': lastName,
-        'email': email,
-        'phoneNumber': phone,
-        'countryCode': countryCode,
-        'address': address,
-        'city': city,
-        'avatar_url': avatarUrl,
-      };
-
-  ProfileModel copyWith({
-    String? firstName,            
-    String? lastName,
-    String? email,
-    String? phone,
-    String? countryCode,
-    String? address,
-    String? city,
-    String? avatarUrl,
-  }) =>
-      ProfileModel(
-        id: id,
-        firstName: firstName ?? this.firstName,
-        lastName: lastName ?? this.lastName,
-        email: email ?? this.email,
-        phone: phone ?? this.phone,
-        countryCode: countryCode ?? this.countryCode,
-        address: address ?? this.address,
-        city: city ?? this.city,
-        avatarUrl: avatarUrl ?? this.avatarUrl,
-      );
-
-  String get fullName => '$firstName $lastName'.trim();
+  String get fullName => '$firstname $lastname'.trim();
 }

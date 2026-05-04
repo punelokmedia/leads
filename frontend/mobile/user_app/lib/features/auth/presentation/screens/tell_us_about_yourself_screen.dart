@@ -1,9 +1,12 @@
 // features/auth/presentation/screens/tell_us_about_yourself_screen.dart
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
@@ -33,6 +36,9 @@ class _TellUsAboutYourselfScreenState
   String? _selectedCityId;
   String? _selectedWorkType;
 
+  String? _profilePicPath;
+  final ImagePicker _picker = ImagePicker();
+
   final List<String> _fallbackCities = ["Mumbai", "Delhi", "Bengaluru", "Pune"];
   final List<String> _fallbackWorkTypes = [
     "Carpenter",
@@ -49,6 +55,10 @@ class _TellUsAboutYourselfScreenState
       if (draft.fullName.isNotEmpty) _nameCtrl.text = draft.fullName;
       if (draft.email.isNotEmpty) _emailCtrl.text = draft.email;
       if (draft.businessName.isNotEmpty) _bizCtrl.text = draft.businessName;
+      if (draft.address.isNotEmpty) _addressCtrl.text = draft.address;
+      if (draft.profilePicPath.isNotEmpty) {
+        setState(() => _profilePicPath = draft.profilePicPath);
+      }
       if (draft.city.isNotEmpty) {
         setState(() {
           _selectedCity = draft.city;
@@ -70,10 +80,28 @@ class _TellUsAboutYourselfScreenState
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _profilePicPath = image.path;
+        });
+      }
+    } catch (e) {
+      SnackbarHelper.showError(context, 'Failed to pick image: $e');
+    }
+  }
+
   void _onContinue() {
+    if (_profilePicPath == null || _profilePicPath!.isEmpty) {
+      SnackbarHelper.showError(context, 'Please upload a profile picture.');
+      return;
+    }
     if (_nameCtrl.text.trim().isEmpty ||
         _bizCtrl.text.trim().isEmpty ||
         _emailCtrl.text.trim().isEmpty ||
+        _addressCtrl.text.trim().isEmpty ||
         _selectedCity == null ||
         _selectedWorkType == null) {
       SnackbarHelper.showError(
@@ -97,6 +125,8 @@ class _TellUsAboutYourselfScreenState
           city: _selectedCity!,
           cityId: _selectedCityId ?? '',
           workType: _selectedWorkType!,
+          address: _addressCtrl.text.trim(),
+          profilePicPath: _profilePicPath ?? '',
         );
 
     context.push(AppRouter.chooseWorkCityPath);
@@ -140,55 +170,72 @@ class _TellUsAboutYourselfScreenState
                 SizedBox(height: 16.h),
 
                 // ── Avatar Upload ──
-                Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    Container(
-                      width: 90.r,
-                      height: 90.r,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD6CCFF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.person,
-                        size: 50.r,
-                        color: const Color(0xFF9B8FCC),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 4.h,
-                        ),
+                GestureDetector(
+                  // ✅ Wrap with GestureDetector
+                  onTap: _pickImage, // ✅ Trigger Image Picker
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      Container(
+                        width: 90.r,
+                        height: 90.r,
                         decoration: BoxDecoration(
-                          color: AppColors.purple73,
-                          borderRadius: BorderRadius.circular(20.r),
+                          color: const Color(0xFFD6CCFF),
+                          shape: BoxShape.circle,
+                          // ✅ Show image if selected
+                          image:
+                              _profilePicPath != null &&
+                                  _profilePicPath!.isNotEmpty
+                              ? DecorationImage(
+                                  image: FileImage(File(_profilePicPath!)),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Upload',
-                              style: AppTextStyles.poppins(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                        // ✅ Hide icon if image is selected
+                        child:
+                            _profilePicPath == null || _profilePicPath!.isEmpty
+                            ? Icon(
+                                Icons.person,
+                                size: 50.r,
+                                color: const Color(0xFF9B8FCC),
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.purple73,
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Upload',
+                                style: AppTextStyles.poppins(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                            SizedBox(width: 4.w),
-                            Icon(
-                              Icons.add_circle_outline,
-                              color: Colors.white,
-                              size: 14.r,
-                            ),
-                          ],
+                              SizedBox(width: 4.w),
+                              Icon(
+                                Icons.add_circle_outline,
+                                color: Colors.white,
+                                size: 14.r,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 SizedBox(height: 24.h),
