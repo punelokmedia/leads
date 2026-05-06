@@ -14,26 +14,42 @@ class AuthRepository {
   // ✅ Require storage in the constructor
   AuthRepository(this._dio, this._storage);
 
-  // ── POST /auth/mobile/complete-profile ────────────────────────────────────
+  // ── PUT /auth/mobile/complete-profile ────────────────────────────────────
   Future<AuthUser> completeProfile({
     required String fullName,
     required String email,
     required String city,
+    required String address,
     required List<String> categories,
     required String businessName,
     required String workType,
+    String? profilePicPath,
   }) async {
-    final res = await _dio.post(
-      ApiEndpoints.completeProfile,
-      data: {
-        'fullName': fullName,
-        'email': email,
-        'city': city,
-        'categories': categories,
-        'businessName': businessName,
-        'workType': workType,
-      },
-    );
+    // ✅ FIX 1: Use FormData for multipart/form-data instead of a standard Map
+    final formData = FormData.fromMap({
+      'fullName': fullName,
+      'email': email,
+      'city': city,
+      'businessName': businessName,
+      'workType': workType,
+      'address': address,
+    });
+
+    // ✅ FIX 2: Handle the Array for multipart form data.
+    // Notice in Postman the key is exactly 'categories[]'
+    for (var category in categories) {
+      formData.fields.add(MapEntry('categories[]', category));
+    }
+
+    // Optional: How to attach the image file if you add it later
+    if (profilePicPath != null && profilePicPath.isNotEmpty) {
+      formData.files.add(
+        MapEntry('profilePic', await MultipartFile.fromFile(profilePicPath)),
+      );
+    }
+
+    // ✅ FIX 3: Change _dio.post to _dio.put
+    final res = await _dio.put(ApiEndpoints.completeProfile, data: formData);
 
     final body = res.data as Map<String, dynamic>;
     final data = body['data'] as Map<String, dynamic>;
@@ -66,6 +82,7 @@ class AuthRepository {
   }
 
   // ── POST /auth/mobile/verify-otp (Standard Flow) ──────────────────────────
+  // ── POST /auth/mobile/verify-otp (Standard Flow) ──────────────────────────
   Future<({AuthUser? user, String token, bool needsProfile})> verifyOtp({
     required String phoneNumber,
     required String otp,
@@ -77,23 +94,25 @@ class AuthRepository {
 
     final body = res.data as Map<String, dynamic>;
 
-    // ✅ FIX 1: Token is inside 'data', not at root level
-    final data = body['data'] as Map<String, dynamic>;
-    final String token = data['token'] as String;
-
-    // ✅ SAVE TOKEN
+    // 1. Save Token
+    final String token = body['token'] as String;
     await _storage.write(key: 'auth_token', value: token);
 
-    // ✅ FIX 2: Use 'code' field to determine if new or existing user
-    // LOGIN_SUCCESS = existing user → no profile needed
-    // Anything else (e.g. REGISTRATION_SUCCESS) = new user → needs profile
-    final String code = body['code'] as String? ?? '';
-    final bool needsProfile = code != 'LOGIN_SUCCESS';
+    // 2. Extract meta object
+    final Map<String, dynamic>? meta = body['meta'] as Map<String, dynamic>?;
 
-    // ✅ User object may not exist for existing users — that's fine
+    //  Strictly use 'isNewUser' only. Default to false if missing.
+    final bool isNewUser = meta?['isNewUser'] as bool? ?? false;
+
+    // Assign it directly to needsProfile for your UI to use
+    final bool needsProfile = isNewUser;
+
+    // 3. Parse User Data
     AuthUser? user;
-    if (data['user'] != null) {
-      user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
+    final Map<String, dynamic>? data = body['data'] as Map<String, dynamic>?;
+
+    if (data != null) {
+      user = AuthUser.fromJson(data);
     }
 
     return (user: user, token: token, needsProfile: needsProfile);

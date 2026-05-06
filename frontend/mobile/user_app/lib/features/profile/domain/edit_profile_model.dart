@@ -23,30 +23,30 @@ class EditProfileModel {
 
   // ── From API response ──────────────────────────────────────────────────────
   factory EditProfileModel.fromJson(Map<String, dynamic> json) {
-  final addressData = json['address'] as Map<String, dynamic>?;
+    final addressData = json['address'] as Map<String, dynamic>?;
 
-  return EditProfileModel(
-    firstName: json['firstname'] as String? ?? '',
-    lastName: json['lastname'] as String? ?? '',
-    countryCode: json['countryCode'] as String? ?? '+91',
-    phone: json['phoneNumber'] as String? ?? '',
-    address: addressData?['street'] as String? ?? '',
-    city: addressData?['city'] as String? ?? '',
-    email: json['email'] as String? ?? '',
-    avatarUrl: json['profilePic'] as String?,
-  );
-}
+    return EditProfileModel(
+      firstName: json['firstname'] as String? ?? '',
+      lastName: json['lastname'] as String? ?? '',
+      countryCode: json['countryCode'] as String? ?? '+91',
+      phone: json['phoneNumber'] as String? ?? '',
+      address: addressData?['street'] as String? ?? '',
+      city: addressData?['city'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      avatarUrl: json['profilePic'] as String?,
+    );
+  }
 
   // ── Convert from ProfileModel ──────────────────────────────────────────────
   factory EditProfileModel.fromProfile(ProfileModel p) => EditProfileModel(
-        firstName:   p.firstName,
-        lastName:    p.lastName,
-        countryCode: p.countryCode,
-        phone:       p.phone,
-        address:     p.address,
-        city:        p.city,
+        firstName:   p.firstname,       // ✅ Fixed: Maps to p.firstname
+        lastName:    p.lastname,        // ✅ Fixed: Maps to p.lastname
+        countryCode: '+91',             // ✅ Added Fallback
+        phone:       p.phoneNumber,     // ✅ Fixed: Maps to p.phoneNumber
+        address:     p.address,         
+        city:        p.cityName,        // ✅ Fixed: Maps to p.cityName
         email:       p.email,
-        avatarUrl:   p.avatarUrl,
+        avatarUrl:   null,              // ✅ Added Fallback
       );
 
   // ── To API request body ────────────────────────────────────────────────────

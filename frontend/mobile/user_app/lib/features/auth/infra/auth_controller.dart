@@ -21,6 +21,8 @@ class AuthController extends StateNotifier<AuthState> {
     required List<String> categories,
     required String businessName,
     required String workType,
+    required String address,
+    String? profilePicPath,
     required void Function() onSuccess,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -33,6 +35,8 @@ class AuthController extends StateNotifier<AuthState> {
         categories: categories,
         businessName: businessName,
         workType: workType,
+        address: address,
+        profilePicPath: profilePicPath,
       );
 
       // Update the state with the newly completed user profile

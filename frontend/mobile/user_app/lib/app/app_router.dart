@@ -10,8 +10,10 @@ import 'package:user_app/features/auth/presentation/screens/tell_us_about_yourse
 import 'package:user_app/features/auth/presentation/screens/verify_number_screen.dart';
 import 'package:user_app/features/cart/presentation/screens/cart_screen.dart';
 import 'package:user_app/features/cart/presentation/screens/payment_successful.dart';
+import 'package:user_app/features/home/domain/leads_model.dart';
 import 'package:user_app/features/home/presentation/screens/home_screen.dart';
 import 'package:user_app/features/home/presentation/screens/lead.dart';
+import 'package:user_app/features/home/presentation/screens/lead_details_screen.dart';
 import 'package:user_app/features/splash/presentation/splash_screen.dart';
 import 'package:user_app/features/support/presentation/screens/setting.dart';
 import 'package:user_app/features/payments/presentation/screens/paymets.dart';
@@ -42,6 +44,7 @@ abstract final class AppRouter {
   static const String chooseCategoryPath = '/choose-category';
   static const String profilePath = '/profile';
   static const String paymentsPath = '/payments';
+  static const String leadDetailsPath = '/lead-details';
 
   static const String changePasswordPath = '/change-password';
   static const String editProfilePath = '/edit-profile';
@@ -113,7 +116,14 @@ abstract final class AppRouter {
           );
         },
       ),
-
+      GoRoute(
+        path: AppRouter.leadDetailsPath,
+        builder: (context, state) {
+          // ✅ Extract the lead object from the extra parameter
+          final lead = state.extra as LeadModel;
+          return LeadDetailsScreen(lead: lead);
+        },
+      ),
       GoRoute(
         path: tellUsAboutYourselfPath,
         builder: (context, state) => const TellUsAboutYourselfScreen(),

@@ -2,6 +2,7 @@ import 'package:user_app/core/utils/intl_helper.dart';
 
 class LeadModel {
   final String id;
+  final String leadId;
   final String title;
   final String description;
   final String address;
@@ -18,6 +19,7 @@ class LeadModel {
   const LeadModel({
     required this.id,
     required this.title,
+    required this.leadId,
     required this.description,
     required this.address,
     required this.city,
@@ -42,6 +44,7 @@ class LeadModel {
   return LeadModel(
     id: json['_id'] ?? '',
     title: json['title'] ?? '',
+    leadId: json['leadDisplayId']??'',
     description: json['description'] ?? '',
     address: "${json['city'] ?? ''}, ${json['state'] ?? ''}",
     city: json['city'] ?? '',

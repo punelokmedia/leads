@@ -148,11 +148,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   height: 60.h,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20.r),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0xFFFFD54F), Color(0xFFF8B020)],
-                    ),
+                    color: AppColors.purple73,
+                    // gradient: const LinearGradient(
+                    //   begin: Alignment.topCenter,
+                    //   end: Alignment.bottomCenter,
+                    //   colors: [Color(0xFFFFD54F), Color(0xFFF8B020)],
+                    // ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.15),
@@ -185,7 +186,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       await notifier.startPaymentProcess(
                         onError: (msg) => _showSnack(msg, isError: true),
                         onOrderCreated: (data) {
-                          String rawPhone = userProfile?.phone ?? '';
+                          String rawPhone = userProfile?.phoneNumber ?? '';
                           // Remove all spaces, dashes, parentheses, etc.
                           String cleanPhone = rawPhone.replaceAll(
                             RegExp(r'[^\d+]'),

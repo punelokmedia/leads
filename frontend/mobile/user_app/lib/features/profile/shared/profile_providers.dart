@@ -12,7 +12,7 @@ final profileRepositoryProvider = Provider<IProfileRepository>((ref){
 
 final profileControllerProvider =
     StateNotifierProvider<ProfileController, ProfileState>((ref) {
-  return ProfileController(ref.watch(profileRepositoryProvider));
+  return ProfileController(ref.watch(profileRepositoryProvider), ref);
 });
 
 // Derived providers

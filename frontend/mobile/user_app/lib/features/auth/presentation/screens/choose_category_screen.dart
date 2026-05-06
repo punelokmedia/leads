@@ -48,7 +48,9 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
       businessName: draft.businessName,
       workType: draft.workType,
       city: draft.cityId,
-      categories: _selectedCategoryIds.toList(), 
+      categories: _selectedCategoryIds.toList(),
+      address: draft.address, 
+      profilePicPath: draft.profilePicPath,
       onSuccess: () {
         ref.read(authControllerProvider.notifier).clearError();
         ref.read(profileDraftProvider.notifier).clearDraft(); 

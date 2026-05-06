@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
@@ -35,10 +37,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _onCartTap() => context.push(AppRouter.cartPath);
 
-  void _onAddToCart(LeadModel lead) async {
+  void _onAddToCart(LeadModel lead, int quantity) async {
     final message = await ref
         .read(cartControllerProvider.notifier)
-        .addLeadToCart(lead);
+        // ✅ Make sure to update your addLeadToCart method in the controller to accept this quantity!
+        .addLeadToCart(lead); 
+        
     if (message != null && mounted) {
       final lower = message.toLowerCase();
       final isError =
@@ -151,6 +155,7 @@ class _NextLeadsAppBar extends StatelessWidget {
               size: 24.r,
             ),
             onPressed: () {
+              log("Hamburger Tapped");
               AppDrawerController.open(context);
             },
           ),
@@ -186,7 +191,9 @@ class _NextLeadsAppBar extends StatelessWidget {
                   color: AppColors.black,
                   size: 26.r,
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  context.push(AppRouter.cartPath);
+                },
               ),
               if (cartCount > 0)
                 Positioned(
@@ -583,7 +590,9 @@ class _CategoryTile extends StatelessWidget {
 }
 
 class _HomeLeadSliver extends ConsumerWidget {
-  final void Function(LeadModel) onAddToCart;
+  // ✅ FIX: Added the 'int' parameter for quantity
+  final void Function(LeadModel, int) onAddToCart; 
+  
   const _HomeLeadSliver({required this.onAddToCart});
 
   @override
@@ -619,15 +628,50 @@ class _HomeLeadSliver extends ConsumerWidget {
   }
 }
 
-class _LeadListItem extends ConsumerWidget {
+class _LeadListItem extends StatefulWidget {
   final LeadModel lead;
-  final void Function(LeadModel) onAddToCart;
+  final void Function(LeadModel, int) onAddToCart; // Updated to pass quantity
 
   const _LeadListItem({required this.lead, required this.onAddToCart});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isSoldOut = lead.status == 'SOLD_OUT';
+  State<_LeadListItem> createState() => _LeadListItemState();
+}
+
+class _LeadListItemState extends State<_LeadListItem> {
+  int _quantity = 0; // Local state to track cart quantity
+
+  void _increment() {
+    if (_quantity < widget.lead.sharingCount) {
+      setState(() {
+        _quantity++;
+      });
+      widget.onAddToCart(widget.lead, _quantity);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Maximum sharing limit of ${widget.lead.sharingCount} reached for this lead.',
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _decrement() {
+    if (_quantity > 0) {
+      setState(() {
+        _quantity--;
+      });
+      widget.onAddToCart(widget.lead, _quantity);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSoldOut = widget.lead.status == 'SOLD_OUT';
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -648,7 +692,7 @@ class _LeadListItem extends ConsumerWidget {
                 child: SizedBox(
                   width: 107.w,
                   height: 78.h,
-                  child: Image.network(lead.imageUrl, fit: BoxFit.cover),
+                  child: Image.network(widget.lead.imageUrl, fit: BoxFit.cover),
                 ),
               ),
             ),
@@ -660,12 +704,12 @@ class _LeadListItem extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Title + vendor count
+                  /// Title
                   Row(
                     children: [
                       Expanded(
                         child: Text(
-                          lead.title ?? "1/2",
+                          widget.lead.title ?? "1/2",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.poppins(
@@ -687,7 +731,7 @@ class _LeadListItem extends ConsumerWidget {
                       SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
-                          lead.address,
+                          widget.lead.address,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.poppins(
                             fontSize: 11.sp,
@@ -700,14 +744,12 @@ class _LeadListItem extends ConsumerWidget {
 
                   SizedBox(height: 3.h),
 
-                  /// Price
-
                   /// ───── BUTTONS ROW ─────
                   Row(
                     children: [
-                      /// Add to Cart
+                      /// Price
                       Text(
-                        "₹ ${lead.originalPrice ?? 0}",
+                        "₹ ${widget.lead.originalPrice ?? 0}",
                         style: AppTextStyles.poppins(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w800,
@@ -715,38 +757,103 @@ class _LeadListItem extends ConsumerWidget {
                         ),
                       ),
                       SizedBox(width: 8.w),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: isSoldOut ? null : () => onAddToCart(lead),
-                          child: Container(
-                            height: 28.h,
 
-                            // padding: EdgeInsets.symmetric(vertical: 8.h),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10.r),
-                              border: Border.all(color: AppColors.purple72),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              "Add to Cart",
-                              style: AppTextStyles.poppins(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.purple72,
+                      /// Add to Cart / Quantity Toggle
+                      Expanded(
+                        child: _quantity == 0
+                            ? GestureDetector(
+                                onTap: isSoldOut
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _quantity = 1;
+                                        });
+                                        widget.onAddToCart(
+                                          widget.lead,
+                                          _quantity,
+                                        );
+                                      },
+                                child: Container(
+                                  height: 28.h,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10.r),
+                                    border: Border.all(
+                                      color: AppColors.purple72,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    "Add to Cart",
+                                    style: AppTextStyles.poppins(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.purple72,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                height: 28.h,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(color: AppColors.purple72),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: _decrement,
+                                      child: Container(
+                                        width: 24.w,
+                                        color: Colors.transparent,
+                                        alignment: Alignment.center,
+                                        child: Icon(
+                                          Icons.remove,
+                                          size: 14.r,
+                                          color: AppColors.purple72,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      '$_quantity',
+                                      style: AppTextStyles.poppins(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.purple72,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: _increment,
+                                      child: Container(
+                                        width: 24.w,
+                                        color: Colors.transparent,
+                                        alignment: Alignment.center,
+                                        child: Icon(
+                                          Icons.add,
+                                          size: 14.r,
+                                          color: AppColors.purple72,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
                       ),
 
                       SizedBox(width: 8.w),
 
+                      /// View Leads
                       Expanded(
                         child: GestureDetector(
-                          onTap: () {},
+                          onTap: () {
+                            context.push(
+                              AppRouter.leadDetailsPath,
+                              extra: widget.lead,
+                            );
+                          },
                           child: Container(
                             height: 28.h,
-
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10.r),
                               gradient: const LinearGradient(
