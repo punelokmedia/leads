@@ -6,8 +6,8 @@ import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart'; // Make sure this is imported
+import 'package:user_app/core/widgets/app_network_image.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
-import 'package:user_app/features/home/presentation/screens/home_screen.dart';
 import 'package:user_app/features/home/presentation/widgets/home_search_bar.dart';
 import 'package:user_app/features/home/shared/home_providers.dart';
 import 'package:user_app/features/cart/shared/cart_providers.dart'; // Add your cart provider import
@@ -165,11 +165,10 @@ class _LeadTileState extends State<_LeadTile> {
             child: SizedBox(
               width: 90.w,
               height: 80.h,
-              child: Image.network(
-                widget.lead.imageUrl,
+              child: AppNetworkImage(
+                url: widget.lead.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    const Icon(Icons.image_not_supported),
+                errorWidget: const Icon(Icons.image_not_supported),
               ),
             ),
           ),

@@ -41,6 +41,14 @@ class _LogoTitle extends StatelessWidget {
       child: Image.asset(
         "assets/Images/home/logo_leads.png",
         fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => Text(
+          'Next Leads',
+          style: AppTextStyles.poppins(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColors.purple73,
+          ),
+        ),
       ),
     );
   }

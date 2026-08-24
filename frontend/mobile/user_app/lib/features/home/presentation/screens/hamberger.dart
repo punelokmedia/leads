@@ -8,6 +8,7 @@ import 'package:hooks_riverpod/legacy.dart';
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
+import 'package:user_app/features/auth/shared/auth_providers.dart';
 
 enum DrawerMenuItem {
   profile,
@@ -27,12 +28,14 @@ class _MenuItem {
   final IconData icon;
   final String label;
   final String? route;
+  final bool useGo;
 
   const _MenuItem({
     required this.item,
     required this.icon,
     required this.label,
     this.route,
+    this.useGo = false,
   });
 }
 
@@ -41,7 +44,10 @@ class AppDrawerController {
 
   static void open(BuildContext context) {
     if (_entry != null) return;
-    _entry = OverlayEntry(builder: (_) => _DrawerOverlay(onClose: close));
+    final router = GoRouter.of(context);
+    _entry = OverlayEntry(
+      builder: (_) => _DrawerOverlay(onClose: close, router: router),
+    );
     Navigator.of(context, rootNavigator: true).overlay?.insert(_entry!);
   }
 
@@ -53,8 +59,9 @@ class AppDrawerController {
 
 class _DrawerOverlay extends HookConsumerWidget {
   final VoidCallback onClose;
+  final GoRouter router;
 
-  const _DrawerOverlay({required this.onClose, super.key});
+  const _DrawerOverlay({required this.onClose, required this.router});
 
   static const _menuItems = <_MenuItem>[
     _MenuItem(
@@ -62,6 +69,7 @@ class _DrawerOverlay extends HookConsumerWidget {
       icon: Icons.person_outline_rounded,
       label: 'Profile Information',
       route: AppRouter.profilePath,
+      useGo: true,
     ),
     _MenuItem(
       item: DrawerMenuItem.notification,
@@ -73,7 +81,7 @@ class _DrawerOverlay extends HookConsumerWidget {
       item: DrawerMenuItem.privacyPolicy,
       icon: Icons.shield_outlined,
       label: 'Privacy Policy',
-      route: null,
+      route: AppRouter.privacyPath,
     ),
     _MenuItem(
       item: DrawerMenuItem.termsConditions,
@@ -124,20 +132,23 @@ class _DrawerOverlay extends HookConsumerWidget {
 
     void onItemTap(_MenuItem data) {
       ref.read(activeDrawerMenuProvider.notifier).state = data.item;
-      if (data.route != null) {
-        closeWithAnim();
-        Future.delayed(const Duration(milliseconds: 320), () {
-          if (context.mounted) context.push(data.route!);
-        });
-      } else {
-        closeWithAnim();
-      }
+      final route = data.route;
+      closeWithAnim();
+      if (route == null) return;
+      Future.delayed(const Duration(milliseconds: 320), () {
+        if (data.useGo) {
+          router.go(route);
+        } else {
+          router.push(route);
+        }
+      });
     }
 
     void onLogout() {
+      ref.read(authControllerProvider.notifier).logout();
       closeWithAnim();
       Future.delayed(const Duration(milliseconds: 320), () {
-        if (context.mounted) context.go(AppRouter.login);
+        router.go(AppRouter.login);
       });
     }
 
@@ -152,7 +163,7 @@ class _DrawerOverlay extends HookConsumerWidget {
             children: [
               AnimatedBuilder(
                 animation: bgAnim,
-                builder: (_, __) => GestureDetector(
+                builder: (_, _) => GestureDetector(
                   onTap: closeWithAnim,
                   child: Container(
                     color: Colors.black.withOpacity(bgAnim.value),

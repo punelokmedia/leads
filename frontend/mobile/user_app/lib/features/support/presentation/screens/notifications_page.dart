@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 
@@ -139,7 +140,7 @@ class NotificationScreen extends HookConsumerWidget {
                       ),
                       physics: const BouncingScrollPhysics(),
                       itemCount: notifications.length,
-                      separatorBuilder: (_, __) =>
+                      separatorBuilder: (_, _) =>
                           Divider(color: _divider, height: 1, thickness: 1),
                       itemBuilder: (context, index) {
                         final item = notifications[index];
@@ -211,7 +212,9 @@ class _AppBar extends StatelessWidget {
         children: [
           // Back button
           GestureDetector(
-            onTap: () => Navigator.maybePop(context),
+            onTap: () {
+              if (context.canPop()) context.pop();
+            },
             child: Icon(
               Icons.arrow_back_ios_new_rounded,
               size: 20.sp,

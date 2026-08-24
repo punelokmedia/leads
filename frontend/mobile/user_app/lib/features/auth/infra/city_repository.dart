@@ -17,12 +17,14 @@ class CityRepository {
   Future<List<City>> getAllCities() async {
     final res = await _dio.get(ApiEndpoints.getAllCities);
 
-    final body = res.data as Map<String, dynamic>;
-    final dataList = body['data'] as List<dynamic>;
+    final body = res.data;
+    if (body is! Map) return [];
+    final dataList = body['data'];
+    if (dataList is! List) return [];
 
-    // Map the raw JSON list into a strongly-typed List<City>
     return dataList
-        .map((e) => City.fromJson(e as Map<String, dynamic>))
+        .whereType<Map>()
+        .map((e) => City.fromJson(Map<String, dynamic>.from(e)))
         .toList();
   }
 

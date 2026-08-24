@@ -165,6 +165,11 @@ class OtpIllustration extends StatelessWidget {
       'assets/Images/login/otp_illustration.png',
       height: 212.h,
       fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => Icon(
+        Icons.sms_outlined,
+        size: 80.r,
+        color: AppColors.purple73,
+      ),
     );
   }
 }

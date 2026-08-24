@@ -27,15 +27,33 @@ class ProfileModel {
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
     return ProfileModel(
-      id: json['_id'] ?? '',
-      firstname: json['firstname'] ?? '',
-      lastname: json['lastname'] ?? '',
-      email: json['email'] ?? '',
-      phoneNumber: json['phoneNumber'] ?? '',
-      businessName: json['businessName'] ?? '',
-      workType: json['workType'] ?? '',
-      cityName: json['city'] != null ? (json['city']['name'] ?? '') : '',
+      id: json['_id']?.toString() ?? '',
+      firstname: json['firstname']?.toString() ?? '',
+      lastname: json['lastname']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phoneNumber: json['phoneNumber']?.toString() ?? '',
+      businessName: json['businessName']?.toString() ?? '',
+      workType: json['workType']?.toString() ?? '',
+      cityName: _readCityName(json['city']),
+      address: _readAddress(json['address']),
     );
+  }
+
+  static String _readCityName(dynamic city) {
+    if (city is Map) return city['name']?.toString() ?? '';
+    if (city is String) return city;
+    return '';
+  }
+
+  static String _readAddress(dynamic address) {
+    if (address is Map) {
+      final street = address['street']?.toString() ?? '';
+      final city = address['city']?.toString() ?? '';
+      final combined = [street, city].where((part) => part.isNotEmpty).join(', ');
+      return combined.isEmpty ? 'Not Available' : combined;
+    }
+    if (address is String && address.trim().isNotEmpty) return address;
+    return 'Not Available';
   }
 
   String get fullName => '$firstname $lastname'.trim();

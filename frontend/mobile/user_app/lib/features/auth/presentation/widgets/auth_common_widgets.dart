@@ -11,10 +11,17 @@ class AuthLogo extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: 296.w,
     height: 99.h,
-    decoration: const BoxDecoration(
-      image: DecorationImage(
-        image: AssetImage('assets/Images/home/logo_leads.png'),
-        fit: BoxFit.contain,
+    alignment: Alignment.center,
+    child: Image.asset(
+      'assets/Images/home/logo_leads.png',
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => Text(
+        'Next Leads',
+        style: AppTextStyles.poppins(
+          fontSize: 28.sp,
+          fontWeight: FontWeight.w700,
+          color: AppColors.purple73,
+        ),
       ),
     ),
   );

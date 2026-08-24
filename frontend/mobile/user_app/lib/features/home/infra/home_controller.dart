@@ -77,7 +77,10 @@ class HomeController extends StateNotifier<HomeState> {
       );
       state = state.copyWith(leads: leads, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Could not load leads. Please try again.',
+      );
     }
   }
 

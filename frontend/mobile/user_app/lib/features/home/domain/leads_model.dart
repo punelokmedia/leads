@@ -1,4 +1,5 @@
 import 'package:user_app/core/utils/intl_helper.dart';
+import 'package:user_app/core/utils/media_url.dart';
 
 class LeadModel {
   final String id;
@@ -53,9 +54,8 @@ class LeadModel {
     originalPrice: (json['originalPrice']?? 0).toDouble(),
     discountedPrice: (json['price'] ?? 0).toDouble(),
     date: formatIsoDate(json['createdAt']?? ''),
-    imageUrl: (json['image'] == null || json['image'].toString().isEmpty)
-          ? (fallbackImages.toList()..shuffle()).first
-          : json['image'],
+    imageUrl: MediaUrl.resolve(json['image']?.toString()) ??
+          (fallbackImages.toList()..shuffle()).first,
     isSharing: !(json['isPurchased'] ?? false),
     status: json['status'] ?? 'AVAILABLE',
   );

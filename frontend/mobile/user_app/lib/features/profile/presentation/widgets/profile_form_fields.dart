@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
+import 'package:user_app/core/widgets/app_network_image.dart';
 
 // ── Shared shadow decoration ──────────────────────────────────────────────────
 BoxDecoration cardDeco({double radius = 24}) => BoxDecoration(
@@ -26,13 +27,18 @@ class EditProfileAvatar extends StatelessWidget {
   Widget build(BuildContext context) => Center(
         child: Stack(
           children: [
-            CircleAvatar(
-              radius: 48.r,
-              backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-              backgroundColor: Colors.grey[200],
-              child: avatarUrl == null
-                  ? Icon(Icons.person, size: 48.r, color: Colors.grey)
-                  : null,
+            ClipOval(
+              child: AppNetworkImage(
+                url: avatarUrl,
+                width: 96.r,
+                height: 96.r,
+                fit: BoxFit.cover,
+                errorWidget: CircleAvatar(
+                  radius: 48.r,
+                  backgroundColor: Colors.grey[200],
+                  child: Icon(Icons.person, size: 48.r, color: Colors.grey),
+                ),
+              ),
             ),
             Positioned(
               bottom: 0, right: 0,

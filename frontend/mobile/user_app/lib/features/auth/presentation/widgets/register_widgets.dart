@@ -44,13 +44,17 @@ class RegisterHeader extends StatelessWidget {
     return Column(
       children: [
         Center(
-          child: Container(
+          child: Image.asset(
+            'assets/Images/home/logo_leads.png',
             width: 169.w,
             height: 56.h,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/Images/home/logo_leads.png'),
-                fit: BoxFit.contain,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => Text(
+              'Next Leads',
+              style: AppTextStyles.poppins(
+                fontSize: 22.sp,
+                fontWeight: FontWeight.w800,
+                color: AppColors.purple73,
               ),
             ),
           ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:user_app/features/payments/domain/payment_model.dart';
 import 'package:user_app/features/payments/infra/payment_controller.dart';
 import '../widgets/history_widgets.dart';
 

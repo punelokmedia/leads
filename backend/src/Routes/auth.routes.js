@@ -75,6 +75,7 @@ router.post("/mobile/verify-otp", verifyMobileOtp);
 router.post("/mobile/request-otp-session", auth, requestSessionMobileOtp);
 router.post("/mobile/verify-otp-session", auth, verifySessionMobileOtp);
 router.post("/mobile/complete-profile", auth, completeMobileProfile);
+router.put("/mobile/complete-profile", auth, completeMobileProfile);
 router.post("/mobile/create-registration-order", auth, createMobileRegistrationOrder);
 router.post("/mobile/verify-registration-payment", auth, verifyMobileRegistrationPayment);
 

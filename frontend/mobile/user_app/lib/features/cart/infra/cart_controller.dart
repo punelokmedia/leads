@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:user_app/core/errors/error_handler.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
 import '../domain/cart_model.dart';
 import 'cart_repository.dart';
@@ -215,8 +216,16 @@ class CartController extends StateNotifier<CartState> {
       final orderData = await _repo.createRazorpayOrder(selectedIds);
       if (_isDisposed) return; // ✅
 
+      if (orderData['razorpayOrderId'] == null && orderData['orderId'] == null) {
+        throw Exception('Payment order ID missing');
+      }
+
       final dynamic rawAmount = orderData['amount'];
-      final int finalAmount = (rawAmount as num).toInt() * 100;
+      final parsedAmount = rawAmount is num
+          ? rawAmount.toInt()
+          : int.tryParse(rawAmount?.toString() ?? '') ?? 0;
+      // Backend cart order amount is in INR; Razorpay checkout needs paise.
+      final int finalAmount = parsedAmount * 100;
 
       _safeSetState(
         (s) => s.copyWith(
@@ -228,8 +237,9 @@ class CartController extends StateNotifier<CartState> {
 
       onOrderCreated({...orderData, 'amount': finalAmount});
     } catch (e) {
-      _safeSetState((s) => s.copyWith(isLoading: false, error: e.toString()));
-      onError("Failed to initialize payment");
+      final message = ErrorHandler.handle(e).message;
+      _safeSetState((s) => s.copyWith(isLoading: false, error: message));
+      onError(message);
     }
   }
 
@@ -368,8 +378,9 @@ class CartController extends StateNotifier<CartState> {
     try {
       final selected = state.items.where((e) => e.isSelected).toList();
       if (selected.isEmpty) return false;
-      if (_isLoggedIn)
+      if (_isLoggedIn) {
         await _repo.proceedToPayRemote(selected.map((e) => e.id).toList());
+      }
       return true;
     } catch (e) {
       return false;

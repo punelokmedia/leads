@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
@@ -231,6 +230,11 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                 Image.asset(
                   'assets/Images/login/verify_security.png',
                   height: 145.h,
+                  errorBuilder: (_, _, _) => Icon(
+                    Icons.verified_user_outlined,
+                    size: 80.r,
+                    color: AppColors.purple73,
+                  ),
                 ),
 
                 SizedBox(height: 78.h),

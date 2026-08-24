@@ -80,6 +80,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               'assets/Images/login/city_splash.png',
               width: double.infinity,
               fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
             ),
           ),
 
@@ -94,6 +95,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   child: Image.asset(
                     'assets/Icons/appIcon/splash_screen.png',
                     width: 236.h,
+                    errorBuilder: (_, _, _) => Icon(
+                      Icons.storefront_rounded,
+                      size: 80.r,
+                      color: const Color(0xFF38159E),
+                    ),
                   ),
                 ),
 

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
+import 'package:user_app/core/widgets/app_network_image.dart';
 
 class EditProfileAvatar extends StatelessWidget {
   final String? avatarUrl;
@@ -30,13 +31,19 @@ class EditProfileAvatar extends StatelessWidget {
               ),
             ),
             child: Center(
-              child: avatarUrl != null
+              child: avatarUrl != null && avatarUrl!.trim().isNotEmpty
                   ? ClipOval(
-                      child: Image.network(
-                        avatarUrl!,
+                      child: AppNetworkImage(
+                        url: avatarUrl,
                         width: 91.r,
                         height: 91.r,
                         fit: BoxFit.cover,
+                        errorWidget: SvgPicture.asset(
+                          "assets/Icons/svg/navbar/profile.svg",
+                          height: 48.75.h,
+                          width: 39.w,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     )
                   : SvgPicture.asset(

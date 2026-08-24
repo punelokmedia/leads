@@ -979,6 +979,7 @@ const createMobileRegistrationOrder = async (req, res) => {
       message: "Registration order created successfully.",
       data: {
         orderId: order.id,
+        razorpayOrderId: order.id,
         amount: order.amount,
         currency: order.currency,
         keyId: RAZORPAY_PUBLIC_KEY,

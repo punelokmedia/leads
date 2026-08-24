@@ -200,18 +200,35 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             cleanPhone = cleanPhone.substring(2);
                           }
 
+                          final keyId = data['keyId']?.toString();
+                          final orderId =
+                              (data['razorpayOrderId'] ?? data['orderId'])
+                                  ?.toString();
+
+                          if (keyId == null ||
+                              keyId.isEmpty ||
+                              orderId == null ||
+                              orderId.isEmpty) {
+                            _showSnack(
+                              'Invalid payment order. Please try again.',
+                              isError: true,
+                            );
+                            return;
+                          }
+
                           var options = {
-                            'key': 'rzp_test_SeWKWcDgYE86DN',
+                            'key': keyId,
                             'amount': data['amount'],
                             'name': 'Leads Sell',
-                            'order_id': data['razorpayOrderId'],
-                            'currency': 'INR',
+                            'order_id': orderId,
+                            'currency': data['currency'] ?? 'INR',
                             'timeout': 300,
                             'prefill': {
                               'name': userProfile?.fullName ?? '',
                               'email': userProfile?.email ?? '',
                               'contact': cleanPhone,
                             },
+                            'theme': {'color': '#4522C2'},
                           };
                           try {
                             _razorpay.open(options);

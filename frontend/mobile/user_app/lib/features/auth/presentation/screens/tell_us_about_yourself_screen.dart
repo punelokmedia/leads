@@ -465,7 +465,7 @@ class _TellUsAboutYourselfScreenState
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: _dropdownValue(value, items),
           hint: Text(
             hint,
             style: AppTextStyles.poppins(
@@ -487,12 +487,20 @@ class _TellUsAboutYourselfScreenState
           ),
           dropdownColor: Colors.white,
           borderRadius: BorderRadius.circular(12.r),
-          items: items
+          items: items.toSet()
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
               .toList(),
           onChanged: onChanged,
         ),
       ),
     );
+  }
+
+  String? _dropdownValue(String? selected, List<String> items) {
+    if (selected == null) return null;
+    for (final item in items.toSet()) {
+      if (item.toLowerCase() == selected.toLowerCase()) return item;
+    }
+    return null;
   }
 }

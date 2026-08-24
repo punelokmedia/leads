@@ -6,6 +6,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
+import 'package:user_app/core/widgets/app_network_image.dart';
 import 'package:user_app/features/cart/shared/cart_providers.dart';
 import '../../domain/history_model.dart';
 import 'history_status_badge.dart';
@@ -75,23 +76,12 @@ class _CardHeader extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(8.r),
-          child: Image.network(
-            item.imageUrl,
+          child: AppNetworkImage(
+            url: item.imageUrl,
             width: 65.w,
             height: 45.h,
             fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                width: 65.w,
-                height: 45.h,
-                color: Colors.grey[100],
-                child: const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              );
-            },
-            errorBuilder: (_, _, _) => Container(
+            errorWidget: Container(
               width: 65.w,
               height: 45.h,
               color: AppColors.white239,

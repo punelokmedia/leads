@@ -48,8 +48,8 @@ class AuthRepository {
       );
     }
 
-    // ✅ FIX 3: Change _dio.post to _dio.put
-    final res = await _dio.put(ApiEndpoints.completeProfile, data: formData);
+    // ✅ FIX 3: Backend route is POST /auth/mobile/complete-profile
+    final res = await _dio.post(ApiEndpoints.completeProfile, data: formData);
 
     final body = res.data as Map<String, dynamic>;
     final data = body['data'] as Map<String, dynamic>;

@@ -23,17 +23,33 @@ class EditProfileModel {
 
   // ── From API response ──────────────────────────────────────────────────────
   factory EditProfileModel.fromJson(Map<String, dynamic> json) {
-    final addressData = json['address'] as Map<String, dynamic>?;
+    Map<String, dynamic>? addressData;
+    final rawAddress = json['address'];
+    if (rawAddress is Map<String, dynamic>) {
+      addressData = rawAddress;
+    }
+
+    final cityFromUser = json['city'];
+    String city = '';
+    if (cityFromUser is Map) {
+      city = cityFromUser['name']?.toString() ?? '';
+    } else if (cityFromUser is String) {
+      city = cityFromUser;
+    }
+    if (city.isEmpty) {
+      city = addressData?['city']?.toString() ?? '';
+    }
 
     return EditProfileModel(
-      firstName: json['firstname'] as String? ?? '',
-      lastName: json['lastname'] as String? ?? '',
-      countryCode: json['countryCode'] as String? ?? '+91',
-      phone: json['phoneNumber'] as String? ?? '',
-      address: addressData?['street'] as String? ?? '',
-      city: addressData?['city'] as String? ?? '',
-      email: json['email'] as String? ?? '',
-      avatarUrl: json['profilePic'] as String?,
+      firstName: json['firstname']?.toString() ?? '',
+      lastName: json['lastname']?.toString() ?? '',
+      countryCode: json['countryCode']?.toString() ?? '+91',
+      phone: json['phoneNumber']?.toString() ?? '',
+      address: addressData?['street']?.toString() ??
+          (rawAddress is String ? rawAddress : ''),
+      city: city,
+      email: json['email']?.toString() ?? '',
+      avatarUrl: json['profilePic']?.toString(),
     );
   }
 

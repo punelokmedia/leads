@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
+import 'package:user_app/core/widgets/app_network_image.dart';
 import '../../domain/cart_model.dart';
 
 class CartItemCard extends StatelessWidget {
@@ -47,23 +48,22 @@ class CartItemCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12.r),
-                child: item.imageUrl != null
-                    ? Image.network(
-                        item.imageUrl!,
-                        width: 56.r,
-                        height: 50.r,
-                        fit: BoxFit.cover,
-                      )
-                    : Container(
-                        width: 56.r,
-                        height: 50.r,
-                        color: Colors.grey[200],
-                        child: Icon(
-                          Icons.home_outlined,
-                          size: 28.r,
-                          color: Colors.grey,
-                        ),
-                      ),
+                child: AppNetworkImage(
+                  url: item.imageUrl,
+                  width: 56.r,
+                  height: 50.r,
+                  fit: BoxFit.cover,
+                  errorWidget: Container(
+                    width: 56.r,
+                    height: 50.r,
+                    color: Colors.grey[200],
+                    child: Icon(
+                      Icons.home_outlined,
+                      size: 28.r,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
               ),
               SizedBox(width: 12.w),
               Expanded(

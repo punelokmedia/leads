@@ -163,7 +163,9 @@ class _AppBar extends StatelessWidget {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.maybePop(context),
+            onTap: () {
+              if (context.canPop()) context.pop();
+            },
             child: Container(
               width: 38.w,
               height: 38.w,

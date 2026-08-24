@@ -94,7 +94,8 @@ class CustomProfileDropdown extends StatelessWidget {
         // ── Input Box ──
         _buildContainer(
           child: DropdownButtonFormField<String>(
-            value: value,
+            key: ValueKey('${value ?? ''}-${items.join('|')}'),
+            initialValue: (value != null && items.contains(value)) ? value : null,
             icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 24.r),
             style: AppTextStyles.poppins(
               fontSize: 16.sp, 

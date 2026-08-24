@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart'; // ✅ Import flutter_svg
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
+import 'package:user_app/core/utils/media_url.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/infra/category_repository.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
@@ -42,21 +43,22 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
 
     final draft = ref.read(profileDraftProvider);
 
+    ref
+        .read(profileDraftProvider.notifier)
+        .updateCategories(_selectedCategoryIds.toList());
+
     await ref.read(authControllerProvider.notifier).completeProfile(
       fullName: draft.fullName,
       email: draft.email,
       businessName: draft.businessName,
       workType: draft.workType,
-      city: draft.cityId,
+      city: draft.cityId.isNotEmpty ? draft.cityId : draft.city,
       categories: _selectedCategoryIds.toList(),
-      address: draft.address, 
+      address: draft.address,
       profilePicPath: draft.profilePicPath,
       onSuccess: () {
         ref.read(authControllerProvider.notifier).clearError();
-        ref.read(profileDraftProvider.notifier).clearDraft(); 
-        
-        print("Profile Complete! Selected IDs: ${_selectedCategoryIds.toList()}");
-        
+        // Keep the draft until Razorpay verification finishes.
         context.push(AppRouter.completePaymentPath);
       },
     );
@@ -138,7 +140,26 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                           padding: EdgeInsets.only(top: 40.h),
                           child: const Center(child: CircularProgressIndicator()),
                         ),
-                        error: (err, stack) => Center(child: Text('Error loading categories: $err')),
+                        error: (err, stack) => Padding(
+                          padding: EdgeInsets.only(top: 40.h),
+                          child: Column(
+                            children: [
+                              Text(
+                                'Could not load categories. Please try again.',
+                                textAlign: TextAlign.center,
+                                style: AppTextStyles.poppins(
+                                  fontSize: 14.sp,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              TextButton(
+                                onPressed: () => ref.invalidate(categoriesProvider),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                     
@@ -195,16 +216,7 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
             padding: EdgeInsets.symmetric(vertical: 14.h),
             child: Row(
               children: [
-                // ✅ Render Network SVG and colorize it
-                iconUrl.isNotEmpty && iconUrl.endsWith('.svg')
-                    ? SvgPicture.network(
-                        iconUrl,
-                        width: 24.r,
-                        height: 24.r,
-                        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                        placeholderBuilder: (context) => Icon(Icons.category_rounded, color: Colors.grey[300], size: 24.r),
-                      )
-                    : Icon(Icons.category_rounded, color: iconColor, size: 24.r), // Fallback if no valid URL
+                _buildCategoryIcon(iconUrl, iconColor),
 
                 SizedBox(width: 16.w),
                 Expanded(
@@ -236,6 +248,32 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
         ),
         Divider(height: 1, thickness: 1, color: Colors.grey[200]),
       ],
+    );
+  }
+
+  Widget _buildCategoryIcon(String iconUrl, Color iconColor) {
+    final fallback = Icon(Icons.category_rounded, color: iconColor, size: 24.r);
+    final resolved = MediaUrl.resolve(iconUrl);
+    if (resolved == null) return fallback;
+
+    if (MediaUrl.isSvg(resolved)) {
+      return SvgPicture.network(
+        resolved,
+        width: 24.r,
+        height: 24.r,
+        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        placeholderBuilder: (_) =>
+            Icon(Icons.category_rounded, color: Colors.grey[300], size: 24.r),
+        errorBuilder: (_, _, _) => fallback,
+      );
+    }
+
+    return Image.network(
+      resolved,
+      width: 24.r,
+      height: 24.r,
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => fallback,
     );
   }
 }

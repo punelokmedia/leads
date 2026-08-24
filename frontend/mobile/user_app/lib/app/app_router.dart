@@ -4,6 +4,7 @@ import 'package:user_app/features/address/presentation/screens/add_address_scree
 import 'package:user_app/features/auth/presentation/screens/complete_payment_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/login_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/otp_verification_screen.dart';
+import 'package:user_app/features/auth/presentation/screens/register_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/choose_city_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/choose_category_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/tell_us_about_yourself_screen.dart';
@@ -26,6 +27,7 @@ import 'package:user_app/features/splash/presentation/onboarding_screen.dart';
 import 'package:user_app/features/support/presentation/screens/about_us_page.dart';
 import 'package:user_app/features/support/presentation/screens/help_support_screen.dart';
 import 'package:user_app/features/support/presentation/screens/notifications_page.dart';
+import 'package:user_app/features/support/presentation/screens/privacy_policy_screen.dart';
 import 'package:user_app/features/support/presentation/screens/terms_conditions_screen.dart';
 
 abstract final class AppRouter {
@@ -56,6 +58,7 @@ abstract final class AppRouter {
   static const String helpSupportPath = '/help-support';
   static const String aboutusPath = '/aboutus';
   static const String notificationPath = '/notification';
+  static const String privacyPath = '/privacy-policy';
   static const String selectCategoryPath = '/select-category';
   static const String selectCityPath = '/select-city';
   static const String forgotPasswordPath = '/forgot-password';
@@ -76,6 +79,10 @@ abstract final class AppRouter {
       ),
 
       GoRoute(path: login, builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: register,
+        builder: (context, state) => const RegisterScreen(),
+      ),
       GoRoute(
         path: verifyNumberPath,
         builder: (context, state) {
@@ -156,6 +163,10 @@ abstract final class AppRouter {
       GoRoute(
         path: notificationPath,
         builder: (context, state) => const NotificationScreen(),
+      ),
+      GoRoute(
+        path: privacyPath,
+        builder: (context, state) => const PrivacyPolicyScreen(),
       ),
 
       GoRoute(path: cartPath, builder: (context, state) => const CartScreen()),

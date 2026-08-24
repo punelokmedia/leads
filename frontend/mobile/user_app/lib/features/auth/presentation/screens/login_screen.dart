@@ -110,7 +110,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 SizedBox(height: 22.h),
 
                 // ── Logo ──
-                Image.asset('assets/Images/login/lead_logo.png', width: 150.w),
+                Image.asset(
+                  'assets/Images/login/lead_logo.png',
+                  width: 150.w,
+                  errorBuilder: (_, _, _) => Icon(
+                    Icons.storefront_rounded,
+                    size: 56.r,
+                    color: AppColors.purple73,
+                  ),
+                ),
                 SizedBox(height: 24.h),
 
                 // ── Title ──

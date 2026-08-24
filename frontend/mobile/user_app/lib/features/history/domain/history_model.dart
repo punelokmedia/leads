@@ -1,4 +1,5 @@
 import 'package:user_app/core/utils/intl_helper.dart';
+import 'package:user_app/core/utils/media_url.dart';
 
 class HistoryModel {
   final String id;
@@ -52,9 +53,8 @@ class HistoryModel {
       status: json['status'] ?? 'PAID',
       isDownloaded: json['isDownloaded'] ?? false,
       
-      imageUrl: (json['image'] == null || json['image'].toString().isEmpty)
-          ? (fallbackImages.toList()..shuffle()).first
-          : json['image'],
+      imageUrl: MediaUrl.resolve(json['image']?.toString()) ??
+          (fallbackImages.toList()..shuffle()).first,
     );
   }
 }

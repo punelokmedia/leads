@@ -33,10 +33,15 @@ class CategoryRepository {
 
   Future<List<CategoryModel>> getAllCategories() async {
     final res = await _dio.get(ApiEndpoints.getAllCategories);
-    final body = res.data as Map<String, dynamic>;
-    final dataList = body['data'] as List<dynamic>;
-    
-    return dataList.map((e) => CategoryModel.fromJson(e as Map<String, dynamic>)).toList();
+    final body = res.data;
+    if (body is! Map) return [];
+    final dataList = body['data'];
+    if (dataList is! List) return [];
+
+    return dataList
+        .whereType<Map>()
+        .map((e) => CategoryModel.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
   }
 }
 

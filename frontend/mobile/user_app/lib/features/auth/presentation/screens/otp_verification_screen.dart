@@ -49,10 +49,11 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     setState(() => _start = 25);
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_start == 0)
+      if (_start == 0) {
         timer.cancel();
-      else
+      } else {
         setState(() => _start--);
+      }
     });
   }
 

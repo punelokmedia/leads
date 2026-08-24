@@ -141,5 +141,5 @@ class _NavItem {
   final String? iconPath;
   final IconData? iconData;
 
-  const _NavItem({required this.label, this.iconData, this.iconPath});
+  const _NavItem({required this.label, this.iconPath, this.iconData});
 }

@@ -1,5 +1,4 @@
 // features/auth/shared/profile_draft_provider.dart
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 
 class ProfileDraft {

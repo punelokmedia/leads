@@ -50,30 +50,46 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
 
   // ── Razorpay Success Handler ──
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    final draft = ref.read(profileDraftProvider);
+    final orderId = response.orderId;
+    final paymentId = response.paymentId;
+    final signature = response.signature;
 
-    ref
-        .read(authControllerProvider.notifier)
-        .verifyPayment(
-          orderId: response.orderId!,
-          paymentId: response.paymentId!,
-          signature: response.signature!,
-          fullName: draft.fullName,
-          email: draft.email,
-          city: draft.city,
-          categories: draft.categories,
-          businessName: draft.businessName,
-          workType: draft.workType,
-          onSuccess: () {
-            ref.read(authControllerProvider.notifier).clearError();
-            ref.read(profileDraftProvider.notifier).clearDraft();
-            SnackbarHelper.showSuccess(
-              context,
-              "Payment Verified & Profile Created!",
-            );
-            context.go(AppRouter.homePath);
-          },
+    if (orderId == null || paymentId == null || signature == null) {
+      SnackbarHelper.showError(
+        context,
+        'Payment succeeded but details are incomplete. Please contact support.',
+      );
+      return;
+    }
+
+    final draft = ref.read(profileDraftProvider);
+    final user = ref.read(authControllerProvider).user;
+    final city = draft.cityId.isNotEmpty ? draft.cityId : draft.city;
+    final fullName = draft.fullName.isNotEmpty
+        ? draft.fullName
+        : (user?.fullName ?? '');
+    final email = draft.email.isNotEmpty ? draft.email : (user?.email ?? '');
+
+    ref.read(authControllerProvider.notifier).verifyPayment(
+      orderId: orderId,
+      paymentId: paymentId,
+      signature: signature,
+      fullName: fullName,
+      email: email,
+      city: city,
+      categories: draft.categories,
+      businessName: draft.businessName,
+      workType: draft.workType,
+      onSuccess: () {
+        ref.read(authControllerProvider.notifier).clearError();
+        ref.read(profileDraftProvider.notifier).clearDraft();
+        SnackbarHelper.showSuccess(
+          context,
+          'Payment Verified & Profile Created!',
         );
+        context.go(AppRouter.homePath);
+      },
+    );
   }
 
   // ── Razorpay Error Handler ──
@@ -109,10 +125,12 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
       final user = ref.read(authControllerProvider).user;
 
       final keyId = orderData['keyId']?.toString();
-      final orderId = orderData['razorpayOrderId']?.toString();
+      // Backend registration order returns `orderId`; cart orders return `razorpayOrderId`.
+      final orderId =
+          (orderData['orderId'] ?? orderData['razorpayOrderId'])?.toString();
       final currency = orderData['currency']?.toString() ?? 'INR';
 
-      // ✅ Force amount to int — this is the #1 cause of Razorpay hanging
+      // Registration API already returns amount in paise.
       final rawAmount = orderData['amount'];
       final int amount = (rawAmount is int)
           ? rawAmount
@@ -127,7 +145,11 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
       log("currency: $currency");
       log("=======================");
 
-      if (keyId == null || orderId == null || amount == 0) {
+      if (keyId == null ||
+          keyId.isEmpty ||
+          orderId == null ||
+          orderId.isEmpty ||
+          amount == 0) {
         SnackbarHelper.showError(
           context,
           "Invalid order data. Please try again.",

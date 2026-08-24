@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
+import 'package:user_app/core/widgets/app_network_image.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
 
 class LeadCard extends StatelessWidget {
@@ -76,14 +77,12 @@ class _LeadImage extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Image.network(
-              imageUrl,
+            AppNetworkImage(
+              url: imageUrl,
               height: 190.h,
               width: double.infinity,
               fit: BoxFit.cover,
-              cacheWidth: 400,
-              filterQuality: FilterQuality.medium,
-              errorBuilder: (context, error, stackTrace) => Container(
+              errorWidget: Container(
                 height: 190.h,
                 color: AppColors.grey102,
                 child: Icon(Icons.image_not_supported, color: Colors.grey[400]),

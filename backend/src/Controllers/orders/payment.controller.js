@@ -204,8 +204,18 @@ const verifyPayment = async (req, res) => {
       });
     }
 
+    const razorpaySecret =
+      process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || "";
+
+    if (!razorpaySecret) {
+      return res.status(500).json({
+        success: false,
+        message: "Razorpay is not configured on server.",
+      });
+    }
+
     const generated = crypto
-      .createHmac("sha256", process.env.RAZORPAY_SECRET)
+      .createHmac("sha256", razorpaySecret)
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
       .digest("hex");
 

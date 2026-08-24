@@ -116,7 +116,13 @@ Future<String> deleteRemoteItem(String id, int quantity) async {
       ApiEndpoints.payCart,
       data: {'ids': leadIds},
     );
-    return res.data['data']; 
+    final data = res.data['data'];
+    if (data is! Map) {
+      throw Exception(
+        res.data['message']?.toString() ?? 'Failed to create payment order',
+      );
+    }
+    return Map<String, dynamic>.from(data);
   }
 
   /// 2. Verify Payment on Backend

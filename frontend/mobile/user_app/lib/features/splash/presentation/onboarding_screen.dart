@@ -42,6 +42,11 @@ class OnboardingScreen extends StatelessWidget {
                 'assets/Images/login/onboard_illustration.png',
                 height: 163.h,
                 fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => Icon(
+                  Icons.handshake_outlined,
+                  size: 80.r,
+                  color: AppColors.purple73,
+                ),
               ),
 
               SizedBox(height: 21.h),
@@ -53,6 +58,11 @@ class OnboardingScreen extends StatelessWidget {
                     'assets/Icons/svg/onboard/security.svg',
                     height: 22.sp,
                     width: 22.sp,
+                    errorBuilder: (_, _, _) => Icon(
+                      Icons.verified_user_outlined,
+                      size: 22.sp,
+                      color: AppColors.purple73,
+                    ),
                   ),
                   SizedBox(width: 10.w),
                   Text(
@@ -84,7 +94,7 @@ class OnboardingScreen extends StatelessWidget {
                 "High Quality Leads",
               ),
               _buildFeatureItem(
-                'assets/Icons/svg/onboard/roi.png',
+                'assets/Icons/svg/onboard/roi.svg',
                 "Better ROI",
               ),
 
@@ -144,15 +154,22 @@ class OnboardingScreen extends StatelessWidget {
                   imagePath,
                   height: 28.r,
                   width: 28.r,
-                  // Uncomment the line below if you want to force the SVGs to be grey
-                  // colorFilter: ColorFilter.mode(Colors.grey[500]!, BlendMode.srcIn),
+                  errorBuilder: (_, _, _) => Icon(
+                    Icons.check_circle_outline,
+                    size: 28.r,
+                    color: Colors.grey[500],
+                  ),
                 )
               : Image.asset(
                   imagePath,
                   height: 28.r,
                   width: 28.r,
-                  fit: BoxFit
-                      .contain, // Ensures normal images fit perfectly in the 28x28 box
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Icon(
+                    Icons.check_circle_outline,
+                    size: 28.r,
+                    color: Colors.grey[500],
+                  ),
                 ),
           SizedBox(width: 16.w),
 

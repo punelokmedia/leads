@@ -8,6 +8,7 @@ import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
+import 'package:user_app/core/widgets/app_network_image.dart';
 import 'package:user_app/features/cart/shared/cart_providers.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
 import 'package:user_app/features/home/presentation/screens/hamberger.dart';
@@ -692,7 +693,12 @@ class _LeadListItemState extends State<_LeadListItem> {
                 child: SizedBox(
                   width: 107.w,
                   height: 78.h,
-                  child: Image.network(widget.lead.imageUrl, fit: BoxFit.cover),
+                  child: AppNetworkImage(
+                    url: widget.lead.imageUrl,
+                    width: 107.w,
+                    height: 78.h,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),

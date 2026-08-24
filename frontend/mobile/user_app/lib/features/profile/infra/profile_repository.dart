@@ -4,7 +4,6 @@ import 'package:hooks_riverpod/legacy.dart';
 import 'package:user_app/features/auth/shared/auth_providers.dart';
 import 'package:user_app/features/profile/infra/profile_controller.dart';
 import '../domain/profile_model.dart';
-import '../infra/profile_repository.dart';
 
 class ProfileState {
   final ProfileModel? profile;
