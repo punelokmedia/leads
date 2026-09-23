@@ -1,57 +1,26 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { User } from "../Models/user.model.js";
+import { resolveGoogleUser } from "../Utils/google-user.js";
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL:
-        process.env.NODE_ENV === "production"
-          ? `${process.env.API_BASE_URL}/api/v1/auth/google/callback`
-          : "http://localhost:5000/api/v1/auth/google/callback",
-    },
-    async (req, accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value;
-
-        let user = await User.findOne({ email });
-
-        const first = profile.name?.givenName || "User";
-        const last = profile.name?.familyName || "";
-
-        const initials = `${first[0]}${last[0] || ""}`.toUpperCase();
-
-        if (user) {
-          if (!user.providers) user.providers = [];
-
-          if (!user.googleId) {
-            user.googleId = profile.id;
-          }
-
-          if (!user.providers.includes("GOOGLE")) {
-            user.providers.push("GOOGLE");
-          }
-
-          await user.save();
-        } else {
-          user = await User.create({
-            firstname: first,
-            lastname: last,
-            email,
-            googleId: profile.id,
-            providers: ["GOOGLE"],
-            profilePic: `https://api.dicebear.com/5.x/initials/svg?seed=${initials}`,
-          });
-        }
-
-        return done(null, user);
-      } catch (err) {
-        return done(err, null);
-      }
-    },
-  ),
-);
-
+const baseUrl = (process.env.API_BASE_URL || "http://localhost:" + (process.env.PORT || 5000)).replace(/\/$/, "");
+if (process.env.USER_GOOGLE_CLIENT_ID && process.env.USER_GOOGLE_CLIENT_SECRET) {
+passport.use("google-user", new GoogleStrategy({
+  clientID: process.env.USER_GOOGLE_CLIENT_ID,
+  clientSecret: process.env.USER_GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.USER_GOOGLE_CALLBACK_URL || baseUrl + "/api/" + (process.env.API_VERSION || "v1") + "/auth/google/callback",
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    const user = await resolveGoogleUser({
+      sub: profile.id,
+      email: profile.emails?.[0]?.value,
+      email_verified: profile._json?.email_verified === true,
+      given_name: profile.name?.givenName,
+      family_name: profile.name?.familyName,
+      name: profile.displayName,
+      picture: profile.photos?.[0]?.value,
+    });
+    done(null, user);
+  } catch (error) { done(error, null); }
+}));
+}
 export default passport;

@@ -60,6 +60,9 @@ EMAIL_PASSWORD=
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
 
+# SMS provider API key (required when SMS sending is configured)
+SMS_API_KEY=
+
 # Razorpay (any one naming style works)
 RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
 RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxx

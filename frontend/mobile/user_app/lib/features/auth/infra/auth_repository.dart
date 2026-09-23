@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 // auth/infra/auth_repository.dart
 
 import 'package:dio/dio.dart';
@@ -143,7 +144,16 @@ class AuthRepository {
   // ── GET /auth/google ──────────────────────────────────────────────────────
   Future<({AuthUser user, String token})> googleAuth() async {
     // 1. Trigger the native Google Sign-In UI
-    final GoogleSignIn googleSignIn = GoogleSignIn();
+    final serverClientId = dotenv.env['USER_GOOGLE_WEB_CLIENT_ID']?.trim();
+    if (serverClientId == null || serverClientId.isEmpty) {
+      throw Exception(
+        'Google sign-in is not configured: USER_GOOGLE_WEB_CLIENT_ID is missing.',
+      );
+    }
+    final GoogleSignIn googleSignIn = GoogleSignIn(
+      scopes: ['email', 'profile'],
+      serverClientId: serverClientId,
+    );
     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
     if (googleUser == null) {

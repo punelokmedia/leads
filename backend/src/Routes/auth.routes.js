@@ -1,6 +1,7 @@
 import express from "express";
 import passport from "../Config/passport.js";
 import { auth } from "../Middlewares/auth.middleware.js";
+import { googleTokenLogin } from "../Controllers/google-auth.controller.js";
 import {
   googleCallback,
   registerUser,
@@ -22,10 +23,18 @@ import {
 } from "../Controllers/auth.controller.js";
 
 const router = express.Router();
+const requireUserGoogleConfig = (req, res, next) => {
+  if (!process.env.USER_GOOGLE_CLIENT_ID || !process.env.USER_GOOGLE_CLIENT_SECRET) {
+    return res.status(503).json({ success: false, message: "User Google login is not configured. Set USER_GOOGLE_CLIENT_ID and USER_GOOGLE_CLIENT_SECRET." });
+  }
+  next();
+};
+router.post("/google", googleTokenLogin);
 
 router.get(
   "/google",
-  passport.authenticate("google", {
+  requireUserGoogleConfig,
+  passport.authenticate("google-user", {
     scope: ["profile", "email"],
     session: false,
   }),
@@ -33,8 +42,9 @@ router.get(
 
 router.get(
   "/google/callback",
+  requireUserGoogleConfig,
   (req, res, next) => {
-    passport.authenticate("google", (err, user) => {
+    passport.authenticate("google-user", (err, user) => {
       if (err) {
         return res.status(500).json({
           success: false,

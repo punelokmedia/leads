@@ -67,10 +67,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .read(authControllerProvider.notifier)
         .googleAuth(
           onSuccess: (String token) {
-            context.push(
-              AppRouter.verifyNumberPath,
-              extra: {'isGoogle': true, 'token': token},
-            );
+            if (!mounted) return;
+            context.go(AppRouter.homePath);
           },
         );
   }

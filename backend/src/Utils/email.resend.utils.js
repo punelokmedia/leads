@@ -198,46 +198,26 @@ const sendAdminOtpEmail = async (recipientEmail, name, otp) => {
     </div>
     `;
 
-  try {
-    const response = await resend.emails.send({
-      from: RESEND_FROM_EMAIL,
+  // Use the configured Gmail sender directly; Resend is only for SMTP-free setups.
+  if (SMTP_FROM_EMAIL && ENV.EMAIL_PASSWORD) {
+    const info = await transporter.sendMail({
+      from: SMTP_FROM_EMAIL,
       to: recipientEmail,
       subject,
       html,
     });
-
-    if (response.error) {
-      throw new Error(response.error.message);
-    }
-
-    return response;
-  } catch (resendError) {
-    console.error("Resend error:", resendError?.message || resendError);
-
-    const canUseSmtpFallback =
-      typeof SMTP_FROM_EMAIL === "string" &&
-      SMTP_FROM_EMAIL.length > 0 &&
-      typeof ENV.EMAIL_PASSWORD === "string" &&
-      ENV.EMAIL_PASSWORD.length > 0;
-
-    if (!canUseSmtpFallback) {
-      throw resendError;
-    }
-
-    try {
-      await transporter.sendMail({
-        from: SMTP_FROM_EMAIL,
-        to: recipientEmail,
-        subject,
-        html,
-      });
-
-      return { id: "smtp-fallback" };
-    } catch (smtpError) {
-      console.error("SMTP fallback error:", smtpError?.message || smtpError);
-      throw smtpError;
-    }
+    return { id: info.messageId, provider: "smtp" };
   }
+
+  const response = await resend.emails.send({
+    from: RESEND_FROM_EMAIL,
+    to: recipientEmail,
+    subject,
+    html,
+  });
+  if (response.error) throw new Error(response.error.message);
+  return response;
+
 };
 
 export { sendWelcomeEmail, forgetPasswordEmail, sendAdminOtpEmail };

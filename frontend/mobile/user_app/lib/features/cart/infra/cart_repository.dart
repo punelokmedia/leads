@@ -37,7 +37,6 @@ class CartRepository {
     try {
       final res = await _dio.get(ApiEndpoints.cart);
 
-  
       final dynamic data = res.data['data'];
       if (data != null && data['leads'] != null) {
         final List leadsList = data['leads'];
@@ -51,13 +50,13 @@ class CartRepository {
   }
 
   /// DELETE item
-Future<String> deleteRemoteItem(String id, int quantity) async {
+  Future<String> deleteRemoteItem(String id, int quantity) async {
     final res = await _dio.delete(
-      ApiEndpoints.deleteCartItem, 
+      ApiEndpoints.deleteCartItem,
       data: {
         'leadId': id,
         'quantity': quantity, // ✅ Send the quantity to the backend
-      }
+      },
     );
     // Return the message from the backend, or a default string
     return res.data['message'] ?? "Cart updated successfully";
@@ -66,11 +65,8 @@ Future<String> deleteRemoteItem(String id, int quantity) async {
   /// ADD to cart
   Future<String> addToCartRemote(String id, int quantity) async {
     final res = await _dio.post(
-      ApiEndpoints.addToCart, 
-      data: {
-        'leadId': id,
-        'quantity': quantity,
-      }
+      ApiEndpoints.addToCart,
+      data: {'leadId': id, 'quantity': quantity},
     );
     return res.data['message'] ?? "Added to cart";
   }
@@ -95,10 +91,7 @@ Future<String> deleteRemoteItem(String id, int quantity) async {
         if (item.id.isNotEmpty) {
           await _dio.post(
             ApiEndpoints.addToCart,
-            data: {
-              'leadId': item.id, 
-              'quantity': item.quantity ?? 1, 
-            }, 
+            data: {'leadId': item.id, 'quantity': item.quantity},
           );
         } else {
           debugPrint("Skipping sync for item with empty ID: ${item.title}");
@@ -112,10 +105,7 @@ Future<String> deleteRemoteItem(String id, int quantity) async {
   }
 
   Future<Map<String, dynamic>> createRazorpayOrder(List<String> leadIds) async {
-    final res = await _dio.post(
-      ApiEndpoints.payCart,
-      data: {'ids': leadIds},
-    );
+    final res = await _dio.post(ApiEndpoints.payCart, data: {'ids': leadIds});
     final data = res.data['data'];
     if (data is! Map) {
       throw Exception(
@@ -132,7 +122,7 @@ Future<String> deleteRemoteItem(String id, int quantity) async {
     required String signature,
   }) async {
     final res = await _dio.post(
-      ApiEndpoints.verifyPayment, 
+      ApiEndpoints.verifyPayment,
       data: {
         "razorpayOrderId": orderId,
         "razorpayPaymentId": paymentId,

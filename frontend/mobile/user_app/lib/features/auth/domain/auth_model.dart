@@ -8,6 +8,7 @@ class AuthUser {
   final String? phoneNumber;
   final String role;
   final String? provider;
+  final bool registrationFeePaid;
 
   const AuthUser({
     required this.id,
@@ -17,6 +18,7 @@ class AuthUser {
     this.phoneNumber,
     required this.role,
     this.provider,
+    this.registrationFeePaid = false,
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
@@ -27,6 +29,7 @@ class AuthUser {
         phoneNumber: json['phoneNumber'],
         role: json['role'] ?? 'USER',
         provider: json['provider'],
+        registrationFeePaid: json['registrationFeePaid'] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +40,7 @@ class AuthUser {
         'phoneNumber': phoneNumber,
         'role': role,
         'provider': provider,
+        'registrationFeePaid': registrationFeePaid,
       };
 
   String get fullName => '$firstname $lastname'.trim();

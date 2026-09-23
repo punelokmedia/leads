@@ -205,7 +205,7 @@ const logOutUser = async (req, res) => {
 const googleCallback = async (req, res) => {
   try {
     const user = req.user;
-    const frontendBaseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendBaseUrl = process.env.FRONTEND_URL || "http://localhost:5174";
 
     if (!user) {
       const redirectUrl = new URL("/", frontendBaseUrl);
@@ -261,7 +261,7 @@ const googleCallback = async (req, res) => {
   } catch (error) {
     console.error("Google Callback Error:", error);
 
-    const redirectUrl = new URL("/", process.env.FRONTEND_URL || "http://localhost:5173");
+    const redirectUrl = new URL("/", process.env.FRONTEND_URL || "http://localhost:5174");
     redirectUrl.searchParams.set("gauth", "1");
     redirectUrl.searchParams.set("error", "Unable to complete Google login.");
     return res.redirect(302, redirectUrl.toString());
