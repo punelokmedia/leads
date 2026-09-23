@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
 const API_BASE_URL_CANDIDATES = Array.from(
-  new Set(['http://localhost:5000', CONFIGURED_API_BASE_URL].filter(Boolean)),
+  new Set([CONFIGURED_API_BASE_URL, `${window.location.protocol}//${window.location.hostname}:5000`].filter(Boolean)),
 )
 
 const TOTAL_STEPS = 6
