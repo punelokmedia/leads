@@ -1,9 +1,9 @@
 import { resend } from "../Config/resend.config.js";
 import { ENV } from "../Config/env.config.js";
-import { transporter } from "../Config/email.config.js";
+import { adminTransporter } from "../Config/email.config.js";
 
 const RESEND_FROM_EMAIL = ENV.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-const SMTP_FROM_EMAIL = ENV.EMAIL_USER;
+const SMTP_FROM_EMAIL = ENV.ADMIN_SMTP_USER;
 
 const sendWelcomeEmail = async (recipientEmail, name) => {
   try {
@@ -199,8 +199,8 @@ const sendAdminOtpEmail = async (recipientEmail, name, otp) => {
     `;
 
   // Use the configured Gmail sender directly; Resend is only for SMTP-free setups.
-  if (SMTP_FROM_EMAIL && ENV.EMAIL_PASSWORD) {
-    const info = await transporter.sendMail({
+  if (SMTP_FROM_EMAIL && ENV.ADMIN_SMTP_PASSWORD) {
+    const info = await adminTransporter.sendMail({
       from: SMTP_FROM_EMAIL,
       to: recipientEmail,
       subject,

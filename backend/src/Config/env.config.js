@@ -19,6 +19,8 @@ export const ENV = {
 
   EMAIL_USER: process.env.EMAIL_USER,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
+  ADMIN_SMTP_USER: process.env.ADMIN_SMTP_USER,
+  ADMIN_SMTP_PASSWORD: process.env.ADMIN_SMTP_PASSWORD,
 
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
