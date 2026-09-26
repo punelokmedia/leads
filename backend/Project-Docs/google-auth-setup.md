@@ -55,6 +55,32 @@ Rebuild Flutter after updating its environment file.
 
 ## Verification
 
+### Private Google-login testing
+
+Google's Testing audience is not an application authorization list: basic
+openid/email/profile sign-in has an exception to the test-user restriction.
+To restrict Google login in both web and mobile, set the backend environment:
+
+```env
+USER_GOOGLE_ALLOWED_EMAILS=first-tester@example.com,second-tester@example.com
+```
+
+Use the actual approved emails, then redeploy the backend. Addresses are matched
+case-insensitively against Google's verified email before looking up or creating
+a user. Unlisted accounts receive HTTP 403. An empty/unset value permits all
+verified Google accounts, subject to the existing blocked-account check.
+This setting controls new Google logins; it does not revoke existing sessions
+or restrict the separate phone OTP flow. Remove it when opening Google login
+to the public. Never put this authorization list in the mobile client.
+
+The mobile Google token exchange allows 90 seconds for a slow backend response.
+Render free services can take about a minute to wake up; this timeout does not
+guarantee first-attempt success for network or provider failures. Cart-sync
+failure no longer reports successful authentication as a failed login.
+
+References: https://support.google.com/cloud/answer/15549945 and
+https://render.com/docs/free#spinning-down-on-idle
+
 Run `node --test test/google-auth.test.js` from backend and `npm run build` from
 user-web. For a live check, sign in with a new Google account and confirm
 onboarding, then a paid existing account and confirm it reaches home. Confirm a

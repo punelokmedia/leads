@@ -7,6 +7,27 @@ import 'package:user_app/core/network/dio_provider.dart';
 
 final categorySearchProvider = StateProvider<String>((ref) => "");
 
+// Home filters use the full catalog, independently of other category searches.
+final homeCategoryListProvider = FutureProvider<List<LeadCategory>>((
+  ref,
+) async {
+  final response = await ref
+      .watch(dioProvider)
+      .get(ApiEndpoints.getAllCategories);
+  final List data = response.data['data'] ?? [];
+  return data
+      .where((json) => (json['_id'] ?? '').toString().isNotEmpty)
+      .map(
+        (json) => LeadCategory(
+          id: json['_id'],
+          title: json['name'] ?? '',
+          iconPath: json['icon'] ?? 'loc_pin',
+          iconColor: Colors.blue,
+        ),
+      )
+      .toList();
+});
+
 final categoryListProvider = FutureProvider<List<LeadCategory>>((ref) async {
   final searchQuery = ref.watch(categorySearchProvider).toLowerCase();
   final dio = ref.watch(dioProvider);
@@ -26,7 +47,9 @@ final categoryListProvider = FutureProvider<List<LeadCategory>>((ref) async {
       }).toList();
 
       if (searchQuery.isEmpty) return allCategories;
-      return allCategories.where((c) => c.title.toLowerCase().contains(searchQuery)).toList();
+      return allCategories
+          .where((c) => c.title.toLowerCase().contains(searchQuery))
+          .toList();
     }
   } catch (e) {
     debugPrint('Error fetching categories: $e');

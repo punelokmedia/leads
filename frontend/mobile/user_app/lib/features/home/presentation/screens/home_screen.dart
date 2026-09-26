@@ -1,7 +1,9 @@
 import 'dart:developer';
+import 'package:user_app/features/home/infra/category_controller.dart';
+import 'package:user_app/features/home/presentation/screens/category_picker.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:user_app/app/app_router.dart';
@@ -42,8 +44,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final message = await ref
         .read(cartControllerProvider.notifier)
         // ✅ Make sure to update your addLeadToCart method in the controller to accept this quantity!
-        .addLeadToCart(lead); 
-        
+        .addLeadToCart(lead);
+
     if (message != null && mounted) {
       final lower = message.toLowerCase();
       final isError =
@@ -370,6 +372,12 @@ class _FilterRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedCity = ref.watch(selectedCityProvider);
+    final categoryId = ref.watch(homeControllerProvider).selectedCategoryId;
+    final categories = ref.watch(homeCategoryListProvider).asData?.value ?? [];
+    final selected = categories.where((c) => c.id == categoryId);
+    final categoryName = selected.isEmpty
+        ? 'All Categories'
+        : selected.first.title;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
@@ -383,7 +391,11 @@ class _FilterRow extends ConsumerWidget {
               onTap: () async {
                 await showCityPickerSheet(context);
                 // After closing, trigger a lead reload with the new city
-                ref.read(homeControllerProvider.notifier).loadLeads();
+                ref
+                    .read(homeControllerProvider.notifier)
+                    .loadLeads(
+                      city: ref.read(selectedCityProvider)?.name ?? '',
+                    );
               },
             ),
           ),
@@ -393,11 +405,9 @@ class _FilterRow extends ConsumerWidget {
           Expanded(
             child: _FilterChip(
               icon: Icons.grid_view_rounded,
-              label: 'All Categories',
-              isActive: false,
-              onTap: () {
-                // TODO: open category picker
-              },
+              label: categoryName,
+              isActive: categoryId != null && categoryId.isNotEmpty,
+              onTap: () => showCategoryPicker(context),
             ),
           ),
         ],
@@ -479,31 +489,16 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _TopCategories extends StatelessWidget {
+class _TopCategories extends ConsumerWidget {
   const _TopCategories();
 
-  static const _cats = [
-    _CatItem('Interior\nDesign', Icons.chair_rounded, Color(0xFFFF6B2C)),
-    _CatItem('Renovation\n/ Civil', Icons.home_work_rounded, Color(0xFFFF8C42)),
-    _CatItem('Painting', Icons.format_paint_rounded, Color(0xFFE63946)),
-    _CatItem('Plumbing', Icons.plumbing_rounded, Color(0xFF0099FF)),
-    _CatItem('Electrical\nWork', Icons.bolt_rounded, Color(0xFFFFB800)),
-    _CatItem('Carpentry', Icons.carpenter_rounded, Color(0xFF8B4513)),
-    _CatItem('CCTV\nInstallation', Icons.videocam_rounded, Color(0xFF2DC653)),
-    _CatItem('AC Service', Icons.ac_unit_rounded, Color(0xFF00B8D9)),
-    _CatItem('Modular\nKitchen', Icons.kitchen_rounded, Color(0xFF7B2FBE)),
-    _CatItem('False\nCeiling', Icons.layers_rounded, Color(0xFFE63946)),
-    _CatItem('Home\nAutomation', Icons.smart_toy_rounded, Color(0xFF0072FF)),
-    _CatItem('Waterproofing', Icons.water_drop_rounded, Color(0xFF1A1A7E)),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categories = ref.watch(homeCategoryListProvider);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(12.w, 10.h, 16.w, 12.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -515,31 +510,49 @@ class _TopCategories extends StatelessWidget {
                   color: AppColors.grey77,
                 ),
               ),
-              Text(
-                'View All',
-                style: AppTextStyles.poppins(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.purple72,
-                ),
+              TextButton(
+                onPressed: () => showCategoryPicker(context),
+                child: const Text('View All'),
               ),
             ],
           ),
         ),
-        SizedBox(
-          height: 300.h,
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              mainAxisSpacing: 2.h,
-              crossAxisSpacing: 30.w,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: _cats.length,
-            itemBuilder: (_, i) => _CategoryTile(item: _cats[i]),
+        categories.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.all(16),
+            child: CircularProgressIndicator(),
           ),
+          error: (error, stack) => TextButton(
+            onPressed: () => ref.invalidate(homeCategoryListProvider),
+            child: const Text('Could not load categories. Retry'),
+          ),
+          data: (items) => items.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('No categories available'),
+                )
+              : GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 8.h,
+                    crossAxisSpacing: 12.w,
+                    mainAxisExtent: 100.h,
+                  ),
+                  itemCount: items.length > 12 ? 12 : items.length,
+                  itemBuilder: (_, i) => _CategoryTile(
+                    item: _CatItem(
+                      items[i].title,
+                      Icons.category_rounded,
+                      AppColors.purple72,
+                    ),
+                    onTap: () => ref
+                        .read(homeControllerProvider.notifier)
+                        .loadLeads(categoryId: items[i].id),
+                  ),
+                ),
         ),
       ],
     );
@@ -555,12 +568,13 @@ class _CatItem {
 
 class _CategoryTile extends StatelessWidget {
   final _CatItem item;
-  const _CategoryTile({required this.item});
+  final VoidCallback onTap;
+  const _CategoryTile({required this.item, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -592,8 +606,8 @@ class _CategoryTile extends StatelessWidget {
 
 class _HomeLeadSliver extends ConsumerWidget {
   // ✅ FIX: Added the 'int' parameter for quantity
-  final void Function(LeadModel, int) onAddToCart; 
-  
+  final void Function(LeadModel, int) onAddToCart;
+
   const _HomeLeadSliver({required this.onAddToCart});
 
   @override

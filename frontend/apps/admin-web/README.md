@@ -2,6 +2,15 @@
 
 ## Render deployment
 
+Set `VITE_API_BASE_URL` on the admin Render service to the backend HTTPS origin
+(for example, `https://your-backend.onrender.com`, without `/api/v1`). Vite reads
+this value at build time, so rebuild the admin after changing it.
+
+On the backend Render service, set `ADMIN_FRONTEND_URL` to the admin HTTPS origin
+and keep `FRONTEND_URL` pointing to the user website. Redeploy the backend after
+changing these values. The admin uses email OTP at `/api/v1/admin/send-otp` and
+`/api/v1/admin/verify-otp`; the backend must have `API_VERSION=v1`.
+
 Use the shared frontend workspace lockfile:
 
 - Root directory: `frontend`

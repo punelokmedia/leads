@@ -5,6 +5,11 @@ export async function resolveGoogleUser(profile) {
     throw Object.assign(new Error("A verified Google email is required."), { status: 401 });
   }
   const email = profile.email.trim().toLowerCase();
+  const allowedEmails = (process.env.USER_GOOGLE_ALLOWED_EMAILS || "")
+    .split(",").map((value) => value.trim().toLowerCase()).filter(Boolean);
+  if (allowedEmails.length && !allowedEmails.includes(email)) {
+    throw Object.assign(new Error("This account does not have access to the testing app."), { status: 403 });
+  }
   let user = await User.findOne({ googleId: profile.sub });
   if (!user) user = await User.findOne({ email });
   if (user?.isBlocked) {

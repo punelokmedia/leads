@@ -50,6 +50,7 @@ class HomeState {
 // ---------- Controller ----------
 class HomeController extends StateNotifier<HomeState> {
   final IHomeRepository _repository;
+  int _requestId = 0;
 
   HomeController(this._repository) : super(const HomeState());
 
@@ -58,6 +59,7 @@ class HomeController extends StateNotifier<HomeState> {
     String? categoryId,
     bool isReset = false,
   }) async {
+    final requestId = ++_requestId;
     final cityToFetch = isReset ? null : (city ?? state.selectedCity);
     final categoryToFetch = isReset
         ? null
@@ -75,8 +77,10 @@ class HomeController extends StateNotifier<HomeState> {
         city: cityToFetch,
         categoryId: categoryToFetch,
       );
+      if (!mounted || requestId != _requestId) return;
       state = state.copyWith(leads: leads, isLoading: false);
     } catch (e) {
+      if (!mounted || requestId != _requestId) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Could not load leads. Please try again.',
@@ -85,6 +89,7 @@ class HomeController extends StateNotifier<HomeState> {
   }
 
   Future<void> searchLeads(String query) async {
+    final requestId = ++_requestId;
     state = state.copyWith(
       searchQuery: query,
       isLoading: true,
@@ -94,8 +99,10 @@ class HomeController extends StateNotifier<HomeState> {
       final leads = query.isEmpty
           ? await _repository.fetchLeads()
           : await _repository.searchLeads(query);
+      if (!mounted || requestId != _requestId) return;
       state = state.copyWith(leads: leads, isLoading: false);
     } catch (e) {
+      if (!mounted || requestId != _requestId) return;
       state = state.copyWith(isLoading: false, errorMessage: 'Search failed.');
     }
   }

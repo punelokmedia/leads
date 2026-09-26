@@ -152,17 +152,25 @@ class AuthController extends StateNotifier<AuthState> {
     required void Function(String token)
     onSuccess, // ✅ Add token parameter here
   }) async {
+    if (state.isLoading) return;
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final result = await _repo.googleAuth();
 
       state = state.copyWith(
-        isLoading: false,
+        isLoading: true,
         user: result.user,
         token: result.token,
       );
 
-      await _ref.read(cartRepositoryProvider).syncLocalToRemote();
+      // A cart failure must not turn a successful sign-in into a login error.
+      // The repository retains the local cart when synchronization fails.
+      try {
+        await _ref.read(cartRepositoryProvider).syncLocalToRemote();
+      } catch (_) {
+        // Keep local items for a later synchronization attempt.
+      }
+      state = state.copyWith(isLoading: false);
       _ref.invalidate(cartControllerProvider);
 
       onSuccess(result.token); // ✅ Pass the token back to the UI

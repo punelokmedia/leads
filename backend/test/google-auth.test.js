@@ -10,6 +10,29 @@ process.env.GOOGLE_CLIENT_ID = "legacy-admin-client-must-not-be-used";
 process.env.ADMIN_GOOGLE_CLIENT_ID = "admin-client-must-not-be-used";
 process.env.JWT_SECRET = "test-secret-only";
 const identity = { sub: "google-id", email: "user@example.com", email_verified: true };
+test("private Google beta rejects unlisted emails before database access", async (t) => {
+  const previous = process.env.USER_GOOGLE_ALLOWED_EMAILS;
+  process.env.USER_GOOGLE_ALLOWED_EMAILS = "tester@example.com";
+  t.mock.method(User, "findOne", () => assert.fail("must not access database"));
+  try {
+    await assert.rejects(resolveGoogleUser(identity), { status: 403 });
+  } finally {
+    if (previous === undefined) delete process.env.USER_GOOGLE_ALLOWED_EMAILS;
+    else process.env.USER_GOOGLE_ALLOWED_EMAILS = previous;
+  }
+});
+test("private Google beta accepts normalized listed emails", async (t) => {
+  const previous = process.env.USER_GOOGLE_ALLOWED_EMAILS;
+  process.env.USER_GOOGLE_ALLOWED_EMAILS = " TESTER@example.com, USER@EXAMPLE.COM ";
+  const user = { googleId: identity.sub, providers: [], async save() {} };
+  t.mock.method(User, "findOne", async () => user);
+  try {
+    assert.equal(await resolveGoogleUser(identity), user);
+  } finally {
+    if (previous === undefined) delete process.env.USER_GOOGLE_ALLOWED_EMAILS;
+    else process.env.USER_GOOGLE_ALLOWED_EMAILS = previous;
+  }
+});
 test("new Google users without a surname pass schema validation", async (t) => {
   t.mock.method(User, "findOne", async () => null);
   t.mock.method(User, "create", async (data) => {

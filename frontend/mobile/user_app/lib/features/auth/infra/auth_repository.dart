@@ -173,6 +173,8 @@ class AuthRepository {
     final res = await _dio.post(
       ApiEndpoints.googleAuth,
       data: {'idToken': idToken},
+      // A sleeping development backend can take about a minute to respond.
+      options: Options(receiveTimeout: const Duration(seconds: 90)),
     );
 
     final body = res.data as Map<String, dynamic>;
