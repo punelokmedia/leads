@@ -1,4 +1,22 @@
-# React + TypeScript + Vite
+# Admin web
+
+## Render deployment
+
+Use the shared frontend workspace lockfile:
+
+- Root directory: `frontend`
+- Build command: `npm ci --include=dev --include=optional && npm run build:admin`
+- Publish directory: `apps/admin-web/dist`
+
+After deploying a repaired lockfile, select **Manual Deploy → Clear build cache & deploy**.
+
+The lockfile must include native optional dependencies for both local development
+and Linux builds, including Rolldown, Tailwind Oxide, and Lightning CSS. A lockfile
+containing only Windows binaries can build locally but fail on Render with
+`Cannot find module '@rolldown/binding-linux-x64-gnu'`. Commit the shared
+`frontend/package-lock.json` and use `npm ci` for deployment to keep it unchanged.
+
+## Vite template notes
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
