@@ -15,12 +15,13 @@ const app = express();
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  process.env.ADMIN_FRONTEND_URL,
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5000",
   "http://localhost:3000",
 
-];
+].filter(Boolean).map((origin) => origin.trim().replace(/\/+$/, ""));
 
 const corsOptions = {
   origin: (origin, callback) => {
