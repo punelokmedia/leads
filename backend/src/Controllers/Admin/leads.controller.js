@@ -972,7 +972,7 @@ const getUserHistory = async (req, res) => {
 
     const orders = await Order.find({
       user: userId,
-      status: "PAID",
+      status: { $in: ["PAID", "REFUND_PENDING", "REFUNDED"] },
     })
       .populate({
         path: "leads.lead",
@@ -996,7 +996,7 @@ const getUserHistory = async (req, res) => {
       let totalAmount = 0;
 
       const items = order.leads
-        .filter((item) => item.lead && ownedIds.has(String(item.lead._id)))
+        .filter((item) => order.status === 'PAID' && item.lead && ownedIds.has(String(item.lead._id)))
         .map((item) => {
           const lead = item.lead;
 
@@ -1023,7 +1023,7 @@ const getUserHistory = async (req, res) => {
         status: order.status,
         isDownloaded: order.isDownloaded,
         paidAt: order.paidAt,
-        totalAmount, 
+        totalAmount: order.status === 'PAID' ? totalAmount : order.totalAmount,
         totalItems: items.reduce((sum, i) => sum + i.quantity, 0), 
         items, 
       });
@@ -1154,7 +1154,7 @@ const downloadLeads = async (req, res) => {
     }
 
     const ownedIds = new Set((await LeadPurchase.find({ user: userId }).select('lead').lean()).map((p) => String(p.lead)));
-    order.leads = order.leads.filter((item) => item.lead && ownedIds.has(String(item.lead._id)));
+    const ownedLeads = order.leads.filter((item) => item.lead && ownedIds.has(String(item.lead._id)));
 
     if (order.isDownloaded) {
       return res.status(400).json({
@@ -1163,7 +1163,7 @@ const downloadLeads = async (req, res) => {
       });
     }
 
-    if (!order.leads || order.leads.length === 0) {
+    if (ownedLeads.length === 0) {
       return res.status(400).json({
         success: false,
         message: "No leads found in this order",
@@ -1188,7 +1188,7 @@ const downloadLeads = async (req, res) => {
 
     worksheet.getRow(1).font = { bold: true };
 
-    for (const item of order.leads) {
+    for (const item of ownedLeads) {
       const lead = item.lead;
 
       if (!lead) continue;

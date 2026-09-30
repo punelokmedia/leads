@@ -97,7 +97,7 @@ export function startPaymentMaintenance() {
     if (running) return;
     running = true;
     try {
-      const orders = await Order.find({ fulfillmentVersion: 2, status: { $in: ['CREATED', 'EXPIRED', 'CANCELLED', 'FAILED'] }, razorpayOrderId: { $type: 'string' }, updatedAt: { $gte: new Date(Date.now() - 7 * 86400000) } }).sort({ lastReconciledAt: 1 }).limit(20);
+      const orders = await Order.find({ fulfillmentVersion: 2, status: { $in: ['CREATED', 'EXPIRED', 'CANCELLED', 'FAILED'] }, razorpayOrderId: { $type: 'string' }, createdAt: { $gte: new Date(Date.now() - 7 * 86400000) } }).sort({ lastReconciledAt: 1 }).limit(20);
       for (const order of orders) {
         try {
           const payments = await razorpay.orders.fetchPayments(order.razorpayOrderId);

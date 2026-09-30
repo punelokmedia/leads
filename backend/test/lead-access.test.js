@@ -2,7 +2,7 @@ import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { mock } from 'node:test';
 import { Lead } from '../src/Models/leads.model.js';
-import { Order } from '../src/Models/orders.models.js';
+import { LeadPurchase } from '../src/Models/lead.purchase.model.js';
 import { getAllLeads, getLeadDetailsById } from '../src/Controllers/Admin/leads.controller.js';
 import { optionalAuth } from '../src/Middlewares/auth.middleware.js';
 
@@ -23,7 +23,7 @@ function response() {
 
 test('guest details hide contacts and calculate capacity from buyersCount', async () => {
   mock.method(Lead, 'findById', () => ({ populate: async () => fixture() }));
-  mock.method(Order, 'exists', () => { throw new Error('Guest must not query ownership'); });
+  mock.method(LeadPurchase, 'exists', () => { throw new Error('Guest must not query ownership'); });
   const res = response();
   await getLeadDetailsById({ params: { id } }, res);
   assert.equal(res.statusCode, 200);
@@ -33,11 +33,11 @@ test('guest details hide contacts and calculate capacity from buyersCount', asyn
   assert.equal(res.body.data.status, 'SOLD_OUT');
 });
 
-test('only a paid order belonging to the current user unlocks contacts', async () => {
+test('only a recorded purchase belonging to the current user unlocks contacts', async () => {
   mock.method(Lead, 'findById', () => ({ populate: async () => fixture() }));
   let owned = true;
-  mock.method(Order, 'exists', async (query) => {
-    assert.deepEqual(query, { user: 'vendor-1', status: 'PAID', 'leads.lead': id });
+  mock.method(LeadPurchase, 'exists', async (query) => {
+    assert.deepEqual(query, { user: 'vendor-1', lead: id });
     return owned ? { _id: 'paid-order' } : null;
   });
   const req = { user: { id: 'vendor-1' }, params: { id } };
@@ -56,10 +56,10 @@ test('listing marks paid purchases but never includes client contacts', async ()
   mock.method(Lead, 'countDocuments', async () => 1);
   const chain = { populate() { return this; }, sort() { return this; }, limit() { return this; }, skip: async () => [fixture()] };
   mock.method(Lead, 'find', () => chain);
-  mock.method(Order, 'find', (query) => {
+  mock.method(LeadPurchase, 'find', (query) => {
     assert.equal(query.user, 'vendor-1');
-    assert.equal(query.status, 'PAID');
-    return { select: () => ({ lean: async () => [{ leads: [{ lead: id }] }] }) };
+    assert.deepEqual(query.lead, { $in: [id] });
+    return { select: () => ({ lean: async () => [{ lead: id }] }) };
   });
   const res = response();
   await getAllLeads({ user: { id: 'vendor-1' }, query: {} }, res);

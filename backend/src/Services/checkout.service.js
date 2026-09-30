@@ -167,8 +167,8 @@ export async function processRefunds(gateway) {
       } else if (payment.amount_refunded < job.amount) {
         throw new Error('Partial refund requires reconciliation; no additional refund submitted');
       }
-      await PaymentRefund.updateOne({ _id: job._id, lockedUntil }, { $set: { status, refundId, nextAttemptAt: new Date(Date.now() + 60000) }, $unset: { lockedUntil: 1, lastError: 1 } });
       if (status === 'REFUNDED') await Order.updateOne({ _id: job.order, status: 'REFUND_PENDING', razorpayPaymentId: job.paymentId }, { $set: { status: 'REFUNDED' } });
+      await PaymentRefund.updateOne({ _id: job._id, lockedUntil }, { $set: { status, refundId, nextAttemptAt: new Date(Date.now() + 60000) }, $unset: { lockedUntil: 1, lastError: 1 } });
     } catch (error) {
       await PaymentRefund.updateOne({ _id: job._id, lockedUntil }, { $set: { lastError: error.message || 'Refund failed', nextAttemptAt: new Date(Date.now() + 60000) }, $unset: { lockedUntil: 1 } });
     }
