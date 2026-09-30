@@ -11,6 +11,7 @@ type AdminNavItem = {
 }
 
 const primaryNav: AdminNavItem[] = [
+  { to: '/support', label: 'Support Inbox', icon: 'leads', hint: 'Customer messages' },
   { to: '/', label: 'Dashboard', end: true, icon: 'dashboard', hint: 'Overview' },
   { to: '/leads', label: 'Leads', icon: 'leads', hint: 'Records' },
   { to: '/categories', label: 'Categories', icon: 'category', hint: 'Category manager' },

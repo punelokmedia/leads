@@ -10,6 +10,8 @@ const CategorySchema = new Schema(
     icon: {
       type: String,
     },
+    displayName: String,
+    sortOrder: { type: Number, default: 1000 },
     isActive: {
       type: Boolean,
       default: true,

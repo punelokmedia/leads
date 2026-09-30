@@ -45,7 +45,7 @@ const createCategory = async (req, res) => {
 const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find()
-      .sort({ createdAt: -1 })
+      .sort({ sortOrder: 1, name: 1 })
       .select("-__v");
 
     return res.status(200).json({

@@ -15,6 +15,7 @@ import { PaymentHistoryPage } from '@/features/payments/pages/PaymentHistoryPage
 import { WebAnalyticsPage } from '@/features/analytics/pages/WebAnalyticsPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { SupportPage } from '@/features/support/SupportPage'
 
 export const router = createBrowserRouter([
   {
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
           { path: 'payments', element: <PaymentHistoryPage /> },
           { path: 'web-analytics', element: <WebAnalyticsPage /> },
           { path: 'settings', element: <SettingsPage /> },
+          { path: 'support', element: <SupportPage /> },
         ],
       },
     ],

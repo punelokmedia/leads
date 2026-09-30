@@ -1,0 +1,104 @@
+[
+  {
+    "name": "interior design",
+    "displayName": "Interior Design",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/sofa.svg",
+    "sortOrder": 0
+  },
+  {
+    "name": "home renovation / civil work",
+    "displayName": "Home Renovation / Civil Work",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/house.svg",
+    "sortOrder": 1
+  },
+  {
+    "name": "painting",
+    "displayName": "Painting",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/paintbrush.svg",
+    "sortOrder": 2
+  },
+  {
+    "name": "plumbing",
+    "displayName": "Plumbing",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/wrench.svg",
+    "sortOrder": 3
+  },
+  {
+    "name": "electrical work",
+    "displayName": "Electrical Work",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/zap.svg",
+    "sortOrder": 4
+  },
+  {
+    "name": "carpentry / modular furniture",
+    "displayName": "Carpentry / Modular Furniture",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/door-open.svg",
+    "sortOrder": 5
+  },
+  {
+    "name": "cctv installation",
+    "displayName": "CCTV Installation",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/cctv.svg",
+    "sortOrder": 6
+  },
+  {
+    "name": "ac service & repair",
+    "displayName": "AC Service & Repair",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/fan.svg",
+    "sortOrder": 7
+  },
+  {
+    "name": "modular kitchen",
+    "displayName": "Modular Kitchen",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/cooking-pot.svg",
+    "sortOrder": 8
+  },
+  {
+    "name": "false ceiling (pop)",
+    "displayName": "False Ceiling (POP)",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/house.svg",
+    "sortOrder": 9
+  },
+  {
+    "name": "home automation",
+    "displayName": "Home Automation",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/radio.svg",
+    "sortOrder": 10
+  },
+  {
+    "name": "waterproofing",
+    "displayName": "Waterproofing",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/droplet.svg",
+    "sortOrder": 11
+  },
+  {
+    "name": "construction",
+    "displayName": "Construction",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/construction.svg",
+    "sortOrder": 12
+  },
+  {
+    "name": "architecture",
+    "displayName": "Architecture",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/ruler.svg",
+    "sortOrder": 13
+  },
+  {
+    "name": "mep",
+    "displayName": "MEP",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/settings.svg",
+    "sortOrder": 14
+  },
+  {
+    "name": "landscaping",
+    "displayName": "Landscaping",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/trees.svg",
+    "sortOrder": 15
+  },
+  {
+    "name": "flooring",
+    "displayName": "Flooring",
+    "icon": "https://cdn.jsdelivr.net/npm/lucide-static/icons/grid-2x2.svg",
+    "sortOrder": 16
+  }
+]

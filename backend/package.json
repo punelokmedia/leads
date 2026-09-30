@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "seed:admin": "node src/seeders/admin.seed.js"
+    "seed:admin": "node src/seeders/admin.seed.js",
+    "seed:categories": "node src/seeders/categories.seed.js"
   },
   "keywords": [],
   "author": "",
