@@ -37,8 +37,12 @@ class CityListItemWidget extends StatelessWidget {
               child: Icon(Icons.my_location, color: Colors.white, size: 16.r),
             )
           else
-            Icon(Icons.location_on_outlined, color: Colors.grey[400], size: 24.r),
-          
+            Icon(
+              Icons.location_on_outlined,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              size: 24.r,
+            ),
+
           SizedBox(width: 16.w),
 
           // ── City Name ──
@@ -47,7 +51,7 @@ class CityListItemWidget extends StatelessWidget {
               cityName,
               style: AppTextStyles.poppins(
                 fontSize: 15.sp,
-                color: Colors.black87,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
@@ -60,7 +64,9 @@ class CityListItemWidget extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: isSelected ? const Color(0xFF4522C2) : Colors.grey[400]!,
+                color: isSelected
+                    ? const Color(0xFF4522C2)
+                    : Theme.of(context).colorScheme.outlineVariant,
                 width: 1.5,
               ),
             ),

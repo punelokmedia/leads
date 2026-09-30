@@ -18,13 +18,13 @@ class RegisterBackground extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFF0F0F0),
-            Color(0xFFF0F0F0),
+            Theme.of(context).colorScheme.surfaceContainerLow,
+            Theme.of(context).colorScheme.surfaceContainerLow,
             Color.fromARGB(255, 255, 198, 28),
           ],
           stops: [0.40, 0.70, 1.0],
@@ -54,7 +54,7 @@ class RegisterHeader extends StatelessWidget {
               style: AppTextStyles.poppins(
                 fontSize: 22.sp,
                 fontWeight: FontWeight.w800,
-                color: AppColors.purple73,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -66,7 +66,7 @@ class RegisterHeader extends StatelessWidget {
             style: TextStyle(
               fontSize: 22.sp,
               fontWeight: FontWeight.w800,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
@@ -75,8 +75,8 @@ class RegisterHeader extends StatelessWidget {
           child: Text(
             'Almost there, just sign up!',
             style: TextStyle(
-              fontSize: 13.sp, 
-              color: Colors.grey[600],
+              fontSize: 13.sp,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -99,7 +99,7 @@ class RegisterFooter extends ConsumerWidget {
             'Already have an account? ',
             style: AppTextStyles.poppins(
               fontSize: 14.sp,
-              color: AppColors.black,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w500,
               height: 20 / 14,
               letterSpacing: 0.1,

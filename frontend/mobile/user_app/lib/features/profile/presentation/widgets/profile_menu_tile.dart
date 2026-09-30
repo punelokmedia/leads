@@ -28,9 +28,11 @@ class ProfileMenuTile extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(30.r),
-          border: Border.all(color: AppColors.grey198),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
+          ),
           boxShadow: [
             BoxShadow(
               color: Color.fromRGBO(0, 0, 0, 0.25),
@@ -41,7 +43,11 @@ class ProfileMenuTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 24.r, color: AppColors.grey102),
+            Icon(
+              icon,
+              size: 24.r,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             SizedBox(width: 24.w),
             Expanded(
               child: Text(
@@ -49,7 +55,7 @@ class ProfileMenuTile extends StatelessWidget {
                 style: AppTextStyles.poppins(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.grey102,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 13 / 18,
                 ),
               ),
@@ -57,7 +63,7 @@ class ProfileMenuTile extends StatelessWidget {
             Icon(
               Icons.chevron_right_rounded,
               size: 24.r,
-              color: AppColors.grey102,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ],
         ),
@@ -91,9 +97,11 @@ class ProfileLogoutTile extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(30.r),
-            border: Border.all(color: AppColors.grey198),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+            ),
             boxShadow: [
               BoxShadow(
                 color: const Color.fromRGBO(0, 0, 0, 0.25),
@@ -108,7 +116,9 @@ class ProfileLogoutTile extends StatelessWidget {
                 Icons.logout_rounded,
                 size: 24.r,
 
-                color: isEnabled ? AppColors.red237 : Colors.grey,
+                color: isEnabled
+                    ? AppColors.red237
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               SizedBox(width: 20.w),
               Expanded(
@@ -118,7 +128,9 @@ class ProfileLogoutTile extends StatelessWidget {
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w500,
 
-                    color: isEnabled ? AppColors.red237 : Colors.grey,
+                    color: isEnabled
+                        ? AppColors.red237
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                     height: 13 / 18,
                   ),
                 ),
@@ -174,7 +186,7 @@ class _ProfileShimmerState extends State<ProfileShimmer>
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: circle ? null : BorderRadius.circular(6.r),
           shape: circle ? BoxShape.circle : BoxShape.rectangle,
         ),
@@ -191,7 +203,7 @@ class _ProfileShimmerState extends State<ProfileShimmer>
             // Header skeleton
             Container(
               height: 210.h,
-              color: AppColors.grey198,
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -211,7 +223,7 @@ class _ProfileShimmerState extends State<ProfileShimmer>
                 margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
                 padding: EdgeInsets.all(14.w),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: _box(width: double.infinity, height: 14.h),

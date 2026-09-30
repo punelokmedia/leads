@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 
 class SupportOptionTile extends StatelessWidget {
@@ -10,7 +9,7 @@ class SupportOptionTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const SupportOptionTile({
-    super.key, 
+    super.key,
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -25,9 +24,11 @@ class SupportOptionTile extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: AppColors.grey229),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
+          ),
           boxShadow: const [
             BoxShadow(
               color: Color(0x12000000),
@@ -43,15 +44,12 @@ class SupportOptionTile extends StatelessWidget {
               height: 44.r,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFF3F3F3),
-                border: Border.all(
-                  color: const Color(0xFFF8B020),
-                  width: 1.2,
-                ),
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                border: Border.all(color: const Color(0xFFF8B020), width: 1.2),
               ),
               child: Icon(
                 icon,
-                color: const Color(0xFF636363),
+                color: Theme.of(context).colorScheme.onSurface,
                 size: 22.r,
               ),
             ),
@@ -65,7 +63,7 @@ class SupportOptionTile extends StatelessWidget {
                     style: AppTextStyles.poppins(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                       height: 1.2,
                     ),
                   ),
@@ -75,7 +73,7 @@ class SupportOptionTile extends StatelessWidget {
                     style: AppTextStyles.poppins(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.grey117,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.3,
                     ),
                   ),
@@ -86,7 +84,7 @@ class SupportOptionTile extends StatelessWidget {
             Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14.r,
-              color: AppColors.grey143,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ],
         ),

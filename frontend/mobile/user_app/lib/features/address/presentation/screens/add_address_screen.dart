@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 
@@ -27,9 +26,9 @@ class AddAddressScreen extends ConsumerWidget {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
         elevation: 0.5,
         centerTitle: true,
         leading: GestureDetector(
@@ -37,7 +36,7 @@ class AddAddressScreen extends ConsumerWidget {
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 18.r,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         title: Text(
@@ -45,7 +44,7 @@ class AddAddressScreen extends ConsumerWidget {
           style: AppTextStyles.poppins(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
@@ -60,10 +59,7 @@ class AddAddressScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Flat no. / Street Name
-                  const AddressLabel(
-                    text: 'Flat no. / Street Name',
-                    
-                  ),
+                  const AddressLabel(text: 'Flat no. / Street Name'),
                   AddressTextField(
                     hint: 'Flat 203, Sai Residency',
                     initialValue: address.flatStreet,
@@ -121,7 +117,7 @@ class AddAddressScreen extends ConsumerWidget {
                     style: AppTextStyles.poppins(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.grey137,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 20 / 18,
                       letterSpacing: 0.1,
                     ),
@@ -141,7 +137,7 @@ class AddAddressScreen extends ConsumerWidget {
 
           // ── Save button pinned at bottom ──────────────────────────────────
           Container(
-            color: const Color(0xFFF7F7F7),
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             padding: EdgeInsets.only(
               left: 20.w,
               right: 20.w,
@@ -153,8 +149,11 @@ class AddAddressScreen extends ConsumerWidget {
               onTap: () {
                 notifier.save(
                   onSuccess: () {
-                    SnackbarHelper.showSuccess(context, "Address saved successfully");
-                   
+                    SnackbarHelper.showSuccess(
+                      context,
+                      "Address saved successfully",
+                    );
+
                     context.pop();
                   },
                 );

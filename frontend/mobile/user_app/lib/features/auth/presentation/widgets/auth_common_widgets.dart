@@ -20,7 +20,7 @@ class AuthLogo extends StatelessWidget {
         style: AppTextStyles.poppins(
           fontSize: 28.sp,
           fontWeight: FontWeight.w700,
-          color: AppColors.purple73,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     ),
@@ -42,38 +42,41 @@ class AuthPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: isLoading ? null : onTap,
-        child: Container(
-          width: double.infinity,
-          height: 56.h,
-          decoration: BoxDecoration(
-            color: AppColors.purple73,
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(color: Color.fromRGBO(248,182,31,0.58)),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF4522C2).withOpacity(0.35),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+    onTap: isLoading ? null : onTap,
+    child: Container(
+      width: double.infinity,
+      height: 56.h,
+      decoration: BoxDecoration(
+        color: AppColors.purple73,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: Color.fromRGBO(248, 182, 31, 0.58)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4522C2).withOpacity(0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: isLoading
+            ? CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.surface,
+                strokeWidth: 2,
               )
-            ],
-          ),
-          child: Center(
-            child: isLoading
-                ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                : Text(
-                    label,
-                    style: AppTextStyles.poppins(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      letterSpacing: 0.01,
-                      height: 20/24
-                    ),
-                  ),
-          ),
-        ),
-      );
+            : Text(
+                label,
+                style: AppTextStyles.poppins(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  letterSpacing: 0.01,
+                  height: 20 / 24,
+                ),
+              ),
+      ),
+    ),
+  );
 }
 
 // ── Google sign-in button ─────────────────────────────────────────────────────
@@ -87,7 +90,7 @@ class GoogleSignInButton extends StatelessWidget {
     child: Container(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(30.r),
       ),
       child: Row(
@@ -105,7 +108,7 @@ class GoogleSignInButton extends StatelessWidget {
             style: AppTextStyles.poppins(
               fontSize: 16.sp,
               fontWeight: FontWeight.w500,
-              color: AppColors.grey77,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               height: 20 / 16,
               letterSpacing: 0.1,
             ),
@@ -133,7 +136,7 @@ class OrDivider extends StatelessWidget {
           text,
           style: AppTextStyles.poppins(
             fontSize: 14.sp,
-            color: AppColors.grey77,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w400,
             height: 20 / 14,
             letterSpacing: 0.1,

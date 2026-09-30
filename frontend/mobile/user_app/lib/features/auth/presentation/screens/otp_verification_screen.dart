@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:user_app/app/app_router.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
@@ -149,15 +148,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         centerTitle: true,
         title: Text(
           'Enter OTP',
           style: AppTextStyles.poppins(
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w600,
             fontSize: 24.sp,
           ),
@@ -166,7 +165,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 25.r,
-            color: AppColors.grey102,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           onPressed: () => context.pop(),
         ),
@@ -192,7 +191,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               Text(
                 'Resend OTP IN 00:${_start.toString().padLeft(2, '0')}',
                 style: AppTextStyles.poppins(
-                  color: AppColors.grey137,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w500,
                 ),

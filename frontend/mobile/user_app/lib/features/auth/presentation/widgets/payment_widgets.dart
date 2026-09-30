@@ -13,9 +13,9 @@ class PricingCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
@@ -30,7 +30,7 @@ class PricingCardWidget extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.only(top: 24.h, bottom: 16.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
               ),
               child: Column(
@@ -40,7 +40,7 @@ class PricingCardWidget extends StatelessWidget {
                     style: AppTextStyles.poppins(
                       fontSize: 54.sp,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.purple73,
+                      color: Theme.of(context).colorScheme.primary,
                       height: 1.0,
                     ),
                   ),
@@ -48,7 +48,11 @@ class PricingCardWidget extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(width: 40.w, height: 1.5, color: const Color(0xFF4522C2)),
+                      Container(
+                        width: 40.w,
+                        height: 1.5,
+                        color: const Color(0xFF4522C2),
+                      ),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 10.w),
                         child: Text(
@@ -56,11 +60,15 @@ class PricingCardWidget extends StatelessWidget {
                           style: AppTextStyles.poppins(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
-                      Container(width: 40.w, height: 1.5, color: const Color(0xFF4522C2)),
+                      Container(
+                        width: 40.w,
+                        height: 1.5,
+                        color: const Color(0xFF4522C2),
+                      ),
                     ],
                   ),
                 ],
@@ -69,25 +77,38 @@ class PricingCardWidget extends StatelessWidget {
           ),
           SizedBox(height: 20.h),
           const Divider(),
-          
+
           // Features List
           Container(
             padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(20.r)),
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(20.r),
+              ),
             ),
             child: Column(
               children: [
-                _buildFeatureRow("Lifetime Access", "No Expiry"),
-                _buildFeatureRow("High Quality Leads", "Better ROI"),
-                _buildFeatureRow("Trusted Platform", "Verified Vendors"),
-                _buildFeatureRow("24/7 Support", "We are here to help"),
+                _buildFeatureRow(context, "Lifetime Access", "No Expiry"),
+                _buildFeatureRow(context, "High Quality Leads", "Better ROI"),
+                _buildFeatureRow(
+                  context,
+                  "Trusted Platform",
+                  "Verified Vendors",
+                ),
+                _buildFeatureRow(
+                  context,
+                  "24/7 Support",
+                  "We are here to help",
+                ),
                 SizedBox(height: 10.h),
 
                 // Best Value Box
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10.r),
                     border: Border.all(color: AppColors.purple73, width: 1),
@@ -97,14 +118,42 @@ class PricingCardWidget extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Best Value", style: AppTextStyles.poppins(fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.purple73, height: 20/16, letterSpacing: 0.01)),
-                          Text("Pay Once, Use Forever !", style: AppTextStyles.poppins(fontSize: 16.sp, fontWeight: FontWeight.w500, color: AppColors.black, height: 20/16, letterSpacing: 0.01)),
+                          Text(
+                            "Best Value",
+                            style: AppTextStyles.poppins(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.primary,
+                              height: 20 / 16,
+                              letterSpacing: 0.01,
+                            ),
+                          ),
+                          Text(
+                            "Pay Once, Use Forever !",
+                            style: AppTextStyles.poppins(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              height: 20 / 16,
+                              letterSpacing: 0.01,
+                            ),
+                          ),
                         ],
                       ),
                       const Spacer(),
-                      Container(height: 30.h, width: 1.5, color: Colors.grey[300]),
+                      Container(
+                        height: 30.h,
+                        width: 1.5,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                      ),
                       SizedBox(width: 12.w),
-                      Icon(Icons.verified_outlined, color: AppColors.purple73, size: 28.r),
+                      Icon(
+                        Icons.verified_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 28.r,
+                      ),
                     ],
                   ),
                 ),
@@ -116,16 +165,38 @@ class PricingCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureRow(String title, String subtitle) {
+  Widget _buildFeatureRow(BuildContext context, String title, String subtitle) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: Row(
         children: [
-          Icon(Icons.check_circle, color: AppColors.purple73, size: 20.r),
+          Icon(
+            Icons.check_circle,
+            color: Theme.of(context).colorScheme.primary,
+            size: 20.r,
+          ),
           SizedBox(width: 12.w),
-          Text(title, style: AppTextStyles.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.black, height: 20/14, letterSpacing: 0.01)),
+          Text(
+            title,
+            style: AppTextStyles.poppins(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 20 / 14,
+              letterSpacing: 0.01,
+            ),
+          ),
           const Spacer(),
-          Text(subtitle, style: AppTextStyles.poppins(fontSize: 12.sp, color: AppColors.grey137, fontWeight: FontWeight.w400, height: 20/12, letterSpacing: 0.01)),
+          Text(
+            subtitle,
+            style: AppTextStyles.poppins(
+              fontSize: 12.sp,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w400,
+              height: 20 / 12,
+              letterSpacing: 0.01,
+            ),
+          ),
         ],
       ),
     );
@@ -140,7 +211,7 @@ class PaymentSummaryWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8.r),
       ),
       child: Column(
@@ -152,7 +223,16 @@ class PaymentSummaryWidget extends StatelessWidget {
               color: const Color.fromRGBO(217, 206, 255, 1),
               borderRadius: BorderRadius.vertical(top: Radius.circular(8.r)),
             ),
-            child: Text("Payment Summary", style: AppTextStyles.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.black, height: 20/16, letterSpacing: 0.01)),
+            child: Text(
+              "Payment Summary",
+              style: AppTextStyles.poppins(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 20 / 16,
+                letterSpacing: 0.01,
+              ),
+            ),
           ),
           Padding(
             padding: EdgeInsets.all(16.w),
@@ -161,16 +241,54 @@ class PaymentSummaryWidget extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Lifetime Register Fee", style: AppTextStyles.poppins(fontSize: 14.sp, color: AppColors.grey77, height: 20/14, letterSpacing: 0.01)),
-                    Text("₹ 499", style: AppTextStyles.poppins(fontSize: 12.sp, fontWeight: FontWeight.w400, color: AppColors.purple73, height: 20/12, letterSpacing: 0.01)),
+                    Text(
+                      "Lifetime Register Fee",
+                      style: AppTextStyles.poppins(
+                        fontSize: 14.sp,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 20 / 14,
+                        letterSpacing: 0.01,
+                      ),
+                    ),
+                    Text(
+                      "₹ 499",
+                      style: AppTextStyles.poppins(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context).colorScheme.primary,
+                        height: 20 / 12,
+                        letterSpacing: 0.01,
+                      ),
+                    ),
                   ],
                 ),
-                Divider(height: 24.h, color: Colors.grey[300]),
+                Divider(
+                  height: 24.h,
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Total Amount", style: AppTextStyles.poppins(fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.purple73, height: 20/14, letterSpacing: 0.01)),
-                    Text("₹ 499", style: AppTextStyles.poppins(fontSize: 12.sp, fontWeight: FontWeight.w700, color: AppColors.purple73, height: 20/12, letterSpacing: 0.01)),
+                    Text(
+                      "Total Amount",
+                      style: AppTextStyles.poppins(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.primary,
+                        height: 20 / 14,
+                        letterSpacing: 0.01,
+                      ),
+                    ),
+                    Text(
+                      "₹ 499",
+                      style: AppTextStyles.poppins(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.primary,
+                        height: 20 / 12,
+                        letterSpacing: 0.01,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -193,27 +311,55 @@ class TrustBadgesRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildTrustBadge(Icons.lock_outline, "100% Secure\nPayment"),
-        Container(height: 35.h, width: 1, color: Colors.grey[300]),
-        _buildTrustBadge(Icons.currency_rupee, "No Hidden\nCharges", isOutlined: true),
-        Container(height: 35.h, width: 1, color: Colors.grey[300]),
+        Container(
+          height: 35.h,
+          width: 1,
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+        ),
+        _buildTrustBadge(
+          Icons.currency_rupee,
+          "No Hidden\nCharges",
+          isOutlined: true,
+        ),
+        Container(
+          height: 35.h,
+          width: 1,
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+        ),
         _buildTrustBadge(Icons.language, "Trusted by\n10,000+ Vendors"),
       ],
     );
   }
 
-  Widget _buildTrustBadge(IconData icon, String text, {bool isOutlined = false}) {
+  Widget _buildTrustBadge(
+    IconData icon,
+    String text, {
+    bool isOutlined = false,
+  }) {
     return Expanded(
       child: Column(
         children: [
           isOutlined
               ? Container(
                   padding: EdgeInsets.all(4.r),
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.blue34, width: 1.5)),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.blue34, width: 1.5),
+                  ),
                   child: Icon(icon, color: AppColors.blue34, size: 16.r),
                 )
               : Icon(icon, color: AppColors.blue34, size: 26.r),
           SizedBox(height: 6.h),
-          Text(text, textAlign: TextAlign.center, style: AppTextStyles.poppins(fontSize: 10.sp, color: AppColors.blue36, fontWeight: FontWeight.w500, height: 1.3)),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.poppins(
+              fontSize: 10.sp,
+              color: AppColors.blue36,
+              fontWeight: FontWeight.w500,
+              height: 1.3,
+            ),
+          ),
         ],
       ),
     );

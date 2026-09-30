@@ -28,7 +28,7 @@ class PaymentsAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       child: Row(
         children: [
@@ -40,7 +40,7 @@ class PaymentsAppBar extends StatelessWidget {
                 fontFamily: 'Poppins',
                 fontSize: 17.sp,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -66,7 +66,7 @@ class HistoryTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
           Row(
@@ -98,7 +98,10 @@ class HistoryTabBar extends StatelessWidget {
           ),
           Stack(
             children: [
-              Container(height: 2.h, color: Colors.grey.shade200),
+              Container(
+                height: 2.h,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+              ),
               AnimatedAlign(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeInOut,
@@ -138,7 +141,7 @@ class HistoryEmptyState extends StatelessWidget {
           Icon(
             Icons.receipt_long_rounded,
             size: 56.r,
-            color: Colors.grey.shade300,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           SizedBox(height: 12.h),
           Text(
@@ -146,7 +149,7 @@ class HistoryEmptyState extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 14.sp,
-              color: Colors.grey.shade400,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -169,7 +172,7 @@ class PaymentCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 14.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: _kBorder, width: 1.2),
       ),
@@ -203,7 +206,7 @@ class PaymentCard extends StatelessWidget {
                           fontFamily: 'Poppins',
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(height: 2.h),
@@ -221,7 +224,10 @@ class PaymentCard extends StatelessWidget {
               ],
             ),
           ),
-          Divider(height: 1, color: Colors.grey.shade100),
+          Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
           Container(
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
@@ -242,7 +248,7 @@ class PaymentCard extends StatelessWidget {
                         fontFamily: 'Poppins',
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     SizedBox(height: 2.h),
@@ -277,7 +283,7 @@ class PaymentCard extends StatelessWidget {
                             fontFamily: 'Poppins',
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         Text(
@@ -311,7 +317,7 @@ class LeadCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 14.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: _kBorder, width: 1.2),
       ),
@@ -345,7 +351,7 @@ class LeadCard extends StatelessWidget {
                           fontFamily: 'Poppins',
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(height: 2.h),
@@ -381,7 +387,10 @@ class LeadCard extends StatelessWidget {
               ],
             ),
           ),
-          Divider(height: 1, color: Colors.grey.shade100),
+          Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
           Container(
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
@@ -402,7 +411,7 @@ class LeadCard extends StatelessWidget {
                         fontFamily: 'Poppins',
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     SizedBox(height: 2.h),
@@ -437,14 +446,14 @@ class LeadCard extends StatelessWidget {
                             fontFamily: 'Poppins',
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black87,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         SizedBox(width: 4.w),
                         Icon(
                           Icons.download_rounded,
                           size: 18.r,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ],
                     ),

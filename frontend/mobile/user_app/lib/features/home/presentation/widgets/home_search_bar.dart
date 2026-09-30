@@ -48,7 +48,7 @@ class HomeSearchBar extends HookConsumerWidget {
                 style: AppTextStyles.poppins(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               backgroundColor: const Color(0xFFF7E9A6),
@@ -68,9 +68,11 @@ class HomeSearchBar extends HookConsumerWidget {
           margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 10.h),
           height: 54.h,
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: AppColors.grey223),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+            ),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x11000000),
@@ -82,7 +84,11 @@ class HomeSearchBar extends HookConsumerWidget {
           child: Row(
             children: [
               SizedBox(width: 14.w),
-              Icon(Icons.search_rounded, color: AppColors.grey117, size: 22.r),
+              Icon(
+                Icons.search_rounded,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                size: 22.r,
+              ),
               SizedBox(width: 10.w),
               Expanded(
                 child: TextField(
@@ -101,7 +107,7 @@ class HomeSearchBar extends HookConsumerWidget {
                   style: AppTextStyles.poppins(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                   textInputAction: TextInputAction.search,
                   decoration: InputDecoration(
@@ -110,7 +116,7 @@ class HomeSearchBar extends HookConsumerWidget {
                     hintText: 'Search leads,...',
                     hintStyle: AppTextStyles.poppins(
                       fontSize: 13.sp,
-                      color: AppColors.grey137,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -124,7 +130,7 @@ class HomeSearchBar extends HookConsumerWidget {
                   },
                   icon: Icon(
                     Icons.close_rounded,
-                    color: AppColors.grey117,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     size: 20.r,
                   ),
                   splashRadius: 18.r,

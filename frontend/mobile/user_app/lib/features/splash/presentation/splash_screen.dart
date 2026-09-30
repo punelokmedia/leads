@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/features/auth/shared/auth_providers.dart';
+
 // Ensure your secure storage provider is imported (adjust path if needed)
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -69,7 +70,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Stack(
         children: [
           Positioned(
@@ -93,8 +94,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 // ── Logo ──
                 Center(
                   child: Image.asset(
-                    'assets/Icons/appIcon/splash_screen.png',
-                    width: 236.h,
+                    'assets/Icons/appIcon/nextLeads_logo.png',
+                    width: 236.w,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
                     errorBuilder: (_, _, _) => Icon(
                       Icons.storefront_rounded,
                       size: 80.r,
@@ -112,7 +115,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       width: 180.w,
                       height: 6.h,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       alignment: Alignment.centerLeft,

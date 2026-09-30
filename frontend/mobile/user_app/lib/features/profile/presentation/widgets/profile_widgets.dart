@@ -23,7 +23,7 @@ class ProfileAppBar extends StatelessWidget {
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
               size: 22.r,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             onPressed: () {},
           ),
@@ -36,7 +36,7 @@ class ProfileAppBar extends StatelessWidget {
                   height: 20 / 24,
                   letterSpacing: 0.01,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -64,7 +64,7 @@ class AvatarHeader extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 45.r,
-          backgroundColor: const Color(0xFFEEEDFE),
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
           child: Text(
             _initials,
             style: AppTextStyles.poppins(
@@ -94,7 +94,7 @@ class AvatarHeader extends StatelessWidget {
                 profile.phoneNumber,
                 style: AppTextStyles.poppins(
                   fontSize: 14.sp,
-                  color: AppColors.purple73,
+                  color: Theme.of(context).colorScheme.primary,
                   height: 1,
                   letterSpacing: 0.01,
                   fontWeight: FontWeight.w400,
@@ -105,7 +105,7 @@ class AvatarHeader extends StatelessWidget {
                 profile.email,
                 style: AppTextStyles.poppins(
                   fontSize: 12.sp,
-                  color: AppColors.grey137,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                   height: 20 / 12,
                   letterSpacing: 0.01,
@@ -116,7 +116,7 @@ class AvatarHeader extends StatelessWidget {
                 profile.cityName,
                 style: AppTextStyles.poppins(
                   fontSize: 12.sp,
-                  color: AppColors.grey137,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   letterSpacing: 0.01,
                   height: 14 / 12,
                   fontWeight: FontWeight.w400,
@@ -142,7 +142,10 @@ class EditButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.purple73,
           borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: const Color(0xFFE0E0E0), width: 2.w),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            width: 2.w,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.15),
@@ -193,7 +196,7 @@ class LabeledCard extends StatelessWidget {
             label,
             style: AppTextStyles.poppins(
               fontSize: 12.sp,
-              color: AppColors.grey137,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               height: 20 / 12,
               letterSpacing: 0.01,
               fontWeight: FontWeight.w500,
@@ -204,9 +207,12 @@ class LabeledCard extends StatelessWidget {
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: Colors.grey.shade200, width: 0.5),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              width: 0.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: const Color.fromRGBO(0, 0, 0, 0.25),
@@ -221,7 +227,7 @@ class LabeledCard extends StatelessWidget {
               fontSize: 16.sp,
               fontWeight: FontWeight.w500,
               height: 20 / 16,
-              color: const Color(0xFF424242),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
@@ -242,9 +248,12 @@ class LogoutTile extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: Colors.grey.shade200, width: 0.5),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            width: 0.5,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.02),
@@ -287,7 +296,7 @@ class ProfileIllustration extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => Container(
           height: 170.h,
           width: 170.w,
-          color: Colors.grey[300],
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
           child: Center(
             child: Text("Illustration", style: TextStyle(fontSize: 12.sp)),
           ),
@@ -313,7 +322,10 @@ class ProfileShimmerLoading extends StatelessWidget {
             SizedBox(height: 10.h),
             Row(
               children: [
-                CircleAvatar(radius: 45.r, backgroundColor: Colors.white),
+                CircleAvatar(
+                  radius: 45.r,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                ),
                 SizedBox(width: 20.w),
                 Expanded(
                   child: Column(
@@ -322,25 +334,25 @@ class ProfileShimmerLoading extends StatelessWidget {
                       Container(
                         width: 160.w,
                         height: 20.h,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                       ),
                       SizedBox(height: 9.h),
                       Container(
                         width: 120.w,
                         height: 14.h,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                       ),
                       SizedBox(height: 5.h),
                       Container(
                         width: 140.w,
                         height: 12.h,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                       ),
                       SizedBox(height: 3.h),
                       Container(
                         width: 100.w,
                         height: 12.h,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                       ),
                     ],
                   ),
@@ -348,34 +360,42 @@ class ProfileShimmerLoading extends StatelessWidget {
               ],
             ),
             SizedBox(height: 24.h),
-            Divider(height: 2.h, thickness: 2.h, color: Colors.white),
+            Divider(
+              height: 2.h,
+              thickness: 2.h,
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
             SizedBox(height: 24.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(width: 150.w, height: 22.h, color: Colors.white),
+                Container(
+                  width: 150.w,
+                  height: 22.h,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
                 Container(
                   width: 70.w,
                   height: 32.h,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                 ),
               ],
             ),
             SizedBox(height: 20.h),
-            _buildShimmerField(),
+            _buildShimmerField(context),
             SizedBox(height: 16.h),
-            _buildShimmerField(),
+            _buildShimmerField(context),
             SizedBox(height: 16.h),
-            _buildShimmerField(),
+            _buildShimmerField(context),
             SizedBox(height: 30.h),
             Container(
               width: double.infinity,
               height: 50.h,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(10.r),
               ),
             ),
@@ -383,7 +403,7 @@ class ProfileShimmerLoading extends StatelessWidget {
             Container(
               width: double.infinity,
               height: 170.h,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
             ),
             SizedBox(height: 40.h),
           ],
@@ -392,17 +412,21 @@ class ProfileShimmerLoading extends StatelessWidget {
     );
   }
 
-  Widget _buildShimmerField() {
+  Widget _buildShimmerField(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(width: 100.w, height: 10.h, color: Colors.white),
+        Container(
+          width: 100.w,
+          height: 10.h,
+          color: Theme.of(context).colorScheme.surface,
+        ),
         SizedBox(height: 6.h),
         Container(
           width: double.infinity,
           height: 50.h,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(10.r),
           ),
         ),
@@ -422,7 +446,7 @@ class LogoutConfirmationDialog extends ConsumerWidget {
         // ✅ 3px border with specific color from your Figma
         side: BorderSide(color: const Color(0xFF8981A4), width: 3.w),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 30.h),
         child: Column(
@@ -434,7 +458,7 @@ class LogoutConfirmationDialog extends ConsumerWidget {
               style: AppTextStyles.poppins(
                 fontSize: 24.sp,
                 fontWeight: FontWeight.w500,
-                color: AppColors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 height: 20 / 24,
                 letterSpacing: 0.01,
               ),
@@ -462,9 +486,9 @@ class LogoutConfirmationDialog extends ConsumerWidget {
               style: AppTextStyles.poppins(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w400,
-                color: AppColors.grey102,
-                height: 19/16,
-                letterSpacing: 0.01
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 19 / 16,
+                letterSpacing: 0.01,
               ),
             ),
             SizedBox(height: 30.h),
@@ -477,9 +501,7 @@ class LogoutConfirmationDialog extends ConsumerWidget {
                 onPressed: () {
                   ref.read(profileControllerProvider.notifier).logout(() {
                     Navigator.of(context).pop();
-                    context.go(
-                      AppRouter.login,
-                    ); 
+                    context.go(AppRouter.login);
                   });
                 },
                 style: OutlinedButton.styleFrom(
@@ -490,14 +512,14 @@ class LogoutConfirmationDialog extends ConsumerWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  backgroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                 ),
                 child: Text(
                   'Logout',
                   style: AppTextStyles.poppins(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w700,
-                    height: 19/20,
+                    height: 19 / 20,
                     letterSpacing: 0.01,
                     color: AppColors.red237,
                   ), // Red text

@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 
 class CustomProfileTextField extends StatelessWidget {
@@ -33,24 +32,29 @@ class CustomProfileTextField extends StatelessWidget {
             label,
             style: AppTextStyles.poppins(
               fontSize: 16.sp,
-              color: floatingLabelColor ?? AppColors.grey198, 
+              color:
+                  floatingLabelColor ??
+                  Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
-              height: 20/16,
-              letterSpacing: 0.01
+              height: 20 / 16,
+              letterSpacing: 0.01,
             ),
           ),
         ),
         // ── Input Box ──
         _buildContainer(
+          context,
           child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
             style: AppTextStyles.poppins(
-              fontSize: 16.sp, 
-              color: Colors.grey[800], // Darker text for input value
+              fontSize: 16.sp,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant, // Darker text for input value
               fontWeight: FontWeight.w500,
             ),
-            decoration: _buildInputDecoration(hintText),
+            decoration: _buildInputDecoration(context, hintText),
           ),
         ),
       ],
@@ -86,27 +90,37 @@ class CustomProfileDropdown extends StatelessWidget {
             label,
             style: AppTextStyles.poppins(
               fontSize: 14.sp,
-              color: AppColors.grey163, 
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
         // ── Input Box ──
         _buildContainer(
+          context,
           child: DropdownButtonFormField<String>(
             key: ValueKey('${value ?? ''}-${items.join('|')}'),
-            initialValue: (value != null && items.contains(value)) ? value : null,
-            icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600], size: 24.r),
+            initialValue: (value != null && items.contains(value))
+                ? value
+                : null,
+            icon: Icon(
+              Icons.keyboard_arrow_down,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              size: 24.r,
+            ),
             style: AppTextStyles.poppins(
-              fontSize: 16.sp, 
-              color: Colors.grey[800],
+              fontSize: 16.sp,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
-            decoration: _buildInputDecoration(hintText),
+            decoration: _buildInputDecoration(context, hintText),
             items: items.map((String item) {
               return DropdownMenuItem<String>(
                 value: item,
-                child: Text(item, style: AppTextStyles.poppins(fontSize: 15.sp)),
+                child: Text(
+                  item,
+                  style: AppTextStyles.poppins(fontSize: 15.sp),
+                ),
               );
             }).toList(),
             onChanged: onChanged,
@@ -118,15 +132,23 @@ class CustomProfileDropdown extends StatelessWidget {
 }
 
 // ── Shared UI Helpers ──
-Widget _buildContainer({required Widget child}) {
+Widget _buildContainer(BuildContext context, {required Widget child}) {
   return Container(
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(20.r),
-      border: Border.all(color:Color.fromRGBO(221,221,221,1), width: 1), // Distinct light grey border
+      border: Border.all(
+        color: Color.fromRGBO(221, 221, 221, 1),
+        width: 1,
+      ), // Distinct light grey border
       boxShadow: const [
         BoxShadow(
-          color: Color.fromRGBO(0, 0, 0, 0.25), // Very soft, smooth shadow from design
+          color: Color.fromRGBO(
+            0,
+            0,
+            0,
+            0.25,
+          ), // Very soft, smooth shadow from design
           blurRadius: 4,
           offset: Offset(0, 4),
         ),
@@ -136,15 +158,16 @@ Widget _buildContainer({required Widget child}) {
   );
 }
 
-InputDecoration _buildInputDecoration(String hint) {
+InputDecoration _buildInputDecoration(BuildContext context, String hint) {
   return InputDecoration(
     hintText: hint,
     hintStyle: AppTextStyles.poppins(
       fontSize: 15.sp,
-      color: AppColors.grey163,
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
       fontWeight: FontWeight.w400,
     ),
     contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-    border: InputBorder.none, // Hide default border since we use the Container's border
+    border: InputBorder
+        .none, // Hide default border since we use the Container's border
   );
 }

@@ -57,9 +57,9 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
     final isLoading = ref.watch(isLoadingProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -67,7 +67,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
           style: AppTextStyles.poppins(
             fontSize: 23.sp,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
@@ -89,7 +89,8 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                     itemCount: leads.length,
                     itemBuilder: (_, i) => _LeadTile(
                       lead: leads[i],
-                      onAddToCart: _onAddToCart, // ✅ Passed the actual function here
+                      onAddToCart:
+                          _onAddToCart, // ✅ Passed the actual function here
                     ),
                   ),
           ),
@@ -122,7 +123,9 @@ class _LeadTileState extends State<_LeadTile> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Maximum sharing limit of ${widget.lead.sharingCount} reached for this lead.'),
+          content: Text(
+            'Maximum sharing limit of ${widget.lead.sharingCount} reached for this lead.',
+          ),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
@@ -153,9 +156,11 @@ class _LeadTileState extends State<_LeadTile> {
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
       padding: EdgeInsets.all(10.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+        ),
       ),
       child: Row(
         children: [
@@ -200,7 +205,7 @@ class _LeadTileState extends State<_LeadTile> {
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.poppins(
                     fontSize: 11.sp,
-                    color: Colors.grey,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
 
@@ -215,11 +220,11 @@ class _LeadTileState extends State<_LeadTile> {
                       style: AppTextStyles.poppins(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.purple72,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     SizedBox(width: 8.w),
-                    
+
                     /// ✅ Add to Cart / Plus-Minus Toggle
                     Expanded(
                       child: _quantity == 0
@@ -230,7 +235,10 @@ class _LeadTileState extends State<_LeadTile> {
                                       setState(() {
                                         _quantity = 1;
                                       });
-                                      widget.onAddToCart(widget.lead, _quantity);
+                                      widget.onAddToCart(
+                                        widget.lead,
+                                        _quantity,
+                                      );
                                     },
                               child: Container(
                                 height: 28.h,
@@ -244,7 +252,9 @@ class _LeadTileState extends State<_LeadTile> {
                                   style: AppTextStyles.poppins(
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.purple72,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                 ),
                               ),
@@ -256,7 +266,8 @@ class _LeadTileState extends State<_LeadTile> {
                                 border: Border.all(color: AppColors.purple72),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: [
                                   GestureDetector(
                                     onTap: _decrement,
@@ -264,7 +275,13 @@ class _LeadTileState extends State<_LeadTile> {
                                       width: 24.w,
                                       color: Colors.transparent,
                                       alignment: Alignment.center,
-                                      child: Icon(Icons.remove, size: 14.r, color: AppColors.purple72),
+                                      child: Icon(
+                                        Icons.remove,
+                                        size: 14.r,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                      ),
                                     ),
                                   ),
                                   Text(
@@ -272,7 +289,9 @@ class _LeadTileState extends State<_LeadTile> {
                                     style: AppTextStyles.poppins(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.purple72,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
                                     ),
                                   ),
                                   GestureDetector(
@@ -281,7 +300,13 @@ class _LeadTileState extends State<_LeadTile> {
                                       width: 24.w,
                                       color: Colors.transparent,
                                       alignment: Alignment.center,
-                                      child: Icon(Icons.add, size: 14.r, color: AppColors.purple72),
+                                      child: Icon(
+                                        Icons.add,
+                                        size: 14.r,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -295,7 +320,10 @@ class _LeadTileState extends State<_LeadTile> {
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
-                          context.push(AppRouter.leadDetailsPath, extra: widget.lead);
+                          context.push(
+                            AppRouter.leadDetailsPath,
+                            extra: widget.lead,
+                          );
                         },
                         child: Container(
                           height: 28.h,

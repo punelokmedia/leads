@@ -54,12 +54,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     // Proceed to next screen
     context.push(
-          AppRouter.verifyNumberPath,
-          extra: {
-            'isGoogle': false,
-            'phone': phone,
-          }, 
-        );
+      AppRouter.verifyNumberPath,
+      extra: {'isGoogle': false, 'phone': phone},
+    );
   }
 
   void _onGoogleLogin() {
@@ -83,13 +80,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.white, // Top is white
-              Colors.white, // Middle is white
+              Theme.of(context).colorScheme.surface, // Top is white
+              Theme.of(context).colorScheme.surface, // Middle is white
               Color(0xFF9F75FF), // Bottom fades into light purple
             ],
             stops: [
@@ -114,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   errorBuilder: (_, _, _) => Icon(
                     Icons.storefront_rounded,
                     size: 56.r,
-                    color: AppColors.purple73,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 SizedBox(height: 24.h),
@@ -127,7 +124,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     fontWeight: FontWeight.w600,
                     height: 20 / 24,
                     letterSpacing: 0.01,
-                    color: AppColors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: 6.h),
@@ -135,7 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   'Login to access your account',
                   style: AppTextStyles.poppins(
                     fontSize: 16.sp,
-                    color: AppColors.grey77,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                     height: 20 / 16,
                     letterSpacing: 0.01,
@@ -156,7 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     'Enter Mobile Number',
                     style: AppTextStyles.poppins(
                       fontSize: 18.sp,
-                      color: AppColors.grey77,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 20 / 18,
                       letterSpacing: 0.1,
                       fontWeight: FontWeight.w600,
@@ -168,7 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // ── Custom Mobile Number Field with Soft Shadow ──
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12.r),
                     boxShadow: [
                       BoxShadow(
@@ -187,13 +184,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                     style: AppTextStyles.poppins(
                       fontSize: 16.sp,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     decoration: InputDecoration(
                       hintText: '9845 372784',
                       hintStyle: AppTextStyles.poppins(
                         fontSize: 16.sp,
-                        color: AppColors.grey163,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 20 / 16,
                         letterSpacing: 0.01,
                       ),
@@ -216,7 +213,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               '+91',
                               style: AppTextStyles.poppins(
                                 fontSize: 16.sp,
-                                color: Colors.grey[600],
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -224,7 +223,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Container(
                               width: 1.w,
                               height: 24.h,
-                              color: Colors.grey[300],
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                             SizedBox(width: 8.w),
                           ],
@@ -258,7 +259,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: AppTextStyles.poppins(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.white,
+                    color: Colors.white,
                     height: 21 / 14,
                   ),
                 ),
@@ -272,7 +273,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       "Don't have an account? ",
                       style: AppTextStyles.poppins(
                         fontSize: 16.sp,
-                        color: AppColors.white,
+                        color: Colors.white,
                         fontWeight: FontWeight.w500,
                         height: 20 / 16,
                         letterSpacing: 0.01,

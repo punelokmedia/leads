@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'preview_data.dart';
+import '../../core/theme/app_theme.dart';
 
 const _purple = Color(0xFF5722CE);
 const _gradient = LinearGradient(
@@ -30,21 +31,9 @@ class _PreviewAppState extends State<PreviewApp> {
   Widget build(BuildContext context) => MaterialApp(
     title: 'NextLeads • Test mode',
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(seedColor: _purple),
-      scaffoldBackgroundColor: const Color(0xFFFAF9FD),
-      appBarTheme: const AppBarTheme(
-        centerTitle: true,
-        backgroundColor: Colors.white,
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: _purple,
-          foregroundColor: Colors.white,
-        ),
-      ),
-    ),
+    theme: AppTheme.light,
+    darkTheme: AppTheme.dark,
+    themeMode: AppTheme.mode,
     builder: (context, child) => Column(
       children: [
         Material(
@@ -91,7 +80,8 @@ class _PreviewHomeState extends State<PreviewHome> {
   List<PreviewLead> get filtered => store.leads
       .where(
         (l) =>
-            (city == 'All Cities' || l.city.toLowerCase() == city.toLowerCase()) &&
+            (city == 'All Cities' ||
+                l.city.toLowerCase() == city.toLowerCase()) &&
             (category == null || l.category == category) &&
             (!savedOnly || l.saved) &&
             '${l.title} ${l.city} ${l.id}'.toLowerCase().contains(
@@ -272,7 +262,7 @@ class _PreviewHomeState extends State<PreviewHome> {
                           setState(() => showFeaturePrompt = false),
                       child: Card(
                         elevation: 6,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         clipBehavior: Clip.antiAlias,
                         child: InkWell(
                           onTap: () => Navigator.push(
@@ -288,9 +278,9 @@ class _PreviewHomeState extends State<PreviewHome> {
                             padding: const EdgeInsets.fromLTRB(16, 8, 8, 16),
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.tips_and_updates_outlined,
-                                  color: _purple,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                                 const SizedBox(width: 12),
                                 const Expanded(
@@ -490,7 +480,7 @@ class _PreviewHomeState extends State<PreviewHome> {
       ),
       if (filtered.isEmpty) const EmptyLeads(),
       ...filtered.take(3).map((l) => LeadPreviewCard(lead: l, store: store)),
-      if (!store.isLive) const TrustStrip(),
+      TrustStrip(store: store),
     ],
   );
 
@@ -589,10 +579,13 @@ class _PreviewHomeState extends State<PreviewHome> {
       ...store.receipts.map(
         (r) => Card(
           child: ListTile(
-            leading: const Icon(Icons.check_circle, color: Colors.green),
+            leading: Icon(
+              r.status == 'Paid' ? Icons.check_circle : Icons.currency_exchange,
+              color: r.status == 'Paid' ? Colors.green : Colors.orange,
+            ),
             title: Text(r.title),
             subtitle: Text(
-              '${r.leadId} • ${store.isLive ? 'Paid' : 'Test payment successful'}',
+              '${r.leadId} • ${store.isLive ? r.status : 'Test payment successful'}',
             ),
             trailing: Text(money(r.fee)),
             onTap: () => showDialog<void>(
@@ -600,7 +593,7 @@ class _PreviewHomeState extends State<PreviewHome> {
               builder: (_) => AlertDialog(
                 title: Text(store.isLive ? 'Receipt' : 'Test receipt'),
                 content: Text(
-                  '${r.leadId}\n${r.title}\nAmount: ${money(r.fee)}\nStatus: ${store.isLive ? 'Paid' : 'Simulated success\nNo real transaction was created.'}',
+                  '${r.leadId}\n${r.title}\nAmount: ${money(r.fee)}\nStatus: ${store.isLive ? r.status : 'Simulated success\nNo real transaction was created.'}',
                 ),
                 actions: [
                   TextButton(
@@ -921,7 +914,7 @@ class LeadPreviewCard extends StatelessWidget {
   const LeadPreviewCard({super.key, required this.lead, required this.store});
   @override
   Widget build(BuildContext context) => Card(
-    color: Colors.white,
+    color: Theme.of(context).colorScheme.surface,
     margin: const EdgeInsets.only(bottom: 12),
     child: Padding(
       padding: const EdgeInsets.all(14),
@@ -943,7 +936,10 @@ class LeadPreviewCard extends StatelessWidget {
                 ),
                 Text(
                   '${lead.city}, ${lead.state}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -952,8 +948,8 @@ class LeadPreviewCard extends StatelessWidget {
                 ),
                 Text(
                   (lead.budgetLabel ?? money(lead.budget)),
-                  style: const TextStyle(
-                    color: _purple,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
                     fontSize: 19,
                     fontWeight: FontWeight.bold,
                   ),
@@ -966,13 +962,19 @@ class LeadPreviewCard extends StatelessWidget {
                     Text(
                       lead.status,
                       style: TextStyle(
-                        color: lead.closed ? Colors.grey : _purple,
+                        color: lead.closed
+                            ? Theme.of(context).colorScheme.onSurfaceVariant
+                            : Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                       ),
                     ),
                     if (lead.saved)
-                      const Icon(Icons.favorite, color: _purple, size: 16),
+                      Icon(
+                        Icons.favorite,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 16,
+                      ),
                   ],
                 ),
                 Align(
@@ -1018,20 +1020,26 @@ class EmptyLeads extends StatelessWidget {
 }
 
 class TrustStrip extends StatelessWidget {
-  const TrustStrip({super.key});
+  final PreviewStore? store;
+  const TrustStrip({super.key, this.store});
   @override
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.symmetric(vertical: 12),
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: const Color(0xFFF0EBFD),
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(12),
     ),
-    child: const Wrap(
+    child: Wrap(
       alignment: WrapAlignment.center,
       spacing: 16,
       runSpacing: 8,
-      children: [
+      children: store?.isLive == true ? [
+        Text('${store!.categories.length} service categories'),
+        Text('${store!.cities.length} cities'),
+        const Text('Two buyers per lead'),
+        const Text('Support inbox available 24/7'),
+      ] : const [
         Text('✦ Verified & quality leads'),
         Text('⌖ Pan India • 1000+ cities'),
         Text('✓ Secure platform'),
@@ -1069,12 +1077,16 @@ class _CategoryPreviewState extends State<CategoryPreview> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFE9FC),
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.public, color: _purple, size: 40),
+                  Icon(
+                    Icons.public,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 40,
+                  ),
                   SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -1087,9 +1099,9 @@ class _CategoryPreviewState extends State<CategoryPreview> {
                             fontSize: 18,
                           ),
                         ),
-                        Text('Leads available in 1000+ cities'),
+                        Text(store.isLive ? '${store.cities.length} cities in our catalog' : 'Leads available in 1000+ cities'),
                         Text(
-                          'Coverage claims shown as mock copy',
+                          store.isLive ? 'Select a category to see current availability' : 'Coverage claims shown as mock copy',
                           style: TextStyle(fontSize: 10),
                         ),
                       ],
@@ -1147,9 +1159,13 @@ class _CategoryPreviewState extends State<CategoryPreview> {
                     horizontal: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: i.isEven ? Colors.white : const Color(0xFFF5F2FA),
-                    border: const Border(
-                      bottom: BorderSide(color: Color(0xFFEDEAF2)),
+                    color: i.isEven
+                        ? Theme.of(context).colorScheme.surface
+                        : Theme.of(context).colorScheme.surfaceContainerLow,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
                     ),
                   ),
                   child: pricing
@@ -1197,9 +1213,11 @@ class _CategoryPreviewState extends State<CategoryPreview> {
                                   Text(c.name),
                                   Text(
                                     '${widget.store.leads.where((l) => l.category == i && !l.closed).length} available ${store.isLive ? '' : 'test '}leads',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
@@ -1217,12 +1235,15 @@ class _CategoryPreviewState extends State<CategoryPreview> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Prices vary by city and project. See each lead for its access fee.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: _purple, fontSize: 12),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 12,
+              ),
             ),
-            if (!store.isLive) const TrustStrip(),
+            TrustStrip(store: store),
           ],
         ),
       ),
@@ -1304,7 +1325,7 @@ class LeadDetailsPreview extends StatelessWidget {
             onPressed: () => store.toggleSaved(lead),
             icon: Icon(
               lead.saved ? Icons.favorite : Icons.favorite_border,
-              color: _purple,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           IconButton(
@@ -1387,7 +1408,7 @@ class LeadDetailsPreview extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -1399,8 +1420,10 @@ class LeadDetailsPreview extends StatelessWidget {
                                 const Text('Project Budget'),
                                 Text(
                                   (lead.budgetLabel ?? money(lead.budget)),
-                                  style: const TextStyle(
-                                    color: _purple,
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     fontSize: 26,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1426,31 +1449,42 @@ class LeadDetailsPreview extends StatelessWidget {
                 ),
               ),
               panel(
+                context,
                 'Project Requirements',
                 Text(lead.description, style: const TextStyle(height: 1.6)),
               ),
               panel(
+                context,
                 'Project Information',
                 Column(
                   children: [
                     info(
+                      context,
                       Icons.work_outline,
                       'Project Type',
                       store.categories[lead.category].name,
                     ),
-                    info(Icons.person_outline, 'Client Type', lead.clientType),
                     info(
+                      context,
+                      Icons.person_outline,
+                      'Client Type',
+                      lead.clientType,
+                    ),
+                    info(
+                      context,
                       Icons.home_outlined,
                       'Property Type',
                       lead.propertyType,
                     ),
-                    info(Icons.square_foot, 'Area', lead.area),
+                    info(context, Icons.square_foot, 'Area', lead.area),
                     info(
+                      context,
                       Icons.calendar_month,
                       'Project Timeline',
                       lead.timeline,
                     ),
                     info(
+                      context,
                       Icons.event_available,
                       'Preferred Starting Date',
                       lead.start,
@@ -1459,6 +1493,7 @@ class LeadDetailsPreview extends StatelessWidget {
                 ),
               ),
               panel(
+                context,
                 'Vendors Joined • ${lead.buyers}/${lead.maxBuyers}',
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1470,15 +1505,20 @@ class LeadDetailsPreview extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      lead.closed
-                          ? 'This lead is closed. All vendor slots are filled.'
-                          : '${lead.maxBuyers - lead.buyers} more vendor${lead.buyers == 0 ? 's' : ''} can join this lead.',
+                      lead.reserved
+                          ? 'Checkout slots are temporarily reserved. Try again shortly.'
+                          : lead.expired
+                          ? 'This lead has expired.'
+                          : lead.closed
+                          ? 'Out of stock. Two buyers have purchased this lead.'
+                          : '${lead.availableSlots} slot(s) available. One purchase per buyer.',
                     ),
                   ],
                 ),
               ),
               if (lead.joined)
                 panel(
+                  context,
                   store.isLive
                       ? 'Client Contact'
                       : 'Sample Client Contact • Unlocked',
@@ -1488,7 +1528,7 @@ class LeadDetailsPreview extends StatelessWidget {
                         : 'Demo Client\nclient@example.test\nPhone: +91 XXXXX XXXXX\nSample address: Demo Apartment, selected city\n\nTest data only. No real client will be contacted.',
                   ),
                 ),
-              if (!store.isLive) const TrustStrip(),
+              TrustStrip(store: store),
             ],
           ),
         ),
@@ -1510,9 +1550,9 @@ class LeadDetailsPreview extends StatelessWidget {
                         const Text('Lead Access Fee'),
                         Text(
                           money(lead.fee),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 25,
-                            color: _purple,
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -1530,7 +1570,9 @@ class LeadDetailsPreview extends StatelessWidget {
                         lead.joined
                             ? 'Contact Unlocked'
                             : lead.closed
-                            ? 'Lead Closed'
+                            ? (store.isLive
+                                  ? lead.availabilityLabel
+                                  : 'Lead Closed')
                             : 'Accept Lead & View Contact',
                         textAlign: TextAlign.center,
                       ),
@@ -1551,8 +1593,8 @@ class LeadDetailsPreview extends StatelessWidget {
     ),
   );
 
-  Widget panel(String title, Widget child) => Card(
-    color: Colors.white,
+  Widget panel(BuildContext context, String title, Widget child) => Card(
+    color: Theme.of(context).colorScheme.surface,
     margin: const EdgeInsets.only(top: 14),
     child: Padding(
       padding: const EdgeInsets.all(18),
@@ -1569,11 +1611,16 @@ class LeadDetailsPreview extends StatelessWidget {
       ),
     ),
   );
-  Widget info(IconData icon, String label, String value) => Padding(
+  Widget info(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 10),
     child: Row(
       children: [
-        Icon(icon, color: _purple, size: 22),
+        Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
         const SizedBox(width: 10),
         Expanded(child: Text(label)),
         const SizedBox(width: 8),
@@ -1581,7 +1628,7 @@ class LeadDetailsPreview extends StatelessWidget {
           child: Text(
             value,
             textAlign: TextAlign.right,
-            style: const TextStyle(color: Colors.black54),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           ),
         ),
       ],
@@ -1694,8 +1741,10 @@ class _SupportPreviewState extends State<SupportPreview> {
                             : Alignment.centerLeft,
                         child: Card(
                           color: m.startsWith('You:')
-                              ? const Color(0xFFECE3FE)
-                              : Colors.white,
+                              ? Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerLow
+                              : Theme.of(context).colorScheme.surface,
                           child: Padding(
                             padding: const EdgeInsets.all(14),
                             child: Text(m),
@@ -1724,7 +1773,10 @@ class _SupportPreviewState extends State<SupportPreview> {
                 IconButton(
                   tooltip: 'Send test message',
                   onPressed: send,
-                  icon: const Icon(Icons.send, color: _purple),
+                  icon: Icon(
+                    Icons.send,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ],
             ),
@@ -1744,15 +1796,17 @@ class NotificationsPreview extends StatelessWidget {
     body: ListenableBuilder(
       listenable: store,
       builder: (context, _) => ListView(
-        children: store.notifications
+        children: store.notifications.isEmpty
+            ? [const ListTile(title: Text('No notifications yet'))]
+            : store.notifications
             .map(
               (n) => ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.notifications_active_outlined,
-                  color: _purple,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 title: Text(n),
-                subtitle: const Text('Test notification'),
+                subtitle: Text(store.isLive ? 'Account update' : 'Test notification'),
               ),
             )
             .toList(),

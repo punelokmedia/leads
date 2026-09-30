@@ -14,8 +14,6 @@ import 'package:user_app/features/auth/presentation/widgets/city_list_item_widge
 import 'package:user_app/features/auth/shared/profile_draft_provider.dart';
 import '../../shared/auth_providers.dart';
 
-
-
 class ChooseWorkCityScreen extends ConsumerStatefulWidget {
   const ChooseWorkCityScreen({super.key});
 
@@ -68,23 +66,27 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
   Future<void> _onContinue() async {
     if (_selectedCityName == null) return;
     print("Selected City: $_selectedCityName, ID: $_selectedCityId");
-    
+
     // ✅ Save both to the draft provider
-    ref.read(profileDraftProvider.notifier).updateCity(
-      cityName: _selectedCityName!, 
-      cityId: _selectedCityId ?? ''
-    );
-    
+    ref
+        .read(profileDraftProvider.notifier)
+        .updateCity(
+          cityName: _selectedCityName!,
+          cityId: _selectedCityId ?? '',
+        );
+
     context.push(AppRouter.chooseCategoryPath);
   }
 
   // ✅ Change parameter to List<City> instead of List<String>
   Widget _buildCityList(List<City> allCities) {
     final query = _searchCtrl.text.toLowerCase();
-    
-    final filteredCities = query.isEmpty 
-        ? allCities 
-        : allCities.where((city) => city.name.toLowerCase().contains(query)).toList();
+
+    final filteredCities = query.isEmpty
+        ? allCities
+        : allCities
+              .where((city) => city.name.toLowerCase().contains(query))
+              .toList();
 
     if (filteredCities.isEmpty) {
       return Padding(
@@ -94,7 +96,7 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
             "No cities found matching '${_searchCtrl.text}'",
             style: AppTextStyles.poppins(
               fontSize: 14.sp,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -107,7 +109,8 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
           padding: EdgeInsets.only(bottom: 16.h),
           child: CityListItemWidget(
             cityName: city.name,
-            isSelected: _selectedCityName?.toLowerCase() == city.name.toLowerCase(),
+            isSelected:
+                _selectedCityName?.toLowerCase() == city.name.toLowerCase(),
             onTap: () => setState(() {
               // ✅ Capture both Name and ID when tapped
               _selectedCityName = city.name;
@@ -125,15 +128,15 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
     final citiesAsync = ref.watch(citiesProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.grey102,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             size: 25.r,
           ),
           onPressed: () => context.pop(),
@@ -141,11 +144,12 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
         title: Text(
           'Select your City',
           style: AppTextStyles.poppins(
-              fontSize: 24.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.black,
-              height: 20 / 24,
-              letterSpacing: 0.01),
+            fontSize: 24.sp,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+            height: 20 / 24,
+            letterSpacing: 0.01,
+          ),
         ),
         titleSpacing: 0,
       ),
@@ -164,20 +168,25 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
                         'Choose the city\nwhere you want to work',
                         textAlign: TextAlign.center,
                         style: AppTextStyles.poppins(
-                            fontSize: 16.sp,
-                            color: AppColors.purple75,
-                            fontWeight: FontWeight.w400,
-                            height: 20 / 16,
-                            letterSpacing: 0.01),
+                          fontSize: 16.sp,
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w400,
+                          height: 20 / 16,
+                          letterSpacing: 0.01,
+                        ),
                       ),
                     ),
                     SizedBox(height: 24.h),
 
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(color: AppColors.grey198),
+                        border: Border.all(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerLow,
+                        ),
                       ),
                       child: ShaderMask(
                         blendMode: BlendMode.srcIn,
@@ -203,7 +212,9 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
                             ),
                             prefixIcon: Icon(Icons.search, size: 24.r),
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 16.h,
+                            ),
                           ),
                         ),
                       ),
@@ -214,7 +225,7 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
                       'Popular Cities',
                       style: AppTextStyles.poppins(
                         fontSize: 12.sp,
-                        color: Colors.grey[500],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -250,7 +261,7 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
 
             Container(
               padding: EdgeInsets.fromLTRB(24.w, 10.h, 24.w, 30.h),
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               child: AuthPrimaryButton(
                 label: 'Continue',
                 isLoading: isLoading,

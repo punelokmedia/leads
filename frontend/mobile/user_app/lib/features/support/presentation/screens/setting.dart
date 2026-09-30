@@ -174,7 +174,7 @@ class _AppBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -257,7 +257,7 @@ class _SettingsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -301,7 +301,7 @@ class _SettingsTile extends HookWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         color: isPressed.value
-            ? primaryColor.withOpacity(0.04)
+            ? primaryColor.withValues(alpha: 0.04)
             : Colors.transparent,
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         child: Row(
@@ -311,7 +311,7 @@ class _SettingsTile extends HookWidget {
               width: 36.w,
               height: 36.w,
               decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.08),
+                color: primaryColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Icon(icon, color: primaryColor, size: 18.sp),

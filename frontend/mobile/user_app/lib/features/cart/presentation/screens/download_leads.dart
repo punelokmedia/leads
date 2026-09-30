@@ -8,7 +8,7 @@ import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/cart/shared/cart_providers.dart';
 
 class DownloadLeadsDialog extends ConsumerWidget {
-  final String orderId; 
+  final String orderId;
 
   const DownloadLeadsDialog({super.key, required this.orderId});
 
@@ -18,13 +18,13 @@ class DownloadLeadsDialog extends ConsumerWidget {
 
     ref.listen<String?>(cartErrorProvider, (previous, next) {
       if (next != null && next.isNotEmpty) {
-        SnackbarHelper.showError(context, next);    
+        SnackbarHelper.showError(context, next);
       }
     });
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 30.h),
         child: Column(
@@ -50,19 +50,26 @@ class DownloadLeadsDialog extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: AppTextStyles.poppins(
                 fontSize: 16.sp,
-                color: AppColors.grey137,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             SizedBox(height: 30.h),
             GestureDetector(
-              onTap: isLoading ? null : () async {
-                await ref.read(cartControllerProvider.notifier).downloadLeads(orderId);
-                if (context.mounted) {
-                  SnackbarHelper.showSuccess(context, "Download started...");
-                }
-                // ignore: use_build_context_synchronously
-                context.pop();
-              },
+              onTap: isLoading
+                  ? null
+                  : () async {
+                      await ref
+                          .read(cartControllerProvider.notifier)
+                          .downloadLeads(orderId);
+                      if (context.mounted) {
+                        SnackbarHelper.showSuccess(
+                          context,
+                          "Download started...",
+                        );
+                      }
+                      // ignore: use_build_context_synchronously
+                      context.pop();
+                    },
               child: Container(
                 width: double.infinity,
                 height: 55.h,
@@ -71,16 +78,18 @@ class DownloadLeadsDialog extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(30.r),
                 ),
                 alignment: Alignment.center,
-                child: isLoading 
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                      'Download File',
-                      style: AppTextStyles.poppins(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                child: isLoading
+                    ? CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.surface,
+                      )
+                    : Text(
+                        'Download File',
+                        style: AppTextStyles.poppins(
+                          fontSize: 24.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
               ),
             ),
             SizedBox(height: 20.h),

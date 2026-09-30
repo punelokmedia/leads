@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import '../../domain/edit_profile_model.dart';
 
@@ -18,7 +17,7 @@ class FormLabel extends StatelessWidget {
         style: AppTextStyles.poppins(
           fontSize: 18.sp,
           fontWeight: FontWeight.w500,
-          color: AppColors.grey77,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           height: 20 / 18,
           letterSpacing: 0.1,
         ),
@@ -52,7 +51,7 @@ class ProfileTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
@@ -70,14 +69,16 @@ class ProfileTextField extends StatelessWidget {
         readOnly: readOnly,
         style: AppTextStyles.poppins(
           fontSize: 15.sp,
-          color: AppColors.grey163,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: AppTextStyles.poppins(
             fontSize: 15.sp,
-            color: AppColors.grey163.withOpacity(0.7),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurfaceVariant.withOpacity(0.7),
             fontWeight: FontWeight.w400,
           ),
           suffixIcon: suffixIcon,
@@ -116,7 +117,7 @@ class MobileNumberField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
@@ -135,7 +136,10 @@ class MobileNumberField extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
               decoration: BoxDecoration(
                 border: Border(
-                  right: BorderSide(color: Colors.grey.shade100, width: 1.5),
+                  right: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    width: 1.5,
+                  ),
                 ),
               ),
               child: Row(
@@ -147,14 +151,14 @@ class MobileNumberField extends StatelessWidget {
                     style: AppTextStyles.poppins(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.grey163,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   SizedBox(width: 4.w),
                   Icon(
                     Icons.keyboard_arrow_down_rounded,
                     size: 18.r,
-                    color: AppColors.grey163,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ],
               ),
@@ -170,14 +174,14 @@ class MobileNumberField extends StatelessWidget {
               // maxLength: 10
               keyboardType: TextInputType.phone,
               style: AppTextStyles.poppins(
-                color: AppColors.grey163,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
                 hintText: 'Enter phone number',
                 hintStyle: TextStyle(
-                  color: Colors.grey.shade300,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 14.sp,
                 ),
                 border: InputBorder.none,
@@ -228,7 +232,7 @@ class CityDropdown extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -246,10 +250,13 @@ class CityDropdown extends StatelessWidget {
           isExpanded: true,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: Colors.grey[600],
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             size: 20.r,
           ),
-          style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
           items: kAvailableCities
               .map((c) => DropdownMenuItem(value: c, child: Text(c)))
               .toList(),

@@ -70,26 +70,28 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
         : (user?.fullName ?? '');
     final email = draft.email.isNotEmpty ? draft.email : (user?.email ?? '');
 
-    ref.read(authControllerProvider.notifier).verifyPayment(
-      orderId: orderId,
-      paymentId: paymentId,
-      signature: signature,
-      fullName: fullName,
-      email: email,
-      city: city,
-      categories: draft.categories,
-      businessName: draft.businessName,
-      workType: draft.workType,
-      onSuccess: () {
-        ref.read(authControllerProvider.notifier).clearError();
-        ref.read(profileDraftProvider.notifier).clearDraft();
-        SnackbarHelper.showSuccess(
-          context,
-          'Payment Verified & Profile Created!',
+    ref
+        .read(authControllerProvider.notifier)
+        .verifyPayment(
+          orderId: orderId,
+          paymentId: paymentId,
+          signature: signature,
+          fullName: fullName,
+          email: email,
+          city: city,
+          categories: draft.categories,
+          businessName: draft.businessName,
+          workType: draft.workType,
+          onSuccess: () {
+            ref.read(authControllerProvider.notifier).clearError();
+            ref.read(profileDraftProvider.notifier).clearDraft();
+            SnackbarHelper.showSuccess(
+              context,
+              'Payment Verified & Profile Created!',
+            );
+            context.go(AppRouter.homePath);
+          },
         );
-        context.go(AppRouter.homePath);
-      },
-    );
   }
 
   // ── Razorpay Error Handler ──
@@ -126,8 +128,8 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
 
       final keyId = orderData['keyId']?.toString();
       // Backend registration order returns `orderId`; cart orders return `razorpayOrderId`.
-      final orderId =
-          (orderData['orderId'] ?? orderData['razorpayOrderId'])?.toString();
+      final orderId = (orderData['orderId'] ?? orderData['razorpayOrderId'])
+          ?.toString();
       final currency = orderData['currency']?.toString() ?? 'INR';
 
       // Registration API already returns amount in paise.
@@ -222,15 +224,15 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.grey102,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             size: 25.r,
           ),
           // ✅ Disable back during payment init to prevent broken states
@@ -241,7 +243,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
           style: AppTextStyles.poppins(
             fontSize: 24.sp,
             fontWeight: FontWeight.w700,
-            color: AppColors.black,
+            color: Theme.of(context).colorScheme.onSurface,
             height: 20 / 24,
             letterSpacing: 0.01,
           ),
@@ -268,7 +270,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
             Container(
               padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 20.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -296,8 +298,8 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                           ? SizedBox(
                               height: 24.r,
                               width: 24.r,
-                              child: const CircularProgressIndicator(
-                                color: Colors.white,
+                              child: CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.surface,
                                 strokeWidth: 2,
                               ),
                             )

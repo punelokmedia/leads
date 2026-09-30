@@ -95,7 +95,7 @@ class LiveStore extends PreviewStore {
         final budgetMax = budget is Map
             ? (budget['max'] as num?)?.toInt() ?? 0
             : 0;
-        final limit = (row['maxBuyers'] as num?)?.toInt() ?? 3;
+        final limit = (row['maxBuyers'] as num?)?.toInt() ?? 2;
         final expires = DateTime.tryParse('${row['expiresAt']}');
         final contact = [
           row['customerName'],
@@ -121,6 +121,7 @@ class LiveStore extends PreviewStore {
           description: '${row['description'] ?? ''}',
           buyers: (row['buyersCount'] as num?)?.toInt() ?? 0,
           maxBuyers: limit > 0 ? limit : 1,
+          reservedSlots: (row['reservedSlots'] as num?)?.toInt() ?? 0,
           joined: row['isPurchased'] == true,
           saved: saved.contains('${row['_id']}'),
           backendStatus: expires != null && expires.isBefore(DateTime.now())
@@ -135,7 +136,8 @@ class LiveStore extends PreviewStore {
         );
       }).toList();
       _categories = List.generate(rawCategories.length, (i) {
-        final name = '${rawCategories[i]['name']}';
+        final name =
+            '${rawCategories[i]['displayName'] ?? rawCategories[i]['name']}';
         final design = previewCategories
             .where((c) => c.name.toLowerCase() == name.toLowerCase())
             .firstOrNull;
@@ -165,6 +167,11 @@ class LiveStore extends PreviewStore {
               '${order['orderId']}',
               '${(order['items'] as List).length} lead(s)',
               order['totalAmount'] as num,
+              status: order['status'] == 'REFUND_PENDING'
+                  ? 'Refund pending'
+                  : order['status'] == 'REFUNDED'
+                  ? 'Refunded'
+                  : 'Paid',
             ),
           );
         }
@@ -217,6 +224,9 @@ class LiveStore extends PreviewStore {
     _notify();
   }
 
+  @override
+  void send(String message) =>
+      throw StateError('Live support requires the support API');
   @override
   bool purchase(PreviewLead lead) =>
       throw StateError('Live purchases require verified checkout');

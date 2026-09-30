@@ -61,7 +61,7 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
       builder: (_, scrollController) {
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
           ),
           child: Column(
@@ -72,7 +72,7 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
                   width: 40.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(2.r),
                   ),
                 ),
@@ -88,7 +88,7 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
                       style: AppTextStyles.poppins(
                         fontSize: 17.sp,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
@@ -98,13 +98,15 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
                         width: 28.w,
                         height: 28.h,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerLow,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.close_rounded,
                           size: 16.r,
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -121,17 +123,17 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
                       ref.read(citySearchQueryProvider.notifier).state = v,
                   style: AppTextStyles.poppins(
                     fontSize: 13.sp,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Search city…',
                     hintStyle: AppTextStyles.poppins(
                       fontSize: 13.sp,
-                      color: Colors.grey.shade400,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     prefixIcon: Icon(
                       Icons.search_rounded,
-                      color: AppColors.purple72,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 20.r,
                     ),
                     suffixIcon: _searchCtrl.text.isNotEmpty
@@ -144,24 +146,30 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
                             child: Icon(
                               Icons.clear_rounded,
                               size: 18.r,
-                              color: Colors.grey.shade400,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           )
                         : null,
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerLow,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 14.w,
                       vertical: 12.h,
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: BorderSide(color: Colors.grey.shade200),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
                       borderSide: BorderSide(
-                        color: AppColors.purple72,
+                        color: Theme.of(context).colorScheme.primary,
                         width: 1.5,
                       ),
                     ),
@@ -183,7 +191,7 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
                         Icon(
                           Icons.wifi_off_rounded,
                           size: 40.r,
-                          color: Colors.grey.shade300,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         SizedBox(height: 8.h),
                         Text(
@@ -191,7 +199,9 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
                           textAlign: TextAlign.center,
                           style: AppTextStyles.poppins(
                             fontSize: 13.sp,
-                            color: Colors.grey.shade500,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         SizedBox(height: 12.h),
@@ -201,7 +211,7 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
                             'Retry',
                             style: AppTextStyles.poppins(
                               fontSize: 13.sp,
-                              color: AppColors.purple72,
+                              color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -308,7 +318,9 @@ class _CityTile extends StatelessWidget {
                 style: AppTextStyles.poppins(
                   fontSize: 13.5.sp,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? AppColors.purple72 : Colors.black87,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -316,7 +328,7 @@ class _CityTile extends StatelessWidget {
             if (isSelected)
               Icon(
                 Icons.check_circle_rounded,
-                color: AppColors.purple72,
+                color: Theme.of(context).colorScheme.primary,
                 size: 20.r,
               ),
           ],

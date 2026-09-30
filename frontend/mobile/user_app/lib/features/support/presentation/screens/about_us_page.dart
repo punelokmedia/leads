@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/features/support/shared/about_us_provider.dart';
 
 class AboutUsPage extends HookConsumerWidget {
@@ -12,7 +11,7 @@ class AboutUsPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appInfoProvider);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: buildAppBar(context),
 
       body: SingleChildScrollView(
@@ -50,7 +49,7 @@ class AboutUsPage extends HookConsumerWidget {
 
   PreferredSizeWidget buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 0,
       centerTitle: true,
       leading: IconButton(
@@ -64,7 +63,7 @@ class AboutUsPage extends HookConsumerWidget {
       title: Text(
         'About Us',
         style: TextStyle(
-          color: AppColors.purple75,
+          color: Theme.of(context).colorScheme.primary,
           fontSize: 22.sp,
           fontWeight: FontWeight.w600,
         ),
@@ -102,7 +101,7 @@ class VersionSection extends HookConsumerWidget {
             Text(
               'V $version+$build',
               style: TextStyle(
-                color: AppColors.purple75,
+                color: Theme.of(context).colorScheme.primary,
                 fontSize: 22.sp,
                 fontWeight: FontWeight.w400,
               ),
@@ -161,7 +160,7 @@ class PublisherSection extends HookConsumerWidget {
         Text(
           'Published by',
           style: TextStyle(
-            color: Colors.grey,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 16.sp,
             fontWeight: .w700,
           ),
@@ -170,7 +169,7 @@ class PublisherSection extends HookConsumerWidget {
         Text(
           'Dash Technologies India Pvt Ltd.',
           style: TextStyle(
-            color: AppColors.purple73,
+            color: Theme.of(context).colorScheme.primary,
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,
           ),
@@ -179,7 +178,7 @@ class PublisherSection extends HookConsumerWidget {
         Text(
           'Service provided by',
           style: TextStyle(
-            color: Colors.grey,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,
           ),
@@ -188,7 +187,7 @@ class PublisherSection extends HookConsumerWidget {
         Text(
           'Dash Technologies Pvt Ltd.',
           style: TextStyle(
-            color: AppColors.purple75,
+            color: Theme.of(context).colorScheme.primary,
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,
           ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
@@ -50,11 +50,17 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     if (internalId != null && mounted) {
       context.go(AppRouter.paymentsuccessPath, extra: internalId);
     } else if (mounted) {
-      _showSnack("Payment verification failed", isError: true);
+      _showSnack(
+        ref.read(cartControllerProvider).error ??
+            'Payment confirmation pending. Check your purchases before paying again.',
+        isError: true,
+      );
     }
   }
 
-  void _handlePaymentError(PaymentFailureResponse response) {
+  void _handlePaymentError(PaymentFailureResponse response) async {
+    await ref.read(cartControllerProvider.notifier).cancelActiveReservation();
+    if (!mounted) return;
     _showSnack("Payment failed: ${response.message}", isError: true);
   }
 
@@ -78,9 +84,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     final userProfile = profileState.profile;
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
         elevation: 0.5,
         centerTitle: true,
         leading: GestureDetector(
@@ -88,7 +94,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 18.r,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         title: Text(
@@ -96,7 +102,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           style: AppTextStyles.poppins(
             fontSize: 24.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.black,
+            color: Theme.of(context).colorScheme.onSurface,
             letterSpacing: 0.01,
             height: 20 / 24,
           ),
@@ -156,92 +162,100 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     // ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: ElevatedButton(
-                    onPressed: () async {
-                      // 1. Auth Guard
-                      if (!isLoggedIn) {
-                        context.push(AppRouter.login);
-                        return;
-                      }
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            // 1. Auth Guard
+                            if (!isLoggedIn) {
+                              context.push(AppRouter.login);
+                              return;
+                            }
 
-                      // 2. Local check (Are any items selected?)
-                      final selected = items
-                          .where((e) => e.isSelected)
-                          .toList();
-                      if (selected.isEmpty) {
-                        _showSnack(
-                          "Please select at least one lead",
-                          isError: true,
-                        );
-                        return;
-                      }
+                            // 2. Local check (Are any items selected?)
+                            final selected = items
+                                .where((e) => e.isSelected)
+                                .toList();
+                            if (selected.isEmpty) {
+                              _showSnack(
+                                "Please select at least one lead",
+                                isError: true,
+                              );
+                              return;
+                            }
 
-                      // 3. Start Razorpay Process
-                      await notifier.startPaymentProcess(
-                        onError: (msg) => _showSnack(msg, isError: true),
-                        onOrderCreated: (data) {
-                          String rawPhone = userProfile?.phoneNumber ?? '';
-                          // Remove all spaces, dashes, parentheses, etc.
-                          String cleanPhone = rawPhone.replaceAll(
-                            RegExp(r'[^\d+]'),
-                            '',
-                          );
+                            // 3. Start Razorpay Process
+                            await notifier.startPaymentProcess(
+                              onError: (msg) => _showSnack(msg, isError: true),
+                              onOrderCreated: (data) async {
+                                String rawPhone =
+                                    userProfile?.phoneNumber ?? '';
+                                // Remove all spaces, dashes, parentheses, etc.
+                                String cleanPhone = rawPhone.replaceAll(
+                                  RegExp(r'[^\d+]'),
+                                  '',
+                                );
 
-                          if (cleanPhone.startsWith('+91')) {
-                            cleanPhone = cleanPhone.substring(3);
-                          } else if (cleanPhone.startsWith('91') &&
-                              cleanPhone.length == 12) {
-                            cleanPhone = cleanPhone.substring(2);
-                          }
+                                if (cleanPhone.startsWith('+91')) {
+                                  cleanPhone = cleanPhone.substring(3);
+                                } else if (cleanPhone.startsWith('91') &&
+                                    cleanPhone.length == 12) {
+                                  cleanPhone = cleanPhone.substring(2);
+                                }
 
-                          final keyId = data['keyId']?.toString();
-                          final orderId =
-                              (data['razorpayOrderId'] ?? data['orderId'])
-                                  ?.toString();
+                                final keyId = data['keyId']?.toString();
+                                final orderId =
+                                    (data['razorpayOrderId'] ?? data['orderId'])
+                                        ?.toString();
 
-                          if (keyId == null ||
-                              keyId.isEmpty ||
-                              orderId == null ||
-                              orderId.isEmpty) {
-                            _showSnack(
-                              'Invalid payment order. Please try again.',
-                              isError: true,
+                                if (keyId == null ||
+                                    keyId.isEmpty ||
+                                    orderId == null ||
+                                    orderId.isEmpty) {
+                                  _showSnack(
+                                    'Invalid payment order. Please try again.',
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
+                                var options = {
+                                  'key': keyId,
+                                  'amount': data['amount'],
+                                  'name': 'Leads Sell',
+                                  'order_id': orderId,
+                                  'currency': data['currency'] ?? 'INR',
+                                  'timeout':
+                                      ((data['expiresIn'] as num?)?.toInt() ??
+                                              300)
+                                          .clamp(1, 600),
+                                  'prefill': {
+                                    'name': userProfile?.fullName ?? '',
+                                    'email': userProfile?.email ?? '',
+                                    'contact': cleanPhone,
+                                  },
+                                  'theme': {'color': '#4522C2'},
+                                };
+                                try {
+                                  _razorpay.open(options);
+                                } catch (e) {
+                                  await notifier.cancelActiveReservation();
+                                  if (!mounted) return;
+                                  debugPrint("Error opening Razorpay: $e");
+                                  _showSnack(
+                                    "Unable to launch payment gateway",
+                                    isError: true,
+                                  );
+                                }
+                              },
                             );
-                            return;
-                          }
-
-                          var options = {
-                            'key': keyId,
-                            'amount': data['amount'],
-                            'name': 'Leads Sell',
-                            'order_id': orderId,
-                            'currency': data['currency'] ?? 'INR',
-                            'timeout': 300,
-                            'prefill': {
-                              'name': userProfile?.fullName ?? '',
-                              'email': userProfile?.email ?? '',
-                              'contact': cleanPhone,
-                            },
-                            'theme': {'color': '#4522C2'},
-                          };
-                          try {
-                            _razorpay.open(options);
-                          } catch (e) {
-                            debugPrint("Error opening Razorpay: $e");
-                            _showSnack(
-                              "Unable to launch payment gateway",
-                              isError: true,
-                            );
-                          }
-                        },
-                      );
-                    },
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -254,7 +268,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       style: AppTextStyles.poppins(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.white,
+                        color: Colors.white,
                         height: 1.0,
                         letterSpacing: 0.1,
                       ),
@@ -282,7 +296,10 @@ class _EmptyCartView extends StatelessWidget {
           SizedBox(height: 10.h),
           Text(
             'Your cart is empty',
-            style: AppTextStyles.poppins(fontSize: 18.sp, color: Colors.grey),
+            style: AppTextStyles.poppins(
+              fontSize: 18.sp,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

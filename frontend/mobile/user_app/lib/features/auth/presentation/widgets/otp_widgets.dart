@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 
 // ── 1. OTP Header (Subtitle & Phone) ──
@@ -18,7 +17,7 @@ class OtpHeader extends StatelessWidget {
         Text(
           'We have sent a 6 digit OTP ON',
           style: AppTextStyles.poppins(
-            color: AppColors.grey137,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 16.sp,
             fontWeight: FontWeight.w500,
             height: 20 / 16,
@@ -29,7 +28,7 @@ class OtpHeader extends StatelessWidget {
         Text(
           phoneNumber,
           style: AppTextStyles.poppins(
-            color: AppColors.purple73,
+            color: Theme.of(context).colorScheme.primary,
             fontSize: 24.sp,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.01,
@@ -65,10 +64,12 @@ class OtpInputRow extends StatelessWidget {
           width: 48.w,
           height: 52.h,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(
-              color: focusNodes[index].hasFocus ? const Color(0xFF4522C2) : Colors.grey[300]!,
+              color: focusNodes[index].hasFocus
+                  ? const Color(0xFF4522C2)
+                  : Theme.of(context).colorScheme.outlineVariant,
               width: 1.5,
             ),
           ),
@@ -76,10 +77,12 @@ class OtpInputRow extends StatelessWidget {
             // ✅ FIX: Focus widget listens to hardware keys to detect backspace on empty fields
             child: Focus(
               onKeyEvent: (node, event) {
-                if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
+                if (event is KeyDownEvent &&
+                    event.logicalKey == LogicalKeyboardKey.backspace) {
                   if (controllers[index].text.isEmpty && index > 0) {
                     focusNodes[index - 1].requestFocus();
-                    controllers[index - 1].clear(); // Clear previous box on backspace
+                    controllers[index - 1]
+                        .clear(); // Clear previous box on backspace
                     onUpdate();
                     return KeyEventResult.handled;
                   }
@@ -95,7 +98,7 @@ class OtpInputRow extends StatelessWidget {
                 style: AppTextStyles.poppins(
                   fontSize: 22.sp,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 decoration: const InputDecoration(
                   counterText: '',
@@ -120,7 +123,11 @@ class OtpResendRow extends StatelessWidget {
   final int timerStart;
   final VoidCallback onResendTap;
 
-  const OtpResendRow({super.key, required this.timerStart, required this.onResendTap});
+  const OtpResendRow({
+    super.key,
+    required this.timerStart,
+    required this.onResendTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -130,7 +137,7 @@ class OtpResendRow extends StatelessWidget {
         Text(
           "Didn't recieve OTP? ",
           style: AppTextStyles.poppins(
-            color: AppColors.grey102,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 16.sp,
             fontWeight: FontWeight.w400,
             height: 20 / 16,
@@ -142,7 +149,9 @@ class OtpResendRow extends StatelessWidget {
           child: Text(
             'Resend',
             style: AppTextStyles.poppins(
-              color: timerStart == 0 ? AppColors.purple72 : Colors.grey[400],
+              color: timerStart == 0
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
               fontSize: 16.sp,
               height: 20 / 16,
@@ -168,7 +177,7 @@ class OtpIllustration extends StatelessWidget {
       errorBuilder: (_, _, _) => Icon(
         Icons.sms_outlined,
         size: 80.r,
-        color: AppColors.purple73,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }

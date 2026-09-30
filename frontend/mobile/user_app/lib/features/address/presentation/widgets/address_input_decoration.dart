@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 
-InputDecoration addressInputDeco({required String hint, Widget? suffix}) =>
-    InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
-      suffixIcon: suffix,
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-      border: _border(),
-      enabledBorder: _border(),
-      focusedBorder: _border(color: const Color(0xFFFFC107), width: 1.5),
-    );
+InputDecoration addressInputDeco(
+  BuildContext context, {
+  required String hint,
+  Widget? suffix,
+}) => InputDecoration(
+  hintText: hint,
+  hintStyle: TextStyle(
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+    fontSize: 14.sp,
+  ),
+  suffixIcon: suffix,
+  filled: true,
+  fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
+  contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+  border: _border(),
+  enabledBorder: _border(),
+  focusedBorder: _border(color: const Color(0xFFFFC107), width: 1.5),
+);
 
 OutlineInputBorder _border({Color? color, double width = 0}) =>
     OutlineInputBorder(
@@ -22,8 +28,9 @@ OutlineInputBorder _border({Color? color, double width = 0}) =>
           : BorderSide.none,
     );
 
-BoxDecoration cardShadow({double radius = 12}) => BoxDecoration(
-      color: Colors.white,
+BoxDecoration cardShadow(BuildContext context, {double radius = 12}) =>
+    BoxDecoration(
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(radius.r),
       boxShadow: const [
         BoxShadow(

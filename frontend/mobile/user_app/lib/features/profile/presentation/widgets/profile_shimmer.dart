@@ -19,7 +19,7 @@ class ProfileHeaderShimmer extends StatelessWidget {
           right: 24.w,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(32.r)),
         ),
         child: Row(
@@ -28,8 +28,8 @@ class ProfileHeaderShimmer extends StatelessWidget {
             Container(
               width: 80.r,
               height: 80.r,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
                 shape: BoxShape.circle,
               ),
             ),
@@ -39,10 +39,18 @@ class ProfileHeaderShimmer extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Name line
-                Container(width: 120.w, height: 20.h, color: Colors.white),
+                Container(
+                  width: 120.w,
+                  height: 20.h,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
                 SizedBox(height: 8.h),
                 // Email line
-                Container(width: 150.w, height: 14.h, color: Colors.white),
+                Container(
+                  width: 150.w,
+                  height: 14.h,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
               ],
             ),
           ],

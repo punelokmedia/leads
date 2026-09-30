@@ -20,12 +20,19 @@ class ErrorStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off_rounded, size: 56.r, color: Colors.grey[400]),
+            Icon(
+              Icons.wifi_off_rounded,
+              size: 56.r,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             SizedBox(height: 16.h),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             SizedBox(height: 20.h),
             ElevatedButton(
@@ -63,11 +70,18 @@ class EmptyStateWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off_rounded, size: 56.r, color: Colors.grey[400]),
+          Icon(
+            Icons.search_off_rounded,
+            size: 56.r,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           SizedBox(height: 12.h),
           Text(
             message,
-            style: TextStyle(fontSize: 14.sp, color: Colors.grey[500]),
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -125,13 +139,16 @@ class _ShimmerCardState extends State<_ShimmerCard>
         child: Container(
           margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(14.r),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(height: 190.h, color: Colors.grey[200]),
+              Container(
+                height: 190.h,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+              ),
               Padding(
                 padding: EdgeInsets.all(12.w),
                 child: Column(
@@ -165,7 +182,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey[300],
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(4.r),
       ),
     );

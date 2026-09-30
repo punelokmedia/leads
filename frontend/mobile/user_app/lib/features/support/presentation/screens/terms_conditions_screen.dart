@@ -22,13 +22,13 @@ class TermsConditionsScreen extends ConsumerWidget {
           child: Icon(
             Icons.arrow_back_ios_new,
             size: 18.r,
-            color: AppColors.purple86,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         title: Text(
           "Terms & Conditions",
           style: AppTextStyles.roboto(
-            color: AppColors.purple86,
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.w600,
             fontSize: 24.sp,
             height: 1,
@@ -45,14 +45,17 @@ class TermsConditionsScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSection(
+                      context,
                       "1. Acceptance of Terms",
                       "By using this website or service, you agree to comply with and be bound by these terms and conditions. if you do not agree to these terms, please do not use this website or service.",
                     ),
                     _buildSection(
+                      context,
                       "2. Use of the Service",
                       "You agree to use this website or service only for lawful purposes and in a way that does not infringe upon the rights of others or restricts or inhabit anyone else’s use and enjoyment of the website or service.",
                     ),
                     _buildSection(
+                      context,
                       "3. User Account",
                       "Some features of this website or service may require you to create a user account. You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account.",
                     ),
@@ -74,7 +77,7 @@ class TermsConditionsScreen extends ConsumerWidget {
                       text: "I agree all the ",
                       style: AppTextStyles.roboto(
                         fontSize: 16.sp,
-                        color: AppColors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w400,
                         height: 1.34,
                       ),
@@ -82,7 +85,7 @@ class TermsConditionsScreen extends ConsumerWidget {
                         TextSpan(
                           text: "Terms & Conditions",
                           style: AppTextStyles.roboto(
-                            color: AppColors.purple75,
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w400,
                             fontSize: 16.sp,
                             height: 1.34,
@@ -110,7 +113,7 @@ class TermsConditionsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(String title, String body) {
+  Widget _buildSection(BuildContext context, String title, String body) {
     return Padding(
       padding: EdgeInsets.only(bottom: 20.h, right: 10.h, left: 10.w),
       child: Column(
@@ -122,14 +125,14 @@ class TermsConditionsScreen extends ConsumerWidget {
               fontWeight: FontWeight.w600,
               fontSize: 18.sp,
               height: 1.34,
-              color: AppColors.black,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           SizedBox(height: 8.h),
           Text(
             body,
             style: AppTextStyles.roboto(
-              color: AppColors.grey94,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 16.sp,
               fontWeight: FontWeight.w400,
               height: 1.34,

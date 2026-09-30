@@ -29,9 +29,11 @@ class LeadCard extends StatelessWidget {
       width: 370.w,
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.grey223),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x12000000),
@@ -43,10 +45,7 @@ class LeadCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LeadImage(
-            imageUrl: lead.imageUrl,
-            isSoldOut: isSoldOut,
-          ),
+          _LeadImage(imageUrl: lead.imageUrl, isSoldOut: isSoldOut),
           _LeadCardBody(
             lead: lead,
             cartQuantity: cartQuantity,
@@ -63,10 +62,7 @@ class _LeadImage extends StatelessWidget {
   final String imageUrl;
   final bool isSoldOut;
 
-  const _LeadImage({
-    required this.imageUrl,
-    required this.isSoldOut,
-  });
+  const _LeadImage({required this.imageUrl, required this.isSoldOut});
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +81,10 @@ class _LeadImage extends StatelessWidget {
               errorWidget: Container(
                 height: 190.h,
                 color: AppColors.grey102,
-                child: Icon(Icons.image_not_supported, color: Colors.grey[400]),
+                child: Icon(
+                  Icons.image_not_supported,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
 
@@ -93,7 +92,9 @@ class _LeadImage extends StatelessWidget {
               Container(
                 height: 190.h,
                 width: double.infinity,
-                color: Colors.white.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.5),
               ),
               Center(
                 child: Image.asset(
@@ -140,7 +141,7 @@ class _LeadCardBody extends StatelessWidget {
                   style: AppTextStyles.poppins(
                     fontWeight: FontWeight.w600,
                     fontSize: 16.sp,
-                    color: AppColors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                     height: 1.3,
                     letterSpacing: 0.1,
                   ),
@@ -150,7 +151,7 @@ class _LeadCardBody extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: AppColors.white239,
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(999.r),
                 ),
                 child: Row(
@@ -159,14 +160,14 @@ class _LeadCardBody extends StatelessWidget {
                     Icon(
                       Icons.location_on_outlined,
                       size: 12.r,
-                      color: AppColors.grey117,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     SizedBox(width: 3.w),
                     Text(
                       lead.city,
                       style: AppTextStyles.poppins(
                         fontSize: 11.sp,
-                        color: AppColors.grey117,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -182,7 +183,7 @@ class _LeadCardBody extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.poppins(
               fontSize: 13.sp,
-              color: AppColors.grey77,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               height: 1.45,
               letterSpacing: 0.1,
               fontWeight: FontWeight.w400,
@@ -195,7 +196,7 @@ class _LeadCardBody extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.poppins(
               fontSize: 12.sp,
-              color: AppColors.grey117,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
               height: 1.45,
             ),
@@ -205,7 +206,7 @@ class _LeadCardBody extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
             decoration: BoxDecoration(
-              color: AppColors.white239,
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Row(
@@ -268,7 +269,7 @@ class _LeadCardBody extends StatelessWidget {
                     lead.date,
                     style: AppTextStyles.poppins(
                       fontSize: 12.sp,
-                      color: AppColors.grey137,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -354,7 +355,7 @@ class _CartButton extends StatelessWidget {
           child: Text(
             'Add to Cart',
             style: AppTextStyles.poppins(
-              color: AppColors.white,
+              color: Colors.white,
               fontWeight: FontWeight.w600,
               fontSize: 14.sp,
               letterSpacing: 0.1,
@@ -369,7 +370,7 @@ class _CartButton extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.green49, width: 1.5),
         borderRadius: BorderRadius.circular(10.r),
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -391,7 +392,7 @@ class _CartButton extends StatelessWidget {
               style: AppTextStyles.poppins(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
-                color: AppColors.black,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -411,7 +412,9 @@ class _CartButton extends StatelessWidget {
               child: Icon(
                 Icons.add,
                 size: 19.r,
-                color: quantity < maxQuantity ? AppColors.green49 : Colors.grey[400],
+                color: quantity < maxQuantity
+                    ? AppColors.green49
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),

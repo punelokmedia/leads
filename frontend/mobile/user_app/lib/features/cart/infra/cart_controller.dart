@@ -108,7 +108,10 @@ class CartController extends StateNotifier<CartState> {
     final existingItem = state.items
         .where((e) => e.id == lead.id.toString())
         .firstOrNull;
-    final newQuantity = (existingItem?.quantity ?? 0) + 1;
+    if (existingItem != null) {
+      return 'One purchase per buyer. This lead is already in your cart.';
+    }
+    const newQuantity = 1;
     String? resultMessage;
 
     if (_isLoggedIn) {
@@ -202,6 +205,7 @@ class CartController extends StateNotifier<CartState> {
     required Function(Map<String, dynamic>) onOrderCreated,
     required Function(String) onError,
   }) async {
+    if (state.isLoading) return;
     final selectedIds = state.items
         .where((e) => e.isSelected)
         .map((e) => e.id)
@@ -216,7 +220,8 @@ class CartController extends StateNotifier<CartState> {
       final orderData = await _repo.createRazorpayOrder(selectedIds);
       if (_isDisposed) return; // ✅
 
-      if (orderData['razorpayOrderId'] == null && orderData['orderId'] == null) {
+      if (orderData['razorpayOrderId'] == null &&
+          orderData['orderId'] == null) {
         throw Exception('Payment order ID missing');
       }
 
@@ -275,11 +280,30 @@ class CartController extends StateNotifier<CartState> {
         );
         return internalId;
       }
-      _safeSetState((s) => s.copyWith(isLoading: false));
+      _safeSetState(
+        (s) => s.copyWith(
+          isLoading: false,
+          error:
+              'Payment is not confirmed. Check your purchases before paying again.',
+        ),
+      );
       return null;
     } catch (e) {
-      _safeSetState((s) => s.copyWith(isLoading: false));
+      _safeSetState(
+        (s) =>
+            s.copyWith(isLoading: false, error: ErrorHandler.handle(e).message),
+      );
       return null;
+    }
+  }
+
+  Future<void> cancelActiveReservation() async {
+    final orderId = state.activeInternalOrderId;
+    if (orderId == null) return;
+    try {
+      await _repo.cancelReservation(orderId);
+    } catch (_) {
+      /* Server-side expiry releases a reservation if the app is offline. */
     }
   }
 

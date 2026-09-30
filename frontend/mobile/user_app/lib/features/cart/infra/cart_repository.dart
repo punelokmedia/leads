@@ -129,7 +129,18 @@ class CartRepository {
         "razorpaySignature": signature,
       },
     );
-    return res.data['success'] == true;
+    if (res.data['success'] != true || res.data['data']?['status'] != 'PAID') {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        response: res,
+        message: res.data['message']?.toString(),
+      );
+    }
+    return true;
+  }
+
+  Future<void> cancelReservation(String orderId) async {
+    await _dio.post('api/v1/payments/cancel', data: {'orderId': orderId});
   }
 
   Future<Response<List<int>>> downloadLeadsFileWithResponse(

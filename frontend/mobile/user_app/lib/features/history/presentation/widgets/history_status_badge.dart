@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 
 // ── Status Badge ──────────────────────────────────────────────────────────────
@@ -23,7 +22,7 @@ class HistoryStatusBadge extends StatelessWidget {
       child: Text(
         status,
         style: AppTextStyles.roboto(
-          color: AppColors.white,
+          color: Colors.white,
           fontSize: 12.sp,
           fontWeight: FontWeight.w500,
           height: 1.48,
@@ -43,20 +42,27 @@ class HistoryEmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_rounded, size: 64.r, color: Colors.grey[300]),
+          Icon(
+            Icons.history_rounded,
+            size: 64.r,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           SizedBox(height: 16.h),
           Text(
             'No History Yet',
             style: TextStyle(
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           SizedBox(height: 8.h),
           Text(
             'Your purchased leads will appear here.',
-            style: TextStyle(fontSize: 13.sp, color: Colors.grey[400]),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -83,12 +89,19 @@ class HistoryErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off_rounded, size: 56.r, color: Colors.grey[400]),
+            Icon(
+              Icons.wifi_off_rounded,
+              size: 56.r,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             SizedBox(height: 16.h),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             SizedBox(height: 20.h),
             ElevatedButton(
@@ -143,7 +156,7 @@ class _HistoryShimmerListState extends State<HistoryShimmerList>
     width: width,
     height: height,
     decoration: BoxDecoration(
-      color: Colors.grey[300],
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(4.r),
     ),
   );
@@ -161,7 +174,7 @@ class _HistoryShimmerListState extends State<HistoryShimmerList>
             margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(14.r),
             ),
             child: Column(

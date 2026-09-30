@@ -19,15 +19,15 @@ class PaymentSuccessHeader extends StatelessWidget {
             child: Container(
               height: 240.h,
               width: double.infinity,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
                     Color(0xFFFBE48B),
-                    Color(0xFFF1F1F1), 
+                    Theme.of(context).colorScheme.surfaceContainerLow,
                   ],
-                  stops: [0.1,0.99]
+                  stops: [0.1, 0.99],
                 ),
               ),
             ),
@@ -41,17 +41,13 @@ class PaymentSuccessHeader extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Color.fromRGBO(0,0,0,0.25),
+                  color: Color.fromRGBO(0, 0, 0, 0.25),
                   blurRadius: 4,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(
-              Icons.check_rounded,
-              size: 80.r,
-              color: Colors.white,
-            ),
+            child: Icon(Icons.check_rounded, size: 80.r, color: Colors.white),
           ),
         ],
       ),
@@ -86,7 +82,7 @@ class PaymentInfoSection extends StatelessWidget {
             fontWeight: FontWeight.w500,
             color: AppColors.orange248,
             height: 1,
-            letterSpacing: 0.06
+            letterSpacing: 0.06,
           ),
         ),
         SizedBox(height: 68.h),
@@ -96,7 +92,7 @@ class PaymentInfoSection extends StatelessWidget {
             fontSize: 48.sp,
             height: 0.1,
             fontWeight: FontWeight.w600,
-            color: AppColors.grey102,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         SizedBox(height: 43.h),
@@ -105,9 +101,8 @@ class PaymentInfoSection extends StatelessWidget {
           style: AppTextStyles.poppins(
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
-            color: AppColors.black,
+            color: Theme.of(context).colorScheme.onSurface,
             height: 1,
-
           ),
         ),
         SizedBox(height: 6.h),
@@ -116,8 +111,8 @@ class PaymentInfoSection extends StatelessWidget {
           style: AppTextStyles.poppins(
             fontSize: 24.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.grey77,
-            height: 1
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1,
           ),
         ),
         SizedBox(height: 26.h),
@@ -126,7 +121,7 @@ class PaymentInfoSection extends StatelessWidget {
           style: AppTextStyles.poppins(
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
-            color: AppColors.grey77,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             height: 0.144,
           ),
         ),
@@ -136,8 +131,8 @@ class PaymentInfoSection extends StatelessWidget {
           style: AppTextStyles.poppins(
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
-            color: AppColors.black,
-            height: 1
+            color: Theme.of(context).colorScheme.onSurface,
+            height: 1,
           ),
         ),
       ],

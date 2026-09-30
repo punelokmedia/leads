@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:user_app/app/app_router.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/profile/presentation/widgets/profile_form_fields.dart';
@@ -60,7 +59,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       extendBodyBehindAppBar: true,
-      backgroundColor: AppColors.grey241,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -70,7 +69,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 20.r,
-            color: AppColors.grey77,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         title: Text(
@@ -78,18 +77,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           style: AppTextStyles.poppins(
             fontSize: 24.sp,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFF0F0F0),
-              Color(0xFFF0F0F0),
+              Theme.of(context).colorScheme.surfaceContainerLow,
+              Theme.of(context).colorScheme.surfaceContainerLow,
               Color.fromARGB(255, 255, 198, 28),
             ],
             stops: [0.50, 0.40, 1.0],

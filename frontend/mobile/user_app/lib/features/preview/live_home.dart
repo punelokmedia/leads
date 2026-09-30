@@ -3,10 +3,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/app_router.dart';
 import '../../core/network/dio_provider.dart';
+import '../../core/errors/error_handler.dart';
 import '../auth/shared/auth_providers.dart';
 import '../cart/shared/cart_providers.dart';
 import 'live_store.dart';
 import 'preview_app.dart';
+import '../support/presentation/screens/live_support_screen.dart';
 
 final liveStoreProvider = Provider.autoDispose<LiveStore>((ref) {
   final store = LiveStore(
@@ -25,7 +27,18 @@ class LiveHome extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final store = ref.watch(liveStoreProvider);
-    store.support = (_) => context.push(AppRouter.helpSupportPath);
+    store.support = (supportContext) => Navigator.of(supportContext).push(
+      MaterialPageRoute<void>(
+        builder: (chatContext) => LiveSupportScreen(
+          dio: store.dio,
+          signedIn: store.signedIn,
+          signIn: () {
+            Navigator.pop(chatContext);
+            context.push(AppRouter.login);
+          },
+        ),
+      ),
+    );
     store.account = (_) =>
         context.push(store.signedIn ? '/account' : AppRouter.login);
     store.checkout = (detailContext, lead) async {
@@ -45,14 +58,10 @@ class LiveHome extends ConsumerWidget {
         await store.refresh();
         // Close the old detail object; refreshed cards reflect verified purchases.
         if (detailContext.mounted) Navigator.of(detailContext).pop();
-      } catch (_) {
+      } catch (error) {
         if (detailContext.mounted) {
           ScaffoldMessenger.of(detailContext).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Could not open checkout. Refresh the lead and try again.',
-              ),
-            ),
+            SnackBar(content: Text(ErrorHandler.handle(error).message)),
           );
         }
       } finally {

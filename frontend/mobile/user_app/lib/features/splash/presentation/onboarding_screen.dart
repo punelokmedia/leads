@@ -13,7 +13,7 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 34.w, vertical: 20.h),
@@ -30,7 +30,7 @@ class OnboardingScreen extends StatelessWidget {
                   fontSize: 32.sp,
                   fontWeight: FontWeight.w600,
                   fontStyle: FontStyle.normal,
-                  color: AppColors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 37 / 32,
                 ),
               ),
@@ -45,7 +45,7 @@ class OnboardingScreen extends StatelessWidget {
                 errorBuilder: (_, _, _) => Icon(
                   Icons.handshake_outlined,
                   size: 80.r,
-                  color: AppColors.purple73,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
 
@@ -61,7 +61,7 @@ class OnboardingScreen extends StatelessWidget {
                     errorBuilder: (_, _, _) => Icon(
                       Icons.verified_user_outlined,
                       size: 22.sp,
-                      color: AppColors.purple73,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   SizedBox(width: 10.w),
@@ -69,7 +69,7 @@ class OnboardingScreen extends StatelessWidget {
                     "Only 2 Vendors per Lead",
                     style: AppTextStyles.poppins(
                       fontSize: 16.sp,
-                      color: AppColors.purple73,
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w400,
                       height: 34 / 16,
                       letterSpacing: 0.01,
@@ -82,18 +82,22 @@ class OnboardingScreen extends StatelessWidget {
               // ── Feature List ──
               // ✅ Updated to pass SVG paths instead of Icons
               _buildFeatureItem(
+                context,
                 'assets/Icons/svg/onboard/globe.svg',
                 "1000+ Cities Coverage",
               ),
               _buildFeatureItem(
+                context,
                 'assets/Icons/svg/onboard/vendors.svg',
                 "Trusted by 10.000+ Vendors",
               ),
               _buildFeatureItem(
+                context,
                 'assets/Icons/svg/onboard/quality.svg',
                 "High Quality Leads",
               ),
               _buildFeatureItem(
+                context,
                 'assets/Icons/svg/onboard/roi.svg',
                 "Better ROI",
               ),
@@ -141,7 +145,11 @@ class OnboardingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureItem(String imagePath, String text) {
+  Widget _buildFeatureItem(
+    BuildContext context,
+    String imagePath,
+    String text,
+  ) {
     // Check if the file is an SVG
     final isSvg = imagePath.toLowerCase().endsWith('.svg');
 
@@ -157,7 +165,7 @@ class OnboardingScreen extends StatelessWidget {
                   errorBuilder: (_, _, _) => Icon(
                     Icons.check_circle_outline,
                     size: 28.r,
-                    color: Colors.grey[500],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 )
               : Image.asset(
@@ -168,7 +176,7 @@ class OnboardingScreen extends StatelessWidget {
                   errorBuilder: (_, _, _) => Icon(
                     Icons.check_circle_outline,
                     size: 28.r,
-                    color: Colors.grey[500],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
           SizedBox(width: 16.w),
@@ -179,7 +187,7 @@ class OnboardingScreen extends StatelessWidget {
               text,
               style: AppTextStyles.poppins(
                 fontSize: 20.sp,
-                color: AppColors.grey77,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w400,
                 height: 33 / 20,
                 letterSpacing: 0.01,

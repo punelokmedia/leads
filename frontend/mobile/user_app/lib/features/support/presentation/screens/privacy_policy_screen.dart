@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/features/support/presentation/widgets/terms_content_section.dart';
 
@@ -11,9 +10,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFEFD),
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
         elevation: 0.4,
         leading: GestureDetector(
           onTap: () {
@@ -22,13 +21,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
           child: Icon(
             Icons.arrow_back_ios_new,
             size: 18.r,
-            color: AppColors.purple86,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         title: Text(
           'Privacy Policy',
           style: AppTextStyles.roboto(
-            color: AppColors.purple86,
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.w600,
             fontSize: 24.sp,
             height: 1,

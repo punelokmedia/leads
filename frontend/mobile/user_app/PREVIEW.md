@@ -36,13 +36,20 @@ receipts. Profile Save waits for the API response. Prices, purchase state and
 vendor limits come from the server. Accept Lead opens the existing cart checkout;
 contacts are available only after the backend confirms a paid order.
 
+Checkout now allows two distinct buyers per lead, with one slot per buyer.
+Slots are reserved for up to 10 minutes before payment opens. A third checkout
+is blocked while both slots are held; after two purchases the lead is out of
+stock. Late captured payments are queued for a refund and do not unlock contacts.
+See `backend/Project-Docs/two-buyer-checkout.md` at the repository root for
+deployment requirements and the pending concurrency-test validation.
+
 Deploy the accompanying backend changes before relying on profile editing and
 purchased contacts: public lead routes now support authenticated requests,
 ownership is checked against paid orders, and profile updates accept the displayed
 business/location fields. Existing vendor limits and prices are preserved.
 
-Saved leads are session-only. Notifications have no backend feed, and Support
-opens the existing help screen; live mode never sends simulated support replies.
+Saved leads are session-only. Notifications have no backend feed. Both support
+buttons open the authenticated database-backed support inbox; live mode never sends simulated replies.
 API failures show Retry instead of sample data. More includes Refresh and account access.
 
 Checks:
@@ -78,3 +85,37 @@ In TEST_MODE, contact details are placeholders and changes stay in memory.
 Run without TEST_MODE to use the backend integration described above.
 
 Validation: `flutter test test/preview_test.dart`
+
+## System theme and Android test display
+
+The live app and preview follow the phone's light/dark setting automatically.
+Check switching while the app is open with
+`flutter test test/system_theme_test.dart`.
+
+Android debug builds use a TextureView to avoid the blank SurfaceView observed
+on the development emulator. Release builds retain Flutter's SurfaceView.
+After native Android changes, stop and rebuild instead of hot reload:
+
+```powershell
+flutter run -d emulator-5554 -t lib/main_preview.dart
+```
+
+This entry point uses sample data. Use `flutter run` for the backend-connected app.
+
+## Live category catalog and support
+
+All 17 preview categories are imported into the configured database and verified
+through https://leads-e5jv.onrender.com (20 categories including existing entries).
+Sample leads and payment records remain in demo mode. Categories with no active
+leads still appear in the category list.
+
+Both 24/7 Support and Chat with Support use the live support inbox. Sign in to
+send messages. Admins reply from Support Inbox in admin web. Deploy the backend
+support routes and admin web before using live chat. Requests can be submitted
+24/7; the app does not claim immediate human responses.
+
+Build the live APK:
+
+```powershell
+flutter build apk --release --build-number=2 --dart-define=BASE_URL=https://leads-e5jv.onrender.com/
+```

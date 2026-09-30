@@ -69,13 +69,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final cartCount = ref.watch(cartCountProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       body: Padding(
         padding: EdgeInsets.fromLTRB(0.w, 20.h, 0.w, 0.h),
         child: Column(
           children: [
             Material(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               elevation: 0.5,
               shadowColor: Colors.black12,
               child: Column(
@@ -107,7 +107,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             style: AppTextStyles.poppins(
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.grey77,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                           GestureDetector(
@@ -119,7 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               style: AppTextStyles.poppins(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.purple72,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ),
@@ -154,7 +156,7 @@ class _NextLeadsAppBar extends StatelessWidget {
           IconButton(
             icon: Icon(
               Icons.menu_rounded,
-              color: AppColors.black19,
+              color: Theme.of(context).colorScheme.onSurface,
               size: 24.r,
             ),
             onPressed: () {
@@ -179,7 +181,7 @@ class _NextLeadsAppBar extends StatelessWidget {
                 style: AppTextStyles.poppins(
                   fontSize: 17.sp,
                   fontWeight: FontWeight.w800,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],
@@ -191,7 +193,7 @@ class _NextLeadsAppBar extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   Icons.production_quantity_limits_rounded,
-                  color: AppColors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                   size: 26.r,
                 ),
                 onPressed: () {
@@ -253,7 +255,9 @@ class _HeroBanner extends StatelessWidget {
               height: 120.h,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -265,7 +269,9 @@ class _HeroBanner extends StatelessWidget {
               height: 80.h,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.06),
               ),
             ),
           ),
@@ -308,7 +314,7 @@ class _HeroBanner extends StatelessWidget {
                       'Only 2 Vendors per Lead',
                       style: AppTextStyles.poppins(
                         fontSize: 11.sp,
-                        color: Colors.white70,
+                        color: Colors.white,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -442,10 +448,12 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isActive
               ? AppColors.purple72.withValues(alpha: 0.07)
-              : Colors.white,
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: isActive ? AppColors.purple72 : Colors.grey.shade200,
+            color: isActive
+                ? AppColors.purple72
+                : Theme.of(context).colorScheme.surfaceContainerLow,
             width: isActive ? 1.4 : 1.0,
           ),
           boxShadow: [
@@ -461,7 +469,9 @@ class _FilterChip extends StatelessWidget {
             SizedBox(width: 10.w),
             Icon(
               icon,
-              color: isActive ? AppColors.purple72 : AppColors.purple86,
+              color: isActive
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.primary,
               size: 16.r,
             ),
             SizedBox(width: 6.w),
@@ -470,7 +480,9 @@ class _FilterChip extends StatelessWidget {
                 label,
                 style: AppTextStyles.poppins(
                   fontSize: 10.sp,
-                  color: isActive ? AppColors.purple72 : AppColors.black,
+                  color: isActive
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurface,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -478,7 +490,9 @@ class _FilterChip extends StatelessWidget {
             ),
             Icon(
               Icons.keyboard_arrow_down_rounded,
-              color: isActive ? AppColors.purple72 : AppColors.grey94,
+              color: isActive
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
               size: 18.r,
             ),
             SizedBox(width: 6.w),
@@ -507,7 +521,7 @@ class _TopCategories extends ConsumerWidget {
                 style: AppTextStyles.poppins(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.grey77,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               TextButton(
@@ -594,7 +608,7 @@ class _CategoryTile extends StatelessWidget {
             style: AppTextStyles.poppins(
               fontSize: 9.sp,
               fontWeight: FontWeight.w500,
-              color: AppColors.grey77,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               height: 1.3,
             ),
           ),
@@ -693,9 +707,11 @@ class _LeadListItemState extends State<_LeadListItem> {
       child: Container(
         padding: EdgeInsets.fromLTRB(10.w, 4.h, 8.w, 0.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
+          ),
         ),
         child: Row(
           children: [
@@ -735,7 +751,7 @@ class _LeadListItemState extends State<_LeadListItem> {
                           style: AppTextStyles.poppins(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w800,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -747,7 +763,11 @@ class _LeadListItemState extends State<_LeadListItem> {
                   /// Location
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 14.r, color: Colors.grey),
+                      Icon(
+                        Icons.location_on,
+                        size: 14.r,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
@@ -755,7 +775,9 @@ class _LeadListItemState extends State<_LeadListItem> {
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.poppins(
                             fontSize: 11.sp,
-                            color: Colors.grey,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -773,7 +795,7 @@ class _LeadListItemState extends State<_LeadListItem> {
                         style: AppTextStyles.poppins(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.purple72,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       SizedBox(width: 8.w),
@@ -807,7 +829,9 @@ class _LeadListItemState extends State<_LeadListItem> {
                                     style: AppTextStyles.poppins(
                                       fontSize: 10.sp,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.purple72,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
                                     ),
                                   ),
                                 ),
@@ -831,7 +855,9 @@ class _LeadListItemState extends State<_LeadListItem> {
                                         child: Icon(
                                           Icons.remove,
                                           size: 14.r,
-                                          color: AppColors.purple72,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
                                         ),
                                       ),
                                     ),
@@ -840,7 +866,9 @@ class _LeadListItemState extends State<_LeadListItem> {
                                       style: AppTextStyles.poppins(
                                         fontSize: 12.sp,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.purple72,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
                                       ),
                                     ),
                                     GestureDetector(
@@ -852,7 +880,9 @@ class _LeadListItemState extends State<_LeadListItem> {
                                         child: Icon(
                                           Icons.add,
                                           size: 14.r,
-                                          color: AppColors.purple72,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
                                         ),
                                       ),
                                     ),
@@ -938,7 +968,7 @@ class _QtyControl extends StatelessWidget {
               style: AppTextStyles.poppins(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w700,
-                color: AppColors.purple72,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -960,7 +990,11 @@ class _QtyBtn extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(4.r),
-        child: Icon(icon, size: 16.r, color: AppColors.purple72),
+        child: Icon(
+          icon,
+          size: 16.r,
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

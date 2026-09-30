@@ -20,7 +20,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       elevation: 0,
       automaticallyImplyLeading: false,
       title: _LogoTitle(),
@@ -46,7 +46,7 @@ class _LogoTitle extends StatelessWidget {
           style: AppTextStyles.poppins(
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,
-            color: AppColors.purple73,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import '../../domain/address_model.dart';
 import 'address_input_decoration.dart';
@@ -24,16 +23,16 @@ class AddressTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: cardShadow(),
-        child: TextFormField(
-          initialValue: initialValue,
-          onChanged: onChanged,
-          keyboardType: keyboardType,
-          textInputAction: textInputAction,
-          style: _fieldStyle(),
-          decoration: addressInputDeco(hint: hint),
-        ),
-      );
+    decoration: cardShadow(context),
+    child: TextFormField(
+      initialValue: initialValue,
+      onChanged: onChanged,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      style: _fieldStyle(context),
+      decoration: addressInputDeco(context, hint: hint),
+    ),
+  );
 }
 
 // ── City Dropdown ─────────────────────────────────────────────────────────────
@@ -42,8 +41,17 @@ class AddressCityDropdown extends StatelessWidget {
   final ValueChanged<String> onChanged;
 
   static const _cities = [
-    'Select City', 'Nashik', 'Pune', 'Mumbai', 'Bangaluru',
-    'Chennai', 'Hyderabad', 'Delhi', 'Kolkata', 'Nagpur', 'Coimbatore',
+    'Select City',
+    'Nashik',
+    'Pune',
+    'Mumbai',
+    'Bangaluru',
+    'Chennai',
+    'Hyderabad',
+    'Delhi',
+    'Kolkata',
+    'Nagpur',
+    'Coimbatore',
   ];
 
   const AddressCityDropdown({
@@ -57,14 +65,17 @@ class AddressCityDropdown extends StatelessWidget {
     final value = _cities.contains(selectedCity) ? selectedCity : _cities.first;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: cardShadow(),
+      decoration: cardShadow(context),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down_rounded,
-              color: AppColors.grey180, size: 20.r),
-          style: _fieldStyle(),
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            size: 20.r,
+          ),
+          style: _fieldStyle(context),
           items: _cities
               .map((c) => DropdownMenuItem(value: c, child: Text(c)))
               .toList(),
@@ -90,22 +101,22 @@ class AddressTypePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          _TypeChip(
-            icon: Icons.home_outlined,
-            label: 'Home',
-            isSelected: selected == AddressType.home,
-            onTap: () => onChanged(AddressType.home),
-          ),
-          SizedBox(width: 12.w),
-          _TypeChip(
-            icon: Icons.business_center_outlined,
-            label: 'Office',
-            isSelected: selected == AddressType.office,
-            onTap: () => onChanged(AddressType.office),
-          ),
-        ],
-      );
+    children: [
+      _TypeChip(
+        icon: Icons.home_outlined,
+        label: 'Home',
+        isSelected: selected == AddressType.home,
+        onTap: () => onChanged(AddressType.home),
+      ),
+      SizedBox(width: 12.w),
+      _TypeChip(
+        icon: Icons.business_center_outlined,
+        label: 'Office',
+        isSelected: selected == AddressType.office,
+        onTap: () => onChanged(AddressType.office),
+      ),
+    ],
+  );
 }
 
 class _TypeChip extends StatelessWidget {
@@ -125,57 +136,68 @@ class _TypeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: 42.h,
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
-          decoration: BoxDecoration(
-            color: isSelected ? _accent : Colors.white,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: _accent, width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: 42.h,
+      padding: EdgeInsets.symmetric(horizontal: 18.w),
+      decoration: BoxDecoration(
+        color: isSelected ? _accent : Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: _accent, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 26.r,
-                  color: isSelected ? Colors.white : Colors.grey.shade600),
-              SizedBox(width: 8.w),
-              Text(label,
-                  style: AppTextStyles.poppins(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w400,
-                    color: isSelected ? Colors.white : Colors.grey.shade700,
-                  )),
-            ],
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 26.r,
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
-        ),
-      );
+          SizedBox(width: 8.w),
+          Text(
+            label,
+            style: AppTextStyles.poppins(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w400,
+              color: isSelected
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 // ── Label ─────────────────────────────────────────────────────────────────────
 class AddressLabel extends StatelessWidget {
   final String text;
-  
+
   const AddressLabel({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.only(bottom: 6.h),
-        child: Text(text,
-            style: AppTextStyles.poppins(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w400,
-              color: const Color.fromRGBO(69, 90, 100, 1),
-            )),
-      );
+    padding: EdgeInsets.only(bottom: 6.h),
+    child: Text(
+      text,
+      style: AppTextStyles.poppins(
+        fontSize: 18.sp,
+        fontWeight: FontWeight.w400,
+        color: const Color.fromRGBO(69, 90, 100, 1),
+      ),
+    ),
+  );
 }
 
 // ── Save Button ───────────────────────────────────────────────────────────────
@@ -186,42 +208,47 @@ class SaveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: isLoading ? null : onTap,
-        child: Container(
-          width: double.infinity,
-          height: 52.h,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-                colors: [Color(0xFFECCC0D), Color(0xFFF8B020)]),
-            borderRadius: BorderRadius.circular(14.r),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFFC107).withOpacity(0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Center(
-            child: isLoading
-                ? const CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2)
-                : Text('Save',
-                    style: AppTextStyles.poppins(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white,
-                    )),
-          ),
+    onTap: isLoading ? null : onTap,
+    child: Container(
+      width: double.infinity,
+      height: 52.h,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFECCC0D), Color(0xFFF8B020)],
         ),
-      );
+        borderRadius: BorderRadius.circular(14.r),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFC107).withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: isLoading
+            ? CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.surface,
+                strokeWidth: 2,
+              )
+            : Text(
+                'Save',
+                style: AppTextStyles.poppins(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+      ),
+    ),
+  );
 }
 
 // ── Shared text style ─────────────────────────────────────────────────────────
-TextStyle _fieldStyle() => AppTextStyles.poppins(
-      fontSize: 16.sp,
-      color: AppColors.grey137,
-      height: 1,
-      fontWeight: FontWeight.w400,
-      letterSpacing: 0.01,
-    );
+TextStyle _fieldStyle(BuildContext context) => AppTextStyles.poppins(
+  fontSize: 16.sp,
+  color: Theme.of(context).colorScheme.onSurfaceVariant,
+  height: 1,
+  fontWeight: FontWeight.w400,
+  letterSpacing: 0.01,
+);

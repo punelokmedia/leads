@@ -12,7 +12,12 @@ class ProfileSignInHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.only(top: 60.h, bottom: 30.h, left: 24.w, right: 24.w),
+      padding: EdgeInsets.only(
+        top: 60.h,
+        bottom: 30.h,
+        left: 24.w,
+        right: 24.w,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.orange236, AppColors.orange248],
@@ -28,7 +33,7 @@ class ProfileSignInHeader extends StatelessWidget {
             style: AppTextStyles.poppins(
               fontSize: 24.sp,
               fontWeight: FontWeight.w600,
-              color: AppColors.white,
+              color: Colors.white,
               height: 20 / 24,
             ),
           ),
@@ -37,11 +42,11 @@ class ProfileSignInHeader extends StatelessWidget {
             'Log in or sign up to view your complete profile',
             textAlign: TextAlign.center,
             style: AppTextStyles.roboto(
-              color: AppColors.white,
+              color: Colors.white,
               fontSize: 16.sp,
               fontWeight: FontWeight.w400,
-              height: 11/16,
-              letterSpacing: 0
+              height: 11 / 16,
+              letterSpacing: 0,
             ),
           ),
           SizedBox(height: 24.h),
@@ -49,7 +54,7 @@ class ProfileSignInHeader extends StatelessWidget {
           ElevatedButton(
             onPressed: () => context.push(AppRouter.login),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               foregroundColor: AppColors.orange248,
               minimumSize: Size(double.infinity, 53.h),
               shape: RoundedRectangleBorder(
@@ -59,7 +64,11 @@ class ProfileSignInHeader extends StatelessWidget {
             ),
             child: Text(
               'Continue to sign in',
-              style: AppTextStyles.poppins(fontSize: 20.sp, fontWeight: FontWeight.w600,height: 11/20,),
+              style: AppTextStyles.poppins(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                height: 11 / 20,
+              ),
             ),
           ),
         ],

@@ -61,7 +61,7 @@ class _LeadPaymentBottomBarState extends ConsumerState<LeadPaymentBottomBar> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -79,7 +79,7 @@ class _LeadPaymentBottomBarState extends ConsumerState<LeadPaymentBottomBar> {
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 12.h),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5DFFF),
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Column(
@@ -121,9 +121,9 @@ class _LeadPaymentBottomBarState extends ConsumerState<LeadPaymentBottomBar> {
                           ? SizedBox(
                               width: 18.r,
                               height: 18.r,
-                              child: const CircularProgressIndicator(
+                              child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                               ),
                             )
                           : Icon(Icons.lock, size: 18.r, color: Colors.white),
@@ -149,7 +149,7 @@ class _LeadPaymentBottomBarState extends ConsumerState<LeadPaymentBottomBar> {
                     'Pay to unlock client contact details',
                     style: AppTextStyles.poppins(
                       fontSize: 9.sp,
-                      color: Colors.grey.shade600,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

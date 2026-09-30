@@ -28,7 +28,7 @@ class HistoryCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(color: AppColors.color159, width: 1),
         boxShadow: [
@@ -52,7 +52,7 @@ class HistoryCard extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                color: AppColors.white239,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: _CardDetails(item: item),
@@ -84,11 +84,11 @@ class _CardHeader extends StatelessWidget {
             errorWidget: Container(
               width: 65.w,
               height: 45.h,
-              color: AppColors.white239,
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
               child: Icon(
                 Icons.broken_image_outlined,
                 size: 20.r,
-                color: Colors.grey[400],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -108,20 +108,24 @@ class _CardHeader extends StatelessWidget {
                 style: AppTextStyles.roboto(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.2,
                 ),
               ),
               SizedBox(height: 4.h),
               Row(
                 children: [
-                  Icon(Icons.location_on, size: 12.r, color: AppColors.grey137),
+                  Icon(
+                    Icons.location_on,
+                    size: 12.r,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   SizedBox(width: 4.w),
                   Text(
                     item.city,
                     style: AppTextStyles.roboto(
                       fontSize: 12.sp,
-                      color: AppColors.grey137,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -162,7 +166,7 @@ class _CardDetails extends ConsumerWidget {
               item.time,
               style: AppTextStyles.roboto(
                 fontSize: 12.sp,
-                color: Colors.grey[500]!,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -268,7 +272,9 @@ class _CardDetails extends ConsumerWidget {
             icon: Icon(
               Icons.download_rounded,
               size: 20.r,
-              color: item.isDownloaded ? Colors.grey[400] : AppColors.color159,
+              color: item.isDownloaded
+                  ? Theme.of(context).colorScheme.onSurfaceVariant
+                  : AppColors.color159,
             ),
             label: Text(
               item.isDownloaded ? "Already Downloaded" : "Download Leads",
@@ -276,14 +282,14 @@ class _CardDetails extends ConsumerWidget {
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 color: item.isDownloaded
-                    ? Colors.grey[400]
+                    ? Theme.of(context).colorScheme.onSurfaceVariant
                     : AppColors.color159,
               ),
             ),
             style: OutlinedButton.styleFrom(
               side: BorderSide(
                 color: item.isDownloaded
-                    ? Colors.grey[300]!
+                    ? Theme.of(context).colorScheme.outlineVariant
                     : AppColors.color159,
                 width: 1.5,
               ),

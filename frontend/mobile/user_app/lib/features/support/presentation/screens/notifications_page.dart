@@ -384,15 +384,15 @@ class _NotificationIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(width: 46.w, height: 46.w, child: _buildIcon());
+    return SizedBox(width: 46.w, height: 46.w, child: _buildIcon(context));
   }
 
-  Widget _buildIcon() {
+  Widget _buildIcon(BuildContext context) {
     switch (type) {
       case NotificationType.newLead:
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFFFF3DC),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -406,8 +406,8 @@ class _NotificationIcon extends StatelessWidget {
 
       case NotificationType.leadAccepted:
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFDCF5E8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -421,8 +421,8 @@ class _NotificationIcon extends StatelessWidget {
 
       case NotificationType.payment:
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFDCEBFF),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -472,7 +472,7 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF1A1A2E),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           SizedBox(height: 6.h),

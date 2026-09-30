@@ -24,11 +24,8 @@ class EditProfileAvatar extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.grey229,
-              border: Border.all(
-                color: AppColors.orange248,
-                width: 2, 
-              ),
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              border: Border.all(color: AppColors.orange248, width: 2),
             ),
             child: Center(
               child: avatarUrl != null && avatarUrl!.trim().isNotEmpty
@@ -48,13 +45,13 @@ class EditProfileAvatar extends StatelessWidget {
                     )
                   : SvgPicture.asset(
                       "assets/Icons/svg/navbar/profile.svg",
-                      height: 48.75.h, 
+                      height: 48.75.h,
                       width: 39.w,
                       fit: BoxFit.contain,
                     ),
             ),
           ),
-          SizedBox(height:10.h),
+          SizedBox(height: 10.h),
         ],
       ),
     );
@@ -75,17 +72,15 @@ class UpdateButton extends StatelessWidget {
         width: double.infinity,
         height: 57.h,
         decoration: BoxDecoration(
-          color: AppColors.orange248, 
+          color: AppColors.orange248,
           borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(
-            color: AppColors.orange255,
-          ),
+          border: Border.all(color: AppColors.orange255),
           boxShadow: [
             BoxShadow(
-              color: Color.fromRGBO(0,0,0,0.25), 
-              offset: Offset(0, 4.h), 
-              blurRadius: 4.r, 
-              spreadRadius: 0, 
+              color: Color.fromRGBO(0, 0, 0, 0.25),
+              offset: Offset(0, 4.h),
+              blurRadius: 4.r,
+              spreadRadius: 0,
             ),
           ],
         ),
@@ -94,19 +89,19 @@ class UpdateButton extends StatelessWidget {
               ? SizedBox(
                   height: 24.h,
                   width: 24.h,
-                  child: const CircularProgressIndicator(
-                    color: Colors.white,
+                  child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.surface,
                     strokeWidth: 2,
                   ),
                 )
               : Text(
                   'Update',
                   style: AppTextStyles.poppins(
-                    fontSize: 20.sp, 
+                    fontSize: 20.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.white,
+                    color: Colors.white,
                     letterSpacing: 0.1,
-                    height: 20/20
+                    height: 20 / 20,
                   ),
                 ),
         ),
@@ -138,7 +133,7 @@ class _ChangePasswordFieldState extends State<ChangePasswordField> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -152,14 +147,22 @@ class _ChangePasswordFieldState extends State<ChangePasswordField> {
         controller: widget.controller,
         obscureText: _obscure,
         validator: widget.validator,
-        style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+        style: TextStyle(
+          fontSize: 14.sp,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
         decoration: InputDecoration(
           hintText: widget.hintText,
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
+          hintStyle: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 14.sp,
+          ),
           filled: true,
           fillColor: Colors.transparent,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 14.h,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
             borderSide: BorderSide.none,
@@ -170,15 +173,14 @@ class _ChangePasswordFieldState extends State<ChangePasswordField> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide:
-                const BorderSide(color: Color(0xFFFFC107), width: 1.5),
+            borderSide: const BorderSide(color: Color(0xFFFFC107), width: 1.5),
           ),
           suffixIcon: IconButton(
             icon: Icon(
               _obscure
                   ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               size: 20.r,
             ),
             onPressed: () => setState(() => _obscure = !_obscure),

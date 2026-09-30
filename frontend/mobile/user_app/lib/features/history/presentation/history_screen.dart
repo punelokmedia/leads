@@ -61,7 +61,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       appBar: _HistoryAppBar(),
       body: const _HistoryBody(),
     );
@@ -76,16 +76,16 @@ class _HistoryAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 0.5,
       centerTitle: true,
-      
+
       title: Text(
         'History',
         style: AppTextStyles.poppins(
           fontSize: 24.sp,
           fontWeight: FontWeight.w600,
-          color: AppColors.black,
+          color: Theme.of(context).colorScheme.onSurface,
           letterSpacing: 0.1,
           height: 20 / 24,
         ),
@@ -108,12 +108,10 @@ class _HistoryBody extends ConsumerWidget {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final bottomScrollSpace = 120.h + bottomInset;
 
-
     if (!isLoggedIn) {
       return const _HistoryLoginRequiredView();
     }
     if (isLoading && items.isEmpty) return const HistoryShimmerList();
-
 
     if (error != null) {
       return HistoryErrorState(
@@ -122,7 +120,6 @@ class _HistoryBody extends ConsumerWidget {
             ref.read(historyControllerProvider.notifier).loadHistory(),
       );
     }
-
 
     if (isEmpty) return const HistoryEmptyState();
     return RefreshIndicator(
@@ -153,14 +150,18 @@ class _HistoryLoginRequiredView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock_outline_rounded, size: 80.r, color: Colors.grey[300]),
+            Icon(
+              Icons.lock_outline_rounded,
+              size: 80.r,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             SizedBox(height: 24.h),
             Text(
               'Login to see History',
               style: AppTextStyles.poppins(
                 fontSize: 20.sp,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 10.h),
@@ -169,7 +170,7 @@ class _HistoryLoginRequiredView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppTextStyles.roboto(
                 fontSize: 14.sp,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             SizedBox(height: 30.h),

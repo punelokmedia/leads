@@ -143,6 +143,7 @@ class PreviewLead {
   int buyers;
   bool joined, saved;
   final int maxBuyers;
+  final int reservedSlots;
   final String backendId, contact, backendStatus;
   final String? budgetLabel;
   PreviewLead({
@@ -152,6 +153,7 @@ class PreviewLead {
     this.backendStatus = 'ACTIVE',
     this.budgetLabel,
     this.maxBuyers = 2,
+    this.reservedSlots = 0,
     required this.title,
     required this.category,
     required this.city,
@@ -169,8 +171,21 @@ class PreviewLead {
     this.start = 'Within 15 days',
   });
   bool get closed => buyers >= maxBuyers || backendStatus != 'ACTIVE';
+  bool get reserved => backendStatus == 'RESERVED';
+  bool get expired => backendStatus == 'EXPIRED';
+  int get availableSlots =>
+      (maxBuyers - buyers - reservedSlots).clamp(0, maxBuyers);
+  String get availabilityLabel => reserved
+      ? 'Currently unavailable'
+      : expired
+      ? 'Lead expired'
+      : 'Out of stock';
   String get status => joined
       ? 'JOINED'
+      : reserved
+      ? 'RESERVED'
+      : expired
+      ? 'EXPIRED'
       : closed
       ? 'CLOSED'
       : 'NEW';
@@ -179,7 +194,13 @@ class PreviewLead {
 class PreviewReceipt {
   final String leadId, title;
   final num fee;
-  const PreviewReceipt(this.leadId, this.title, this.fee);
+  final String status;
+  const PreviewReceipt(
+    this.leadId,
+    this.title,
+    this.fee, {
+    this.status = 'Paid',
+  });
 }
 
 class PreviewStore extends ChangeNotifier {

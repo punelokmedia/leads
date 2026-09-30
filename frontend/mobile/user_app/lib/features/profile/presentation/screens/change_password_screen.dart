@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import '../widgets/edit_profile_widgets.dart';
@@ -74,24 +73,24 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         centerTitle: true,
         leading: GestureDetector(
           onTap: () => context.pop(),
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
             size: 18.r,
           ),
         ),
         title: Text(
           'Change Password',
           style: AppTextStyles.poppins(
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -175,7 +174,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
             // ── Update button at bottom ───────────────────────────
             Container(
-              color: const Color(0xFFF7F7F7),
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
               padding: EdgeInsets.only(
                 left: 24.w,
                 right: 24.w,
@@ -206,7 +205,7 @@ class _FieldLabel extends StatelessWidget {
       style: AppTextStyles.poppins(
         fontSize: 18.sp,
         fontWeight: FontWeight.w500,
-        color: AppColors.black,
+        color: Theme.of(context).colorScheme.onSurface,
         letterSpacing: 0.1,
         height: 20 / 18,
       ),

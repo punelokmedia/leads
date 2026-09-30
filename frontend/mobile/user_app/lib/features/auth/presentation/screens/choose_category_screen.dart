@@ -16,12 +16,12 @@ import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.
 import '../../shared/auth_providers.dart';
 import '../../shared/profile_draft_provider.dart';
 
-
 class ChooseCategoryScreen extends ConsumerStatefulWidget {
   const ChooseCategoryScreen({super.key});
 
   @override
-  ConsumerState<ChooseCategoryScreen> createState() => _ChooseCategoryScreenState();
+  ConsumerState<ChooseCategoryScreen> createState() =>
+      _ChooseCategoryScreenState();
 }
 
 class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
@@ -29,15 +29,25 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
   bool _hasPreselected = false;
 
   final List<Color> _uiColors = [
-    const Color(0xFF4522C2), const Color(0xFFE65100), const Color(0xFFE91E63),
-    const Color(0xFF1976D2), const Color(0xFFFBC02D), const Color(0xFF795548),
-    const Color(0xFF8D6E63), const Color(0xFFE040FB), const Color(0xFFC2185B),
-    const Color(0xFF388E3C), const Color(0xFF03A9F4),
+    const Color(0xFF4522C2),
+    const Color(0xFFE65100),
+    const Color(0xFFE91E63),
+    const Color(0xFF1976D2),
+    const Color(0xFFFBC02D),
+    const Color(0xFF795548),
+    const Color(0xFF8D6E63),
+    const Color(0xFFE040FB),
+    const Color(0xFFC2185B),
+    const Color(0xFF388E3C),
+    const Color(0xFF03A9F4),
   ];
 
   Future<void> _onContinue() async {
     if (_selectedCategoryIds.isEmpty) {
-      SnackbarHelper.showWarning(context, 'Please select at least one category');
+      SnackbarHelper.showWarning(
+        context,
+        'Please select at least one category',
+      );
       return;
     }
 
@@ -47,21 +57,23 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
         .read(profileDraftProvider.notifier)
         .updateCategories(_selectedCategoryIds.toList());
 
-    await ref.read(authControllerProvider.notifier).completeProfile(
-      fullName: draft.fullName,
-      email: draft.email,
-      businessName: draft.businessName,
-      workType: draft.workType,
-      city: draft.cityId.isNotEmpty ? draft.cityId : draft.city,
-      categories: _selectedCategoryIds.toList(),
-      address: draft.address,
-      profilePicPath: draft.profilePicPath,
-      onSuccess: () {
-        ref.read(authControllerProvider.notifier).clearError();
-        // Keep the draft until Razorpay verification finishes.
-        context.push(AppRouter.completePaymentPath);
-      },
-    );
+    await ref
+        .read(authControllerProvider.notifier)
+        .completeProfile(
+          fullName: draft.fullName,
+          email: draft.email,
+          businessName: draft.businessName,
+          workType: draft.workType,
+          city: draft.cityId.isNotEmpty ? draft.cityId : draft.city,
+          categories: _selectedCategoryIds.toList(),
+          address: draft.address,
+          profilePicPath: draft.profilePicPath,
+          onSuccess: () {
+            ref.read(authControllerProvider.notifier).clearError();
+            // Keep the draft until Razorpay verification finishes.
+            context.push(AppRouter.completePaymentPath);
+          },
+        );
   }
 
   @override
@@ -73,25 +85,33 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
       final draftWorkType = ref.read(profileDraftProvider).workType;
       for (var category in categoriesAsync.value!) {
         if (category.name == draftWorkType) {
-          _selectedCategoryIds.add(category.id); 
+          _selectedCategoryIds.add(category.id);
           break;
         }
       }
-      _hasPreselected = true; 
+      _hasPreselected = true;
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black, size: 20.r),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Theme.of(context).colorScheme.onSurface,
+            size: 20.r,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Select Categories',
-          style: AppTextStyles.poppins(fontSize: 22.sp, fontWeight: FontWeight.w600, color: Colors.black),
+          style: AppTextStyles.poppins(
+            fontSize: 22.sp,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         centerTitle: true,
       ),
@@ -108,7 +128,10 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                         'Choose categories you want\nto receive leads for',
                         textAlign: TextAlign.center,
                         style: AppTextStyles.poppins(
-                          fontSize: 14.sp, color: Colors.grey[500], fontWeight: FontWeight.w400, height: 1.4,
+                          fontSize: 14.sp,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w400,
+                          height: 1.4,
                         ),
                       ),
                     ),
@@ -119,18 +142,20 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                       child: categoriesAsync.when(
                         data: (categories) {
                           if (categories.isEmpty) {
-                            return const Center(child: Text("No categories found."));
+                            return const Center(
+                              child: Text("No categories found."),
+                            );
                           }
                           return Column(
                             children: List.generate(categories.length, (index) {
                               final category = categories[index];
                               final color = _uiColors[index % _uiColors.length];
-                              
+
                               // ✅ Pass the icon URL to the builder
                               return _buildCategoryItem(
                                 id: category.id,
                                 name: category.name,
-                                iconUrl: category.icon, 
+                                iconUrl: category.icon,
                                 iconColor: color,
                               );
                             }),
@@ -138,7 +163,9 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                         },
                         loading: () => Padding(
                           padding: EdgeInsets.only(top: 40.h),
-                          child: const Center(child: CircularProgressIndicator()),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         ),
                         error: (err, stack) => Padding(
                           padding: EdgeInsets.only(top: 40.h),
@@ -149,12 +176,15 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                                 textAlign: TextAlign.center,
                                 style: AppTextStyles.poppins(
                                   fontSize: 14.sp,
-                                  color: Colors.grey[600],
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                               ),
                               SizedBox(height: 12.h),
                               TextButton(
-                                onPressed: () => ref.invalidate(categoriesProvider),
+                                onPressed: () =>
+                                    ref.invalidate(categoriesProvider),
                                 child: const Text('Retry'),
                               ),
                             ],
@@ -162,8 +192,8 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                         ),
                       ),
                     ),
-                    
-                    SizedBox(height: 100.h), 
+
+                    SizedBox(height: 100.h),
                   ],
                 ),
               ),
@@ -175,7 +205,7 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
               right: 0,
               child: Container(
                 padding: EdgeInsets.fromLTRB(24.w, 10.h, 24.w, 30.h),
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 child: AuthPrimaryButton(
                   label: 'Continue',
                   isLoading: isLoading,
@@ -224,7 +254,7 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                     name,
                     style: AppTextStyles.poppins(
                       fontSize: 15.sp,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -234,19 +264,27 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                   height: 22.r,
                   decoration: BoxDecoration(
                     color: isSelected ? AppColors.purple73 : Colors.transparent,
-                    borderRadius: BorderRadius.circular(4.r), 
+                    borderRadius: BorderRadius.circular(4.r),
                     border: Border.all(
-                      color: isSelected ? AppColors.purple73 : Colors.grey[400]!,
+                      color: isSelected
+                          ? AppColors.purple73
+                          : Theme.of(context).colorScheme.outlineVariant,
                       width: 1.5,
                     ),
                   ),
-                  child: isSelected ? Icon(Icons.check, color: Colors.white, size: 16.r) : null,
+                  child: isSelected
+                      ? Icon(Icons.check, color: Colors.white, size: 16.r)
+                      : null,
                 ),
               ],
             ),
           ),
         ),
-        Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+        Divider(
+          height: 1,
+          thickness: 1,
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
       ],
     );
   }
@@ -262,8 +300,11 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
         width: 24.r,
         height: 24.r,
         colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-        placeholderBuilder: (_) =>
-            Icon(Icons.category_rounded, color: Colors.grey[300], size: 24.r),
+        placeholderBuilder: (_) => Icon(
+          Icons.category_rounded,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          size: 24.r,
+        ),
         errorBuilder: (_, _, _) => fallback,
       );
     }
