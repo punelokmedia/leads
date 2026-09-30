@@ -222,10 +222,10 @@ class CartController extends StateNotifier<CartState> {
 
       final dynamic rawAmount = orderData['amount'];
       final parsedAmount = rawAmount is num
-          ? rawAmount.toInt()
-          : int.tryParse(rawAmount?.toString() ?? '') ?? 0;
+          ? rawAmount
+          : num.tryParse(rawAmount?.toString() ?? '') ?? 0;
       // Backend cart order amount is in INR; Razorpay checkout needs paise.
-      final int finalAmount = parsedAmount * 100;
+      final int finalAmount = (parsedAmount * 100).round();
 
       _safeSetState(
         (s) => s.copyWith(

@@ -41,7 +41,9 @@ const corsOptions = {
 };
 
 app.use(cookieParser());
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "10mb", verify: (req, _res, buffer) => {
+  if (req.originalUrl.split('?')[0].endsWith('/payments/razorpay-webhook')) req.rawBody = Buffer.from(buffer);
+} }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 

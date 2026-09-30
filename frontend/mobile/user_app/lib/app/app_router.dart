@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:user_app/features/address/presentation/screens/add_address_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/complete_payment_screen.dart';
@@ -12,17 +11,14 @@ import 'package:user_app/features/auth/presentation/screens/verify_number_screen
 import 'package:user_app/features/cart/presentation/screens/cart_screen.dart';
 import 'package:user_app/features/cart/presentation/screens/payment_successful.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
-import 'package:user_app/features/home/presentation/screens/home_screen.dart';
-import 'package:user_app/features/home/presentation/screens/lead.dart';
+import 'package:user_app/features/preview/live_home.dart';
 import 'package:user_app/features/home/presentation/screens/lead_details_screen.dart';
 import 'package:user_app/features/splash/presentation/splash_screen.dart';
 import 'package:user_app/features/support/presentation/screens/setting.dart';
-import 'package:user_app/features/payments/presentation/screens/paymets.dart';
 import 'package:user_app/features/profile/presentation/screens/change_password_screen.dart';
 import 'package:user_app/features/profile/presentation/screens/edit_profile_screen.dart';
 
 import 'package:user_app/features/profile/presentation/screens/profile_screen.dart';
-import 'package:user_app/features/shell/presentation/main_shell.dart';
 import 'package:user_app/features/splash/presentation/onboarding_screen.dart';
 import 'package:user_app/features/support/presentation/screens/about_us_page.dart';
 import 'package:user_app/features/support/presentation/screens/help_support_screen.dart';
@@ -194,62 +190,22 @@ abstract final class AppRouter {
         builder: (context, state) => const SettingsPage(),
       ),
 
-      StatefulShellRoute.indexedStack(
-        builder:
-            (
-              BuildContext context,
-              GoRouterState state,
-              StatefulNavigationShell navigationShell,
-            ) {
-              return MainShell(navigationShell: navigationShell);
-            },
-        branches: <StatefulShellBranch>[
-          StatefulShellBranch(
-            routes: <RouteBase>[
-              GoRoute(
-                path: homePath,
-                builder: (BuildContext context, GoRouterState state) =>
-                    const HomeScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: <RouteBase>[
-              GoRoute(
-                path: leadsPath,
-                builder: (BuildContext context, GoRouterState state) =>
-                    const LeadsScreen(),
-              ),
-            ],
-          ),
-          // StatefulShellBranch(
-          //   routes: <RouteBase>[
-          //     GoRoute(
-          //       path: selectCityPath,
-          //       builder: (BuildContext context, GoRouterState state) =>
-          //           const _city(),
-          //     ),
-          //   ],
-          // ),
-          StatefulShellBranch(
-            routes: <RouteBase>[
-              GoRoute(
-                path: paymentsPath,
-                builder: (BuildContext context, GoRouterState state) =>
-                    const PaymentsScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: <RouteBase>[
-              GoRoute(
-                path: profilePath,
-                builder: (BuildContext context, GoRouterState state) =>
-                    const ProfileScreen(),
-              ),
-            ],
-          ),
-        ],
+      GoRoute(
+        path: '/account',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(path: homePath, builder: (context, state) => const LiveHome()),
+      GoRoute(
+        path: leadsPath,
+        builder: (context, state) => const LiveHome(initialPage: 1),
+      ),
+      GoRoute(
+        path: paymentsPath,
+        builder: (context, state) => const LiveHome(initialPage: 2),
+      ),
+      GoRoute(
+        path: profilePath,
+        builder: (context, state) => const LiveHome(initialPage: 3),
       ),
     ],
   );

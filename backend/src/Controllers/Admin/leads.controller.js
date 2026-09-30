@@ -5,6 +5,8 @@ import { Lead, resolveLeadStatus } from "../../Models/leads.model.js";
 import { Category } from "../../Models/category.model.js";
 import { UploadLog } from "../../Models/uploadLog.model.js";
 import { Order } from "../../Models/orders.models.js";
+import { LeadPurchase } from "../../Models/lead.purchase.model.js";
+import { inventory, BUYER_LIMIT } from "../../Services/lead-inventory.js";
 
 const buildLeadDisplayId = (leadId) =>
   `NL${String(leadId || "").slice(-8).toUpperCase()}`;
@@ -52,15 +54,17 @@ const getAllLeads = async (req, res) => {
       .limit(normalizedLimit)
       .skip(skip);
 
+    const purchases = userId ? await LeadPurchase.find({
+      user: userId, lead: { $in: leads.map((lead) => lead._id) },
+    }).select('lead').lean() : [];
+    const purchasedIds = new Set(purchases.map((purchase) => String(purchase.lead)));
     const modified = leads.map((lead) => {
-      const buyers = Array.isArray(lead.buyers) ? lead.buyers : [];
-      const isPurchased = userId
-        ? buyers.some((b) => b?.user?.toString?.() === userId)
-        : false;
+      const isPurchased = purchasedIds.has(String(lead._id));
 
       const obj = lead.toObject();
 
       delete obj.buyers;
+      delete obj.reservations;
       delete obj.phone;
       delete obj.primaryPhone;
       delete obj.alternatePhone;
@@ -76,6 +80,7 @@ const getAllLeads = async (req, res) => {
 
       return {
         ...obj,
+        ...inventory(lead),
         leadDisplayId: resolvedLeadDisplayId,
         isPurchased,
         price: obj.price,
@@ -123,19 +128,13 @@ const getLeadDetailsById = async (req, res) => {
       });
     }
 
-    const buyers = Array.isArray(lead.buyers) ? lead.buyers : [];
-    const isPurchased = userId
-      ? buyers.some((b) => b?.user?.toString?.() === userId)
-      : false;
-
-    const status =
-      lead.expiresAt < new Date()
-        ? "EXPIRED"
-        : buyers.length >= lead.maxBuyers
-          ? "SOLD_OUT"
-          : "ACTIVE";
+    const isPurchased = userId ? Boolean(await LeadPurchase.exists({
+      user: userId, lead: lead._id,
+    })) : false;
+    const status = resolveLeadStatus(lead);
 
     const responseLead = lead.toObject();
+    delete responseLead.reservations;
     const resolvedLeadDisplayId = buildLeadDisplayId(responseLead._id);
 
     if (lead.leadDisplayId !== resolvedLeadDisplayId) {
@@ -157,6 +156,7 @@ const getLeadDetailsById = async (req, res) => {
       message: "Lead details fetched successfully",
       data: {
         ...responseLead,
+        ...inventory(lead),
         leadDisplayId: resolvedLeadDisplayId,
 
         isPurchased,
@@ -786,7 +786,7 @@ const processLeadsInBackground = async (
 
         const expiresAt = get(["Expires At", "expiresAt"]);
 
-        const maxBuyers = Number(get(["Max Buyers"]) || 3);
+        const maxBuyers = BUYER_LIMIT;
         const image = get(["Image"]) || "";
 
         if (
@@ -990,12 +990,13 @@ const getUserHistory = async (req, res) => {
     }
 
     const history = [];
+    const ownedIds = new Set((await LeadPurchase.find({ user: userId }).select('lead').lean()).map((p) => String(p.lead)));
 
     for (const order of orders) {
       let totalAmount = 0;
 
       const items = order.leads
-        .filter((item) => item.lead) 
+        .filter((item) => item.lead && ownedIds.has(String(item.lead._id)))
         .map((item) => {
           const lead = item.lead;
 
@@ -1151,6 +1152,9 @@ const downloadLeads = async (req, res) => {
         message: "Order not found or not paid",
       });
     }
+
+    const ownedIds = new Set((await LeadPurchase.find({ user: userId }).select('lead').lean()).map((p) => String(p.lead)));
+    order.leads = order.leads.filter((item) => item.lead && ownedIds.has(String(item.lead._id)));
 
     if (order.isDownloaded) {
       return res.status(400).json({

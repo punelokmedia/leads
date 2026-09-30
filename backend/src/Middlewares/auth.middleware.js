@@ -57,4 +57,9 @@ const checkAccountType = (expectedRole) => (req, res, next) => {
 
 const isAdmin = checkAccountType("ADMIN");
 
-export { auth, isAdmin };
+// Public browsing is allowed; supplied credentials must still be valid.
+const optionalAuth = (req, res, next) => {
+  if (req.header("Authorization") || req.cookies?.token) return auth(req, res, next);
+  return next();
+};
+export { auth, isAdmin, optionalAuth };

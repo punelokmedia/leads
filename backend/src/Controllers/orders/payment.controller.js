@@ -1,410 +1,116 @@
-import crypto from "crypto";
-import mongoose from "mongoose";
-import { Cart } from "../../Models/cart.mode.js";
-import { Order } from "../../Models/orders.models.js";
-import { Lead } from "../../Models/leads.model.js";
-import { razorpay } from "../../Config/razorpay.config.js";
-import { LeadPurchase } from "../../Models/lead.purchase.model.js";
+﻿import crypto from 'node:crypto';
+import mongoose from 'mongoose';
+import { Order } from '../../Models/orders.models.js';
+import { razorpay } from '../../Config/razorpay.config.js';
+import { reserveCheckout, cancelCheckout, settleCapturedPayment, processRefunds } from '../../Services/checkout.service.js';
+import { CheckoutError } from '../../Services/lead-inventory.js';
 
-const ORDER_EXPIRY = 15 * 60 * 1000;
-const RAZORPAY_PUBLIC_KEY =
-  process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || "";
+function respondError(res, error) {
+  if (error instanceof CheckoutError) return res.status(error.status).json({ success: false, code: error.code, message: error.message });
+  console.error('Checkout error:', error.message);
+  return res.status(503).json({ success: false, message: 'Checkout could not be completed. Please retry; check your purchases before paying again.' });
+}
 
-const generateCartHash = (items) => {
-  const sorted = items
-    .map((i) => `${i.lead}-${i.quantity}`)
-    .sort()
-    .join("|");
+export function validSignature(body, signature, secret) {
+  if (!secret || typeof signature !== 'string' || !/^[a-f0-9]{64}$/i.test(signature)) return false;
+  const expected = crypto.createHmac('sha256', secret).update(body).digest();
+  return crypto.timingSafeEqual(expected, Buffer.from(signature, 'hex'));
+}
 
-  return crypto.createHash("sha256").update(sorted).digest("hex");
-};
-
-const createOrder = async (req, res) => {
+export async function createOrder(req, res) {
+  let reserved;
   try {
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized access",
+    const keyId = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY;
+    if (!keyId) throw new CheckoutError('PAYMENTS_UNAVAILABLE', 'Payments are not configured.', 503);
+    reserved = await reserveCheckout(req.user.id, req.body?.leadIds ?? req.body?.ids);
+    let order = reserved.order;
+    if (!reserved.reused) {
+      const gatewayOrder = await razorpay.orders.create({
+        amount: Math.round(order.totalAmount * 100), currency: order.currency,
+        receipt: String(order._id), notes: { internalOrderId: String(order._id) },
       });
+      await Order.updateOne({ _id: order._id }, { $set: { razorpayOrderId: gatewayOrder.id } });
+      order = await Order.findOneAndUpdate({ _id: order._id, status: 'RESERVED', reservationExpiresAt: { $gt: new Date() } }, { $set: { status: 'CREATED' } }, { new: true });
+      if (!order) throw new CheckoutError('RESERVATION_EXPIRED', 'Checkout expired or was cancelled. Please start again.');
     }
-
-    const cart = await Cart.findOne({ user: userId }).populate("leads.lead");
-
-    if (!cart || cart.leads.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Your cart is empty",
-      });
-    }
-
-    const cartHash = generateCartHash(cart.leads);
-
-    const existing = await Order.findOne({
-      user: userId,
-      status: "CREATED",
-    }).sort({ createdAt: -1 });
-
-    if (existing) {
-      const elapsed = Date.now() - existing.createdAt.getTime();
-      const isExpired = elapsed > ORDER_EXPIRY;
-
-      if (existing.cartHash === cartHash && !isExpired) {
-        return res.status(200).json({
-          success: true,
-          message: "Using existing pending order",
-          data: {
-            keyId: RAZORPAY_PUBLIC_KEY,
-            razorpayOrderId: existing.razorpayOrderId,
-            internalOrderId: existing._id,
-            amount: existing.totalAmount,
-            currency: existing.currency || "INR",
-            leadsCount: existing.leads.length,
-            expiresIn: Math.max(0, Math.floor((ORDER_EXPIRY - elapsed) / 1000)),
-          },
-        });
-      }
-
-      existing.status = "FAILED";
-      await existing.save();
-    }
-
-    let total = 0;
-    const leads = [];
-
-    for (let item of cart.leads) {
-      const lead = item.lead;
-
-      if (!lead) {
-        return res.status(400).json({
-          success: false,
-          message: "Some items in your cart are invalid. Please refresh cart.",
-        });
-      }
-
-      const remaining = lead.maxBuyers - (lead.buyersCount || 0);
-
-      if (lead.maxBuyers <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: `"${lead.title}" is not available for purchase`,
-        });
-      }
-
-      if (lead.expiresAt < new Date()) {
-        return res.status(400).json({
-          success: false,
-          message: `"${lead.title}" has expired`,
-        });
-      }
-
-      if (remaining <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: `"${lead.title}" is already sold out`,
-        });
-      }
-
-      if (remaining < item.quantity) {
-        return res.status(400).json({
-          success: false,
-          message: `Only ${remaining} slots left for "${lead.title}"`,
-        });
-      }
-
-      total += lead.price * item.quantity;
-
-      leads.push({
-        lead: lead._id,
-        price: lead.price,
-        quantity: item.quantity,
-      });
-    }
-
-    if (total <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid cart total",
-      });
-    }
-
-    let rzOrder;
-    try {
-      rzOrder = await razorpay.orders.create({
-        amount: total * 100,
-        currency: "INR",
-      });
-    } catch (err) {
-      console.error("Razorpay Error:", err);
-      const errorDescription = err?.error?.description || err?.message || "";
-      const isAuthError =
-        Number(err?.statusCode) === 401 ||
-        String(errorDescription).toLowerCase().includes("authentication failed");
-
-      return res.status(502).json({
-        success: false,
-        message: isAuthError
-          ? "Razorpay authentication failed. Please verify backend Razorpay key and secret."
-          : "Payment gateway error. Please try again.",
-      });
-    }
-
-    const order = await Order.create({
-      user: userId,
-      leads,
-      totalAmount: total,
-      currency: "INR",
-      razorpayOrderId: rzOrder.id,
-      cartHash,
-      status: "CREATED",
-    });
-
-    const expiryInSeconds = Math.floor(ORDER_EXPIRY / 1000);
-
-    return res.status(201).json({
-      success: true,
-      message: "Order created successfully",
-      data: {
-        keyId: RAZORPAY_PUBLIC_KEY,
-        razorpayOrderId: order.razorpayOrderId,
-        internalOrderId: order._id,
-        amount: order.totalAmount,
-        currency: order.currency,
-        leadsCount: order.leads.length,
-        expiresIn: expiryInSeconds,
-      },
-    });
+    return res.status(reserved.reused ? 200 : 201).json({ success: true, message: 'Your slot is reserved for checkout.', data: {
+      keyId, razorpayOrderId: order.razorpayOrderId, internalOrderId: order._id,
+      amount: order.totalAmount, currency: order.currency, leadsCount: order.leads.length,
+      expiresAt: order.reservationExpiresAt,
+      expiresIn: Math.max(0, Math.floor((order.reservationExpiresAt.getTime() - Date.now()) / 1000)),
+    } });
   } catch (error) {
-    console.error("Create Order Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong while creating order",
-    });
+    if (reserved && !reserved.reused) {
+      try { await cancelCheckout(reserved.order._id, req.user.id, 'FAILED'); }
+      catch (releaseError) { console.error('Reservation release failed:', releaseError.message); }
+    }
+    return respondError(res, error);
   }
-};
+}
 
-const verifyPayment = async (req, res) => {
+export async function verifyPayment(req, res) {
   try {
-    const userId = req.user?.id;
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized access.",
-      });
+    if (typeof razorpayOrderId !== 'string' || typeof razorpayPaymentId !== 'string' || !validSignature(`${razorpayOrderId}|${razorpayPaymentId}`, razorpaySignature, process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET)) {
+      throw new CheckoutError('INVALID_SIGNATURE', 'Invalid payment signature.', 400);
     }
+    const order = await Order.findOne({ razorpayOrderId, user: req.user.id });
+    if (!order) throw new CheckoutError('ORDER_NOT_FOUND', 'Payment order not found.', 404);
+    const payment = await razorpay.payments.fetch(razorpayPaymentId);
+    if (payment.order_id !== razorpayOrderId) throw new CheckoutError('PAYMENT_MISMATCH', 'Payment does not belong to this order.', 400);
+    const result = await settleCapturedPayment(payment, req.user.id);
+    return res.status(result.status === 'PAID' ? 200 : 409).json({ success: result.status === 'PAID', code: result.status, message: result.message, data: result });
+  } catch (error) { return respondError(res, error); }
+}
 
-    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing payment details.",
-      });
+export async function cancelOrder(req, res) {
+  try {
+    const { orderId } = req.body;
+    if (!mongoose.isValidObjectId(orderId)) throw new CheckoutError('INVALID_ORDER', 'Invalid order ID.', 400);
+    await cancelCheckout(orderId, req.user.id);
+    return res.json({ success: true, message: 'Unpaid reservation released.' });
+  } catch (error) { return respondError(res, error); }
+}
+
+export async function webhookHandler(req, res) {
+  try {
+    if (!Buffer.isBuffer(req.rawBody) || !validSignature(req.rawBody, req.headers['x-razorpay-signature'], process.env.RAZORPAY_WEBHOOK_SECRET)) {
+      return res.status(400).json({ success: false, message: 'Invalid webhook signature.' });
     }
-
-    const razorpaySecret =
-      process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || "";
-
-    if (!razorpaySecret) {
-      return res.status(500).json({
-        success: false,
-        message: "Razorpay is not configured on server.",
-      });
-    }
-
-    const generated = crypto
-      .createHmac("sha256", razorpaySecret)
-      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-      .digest("hex");
-
-    if (generated !== razorpaySignature) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid signature.",
-      });
-    }
-
-    const order = await Order.findOneAndUpdate(
-      { razorpayOrderId, status: "CREATED" },
-      { status: "PROCESSING" },
-      { new: true },
-    );
-
-    if (!order) {
-      return res.json({
-        success: true,
-        message: "Payment already processed.",
-      });
-    }
-
-    const successLeads = [];
-    const failedLeads = [];
-
-    for (const item of order.leads) {
-      const qty = item.quantity || 1;
-
-      try {
-        const updatedLead = await Lead.findOneAndUpdate(
-          {
-            _id: item.lead,
-            $expr: {
-              $gte: [
-                { $subtract: ["$maxBuyers", { $ifNull: ["$buyersCount", 0] }] },
-                qty,
-              ],
-            },
-          },
-          { $inc: { buyersCount: qty } },
-          { new: true },
-        );
-
-        if (!updatedLead) {
-          failedLeads.push({
-            leadId: item.lead,
-            quantity: qty,
-            reason: "Not enough slots",
-          });
-          continue;
-        }
-
-        await LeadPurchase.create({
-          lead: item.lead,
-          user: userId,
-          quantity: qty,
-        });
-
-        const remaining =
-          updatedLead.maxBuyers - (updatedLead.buyersCount || 0);
-
-        let status = "ACTIVE";
-        if (updatedLead.expiresAt < new Date()) status = "EXPIRED";
-        else if (remaining === 0) status = "SOLD_OUT";
-
-        await Lead.updateOne({ _id: updatedLead._id }, { status });
-
-        successLeads.push({
-          leadId: updatedLead._id,
-          quantity: qty,
-          remainingSlots: remaining,
-        });
-      } catch (err) {
-        failedLeads.push({
-          leadId: item.lead,
-          quantity: qty,
-          reason: "Processing error",
-        });
+    if (req.body.event === 'payment.captured') {
+      const entity = req.body.payload?.payment?.entity;
+      if (!entity?.id) return res.status(400).json({ success: false });
+      // Registration orders have their own verification flow.
+      const known = await Order.exists({ razorpayOrderId: entity.order_id });
+      if (known) {
+        const payment = await razorpay.payments.fetch(entity.id);
+        await settleCapturedPayment(payment);
       }
     }
+    return res.json({ success: true });
+  } catch (error) { return respondError(res, error); }
+}
 
-    order.status = "PAID";
-    order.razorpayPaymentId = razorpayPaymentId;
-    order.paidAt = new Date();
-
-    await order.save();
-
-    if (successLeads.length > 0) {
-      await Cart.updateOne({ user: order.user }, { $set: { leads: [] } });
-    }
-
-    return res.json({
-      success: true,
-      message:
-        failedLeads.length > 0 ? "Partial success" : "Payment successful",
-      data: { successLeads, failedLeads },
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: "Verification failed",
-    });
-  }
-};
-
-const webhookHandler = async (req, res) => {
-  const session = await mongoose.startSession();
-
-  try {
-    const signature = req.headers["x-razorpay-signature"];
-
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
-      .update(req.rawBody)
-      .digest("hex");
-
-    if (expectedSignature !== signature) {
-      return res.status(400).json({ success: false });
-    }
-
-    const event = req.body.event;
-
-    if (event === "payment.captured") {
-      const payment = req.body.payload.payment.entity;
-
-      await session.withTransaction(async () => {
-        const order = await Order.findOneAndUpdate(
-          { razorpayOrderId: payment.order_id, status: "CREATED" },
-          { status: "PROCESSING" },
-          { new: true, session },
-        );
-
-        if (!order) return;
-
-        for (const item of order.leads) {
-          await markLeadAsPurchased(
-            item.lead,
-            order.user,
-            item.quantity,
-            session,
-          );
-        }
-
-        order.status = "PAID";
-        order.razorpayPaymentId = payment.id;
-        order.paidAt = new Date();
-
-        await order.save({ session });
-
-        await Cart.findOneAndUpdate(
-          { user: order.user },
-          { $set: { leads: [] } },
-          { session },
-        );
-      });
-    }
-
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    console.error("Webhook Error:", error);
-    return res.status(500).json({ success: false });
-  } finally {
-    session.endSession();
-  }
-};
-
-const markLeadAsPurchased = async (leadId, userId, quantity, session) => {
-  const updatedLead = await Lead.findOneAndUpdate(
-    {
-      _id: leadId,
-      $expr: {
-        $gte: [{ $subtract: ["$maxBuyers", "$buyersCount"] }, quantity],
-      },
-    },
-    {
-      $inc: { buyersCount: quantity },
-    },
-    { new: true, session },
-  );
-
-  if (!updatedLead) throw new Error("Slots exceeded");
-
-  await LeadPurchase.create([{ lead: leadId, user: userId, quantity }], {
-    session,
-  });
-
-  return updatedLead;
-};
-
-export { createOrder, verifyPayment, webhookHandler };
+export function startPaymentMaintenance() {
+  let running = false;
+  const tick = async () => {
+    if (running) return;
+    running = true;
+    try {
+      const orders = await Order.find({ fulfillmentVersion: 2, status: { $in: ['CREATED', 'EXPIRED', 'CANCELLED', 'FAILED'] }, razorpayOrderId: { $type: 'string' }, updatedAt: { $gte: new Date(Date.now() - 7 * 86400000) } }).sort({ lastReconciledAt: 1 }).limit(20);
+      for (const order of orders) {
+        try {
+          const payments = await razorpay.orders.fetchPayments(order.razorpayOrderId);
+          for (const payment of payments.items ?? []) if (payment.status === 'captured') await settleCapturedPayment(payment);
+          if (order.reservationExpiresAt <= new Date()) await cancelCheckout(order._id, order.user, 'EXPIRED');
+        } catch (error) { console.error('Payment reconciliation failed:', error.message); }
+        await Order.updateOne({ _id: order._id }, { $set: { lastReconciledAt: new Date() } });
+      }
+      await processRefunds(razorpay);
+    } catch (error) { console.error('Payment maintenance failed:', error.message); }
+    finally { running = false; }
+  };
+  const timer = setInterval(tick, 30000);
+  timer.unref();
+  return () => clearInterval(timer);
+}

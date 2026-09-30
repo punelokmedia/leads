@@ -10,13 +10,13 @@ import {
   getUserHistory,
   downloadLeads
 } from "../Controllers/Admin/leads.controller.js";
-import { auth, isAdmin } from "../Middlewares/auth.middleware.js";
+import { auth, isAdmin, optionalAuth } from "../Middlewares/auth.middleware.js";
 import upload from "../Middlewares/fileupload.middleware.js";
 
 const router = express.Router();
 
-router.get("/get-all-leads", getAllLeads);
-router.get("/get-lead/:id", getLeadDetailsById);
+router.get("/get-all-leads", optionalAuth, getAllLeads);
+router.get("/get-lead/:id", optionalAuth, getLeadDetailsById);
 router.get("/history", auth, getUserHistory );
 router.get("/download/:orderId", auth, downloadLeads);
 

@@ -91,6 +91,7 @@ const UserSchema = new Schema(
       default: "",
     },
     profilePic: String,
+    state: { type: String, trim: true, default: "" },
 
     role: {
       type: String,

@@ -487,17 +487,18 @@ const getUserProfile = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { firstname, lastname, phoneNumber } = req.body;
-
-    if (!firstname && !lastname && !phoneNumber) {
+    const fields = ["firstname", "lastname", "phoneNumber", "email", "businessName", "workType", "city", "state"];
+    const supplied = fields.filter((field) => Object.hasOwn(req.body, field));
+    if (!supplied.length || supplied.some((field) => typeof req.body[field] !== "string")) {
       return res.status(400).json({
         success: false,
         code: "VALIDATION_ERROR",
-        message: "At least one field is required to update",
+        message: "Provide at least one valid profile field",
       });
     }
 
-    if (phoneNumber && !/^[6-9]\d{9}$/.test(phoneNumber)) {
+    const { phoneNumber, email } = req.body;
+    if (phoneNumber !== undefined && !/^[6-9]\d{9}$/.test(phoneNumber.trim())) {
       return res.status(400).json({
         success: false,
         code: "INVALID_PHONE",
@@ -506,10 +507,16 @@ const updateUserProfile = async (req, res) => {
     }
 
     const updateData = {};
-
-    if (firstname) updateData.firstname = firstname.trim();
-    if (lastname) updateData.lastname = lastname.trim();
-    if (phoneNumber) updateData.phoneNumber = phoneNumber;
+    for (const field of supplied) updateData[field] = req.body[field].trim();
+    if (email !== undefined) {
+      updateData.email = email.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updateData.email)) {
+        return res.status(400).json({ success: false, message: "Please enter a valid email address" });
+      }
+    }
+    if (["firstname", "lastname"].some((field) => supplied.includes(field) && !updateData[field])) {
+      return res.status(400).json({ success: false, message: "First and last name are required" });
+    }
 
     const user = await User.findByIdAndUpdate(
       userId,
@@ -533,7 +540,9 @@ const updateUserProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Update Profile Error:", error);
-
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: "Email is already in use" });
+    }
     return res.status(500).json({
       success: false,
       code: "UPDATE_FAILED",

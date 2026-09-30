@@ -10,7 +10,10 @@ import 'auth_interceptor.dart'; // ← Import your new interceptor
 final storageProvider = Provider((ref) => const FlutterSecureStorage());
 
 final dioProvider = Provider<Dio>((ref) {
-  final baseUrl = dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:5000/';
+  const configuredUrl = String.fromEnvironment('BASE_URL');
+  final baseUrl = configuredUrl.isNotEmpty
+      ? configuredUrl
+      : dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:5000/';
   final storage = ref.watch(storageProvider);
 
   log("🚀 DIO INITIALIZED WITH BASE_URL: $baseUrl");
@@ -24,19 +27,21 @@ final dioProvider = Provider<Dio>((ref) {
   );
 
   // --- Add Interceptors & Transformers ---
-  
+
   // 1. Add your Auth Interceptor
   dio.interceptors.add(AuthInterceptor(storage));
 
   // 2. Add Background Transformer
   dio.transformer = AppBackgroundTransformer();
-  
-  // 3. Optional: Add Logging (Very helpful for debugging headers)
-  dio.interceptors.add(LogInterceptor(
-    requestHeader: true, 
-    requestBody: true, 
-    responseBody: true
-  ));
 
-  return dio; 
+  // 3. Optional: Add Logging (Very helpful for debugging headers)
+  dio.interceptors.add(
+    LogInterceptor(
+      requestHeader: false,
+      requestBody: false,
+      responseBody: false,
+    ),
+  );
+
+  return dio;
 });

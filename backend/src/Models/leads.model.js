@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { BUYER_LIMIT, inventory } from "../Services/lead-inventory.js";
 
 const LeadSchema = new Schema(
   {
@@ -129,9 +130,15 @@ const LeadSchema = new Schema(
 
     maxBuyers: {
       type: Number,
-      default: 3,
-      min: 1,
+      default: BUYER_LIMIT,
+      enum: [BUYER_LIMIT],
     },
+    reservations: [{
+      _id: false,
+      order: { type: Schema.Types.ObjectId, ref: "Order", required: true },
+      user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+      expiresAt: { type: Date, required: true },
+    }],
 
     expiresAt: {
       type: Date,
@@ -140,7 +147,7 @@ const LeadSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["ACTIVE", "SOLD_OUT", "EXPIRED"],
+      enum: ["ACTIVE", "RESERVED", "SOLD_OUT", "EXPIRED"],
       default: "ACTIVE",
       index: true,
     },
@@ -158,19 +165,18 @@ LeadSchema.index({ expiresAt: 1 });
 LeadSchema.index({ maxBuyers: 1, buyersCount: 1 });
 
 LeadSchema.virtual("remainingSlots").get(function () {
-  return this.maxBuyers - this.buyersCount;
+  return inventory(this).remainingSlots;
 });
 
 const resolveLeadStatus = (lead) => {
-  if (lead.expiresAt < new Date()) return "EXPIRED";
-  if (lead.buyersCount >= lead.maxBuyers) return "SOLD_OUT";
-  return "ACTIVE";
+  return inventory(lead).status;
 };
 
 const buildLeadDisplayId = (leadId) =>
   `NL${String(leadId || "").slice(-8).toUpperCase()}`;
 
 LeadSchema.pre("validate", function () {
+  this.maxBuyers = BUYER_LIMIT;
   if (this._id) {
     this.leadDisplayId = buildLeadDisplayId(this._id);
   }

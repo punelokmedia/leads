@@ -40,7 +40,6 @@ const OrderSchema = new mongoose.Schema(
 
     razorpayOrderId: {
       type: String,
-      required: true,
       index: true,
     },
 
@@ -49,12 +48,17 @@ const OrderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["CREATED", "PROCESSING", "PAID", "FAILED"], 
+      enum: ["RESERVED", "CREATED", "PROCESSING", "PAID", "FAILED", "EXPIRED", "CANCELLED", "REFUND_PENDING", "REFUNDED"],
       default: "CREATED",
       index: true,
     },
 
     paidAt: Date,
+    reservationExpiresAt: Date,
+    cartHash: String,
+    fulfillmentVersion: Number,
+    failureReason: String,
+    lastReconciledAt: Date,
 
     isDownloaded: {
       type: Boolean,
