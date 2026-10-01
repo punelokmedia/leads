@@ -242,6 +242,13 @@ class CartController extends StateNotifier<CartState> {
 
       onOrderCreated({...orderData, 'amount': finalAmount});
     } catch (e) {
+      if (e is DioException &&
+          e.response?.data is Map &&
+          e.response?.data['code'] == 'MEMBERSHIP_REQUIRED') {
+        _safeSetState((s) => s.copyWith(isLoading: false, error: null));
+        onError('MEMBERSHIP_REQUIRED');
+        return;
+      }
       final message = ErrorHandler.handle(e).message;
       _safeSetState((s) => s.copyWith(isLoading: false, error: message));
       onError(message);

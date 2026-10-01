@@ -33,6 +33,15 @@ class AppNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (url?.startsWith('data:image/') == true) {
+      try {
+        final data = UriData.parse(url!);
+        return Image.memory(data.contentAsBytes(), width: width, height: height,
+          fit: fit, errorBuilder: (_, _, _) => _fallback);
+      } on FormatException {
+        return _fallback;
+      }
+    }
     final resolved = MediaUrl.resolve(url);
     if (resolved == null) return _fallback;
 

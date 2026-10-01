@@ -3,7 +3,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
@@ -87,9 +87,9 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
             ref.read(profileDraftProvider.notifier).clearDraft();
             SnackbarHelper.showSuccess(
               context,
-              'Payment Verified & Profile Created!',
+              'Lifetime membership activated!',
             );
-            context.go(AppRouter.homePath);
+            context.go(AppRouter.cartPath);
           },
         );
   }
@@ -170,7 +170,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
         'amount': amount,
         'currency': currency,
         'name': 'Next Leads',
-        'description': 'Registration Fee',
+        'description': 'Lifetime membership - one-time fee',
         'order_id': orderId,
         'prefill': <String, dynamic>{
           'contact': user?.phone ?? user?.phoneNumber ?? '',
@@ -239,7 +239,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
           onPressed: showLoader ? null : () => context.pop(),
         ),
         title: Text(
-          'Complete Payment',
+          'Lifetime membership',
           style: AppTextStyles.poppins(
             fontSize: 24.sp,
             fontWeight: FontWeight.w700,
@@ -257,6 +257,10 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
                 child: Column(
                   children: [
+                    const Text(
+                      'Pay ₹499 once before your first lead purchase. Lifetime access with no recurring subscription. Lead prices are separate.',
+                    ),
+                    SizedBox(height: 16.h),
                     const PricingCardWidget(),
                     SizedBox(height: 24.h),
                     const PaymentSummaryWidget(),

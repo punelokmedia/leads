@@ -1,7 +1,7 @@
 // features/auth/presentation/screens/choose_category_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // ✅ Import flutter_svg
@@ -69,9 +69,10 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
           address: draft.address,
           profilePicPath: draft.profilePicPath,
           onSuccess: () {
+            if (!mounted) return;
             ref.read(authControllerProvider.notifier).clearError();
             // Keep the draft until Razorpay verification finishes.
-            context.push(AppRouter.completePaymentPath);
+            context.go(AppRouter.homePath);
           },
         );
   }
@@ -80,6 +81,9 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authControllerProvider).isLoading;
     final categoriesAsync = ref.watch(categoriesProvider);
+    ref.listen(authErrorProvider, (previous, next) {
+      if (next != null && next != previous) SnackbarHelper.showError(context, next);
+    });
 
     if (categoriesAsync.hasValue && !_hasPreselected) {
       final draftWorkType = ref.read(profileDraftProvider).workType;

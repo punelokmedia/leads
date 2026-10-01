@@ -7,6 +7,7 @@ import 'package:user_app/features/auth/shared/auth_providers.dart';
 import 'package:user_app/features/cart/shared/cart_providers.dart';
 import '../domain/auth_model.dart';
 import 'auth_repository.dart';
+import '../shared/profile_draft_provider.dart';
 
 class AuthController extends StateNotifier<AuthState> {
   final AuthRepository _repo;
@@ -163,6 +164,12 @@ class AuthController extends StateNotifier<AuthState> {
         token: result.token,
       );
 
+      await _ref.read(isLoggedInProvider.notifier).setLoggedIn(result.token);
+      _ref.read(profileDraftProvider.notifier).clearDraft();
+      _ref.read(profileDraftProvider.notifier).updateBasicDetails(
+        fullName: result.user.fullName, email: result.user.email,
+        businessName: '', city: '', workType: '', address: '', profilePicPath: '',
+      );
       // A cart failure must not turn a successful sign-in into a login error.
       // The repository retains the local cart when synchronization fails.
       try {

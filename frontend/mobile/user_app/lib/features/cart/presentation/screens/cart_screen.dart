@@ -192,7 +192,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
                             // 3. Start Razorpay Process
                             await notifier.startPaymentProcess(
-                              onError: (msg) => _showSnack(msg, isError: true),
+                              onError: (msg) {
+                                if (!mounted) return;
+                                if (msg == 'MEMBERSHIP_REQUIRED') {
+                                  context.push(AppRouter.completePaymentPath);
+                                } else {
+                                  _showSnack(msg, isError: true);
+                                }
+                              },
                               onOrderCreated: (data) async {
                                 String rawPhone =
                                     userProfile?.phoneNumber ?? '';

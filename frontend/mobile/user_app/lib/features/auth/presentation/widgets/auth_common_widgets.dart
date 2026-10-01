@@ -82,11 +82,12 @@ class AuthPrimaryButton extends StatelessWidget {
 // ── Google sign-in button ─────────────────────────────────────────────────────
 class GoogleSignInButton extends StatelessWidget {
   final VoidCallback onTap;
-  const GoogleSignInButton({super.key, required this.onTap});
+  final bool isLoading;
+  const GoogleSignInButton({super.key, required this.onTap, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
+    onTap: isLoading ? null : onTap,
     child: Container(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
       decoration: BoxDecoration(
@@ -104,7 +105,7 @@ class GoogleSignInButton extends StatelessWidget {
           ),
           SizedBox(width: 8.w),
           Text(
-            'Google',
+            isLoading ? 'Signing in...' : 'Continue with Google',
             style: AppTextStyles.poppins(
               fontSize: 16.sp,
               fontWeight: FontWeight.w500,

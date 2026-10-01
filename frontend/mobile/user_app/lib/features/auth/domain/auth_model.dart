@@ -9,6 +9,15 @@ class AuthUser {
   final String role;
   final String? provider;
   final bool registrationFeePaid;
+  final String city;
+  final String businessName;
+  final String workType;
+  bool get isProfileComplete =>
+      fullName.isNotEmpty &&
+      email.isNotEmpty &&
+      city.isNotEmpty &&
+      businessName.isNotEmpty &&
+      workType.isNotEmpty;
 
   const AuthUser({
     required this.id,
@@ -19,6 +28,9 @@ class AuthUser {
     required this.role,
     this.provider,
     this.registrationFeePaid = false,
+    this.city = '',
+    this.businessName = '',
+    this.workType = '',
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
@@ -30,6 +42,9 @@ class AuthUser {
     role: json['role'] ?? 'USER',
     provider: json['provider'],
     registrationFeePaid: json['registrationFeePaid'] == true,
+    city: json['city']?.toString() ?? '',
+    businessName: json['businessName'] ?? '',
+    workType: json['workType'] ?? '',
   );
 
   Map<String, dynamic> toJson() => {
@@ -41,6 +56,9 @@ class AuthUser {
     'role': role,
     'provider': provider,
     'registrationFeePaid': registrationFeePaid,
+    'city': city,
+    'businessName': businessName,
+    'workType': workType,
   };
 
   String get fullName => '$firstname $lastname'.trim();

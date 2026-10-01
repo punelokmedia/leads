@@ -745,7 +745,6 @@ const verifyMobileOtp = async (req, res) => {
       !user.businessName ||
       !user.workType ||
       !user.city ||
-      !user.registrationFeePaid ||
       isNewUser;
 
     user.loginOtp = null;
@@ -861,7 +860,15 @@ const verifySessionMobileOtp = async (req, res) => {
 const completeMobileProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { fullName, email, city, businessName, workType } = req.body;
+    const { fullName, email, city, businessName, workType, address } = req.body;
+    const rawCategories = req.body.categories ?? req.body['categories[]'] ?? [];
+    const categories = Array.isArray(rawCategories) ? rawCategories : [rawCategories];
+    if (categories.some((id) => !/^[a-f0-9]{24}$/i.test(String(id)))) {
+      return res.status(400).json({ success: false, message: "Please select valid categories." });
+    }
+    if (req.file && !["image/jpeg", "image/png", "image/webp"].includes(req.file.mimetype)) {
+      return res.status(400).json({ success: false, message: "Please upload a JPEG, PNG or WebP picture." });
+    }
 
     if (!fullName || !email || !businessName || !workType || !city) {
       return res.status(400).json({
@@ -909,10 +916,13 @@ const completeMobileProfile = async (req, res) => {
           city: String(city).trim(),
           businessName: businessName.trim(),
           workType: workType.trim(),
+          profileAddress: String(address || "").trim(),
+          categories: [...new Set(categories)],
+          ...(req.file ? { profilePic: 'data:' + req.file.mimetype + ';base64,' + req.file.buffer.toString('base64') } : {}),
           role: "USER",
         },
       },
-      { new: true },
+      { new: true, runValidators: true },
     ).select("-password");
 
     if (!user) {
@@ -1017,134 +1027,31 @@ const verifyMobileRegistrationPayment = async (req, res) => {
       });
     }
 
-    const {
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
-      fullName,
-      email,
-      city,
-      businessName,
-      workType,
-    } = req.body;
-
-    if (
-      !razorpayOrderId ||
-      !razorpayPaymentId ||
-      !razorpaySignature ||
-      !fullName ||
-      !email ||
-      !city ||
-      !businessName ||
-      !workType
-    ) {
-      return res.status(400).json({
-        success: false,
-        code: "VALIDATION_ERROR",
-        message:
-          "Payment details and profile fields are required.",
-      });
+    // Membership is independent of profile setup and can only be activated by a captured payment.
+    {
+      const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+      if (typeof razorpayOrderId !== 'string' || typeof razorpayPaymentId !== 'string' || typeof razorpaySignature !== 'string') {
+        return res.status(400).json({ success: false, message: 'Payment details are required.' });
+      }
+      const expected = crypto.createHmac('sha256', RAZORPAY_SECRET_KEY).update(razorpayOrderId + '|' + razorpayPaymentId).digest('hex');
+      if (expected !== razorpaySignature) return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
+      const order = await razorpay.orders.fetch(razorpayOrderId);
+      const payment = await razorpay.payments.fetch(razorpayPaymentId);
+      if (String(order.notes?.userId) !== String(req.user.id) || order.notes?.purpose !== 'signup_registration_fee' ||
+          order.amount !== REGISTRATION_FEE_AMOUNT_INR * 100 || order.currency !== 'INR' ||
+          payment.order_id !== razorpayOrderId || payment.status !== 'captured' ||
+          payment.amount !== REGISTRATION_FEE_AMOUNT_INR * 100 || payment.currency !== 'INR') {
+        return res.status(400).json({ success: false, message: 'Membership payment is not captured or does not match this account.' });
+      }
+      const user = await User.findOneAndUpdate({ _id: req.user.id, registrationFeePaid: { $ne: true } }, {
+        $set: { registrationFeePaid: true, registrationFeePaidAt: new Date(), registrationPayment: {
+          razorpayOrderId, razorpayPaymentId, razorpaySignature, amount: REGISTRATION_FEE_AMOUNT_INR, currency: 'INR',
+        } },
+      }, { new: true }).select('-password');
+      const member = user || await User.findById(req.user.id).select('-password');
+      if (!member) return res.status(404).json({ success: false, message: 'User not found.' });
+      return res.json({ success: true, message: 'Lifetime membership activated.', data: member });
     }
-
-    const existingUser = await User.findById(req.user.id).select(
-      "registrationFeePaid registrationPayment",
-    );
-    if (!existingUser) {
-      return res.status(404).json({
-        success: false,
-        code: "USER_NOT_FOUND",
-        message: "User not found.",
-      });
-    }
-
-    if (existingUser.registrationFeePaid) {
-      return res.status(409).json({
-        success: false,
-        code: "REGISTRATION_FEE_ALREADY_PAID",
-        message: "Registration fee already paid for this account.",
-      });
-    }
-
-    const generatedSignature = crypto
-      .createHmac("sha256", RAZORPAY_SECRET_KEY)
-      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-      .digest("hex");
-
-    if (generatedSignature !== razorpaySignature) {
-      return res.status(400).json({
-        success: false,
-        code: "INVALID_PAYMENT_SIGNATURE",
-        message: "Payment verification failed.",
-      });
-    }
-
-    const normalizedEmail = String(email).trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      return res.status(400).json({
-        success: false,
-        code: "INVALID_EMAIL",
-        message: "Please enter a valid email address.",
-      });
-    }
-
-    const existingEmailUser = await User.findOne({
-      email: normalizedEmail,
-      _id: { $ne: req.user.id },
-    }).select("_id");
-    if (existingEmailUser) {
-      return res.status(409).json({
-        success: false,
-        code: "EMAIL_ALREADY_IN_USE",
-        message: "This email is already associated with another account.",
-      });
-    }
-
-    const nameParts = fullName
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    const firstname = nameParts[0] || "User";
-    const lastname = nameParts.slice(1).join(" ") || "User";
-
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        $set: {
-          firstname,
-          lastname,
-          email: normalizedEmail,
-          city: String(city).trim(),
-          businessName: String(businessName).trim(),
-          workType: String(workType).trim(),
-          role: "USER",
-          registrationFeePaid: true,
-          registrationFeePaidAt: new Date(),
-          registrationPayment: {
-            razorpayOrderId,
-            razorpayPaymentId,
-            razorpaySignature,
-            amount: REGISTRATION_FEE_AMOUNT_INR,
-            currency: "INR",
-          },
-        },
-      },
-      { new: true },
-    ).select("-password");
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        code: "USER_NOT_FOUND",
-        message: "User not found.",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      code: "REGISTRATION_PAYMENT_SUCCESS",
-      message: "Payment successful. Registration completed.",
-      data: user,
-    });
   } catch (error) {
     console.error("Verify Registration Payment Error:", error);
     return res.status(500).json({

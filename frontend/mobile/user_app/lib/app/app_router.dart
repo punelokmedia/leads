@@ -3,7 +3,6 @@ import 'package:user_app/features/address/presentation/screens/add_address_scree
 import 'package:user_app/features/auth/presentation/screens/complete_payment_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/login_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/otp_verification_screen.dart';
-import 'package:user_app/features/auth/presentation/screens/register_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/choose_city_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/choose_category_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/tell_us_about_yourself_screen.dart';
@@ -75,10 +74,7 @@ abstract final class AppRouter {
       ),
 
       GoRoute(path: login, builder: (context, state) => const LoginScreen()),
-      GoRoute(
-        path: register,
-        builder: (context, state) => const RegisterScreen(),
-      ),
+      GoRoute(path: register, builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: verifyNumberPath,
         builder: (context, state) {

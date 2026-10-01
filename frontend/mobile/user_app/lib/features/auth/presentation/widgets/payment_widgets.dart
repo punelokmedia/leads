@@ -242,7 +242,7 @@ class PaymentSummaryWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Lifetime Register Fee",
+                      "Lifetime membership",
                       style: AppTextStyles.poppins(
                         fontSize: 14.sp,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,

@@ -106,7 +106,7 @@ class AuthRepository {
     final bool isNewUser = meta?['isNewUser'] as bool? ?? false;
 
     // Assign it directly to needsProfile for your UI to use
-    final bool needsProfile = isNewUser;
+    final bool needsProfile = meta?['needsProfile'] as bool? ?? isNewUser;
 
     // 3. Parse User Data
     AuthUser? user;
@@ -225,6 +225,7 @@ class AuthRepository {
         'razorpayOrderId': orderId,
         'razorpayPaymentId': paymentId,
         'razorpaySignature': signature,
+        'membershipOnly': true,
         'fullName': fullName,
         'email': email,
         'city': city,

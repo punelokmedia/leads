@@ -63,7 +63,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         .googleAuth(
           onSuccess: (String token) {
             if (!mounted) return;
-            context.go(AppRouter.homePath);
+            context.push(AppRouter.tellUsAboutYourselfPath);
           },
         );
   }

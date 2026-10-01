@@ -1,5 +1,6 @@
 ﻿import crypto from 'node:crypto';
 import mongoose from 'mongoose';
+import { User } from '../../Models/user.model.js';
 import { Order } from '../../Models/orders.models.js';
 import { razorpay } from '../../Config/razorpay.config.js';
 import { reserveCheckout, cancelCheckout, settleCapturedPayment, processRefunds } from '../../Services/checkout.service.js';
@@ -20,6 +21,12 @@ export function validSignature(body, signature, secret) {
 export async function createOrder(req, res) {
   let reserved;
   try {
+    const user = await User.findById(req.user.id).select('registrationFeePaid');
+    if (!user) throw new CheckoutError('USER_NOT_FOUND', 'User not found.', 404);
+    const hasPurchased = await Order.exists({ user: req.user.id, status: 'PAID' });
+    if (!user.registrationFeePaid && !hasPurchased) {
+      throw new CheckoutError('MEMBERSHIP_REQUIRED', 'Activate lifetime membership for ₹499 before your first lead purchase. No recurring subscription; lead prices are separate.', 403);
+    }
     const keyId = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY;
     if (!keyId) throw new CheckoutError('PAYMENTS_UNAVAILABLE', 'Payments are not configured.', 503);
     reserved = await reserveCheckout(req.user.id, req.body?.leadIds ?? req.body?.ids);

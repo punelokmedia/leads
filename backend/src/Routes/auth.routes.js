@@ -1,4 +1,5 @@
 import express from "express";
+import multer from "multer";
 import passport from "../Config/passport.js";
 import { auth } from "../Middlewares/auth.middleware.js";
 import { googleTokenLogin } from "../Controllers/google-auth.controller.js";
@@ -23,6 +24,13 @@ import {
 } from "../Controllers/auth.controller.js";
 
 const router = express.Router();
+const profileUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024, files: 1 } });
+const parseProfile = (req, res, next) => {
+  profileUpload.single("profilePic")(req, res, (error) => {
+    if (error) return res.status(400).json({ success: false, message: "Profile picture must be smaller than 2 MB." });
+    next();
+  });
+};
 const requireUserGoogleConfig = (req, res, next) => {
   if (!process.env.USER_GOOGLE_CLIENT_ID || !process.env.USER_GOOGLE_CLIENT_SECRET) {
     return res.status(503).json({ success: false, message: "User Google login is not configured. Set USER_GOOGLE_CLIENT_ID and USER_GOOGLE_CLIENT_SECRET." });
@@ -84,8 +92,8 @@ router.post("/mobile/request-otp", requestMobileOtp);
 router.post("/mobile/verify-otp", verifyMobileOtp);
 router.post("/mobile/request-otp-session", auth, requestSessionMobileOtp);
 router.post("/mobile/verify-otp-session", auth, verifySessionMobileOtp);
-router.post("/mobile/complete-profile", auth, completeMobileProfile);
-router.put("/mobile/complete-profile", auth, completeMobileProfile);
+router.post("/mobile/complete-profile", auth, parseProfile, completeMobileProfile);
+router.put("/mobile/complete-profile", auth, parseProfile, completeMobileProfile);
 router.post("/mobile/create-registration-order", auth, createMobileRegistrationOrder);
 router.post("/mobile/verify-registration-payment", auth, verifyMobileRegistrationPayment);
 

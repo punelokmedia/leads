@@ -91,6 +91,8 @@ const UserSchema = new Schema(
       default: "",
     },
     profilePic: String,
+    profileAddress: { type: String, trim: true, default: "" },
+    categories: [{ type: Schema.Types.ObjectId, ref: "Category" }],
     state: { type: String, trim: true, default: "" },
 
     role: {

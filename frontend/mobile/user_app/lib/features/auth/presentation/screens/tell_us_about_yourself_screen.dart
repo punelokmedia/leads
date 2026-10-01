@@ -51,6 +51,7 @@ class _TellUsAboutYourselfScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final draft = ref.read(profileDraftProvider);
       if (draft.fullName.isNotEmpty) _nameCtrl.text = draft.fullName;
       if (draft.email.isNotEmpty) _emailCtrl.text = draft.email;
@@ -94,10 +95,6 @@ class _TellUsAboutYourselfScreenState
   }
 
   void _onContinue() {
-    if (_profilePicPath == null || _profilePicPath!.isEmpty) {
-      SnackbarHelper.showError(context, 'Please upload a profile picture.');
-      return;
-    }
     if (_nameCtrl.text.trim().isEmpty ||
         _bizCtrl.text.trim().isEmpty ||
         _emailCtrl.text.trim().isEmpty ||

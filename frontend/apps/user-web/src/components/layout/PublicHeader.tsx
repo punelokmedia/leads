@@ -553,6 +553,11 @@ export function PublicHeader() {
       })
       const createPayload = await createResponse.json()
 
+      if (createPayload?.code === 'MEMBERSHIP_REQUIRED') {
+        setPanelMode(null)
+        navigate('/auth/mobile?flow=membership')
+        return
+      }
       if (!createResponse.ok || !createPayload?.success) {
         throw new Error(createPayload?.message ?? 'Unable to create payment order.')
       }
@@ -897,9 +902,14 @@ export function PublicHeader() {
       setIsMobileMenuOpen(false)
       const profile = (parsedUser ?? {}) as {
         registrationFeePaid?: boolean
+        firstname?: string
+        email?: string
+        city?: string
+        businessName?: string
+        workType?: string
       }
 
-      if (!profile.registrationFeePaid) {
+      if (!profile.firstname || !profile.email || !profile.city || !profile.businessName || !profile.workType) {
         navigate('/auth/mobile?flow=google', { replace: true })
         return
       }

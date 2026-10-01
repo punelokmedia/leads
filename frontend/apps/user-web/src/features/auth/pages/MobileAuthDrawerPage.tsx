@@ -30,8 +30,9 @@ const DEFAULT_WORK_TYPES: WorkTypeOption[] = [
 export function MobileAuthDrawerPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const isMembershipFlow = searchParams.get('flow') === 'membership'
   const isGoogleOnboardingFlow = searchParams.get('flow') === 'google'
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(isMembershipFlow ? 5 : isGoogleOnboardingFlow ? 4 : 1)
   const [authIntent, setAuthIntent] = useState<'login' | 'signup'>('login')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -59,13 +60,7 @@ export function MobileAuthDrawerPage() {
   }
 
   useEffect(() => {
-    if (step !== 0) return
-    const timer = window.setTimeout(() => setStep(1), 2000)
-    return () => window.clearTimeout(timer)
-  }, [step])
-
-  useEffect(() => {
-    if (!isGoogleOnboardingFlow) return
+    if (!isGoogleOnboardingFlow && !isMembershipFlow) return
 
     const userToken = localStorage.getItem('user_token') || ''
     if (!userToken) return
@@ -109,8 +104,12 @@ export function MobileAuthDrawerPage() {
       Boolean(profile.businessName) &&
       Boolean(profile.workType)
 
-    setStep(hasProfile ? 5 : 2)
-  }, [isGoogleOnboardingFlow, searchParams])
+    if (hasProfile && (!isMembershipFlow || profile.registrationFeePaid)) {
+      navigate('/', { replace: true })
+    } else {
+      setStep(isMembershipFlow ? 5 : 4)
+    }
+  }, [isGoogleOnboardingFlow, isMembershipFlow, searchParams, navigate])
 
   useEffect(() => {
     if (!toastMessage) return
@@ -268,7 +267,20 @@ export function MobileAuthDrawerPage() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileForm.email.trim())) {
       return setError('Please enter a valid email address.')
     }
-    setStep(5)
+    try {
+      setIsLoading(true)
+      const response = await requestAuth('/mobile/complete-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (token || localStorage.getItem('user_token') || '') },
+        body: JSON.stringify(profileForm),
+      })
+      const payload = await response.json()
+      if (!response.ok || !payload?.success) throw new Error(payload?.message || 'Unable to save profile.')
+      localStorage.setItem('user_profile', JSON.stringify(payload.data))
+      navigate('/')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to save profile.')
+    } finally { setIsLoading(false) }
   }
 
   const handleRegistrationPayment = async () => {
@@ -302,7 +314,7 @@ export function MobileAuthDrawerPage() {
         amount,
         currency,
         name: 'Leads Sell',
-        description: 'Lifetime registration fee',
+        description: 'Lifetime membership - one-time fee',
         order_id: orderId,
         image: '/logo.png',
         prefill: {
@@ -310,6 +322,7 @@ export function MobileAuthDrawerPage() {
           email: profileForm.email,
           contact: phoneNumber,
         },
+        modal: { ondismiss: () => setIsLoading(false) },
         theme: {
           color: '#4B2CF5',
         },
@@ -325,6 +338,7 @@ export function MobileAuthDrawerPage() {
                 razorpayOrderId: paymentResponse.razorpay_order_id,
                 razorpayPaymentId: paymentResponse.razorpay_payment_id,
                 razorpaySignature: paymentResponse.razorpay_signature,
+                membershipOnly: true,
                 ...profileForm,
                 email: profileForm.email.trim().toLowerCase(),
               }),
@@ -336,7 +350,7 @@ export function MobileAuthDrawerPage() {
 
             localStorage.setItem('user_profile', JSON.stringify(verifyPayload?.data ?? {}))
             localStorage.setItem('auth_provider', 'mobile-otp')
-            setToastMessage('Registration successful! Payment received.')
+            setToastMessage('Lifetime membership activated! Return to your cart to purchase leads.')
             window.setTimeout(() => {
               navigate('/')
             }, 900)
@@ -451,7 +465,12 @@ export function MobileAuthDrawerPage() {
             {step > 0 ? (
               <button
                 type="button"
-                onClick={() => (step === 1 ? navigate('/') : setStep((prev) => Math.max(1, prev - 1)))}
+                onClick={() => {
+                  setError(''); setSuccess('')
+                  if (step === 1 || (isGoogleOnboardingFlow && step === 4) || isMembershipFlow) navigate('/')
+                  else if (step === 4) setStep(2)
+                  else setStep((prev) => Math.max(1, prev - 1))
+                }}
                 className="grid h-9 w-9 place-items-center rounded-full text-[#2e2a4f] hover:bg-[#f3efff]"
               >
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -481,8 +500,8 @@ export function MobileAuthDrawerPage() {
           {step === 1 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Welcome Back!</h1> : null}
           {step === 2 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Verify Your Number</h1> : null}
           {step === 3 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Enter OTP</h1> : null}
-          {step === 4 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Tell us about yourself</h1> : null}
-          {step === 5 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Complete Payment</h1> : null}
+          {step === 4 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Complete your profile</h1> : null}
+          {step === 5 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Lifetime membership</h1> : null}
 
           {step === 1 ? <p className="mt-1 text-sm text-[#8A89A2]">Login to continue</p> : null}
           {step === 2 ? <p className="mt-1 text-sm text-[#8A89A2]">We will send you an OTP on this number</p> : null}
@@ -493,51 +512,6 @@ export function MobileAuthDrawerPage() {
 
           {step === 1 ? (
             <div className="mt-6 space-y-4">
-              <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#f5f3ff] p-1">
-                <button
-                  type="button"
-                  onClick={() => setAuthIntent('login')}
-                  className={`h-9 rounded-lg text-sm font-semibold transition ${
-                    authIntent === 'login'
-                      ? 'bg-white text-[#4B2CF5] shadow-sm'
-                      : 'text-[#7A73A8] hover:text-[#4B2CF5]'
-                  }`}
-                >
-                  Login
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAuthIntent('signup')}
-                  className={`h-9 rounded-lg text-sm font-semibold transition ${
-                    authIntent === 'signup'
-                      ? 'bg-white text-[#4B2CF5] shadow-sm'
-                      : 'text-[#7A73A8] hover:text-[#4B2CF5]'
-                  }`}
-                >
-                  Signup
-                </button>
-              </div>
-              <label className="block text-sm font-medium text-[#3A365F]">
-                Enter Mobile Number
-                <div className="mt-2 flex items-center rounded-xl border border-[#D9D7EC] px-3">
-                  <span className="text-sm text-[#777396]">+91</span>
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(event) => setPhoneNumber(event.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="98765 43210"
-                    className="h-11 w-full border-0 bg-transparent px-2 text-sm outline-none"
-                  />
-                </div>
-              </label>
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="h-12 w-full rounded-xl bg-[#4B2CF5] text-sm font-semibold text-white hover:bg-[#3C20D9]"
-              >
-                Next
-              </button>
-              <p className="text-center text-sm text-[#8A89A2]">or</p>
               <button
                 type="button"
                 onClick={handleGoogleLogin}
@@ -563,11 +537,44 @@ export function MobileAuthDrawerPage() {
                 </svg>
                 Continue with Google
               </button>
+              <p className="text-center text-sm text-[#8A89A2]">or</p>
+              <button
+                type="button"
+                onClick={() => { setError(''); setSuccess(''); setStep(2) }}
+                className="h-11 w-full rounded-xl border border-[#ded8f6] text-sm font-semibold text-[#4f4a73] hover:bg-[#f7f5ff]"
+              >
+                Continue with phone
+              </button>
             </div>
           ) : null}
 
           {step === 2 ? (
             <div className="mt-6 space-y-4">
+              <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#f5f3ff] p-1">
+                <button
+                  type="button"
+                  onClick={() => setAuthIntent('login')}
+                  className={`h-9 rounded-lg text-sm font-semibold transition ${
+                    authIntent === 'login'
+                      ? 'bg-white text-[#4B2CF5] shadow-sm'
+                      : 'text-[#7A73A8] hover:text-[#4B2CF5]'
+                  }`}
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthIntent('signup')}
+                  className={`h-9 rounded-lg text-sm font-semibold transition ${
+                    authIntent === 'signup'
+                      ? 'bg-white text-[#4B2CF5] shadow-sm'
+                      : 'text-[#7A73A8] hover:text-[#4B2CF5]'
+                  }`}
+                >
+                  Signup
+                </button>
+              </div>
+
               <div className="flex items-center rounded-xl border border-[#D9D7EC] px-3">
                 <span className="text-sm text-[#777396]">+91</span>
                 <input
@@ -684,9 +691,10 @@ export function MobileAuthDrawerPage() {
           ) : null}
           {step === 5 ? (
             <div className="mt-6 space-y-4">
+              <p className="text-sm text-[#4f4a73]">Pay ₹499 once before your first lead purchase. Lifetime access, no recurring subscription. Each lead is purchased separately.</p>
               <div className="rounded-2xl border border-[#ded8f6] bg-[#f7f5ff] p-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#6f66ad]">
-                  Lifetime Register Fee
+                  Lifetime membership
                 </p>
                 <p className="mt-2 text-5xl font-black text-[#4B2CF5]">₹{REGISTRATION_AMOUNT_INR}</p>
                 <p className="mt-1 text-xs font-semibold text-[#5b5678]">ONE TIME PAYMENT</p>

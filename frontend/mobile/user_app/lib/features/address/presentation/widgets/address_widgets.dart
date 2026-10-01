@@ -24,14 +24,14 @@ class AddressTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    decoration: cardShadow(),
+    decoration: cardShadow(context),
     child: TextFormField(
       initialValue: initialValue,
       onChanged: onChanged,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       style: _fieldStyle(),
-      decoration: addressInputDeco(hint: hint),
+      decoration: addressInputDeco(context, hint: hint),
     ),
   );
 }
@@ -66,7 +66,7 @@ class AddressCityDropdown extends StatelessWidget {
     final value = _cities.contains(selectedCity) ? selectedCity : _cities.first;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: cardShadow(),
+      decoration: cardShadow(context),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
