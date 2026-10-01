@@ -25,17 +25,17 @@ class CartItemCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(
           24.r,
         ), // Pill-shaped outer container
         border: Border.all(
-          color: const Color(0xFFE8C84A).withOpacity(0.5),
+          color: const Color(0xFFE8C84A).withValues(alpha: 0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -56,11 +56,11 @@ class CartItemCard extends StatelessWidget {
                   errorWidget: Container(
                     width: 56.r,
                     height: 50.r,
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    color: Colors.grey[200],
                     child: Icon(
                       Icons.home_outlined,
                       size: 28.r,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: Colors.grey,
                     ),
                   ),
                 ),
@@ -75,7 +75,7 @@ class CartItemCard extends StatelessWidget {
                       style: AppTextStyles.poppins(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
+                        color: AppColors.black,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -85,7 +85,7 @@ class CartItemCard extends StatelessWidget {
                       style: AppTextStyles.roboto(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w400,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: AppColors.grey137,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -100,7 +100,7 @@ class CartItemCard extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              color: const Color(0xFFF1F1F1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Column(
@@ -116,7 +116,7 @@ class CartItemCard extends StatelessWidget {
                         style: AppTextStyles.poppins(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onSurface,
+                          color: Colors.black87,
                         ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 2,
@@ -126,7 +126,7 @@ class CartItemCard extends StatelessWidget {
                       item.time,
                       style: AppTextStyles.roboto(
                         fontSize: 10.sp,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: AppColors.grey94,
                         fontWeight: FontWeight.w500,
                         height: 0.148,
                       ),
@@ -140,7 +140,7 @@ class CartItemCard extends StatelessWidget {
                   style: AppTextStyles.poppins(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w400,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: AppColors.black37,
                     height: 1.4,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -154,7 +154,7 @@ class CartItemCard extends StatelessWidget {
                     Icon(
                       Icons.assignment_outlined,
                       size: 18.r,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: Colors.black45,
                     ),
                     SizedBox(width: 6.w),
                     Text(
@@ -162,7 +162,7 @@ class CartItemCard extends StatelessWidget {
                       style: AppTextStyles.roboto(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onSurface,
+                        color: Colors.black45,
                         height: 0.148,
                       ),
                     ),
@@ -178,9 +178,7 @@ class CartItemCard extends StatelessWidget {
                           vertical: 6.h,
                         ),
                         decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerLow,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(10.r),
                           border: Border.all(color: AppColors.red237, width: 1),
                         ),

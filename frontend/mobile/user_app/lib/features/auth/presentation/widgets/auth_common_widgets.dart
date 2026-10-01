@@ -20,7 +20,7 @@ class AuthLogo extends StatelessWidget {
         style: AppTextStyles.poppins(
           fontSize: 28.sp,
           fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.primary,
+          color: AppColors.purple73,
         ),
       ),
     ),
@@ -52,7 +52,7 @@ class AuthPrimaryButton extends StatelessWidget {
         border: Border.all(color: Color.fromRGBO(248, 182, 31, 0.58)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4522C2).withOpacity(0.35),
+            color: const Color(0xFF4522C2).withValues(alpha: 0.35),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -60,8 +60,8 @@ class AuthPrimaryButton extends StatelessWidget {
       ),
       child: Center(
         child: isLoading
-            ? CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.surface,
+            ? const CircularProgressIndicator(
+                color: Colors.white,
                 strokeWidth: 2,
               )
             : Text(
@@ -90,7 +90,7 @@ class GoogleSignInButton extends StatelessWidget {
     child: Container(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(30.r),
       ),
       child: Row(
@@ -108,7 +108,7 @@ class GoogleSignInButton extends StatelessWidget {
             style: AppTextStyles.poppins(
               fontSize: 16.sp,
               fontWeight: FontWeight.w500,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: AppColors.grey77,
               height: 20 / 16,
               letterSpacing: 0.1,
             ),
@@ -136,7 +136,7 @@ class OrDivider extends StatelessWidget {
           text,
           style: AppTextStyles.poppins(
             fontSize: 14.sp,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: AppColors.grey77,
             fontWeight: FontWeight.w400,
             height: 20 / 14,
             letterSpacing: 0.1,

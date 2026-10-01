@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
+import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/widgets/app_network_image.dart';
 
 // ── Shared shadow decoration ──────────────────────────────────────────────────
-BoxDecoration cardDeco(BuildContext context, {double radius = 24}) =>
-    BoxDecoration(
-      color: Theme.of(context).colorScheme.surface,
-      borderRadius: BorderRadius.circular(radius.r),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.06),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    );
+BoxDecoration cardDeco({double radius = 24}) => BoxDecoration(
+  color: Colors.white,
+  borderRadius: BorderRadius.circular(radius.r),
+  boxShadow: [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.06),
+      blurRadius: 10,
+      offset: const Offset(0, 4),
+    ),
+  ],
+);
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
 class EditProfileAvatar extends StatelessWidget {
@@ -35,14 +35,8 @@ class EditProfileAvatar extends StatelessWidget {
             fit: BoxFit.cover,
             errorWidget: CircleAvatar(
               radius: 48.r,
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerLow,
-              child: Icon(
-                Icons.person,
-                size: 48.r,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              backgroundColor: Colors.grey[200],
+              child: Icon(Icons.person, size: 48.r, color: Colors.grey),
             ),
           ),
         ),
@@ -77,7 +71,7 @@ class FormLabel extends StatelessWidget {
     style: AppTextStyles.poppins(
       fontSize: 15.sp,
       fontWeight: FontWeight.w500,
-      color: Theme.of(context).colorScheme.onSurface,
+      color: Colors.black87,
     ),
   );
 }
@@ -101,7 +95,7 @@ class UpdateButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFC107).withOpacity(0.4),
+            color: const Color(0xFFFFC107).withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -109,8 +103,8 @@ class UpdateButton extends StatelessWidget {
       ),
       child: Center(
         child: isLoading
-            ? CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.surface,
+            ? const CircularProgressIndicator(
+                color: Colors.white,
                 strokeWidth: 2,
               )
             : Text(
@@ -118,7 +112,7 @@ class UpdateButton extends StatelessWidget {
                 style: AppTextStyles.poppins(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
       ),
@@ -137,7 +131,7 @@ class AddAddressRow extends StatelessWidget {
     child: Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
-      decoration: cardDeco(context),
+      decoration: cardDeco(),
       child: Row(
         children: [
           Text(
@@ -145,14 +139,14 @@ class AddAddressRow extends StatelessWidget {
             style: AppTextStyles.poppins(
               fontSize: 15.sp,
               fontWeight: FontWeight.w500,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Colors.black87,
             ),
           ),
           const Spacer(),
           Icon(
             Icons.arrow_forward_ios_rounded,
             size: 16.r,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: Colors.grey[400],
           ),
         ],
       ),
@@ -172,7 +166,7 @@ class PasswordWithChangeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    decoration: cardDeco(context),
+    decoration: cardDeco(),
     child: Row(
       children: [
         Expanded(
@@ -183,7 +177,7 @@ class PasswordWithChangeButton extends StatelessWidget {
             decoration: InputDecoration(
               hintText: '••••••••',
               hintStyle: AppTextStyles.poppins(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: AppColors.grey163,
                 fontSize: 20.sp,
               ),
               contentPadding: EdgeInsets.symmetric(
@@ -206,7 +200,7 @@ class PasswordWithChangeButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -216,7 +210,7 @@ class PasswordWithChangeButton extends StatelessWidget {
               'Change Password',
               style: AppTextStyles.poppins(
                 fontSize: 14.sp,
-                color: Colors.white,
+                color: AppColors.white,
               ),
             ),
           ),

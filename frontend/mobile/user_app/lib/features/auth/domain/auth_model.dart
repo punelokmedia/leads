@@ -22,31 +22,31 @@ class AuthUser {
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
-        id: json['_id'] ?? json['id'] ?? '',
-        firstname: json['firstname'] ?? '',
-        lastname: json['lastname'] ?? '',
-        email: json['email'] ?? '',
-        phoneNumber: json['phoneNumber'],
-        role: json['role'] ?? 'USER',
-        provider: json['provider'],
-        registrationFeePaid: json['registrationFeePaid'] == true,
-      );
+    id: json['_id'] ?? json['id'] ?? '',
+    firstname: json['firstname'] ?? '',
+    lastname: json['lastname'] ?? '',
+    email: json['email'] ?? '',
+    phoneNumber: json['phoneNumber'],
+    role: json['role'] ?? 'USER',
+    provider: json['provider'],
+    registrationFeePaid: json['registrationFeePaid'] == true,
+  );
 
   Map<String, dynamic> toJson() => {
-        '_id': id,
-        'firstname': firstname,
-        'lastname': lastname,
-        'email': email,
-        'phoneNumber': phoneNumber,
-        'role': role,
-        'provider': provider,
-        'registrationFeePaid': registrationFeePaid,
-      };
+    '_id': id,
+    'firstname': firstname,
+    'lastname': lastname,
+    'email': email,
+    'phoneNumber': phoneNumber,
+    'role': role,
+    'provider': provider,
+    'registrationFeePaid': registrationFeePaid,
+  };
 
   String get fullName => '$firstname $lastname'.trim();
-  
+
   // ✅ FIX: Added the missing getter so `.phone` works seamlessly
-  String? get phone => phoneNumber; 
+  String? get phone => phoneNumber;
 }
 
 class AuthState {
@@ -55,12 +55,7 @@ class AuthState {
   final AuthUser? user;
   final String? token;
 
-  const AuthState({
-    this.isLoading = false,
-    this.error,
-    this.user,
-    this.token,
-  });
+  const AuthState({this.isLoading = false, this.error, this.user, this.token});
 
   AuthState copyWith({
     bool? isLoading,
@@ -69,11 +64,10 @@ class AuthState {
     String? token,
     bool clearError = false,
     bool clearToken = false,
-  }) =>
-      AuthState(
-        isLoading: isLoading ?? this.isLoading,
-        error: clearError ? null : error ?? this.error,
-        user: user ?? this.user,
-        token: clearToken ? null : token ?? this.token,
-      );
+  }) => AuthState(
+    isLoading: isLoading ?? this.isLoading,
+    error: clearError ? null : error ?? this.error,
+    user: user ?? this.user,
+    token: clearToken ? null : token ?? this.token,
+  );
 }

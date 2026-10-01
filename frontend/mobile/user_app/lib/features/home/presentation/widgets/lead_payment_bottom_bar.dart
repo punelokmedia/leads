@@ -61,10 +61,10 @@ class _LeadPaymentBottomBarState extends ConsumerState<LeadPaymentBottomBar> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -79,7 +79,7 @@ class _LeadPaymentBottomBarState extends ConsumerState<LeadPaymentBottomBar> {
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 12.h),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  color: const Color(0xFFE5DFFF),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Column(
@@ -121,9 +121,9 @@ class _LeadPaymentBottomBarState extends ConsumerState<LeadPaymentBottomBar> {
                           ? SizedBox(
                               width: 18.r,
                               height: 18.r,
-                              child: CircularProgressIndicator(
+                              child: const CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Theme.of(context).colorScheme.surface,
+                                color: Colors.white,
                               ),
                             )
                           : Icon(Icons.lock, size: 18.r, color: Colors.white),
@@ -149,7 +149,7 @@ class _LeadPaymentBottomBarState extends ConsumerState<LeadPaymentBottomBar> {
                     'Pay to unlock client contact details',
                     style: AppTextStyles.poppins(
                       fontSize: 9.sp,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: Colors.grey.shade600,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

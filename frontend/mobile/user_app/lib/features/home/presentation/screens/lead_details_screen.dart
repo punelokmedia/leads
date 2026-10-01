@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
+import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/features/home/domain/leads_model.dart';
 import 'package:user_app/features/home/presentation/widgets/lead_payment_bottom_bar.dart';
@@ -12,16 +13,16 @@ class LeadDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+      backgroundColor: const Color(0xFFF8F9FB),
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 20.r,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Colors.black,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -30,7 +31,7 @@ class LeadDetailsScreen extends StatelessWidget {
           style: AppTextStyles.poppins(
             fontSize: 20.sp,
             fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Colors.black,
           ),
         ),
       ),
@@ -41,11 +42,11 @@ class LeadDetailsScreen extends StatelessWidget {
               padding: EdgeInsets.all(16.w),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -83,9 +84,7 @@ class LeadDetailsScreen extends StatelessWidget {
                                   style: AppTextStyles.poppins(
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w700,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
+                                    color: Colors.black,
                                   ),
                                 ),
                                 SizedBox(height: 4.h),
@@ -94,9 +93,7 @@ class LeadDetailsScreen extends StatelessWidget {
                                   lead.address,
                                   style: AppTextStyles.poppins(
                                     fontSize: 12.sp,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                                    color: Colors.grey.shade600,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -133,7 +130,7 @@ class LeadDetailsScreen extends StatelessWidget {
                     Divider(
                       height: 1,
                       thickness: 1,
-                      color: Theme.of(context).colorScheme.outlineVariant,
+                      color: Colors.grey.shade200,
                     ),
 
                     // ── Stats ──
@@ -149,9 +146,7 @@ class LeadDetailsScreen extends StatelessWidget {
                                 'Budget',
                                 style: AppTextStyles.poppins(
                                   fontSize: 14.sp,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: Colors.grey.shade600,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -177,18 +172,16 @@ class LeadDetailsScreen extends StatelessWidget {
                                     TextSpan(
                                       text: lead.leadId,
                                       style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
+                                        color: AppColors.purple72,
                                       ),
                                     ),
                                   ],
                                 ),
                                 style: AppTextStyles.poppins(
                                   fontSize: 14.sp,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant, // Color for "Lead Id : "
+                                  color: Colors
+                                      .grey
+                                      .shade600, // Color for "Lead Id : "
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -196,9 +189,7 @@ class LeadDetailsScreen extends StatelessWidget {
                                 'Vendors Joined',
                                 style: AppTextStyles.poppins(
                                   fontSize: 14.sp,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: Colors.grey.shade600,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -207,9 +198,7 @@ class LeadDetailsScreen extends StatelessWidget {
                                 children: [
                                   Icon(
                                     Icons.people,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                                    color: Colors.grey.shade700,
                                     size: 20.r,
                                   ),
                                   SizedBox(width: 6.w),
@@ -218,9 +207,7 @@ class LeadDetailsScreen extends StatelessWidget {
                                     '${lead.sharingCount} / 2',
                                     style: AppTextStyles.poppins(
                                       fontSize: 16.sp,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface,
+                                      color: Colors.black87,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -234,7 +221,7 @@ class LeadDetailsScreen extends StatelessWidget {
                     Divider(
                       height: 1,
                       thickness: 1,
-                      color: Theme.of(context).colorScheme.outlineVariant,
+                      color: Colors.grey.shade200,
                     ),
 
                     // ── Description ──
@@ -248,7 +235,7 @@ class LeadDetailsScreen extends StatelessWidget {
                             style: AppTextStyles.poppins(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w700,
-                              color: Theme.of(context).colorScheme.onSurface,
+                              color: Colors.black,
                             ),
                           ),
                           SizedBox(height: 8.h),
@@ -259,9 +246,7 @@ class LeadDetailsScreen extends StatelessWidget {
                                 : 'No description provided.',
                             style: AppTextStyles.poppins(
                               fontSize: 12.sp,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
+                              color: Colors.grey.shade600,
                               height: 1.5,
                             ),
                           ),
@@ -271,7 +256,7 @@ class LeadDetailsScreen extends StatelessWidget {
                     Divider(
                       height: 1,
                       thickness: 1,
-                      color: Theme.of(context).colorScheme.outlineVariant,
+                      color: Colors.grey.shade200,
                     ),
 
                     // ── Info Grid ──
@@ -280,12 +265,11 @@ class LeadDetailsScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           _buildInfoRow(
-                            context,
                             'Project Type',
                             lead.title.split(' ').first,
                           ), // Fallback approximation
-                          _buildInfoRow(context, 'City', lead.city),
-                          _buildInfoRow(context, 'Posted On', lead.date),
+                          _buildInfoRow('City', lead.city),
+                          _buildInfoRow('Posted On', lead.date),
                         ],
                       ),
                     ),
@@ -303,7 +287,7 @@ class LeadDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, String label, String value) {
+  Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: Row(
@@ -315,7 +299,7 @@ class LeadDetailsScreen extends StatelessWidget {
               label,
               style: AppTextStyles.poppins(
                 fontSize: 13.sp,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: Colors.grey.shade700,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -326,7 +310,7 @@ class LeadDetailsScreen extends StatelessWidget {
               value,
               style: AppTextStyles.poppins(
                 fontSize: 13.sp,
-                color: Theme.of(context).colorScheme.onSurface,
+                color: Colors.black87,
                 fontWeight: FontWeight.w500,
               ),
             ),

@@ -29,6 +29,7 @@ type LeadsApiItem = {
   originalPrice?: number | null
   buyersCount: number
   maxBuyers: number
+  remainingSlots?: number
   createdAt: string
   status: 'ACTIVE' | 'SOLD_OUT' | 'EXPIRED' | string
 }
@@ -53,6 +54,7 @@ type HomeLead = {
   requirement?: string
   createdAt: string
   isSoldOut: boolean
+  unavailableLabel: string
 }
 
 type LeadDetails = {
@@ -107,7 +109,7 @@ const mapLeadsForCards = (items: LeadsApiItem[], startIndex: number): HomeLead[]
     sharing: `Sharing Leads (${lead.buyersCount}/${lead.maxBuyers})`,
     buyersCount: lead.buyersCount,
     maxBuyers: lead.maxBuyers,
-    remainingSlots: Math.max(0, lead.maxBuyers - lead.buyersCount),
+    remainingSlots: lead.remainingSlots ?? Math.max(0, 2 - lead.buyersCount),
     oldPrice:
       typeof lead.originalPrice === 'number' && lead.originalPrice > lead.price
         ? lead.originalPrice
@@ -120,7 +122,8 @@ const mapLeadsForCards = (items: LeadsApiItem[], startIndex: number): HomeLead[]
     timeline: lead.timeline,
     requirement: lead.requirement,
     createdAt: lead.createdAt,
-    isSoldOut: lead.status === 'SOLD_OUT',
+    isSoldOut: ['SOLD_OUT', 'RESERVED', 'EXPIRED'].includes(lead.status),
+    unavailableLabel: lead.status === 'RESERVED' ? 'Currently unavailable' : lead.status === 'EXPIRED' ? 'Expired' : 'Out of stock',
   }))
 
 const trustPoints = [
@@ -327,7 +330,7 @@ export function HomePage() {
     setLeadQuantities((prev) => {
       const next: Record<string, number> = {}
       for (const lead of allLeads) {
-        const maxAllowed = Math.max(1, Math.min(3, lead.remainingSlots || 1))
+        const maxAllowed = 1
         const current = prev[lead.id] ?? 1
         next[lead.id] = Math.min(Math.max(current, 1), maxAllowed)
       }
@@ -650,7 +653,7 @@ export function HomePage() {
                               setLeadQuantities((prev) => ({
                                 ...prev,
                                 [lead.id]: Math.min(
-                                  Math.max(1, Math.min(3, lead.remainingSlots || 1)),
+                                  1,
                                   (prev[lead.id] ?? 1) + 1,
                                 ),
                               }))
@@ -659,7 +662,7 @@ export function HomePage() {
                             disabled={
                               lead.isSoldOut ||
                               (leadQuantities[lead.id] ?? 1) >=
-                                Math.max(1, Math.min(3, lead.remainingSlots || 1))
+                                1
                             }
                             aria-label="Increase quantity"
                           >
@@ -681,7 +684,7 @@ export function HomePage() {
                           disabled={lead.isSoldOut || activeCartLeadId === lead.id}
                         >
                           {lead.isSoldOut
-                            ? 'Sold Out'
+                            ? lead.unavailableLabel
                             : activeCartLeadId === lead.id
                               ? 'Adding...'
                               : 'Add'}

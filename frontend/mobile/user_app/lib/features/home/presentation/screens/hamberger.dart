@@ -166,7 +166,7 @@ class _DrawerOverlay extends HookConsumerWidget {
                 builder: (_, _) => GestureDetector(
                   onTap: closeWithAnim,
                   child: Container(
-                    color: Colors.black.withOpacity(bgAnim.value),
+                    color: Colors.black.withValues(alpha: bgAnim.value),
                   ),
                 ),
               ),
@@ -218,7 +218,7 @@ class _DrawerPanel extends StatelessWidget {
       width: 0.75.sw,
       height: MediaQuery.of(context).size.height,
       child: Container(
-        color: Theme.of(context).colorScheme.surface,
+        color: Colors.white,
         child: SafeArea(
           // top: true  keeps content below status bar
           // bottom: false  lets panel extend behind bottom nav
@@ -248,7 +248,7 @@ class _DrawerPanel extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Divider(
-                  color: Theme.of(context).colorScheme.outlineVariant,
+                  color: Colors.grey.shade200,
                   thickness: 1,
                   height: 1,
                 ),
@@ -333,7 +333,7 @@ class _DrawerTile extends HookWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 100),
             color: isPressed.value
-                ? AppColors.purple72.withOpacity(0.05)
+                ? AppColors.purple72.withValues(alpha: 0.05)
                 : Colors.transparent,
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
             child: Row(
@@ -341,9 +341,7 @@ class _DrawerTile extends HookWidget {
                 Icon(
                   data.icon,
                   size: 25.r,
-                  color: isActive
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: isActive ? AppColors.purple72 : AppColors.grey94,
                 ),
                 SizedBox(width: 16.w),
                 Expanded(
@@ -352,9 +350,7 @@ class _DrawerTile extends HookWidget {
                     style: AppTextStyles.poppins(
                       fontSize: 16.sp,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                      color: isActive
-                          ? Theme.of(context).colorScheme.onSurface
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: isActive ? AppColors.black19 : AppColors.grey77,
                     ),
                   ),
                 ),
@@ -364,11 +360,7 @@ class _DrawerTile extends HookWidget {
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w),
-          child: Divider(
-            color: Theme.of(context).colorScheme.outlineVariant,
-            thickness: 1,
-            height: 1,
-          ),
+          child: Divider(color: Colors.grey.shade200, thickness: 1, height: 1),
         ),
       ],
     );
@@ -397,7 +389,7 @@ class _LogoutTile extends HookWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         color: isPressed.value
-            ? const Color(0xFFE03B3B).withOpacity(0.05)
+            ? const Color(0xFFE03B3B).withValues(alpha: 0.05)
             : Colors.transparent,
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
         child: Row(

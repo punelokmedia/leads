@@ -276,7 +276,7 @@ class _NotificationTile extends HookWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: EdgeInsets.only(right: 20.w),
-        color: const Color(0xFFFF5C5C).withOpacity(0.1),
+        color: const Color(0xFFFF5C5C).withValues(alpha: 0.1),
         child: Icon(
           Icons.delete_outline_rounded,
           color: const Color(0xFFFF5C5C),
@@ -294,7 +294,7 @@ class _NotificationTile extends HookWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           color: isPressed.value
-              ? purple.withOpacity(0.04)
+              ? purple.withValues(alpha: 0.04)
               : Colors.transparent,
           padding: EdgeInsets.symmetric(vertical: 16.h),
           child: Row(
@@ -344,7 +344,7 @@ class _NotificationTile extends HookWidget {
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w400,
-                        color: purple.withOpacity(0.7),
+                        color: purple.withValues(alpha: 0.7),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -384,15 +384,15 @@ class _NotificationIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(width: 46.w, height: 46.w, child: _buildIcon(context));
+    return SizedBox(width: 46.w, height: 46.w, child: _buildIcon());
   }
 
-  Widget _buildIcon(BuildContext context) {
+  Widget _buildIcon() {
     switch (type) {
       case NotificationType.newLead:
         return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
+          decoration: const BoxDecoration(
+            color: Color(0xFFFFF3DC),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -406,8 +406,8 @@ class _NotificationIcon extends StatelessWidget {
 
       case NotificationType.leadAccepted:
         return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
+          decoration: const BoxDecoration(
+            color: Color(0xFFDCF5E8),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -421,8 +421,8 @@ class _NotificationIcon extends StatelessWidget {
 
       case NotificationType.payment:
         return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
+          decoration: const BoxDecoration(
+            color: Color(0xFFDCEBFF),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -457,12 +457,12 @@ class _EmptyState extends StatelessWidget {
             width: 72.w,
             height: 72.w,
             decoration: BoxDecoration(
-              color: purple.withOpacity(0.08),
+              color: purple.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.notifications_off_outlined,
-              color: purple.withOpacity(0.4),
+              color: purple.withValues(alpha: 0.4),
               size: 32.sp,
             ),
           ),
@@ -472,7 +472,7 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: const Color(0xFF1A1A2E),
             ),
           ),
           SizedBox(height: 6.h),

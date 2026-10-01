@@ -28,12 +28,12 @@ class HistoryCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(color: AppColors.color159, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -52,7 +52,7 @@ class HistoryCard extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                color: AppColors.white239,
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: _CardDetails(item: item),
@@ -84,11 +84,11 @@ class _CardHeader extends StatelessWidget {
             errorWidget: Container(
               width: 65.w,
               height: 45.h,
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              color: AppColors.white239,
               child: Icon(
                 Icons.broken_image_outlined,
                 size: 20.r,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: Colors.grey[400],
               ),
             ),
           ),
@@ -108,24 +108,20 @@ class _CardHeader extends StatelessWidget {
                 style: AppTextStyles.roboto(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: AppColors.black,
                   height: 1.2,
                 ),
               ),
               SizedBox(height: 4.h),
               Row(
                 children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 12.r,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  Icon(Icons.location_on, size: 12.r, color: AppColors.grey137),
                   SizedBox(width: 4.w),
                   Text(
                     item.city,
                     style: AppTextStyles.roboto(
                       fontSize: 12.sp,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: AppColors.grey137,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -166,7 +162,7 @@ class _CardDetails extends ConsumerWidget {
               item.time,
               style: AppTextStyles.roboto(
                 fontSize: 12.sp,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: Colors.grey[500]!,
               ),
             ),
           ],
@@ -272,9 +268,7 @@ class _CardDetails extends ConsumerWidget {
             icon: Icon(
               Icons.download_rounded,
               size: 20.r,
-              color: item.isDownloaded
-                  ? Theme.of(context).colorScheme.onSurfaceVariant
-                  : AppColors.color159,
+              color: item.isDownloaded ? Colors.grey[400] : AppColors.color159,
             ),
             label: Text(
               item.isDownloaded ? "Already Downloaded" : "Download Leads",
@@ -282,14 +276,14 @@ class _CardDetails extends ConsumerWidget {
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 color: item.isDownloaded
-                    ? Theme.of(context).colorScheme.onSurfaceVariant
+                    ? Colors.grey[400]
                     : AppColors.color159,
               ),
             ),
             style: OutlinedButton.styleFrom(
               side: BorderSide(
                 color: item.isDownloaded
-                    ? Theme.of(context).colorScheme.outlineVariant
+                    ? Colors.grey[300]!
                     : AppColors.color159,
                 width: 1.5,
               ),

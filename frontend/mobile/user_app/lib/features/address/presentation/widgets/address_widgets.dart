@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
+import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import '../../domain/address_model.dart';
 import 'address_input_decoration.dart';
@@ -23,14 +24,14 @@ class AddressTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    decoration: cardShadow(context),
+    decoration: cardShadow(),
     child: TextFormField(
       initialValue: initialValue,
       onChanged: onChanged,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
-      style: _fieldStyle(context),
-      decoration: addressInputDeco(context, hint: hint),
+      style: _fieldStyle(),
+      decoration: addressInputDeco(hint: hint),
     ),
   );
 }
@@ -65,17 +66,17 @@ class AddressCityDropdown extends StatelessWidget {
     final value = _cities.contains(selectedCity) ? selectedCity : _cities.first;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: cardShadow(context),
+      decoration: cardShadow(),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: AppColors.grey180,
             size: 20.r,
           ),
-          style: _fieldStyle(context),
+          style: _fieldStyle(),
           items: _cities
               .map((c) => DropdownMenuItem(value: c, child: Text(c)))
               .toList(),
@@ -142,12 +143,12 @@ class _TypeChip extends StatelessWidget {
       height: 42.h,
       padding: EdgeInsets.symmetric(horizontal: 18.w),
       decoration: BoxDecoration(
-        color: isSelected ? _accent : Theme.of(context).colorScheme.surface,
+        color: isSelected ? _accent : Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: _accent, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -159,9 +160,7 @@ class _TypeChip extends StatelessWidget {
           Icon(
             icon,
             size: 26.r,
-            color: isSelected
-                ? Colors.white
-                : Theme.of(context).colorScheme.onSurfaceVariant,
+            color: isSelected ? Colors.white : Colors.grey.shade600,
           ),
           SizedBox(width: 8.w),
           Text(
@@ -169,9 +168,7 @@ class _TypeChip extends StatelessWidget {
             style: AppTextStyles.poppins(
               fontSize: 16.sp,
               fontWeight: FontWeight.w400,
-              color: isSelected
-                  ? Colors.white
-                  : Theme.of(context).colorScheme.onSurfaceVariant,
+              color: isSelected ? Colors.white : Colors.grey.shade700,
             ),
           ),
         ],
@@ -219,7 +216,7 @@ class SaveButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFC107).withOpacity(0.4),
+            color: const Color(0xFFFFC107).withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -227,8 +224,8 @@ class SaveButton extends StatelessWidget {
       ),
       child: Center(
         child: isLoading
-            ? CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.surface,
+            ? const CircularProgressIndicator(
+                color: Colors.white,
                 strokeWidth: 2,
               )
             : Text(
@@ -236,7 +233,7 @@ class SaveButton extends StatelessWidget {
                 style: AppTextStyles.poppins(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
       ),
@@ -245,9 +242,9 @@ class SaveButton extends StatelessWidget {
 }
 
 // ── Shared text style ─────────────────────────────────────────────────────────
-TextStyle _fieldStyle(BuildContext context) => AppTextStyles.poppins(
+TextStyle _fieldStyle() => AppTextStyles.poppins(
   fontSize: 16.sp,
-  color: Theme.of(context).colorScheme.onSurfaceVariant,
+  color: AppColors.grey137,
   height: 1,
   fontWeight: FontWeight.w400,
   letterSpacing: 0.01,

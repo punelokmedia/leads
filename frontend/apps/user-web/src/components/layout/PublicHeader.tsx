@@ -571,13 +571,15 @@ export function PublicHeader() {
 
       const razorpay = new window.Razorpay({
         key: orderData.keyId || RAZORPAY_KEY_ID,
-        amount: Number(orderData.amount) * 100,
+        amount: Math.round(Number(orderData.amount) * 100),
+        timeout: Math.max(1, Math.min(600, Number(orderData.expiresIn) || 300)),
         currency: orderData.currency ?? 'INR',
         name: 'Leads Solution',
         description: `${orderData.leadsCount ?? cartSummary.totalItems} lead(s) purchase`,
         order_id: orderData.razorpayOrderId,
         modal: {
           ondismiss: () => {
+            if (internalOrderId) void requestApi('/payments/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken}` }, body: JSON.stringify({ orderId: internalOrderId }) }).catch(() => {});
             setAuthError('Payment cancelled.')
             setIsPaymentProcessing(false)
           },
@@ -1794,6 +1796,8 @@ export function PublicHeader() {
                                 }}
                                 className="h-8 w-8 rounded-r-full text-base font-bold text-stone-700 hover:bg-stone-100"
                                 aria-label="Increase quantity"
+                                disabled={true}
+                                title="One purchase per buyer"
                               >
                                 +
                               </button>

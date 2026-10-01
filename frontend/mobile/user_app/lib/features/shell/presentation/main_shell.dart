@@ -34,7 +34,7 @@ class MainShell extends StatelessWidget {
         child: Container(
           height: 64.h,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(24.r),
             boxShadow: [
               BoxShadow(
@@ -141,5 +141,5 @@ class _NavItem {
   final String? iconPath;
   final IconData? iconData;
 
-  const _NavItem({required this.label, this.iconPath, this.iconData});
+  const _NavItem({required this.label, this.iconData}) : iconPath = null;
 }

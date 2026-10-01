@@ -24,7 +24,7 @@ class EditProfileAvatar extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              color: AppColors.grey229,
               border: Border.all(color: AppColors.orange248, width: 2),
             ),
             child: Center(
@@ -89,8 +89,8 @@ class UpdateButton extends StatelessWidget {
               ? SizedBox(
                   height: 24.h,
                   width: 24.h,
-                  child: CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.surface,
+                  child: const CircularProgressIndicator(
+                    color: Colors.white,
                     strokeWidth: 2,
                   ),
                 )
@@ -99,7 +99,7 @@ class UpdateButton extends StatelessWidget {
                   style: AppTextStyles.poppins(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppColors.white,
                     letterSpacing: 0.1,
                     height: 20 / 20,
                   ),
@@ -133,11 +133,11 @@ class _ChangePasswordFieldState extends State<ChangePasswordField> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -147,16 +147,10 @@ class _ChangePasswordFieldState extends State<ChangePasswordField> {
         controller: widget.controller,
         obscureText: _obscure,
         validator: widget.validator,
-        style: TextStyle(
-          fontSize: 14.sp,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
+        style: TextStyle(fontSize: 14.sp, color: Colors.black87),
         decoration: InputDecoration(
           hintText: widget.hintText,
-          hintStyle: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 14.sp,
-          ),
+          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
           filled: true,
           fillColor: Colors.transparent,
           contentPadding: EdgeInsets.symmetric(
@@ -180,7 +174,7 @@ class _ChangePasswordFieldState extends State<ChangePasswordField> {
               _obscure
                   ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: Colors.grey[400],
               size: 20.r,
             ),
             onPressed: () => setState(() => _obscure = !_obscure),

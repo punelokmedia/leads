@@ -138,14 +138,14 @@ class _TellUsAboutYourselfScreenState
     final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+      backgroundColor: const Color(0xFFF3F0FF),
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+        backgroundColor: const Color(0xFFF3F0FF),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
+          icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Colors.black,
           ),
           onPressed: () => context.pop(),
         ),
@@ -154,7 +154,7 @@ class _TellUsAboutYourselfScreenState
           style: AppTextStyles.poppins(
             fontSize: 20.sp,
             fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Colors.black,
           ),
         ),
         centerTitle: false,
@@ -403,11 +403,11 @@ class _TellUsAboutYourselfScreenState
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -419,7 +419,7 @@ class _TellUsAboutYourselfScreenState
         style: AppTextStyles.poppins(
           fontSize: 14.sp,
           fontWeight: FontWeight.w500,
-          color: Theme.of(context).colorScheme.onSurface,
+          color: Colors.black87,
         ),
         decoration: InputDecoration(
           hintText: hint,
@@ -436,10 +436,7 @@ class _TellUsAboutYourselfScreenState
           enabledBorder: InputBorder.none,
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: AppColors.purple73, width: 1.5),
           ),
         ),
       ),
@@ -456,11 +453,11 @@ class _TellUsAboutYourselfScreenState
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -480,15 +477,15 @@ class _TellUsAboutYourselfScreenState
           isExpanded: true,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: Colors.grey,
             size: 22.r,
           ),
           style: AppTextStyles.poppins(
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Colors.black87,
           ),
-          dropdownColor: Theme.of(context).colorScheme.surface,
+          dropdownColor: Colors.white,
           borderRadius: BorderRadius.circular(12.r),
           items: items
               .toSet()

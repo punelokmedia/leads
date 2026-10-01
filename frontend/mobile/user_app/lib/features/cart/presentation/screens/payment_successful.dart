@@ -26,7 +26,7 @@ class PaymentSuccessScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+      backgroundColor: const Color(0xFFF1F1F1),
       body: Stack(
         children: [
           Column(
@@ -62,7 +62,7 @@ class PaymentSuccessScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(30.r),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -94,11 +94,7 @@ class PaymentSuccessScreen extends ConsumerWidget {
                 width: 40.r,
                 height: 40.r,
 
-                child: Icon(
-                  Icons.close,
-                  size: 30.r,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                child: Icon(Icons.close, size: 30.r, color: Colors.black),
               ),
             ),
           ),

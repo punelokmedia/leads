@@ -6,6 +6,7 @@ import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:user_app/app/app_router.dart';
+import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
@@ -95,16 +96,12 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
     final isLoading = ref.watch(authIsLoadingProvider);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: Theme.of(context).colorScheme.onSurface,
-            size: 25.r,
-          ),
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 25.r),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -112,7 +109,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
           style: AppTextStyles.poppins(
             fontSize: 24.sp,
             fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: AppColors.black,
             height: 20 / 24,
             letterSpacing: 0.01,
           ),
@@ -135,7 +132,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                   textAlign: TextAlign.center,
                   style: AppTextStyles.poppins(
                     fontSize: 20.sp,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: AppColors.grey137,
                     fontWeight: FontWeight.w400,
                     height: 20 / 20,
                     letterSpacing: 0.01,
@@ -146,11 +143,11 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                 // ── Custom Mobile Number Field ──
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -165,13 +162,13 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                     ],
                     style: AppTextStyles.poppins(
                       fontSize: 16.sp,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: Colors.black87,
                     ),
                     decoration: InputDecoration(
                       hintText: '9845 372784',
                       hintStyle: AppTextStyles.poppins(
                         fontSize: 16.sp,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: Colors.grey[400],
                       ),
                       contentPadding: EdgeInsets.symmetric(vertical: 18.h),
                       border: InputBorder.none,
@@ -192,9 +189,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                               '+91',
                               style: AppTextStyles.poppins(
                                 fontSize: 16.sp,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
+                                color: Colors.grey[600],
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -202,9 +197,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                             Container(
                               width: 1.w,
                               height: 24.h,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
+                              color: Colors.grey[300],
                             ),
                             SizedBox(width: 8.w),
                           ],
@@ -212,8 +205,9 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty)
+                      if (v == null || v.isEmpty) {
                         return 'Mobile number is required';
+                      }
                       if (v.length < 10) return 'Enter a valid 10-digit number';
                       return null;
                     },
@@ -236,7 +230,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                   errorBuilder: (_, _, _) => Icon(
                     Icons.verified_user_outlined,
                     size: 80.r,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: AppColors.purple73,
                   ),
                 ),
 
@@ -248,7 +242,7 @@ class _VerifyNumberScreenState extends ConsumerState<VerifyNumberScreen> {
                   textAlign: TextAlign.center,
                   style: AppTextStyles.poppins(
                     fontSize: 16.sp,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: AppColors.grey137,
                     fontWeight: FontWeight.w500,
                     height: 20 / 16,
                     letterSpacing: 0.01,

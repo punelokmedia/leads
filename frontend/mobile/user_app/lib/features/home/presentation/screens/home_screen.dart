@@ -1,4 +1,4 @@
-import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
+import 'dart:async';
 import 'dart:developer';
 import 'package:user_app/features/home/infra/category_controller.dart';
 import 'package:user_app/features/home/presentation/screens/category_picker.dart';
@@ -94,11 +94,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Expanded(
               child: CustomScrollView(
                 slivers: [
-                  SliverToBoxAdapter(
-                    child: HomeBannerCarousel(
-                      padding: EdgeInsets.fromLTRB(16.w, 4.h, 12.w, 12.h),
-                    ),
-                  ),
+                  const SliverToBoxAdapter(child: _HeroBanner()),
                   const SliverToBoxAdapter(child: _FilterRow()),
                   const SliverToBoxAdapter(child: _TopCategories()),
                   SliverToBoxAdapter(
@@ -228,6 +224,97 @@ class _NextLeadsAppBar extends StatelessWidget {
             ],
           ),
           SizedBox(width: 4.w),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroBanner extends StatefulWidget {
+  const _HeroBanner();
+
+  @override
+  State<_HeroBanner> createState() => _HeroBannerState();
+}
+
+class _HeroBannerState extends State<_HeroBanner> {
+  static const _images = [
+    'assets/Images/home/Banner_1.png',
+    'assets/Images/home/Banner_2.png',
+    'assets/Images/home/Banner_3.png',
+  ];
+  final _pageController = PageController();
+  Timer? _timer;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted ||
+          !_pageController.hasClients ||
+          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed ||
+          ModalRoute.of(context)?.isCurrent != true ||
+          MediaQuery.disableAnimationsOf(context) ||
+          _pageController.position.isScrollingNotifier.value) {
+        return;
+      }
+      _pageController.animateToPage(
+        (_currentPage + 1) % _images.length,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 4.h, 12.w, 12.h),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20.r),
+            child: AspectRatio(
+              aspectRatio: 64 / 23,
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _images.length,
+                onPageChanged: (page) => setState(() => _currentPage = page),
+                itemBuilder: (context, index) => Image.asset(
+                  _images[index],
+                  fit: BoxFit.contain,
+                  semanticLabel:
+                      'Home banner ${index + 1} of ${_images.length}',
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_images.length, (index) {
+              final selected = index == _currentPage;
+              return Container(
+                margin: EdgeInsets.symmetric(horizontal: 3.w),
+                width: selected ? 18.w : 6.w,
+                height: 6.h,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(3.r),
+                ),
+              );
+            }),
+          ),
         ],
       ),
     );

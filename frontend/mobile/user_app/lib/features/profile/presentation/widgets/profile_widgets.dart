@@ -23,7 +23,7 @@ class ProfileAppBar extends StatelessWidget {
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
               size: 22.r,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Colors.black87,
             ),
             onPressed: () {},
           ),
@@ -36,7 +36,7 @@ class ProfileAppBar extends StatelessWidget {
                   height: 20 / 24,
                   letterSpacing: 0.01,
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.black,
                 ),
               ),
             ),
@@ -64,7 +64,7 @@ class AvatarHeader extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 45.r,
-          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+          backgroundColor: const Color(0xFFEEEDFE),
           child: Text(
             _initials,
             style: AppTextStyles.poppins(
@@ -94,7 +94,7 @@ class AvatarHeader extends StatelessWidget {
                 profile.phoneNumber,
                 style: AppTextStyles.poppins(
                   fontSize: 14.sp,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: AppColors.purple73,
                   height: 1,
                   letterSpacing: 0.01,
                   fontWeight: FontWeight.w400,
@@ -105,7 +105,7 @@ class AvatarHeader extends StatelessWidget {
                 profile.email,
                 style: AppTextStyles.poppins(
                   fontSize: 12.sp,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: AppColors.grey137,
                   fontWeight: FontWeight.w500,
                   height: 20 / 12,
                   letterSpacing: 0.01,
@@ -116,7 +116,7 @@ class AvatarHeader extends StatelessWidget {
                 profile.cityName,
                 style: AppTextStyles.poppins(
                   fontSize: 12.sp,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: AppColors.grey137,
                   letterSpacing: 0.01,
                   height: 14 / 12,
                   fontWeight: FontWeight.w400,
@@ -142,13 +142,10 @@ class EditButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.purple73,
           borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-            width: 2.w,
-          ),
+          border: Border.all(color: const Color(0xFFE0E0E0), width: 2.w),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -196,7 +193,7 @@ class LabeledCard extends StatelessWidget {
             label,
             style: AppTextStyles.poppins(
               fontSize: 12.sp,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: AppColors.grey137,
               height: 20 / 12,
               letterSpacing: 0.01,
               fontWeight: FontWeight.w500,
@@ -207,12 +204,9 @@ class LabeledCard extends StatelessWidget {
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
-              width: 0.5,
-            ),
+            border: Border.all(color: Colors.grey.shade200, width: 0.5),
             boxShadow: [
               BoxShadow(
                 color: const Color.fromRGBO(0, 0, 0, 0.25),
@@ -227,7 +221,7 @@ class LabeledCard extends StatelessWidget {
               fontSize: 16.sp,
               fontWeight: FontWeight.w500,
               height: 20 / 16,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: const Color(0xFF424242),
             ),
           ),
         ),
@@ -248,15 +242,12 @@ class LogoutTile extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
-            width: 0.5,
-          ),
+          border: Border.all(color: Colors.grey.shade200, width: 0.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -296,7 +287,7 @@ class ProfileIllustration extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => Container(
           height: 170.h,
           width: 170.w,
-          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          color: Colors.grey[300],
           child: Center(
             child: Text("Illustration", style: TextStyle(fontSize: 12.sp)),
           ),
@@ -322,10 +313,7 @@ class ProfileShimmerLoading extends StatelessWidget {
             SizedBox(height: 10.h),
             Row(
               children: [
-                CircleAvatar(
-                  radius: 45.r,
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                ),
+                CircleAvatar(radius: 45.r, backgroundColor: Colors.white),
                 SizedBox(width: 20.w),
                 Expanded(
                   child: Column(
@@ -334,25 +322,25 @@ class ProfileShimmerLoading extends StatelessWidget {
                       Container(
                         width: 160.w,
                         height: 20.h,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Colors.white,
                       ),
                       SizedBox(height: 9.h),
                       Container(
                         width: 120.w,
                         height: 14.h,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Colors.white,
                       ),
                       SizedBox(height: 5.h),
                       Container(
                         width: 140.w,
                         height: 12.h,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Colors.white,
                       ),
                       SizedBox(height: 3.h),
                       Container(
                         width: 100.w,
                         height: 12.h,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Colors.white,
                       ),
                     ],
                   ),
@@ -360,42 +348,34 @@ class ProfileShimmerLoading extends StatelessWidget {
               ],
             ),
             SizedBox(height: 24.h),
-            Divider(
-              height: 2.h,
-              thickness: 2.h,
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
+            Divider(height: 2.h, thickness: 2.h, color: Colors.white),
             SizedBox(height: 24.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  width: 150.w,
-                  height: 22.h,
-                  color: Theme.of(context).colorScheme.surface,
-                ),
+                Container(width: 150.w, height: 22.h, color: Colors.white),
                 Container(
                   width: 70.w,
                   height: 32.h,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                 ),
               ],
             ),
             SizedBox(height: 20.h),
-            _buildShimmerField(context),
+            _buildShimmerField(),
             SizedBox(height: 16.h),
-            _buildShimmerField(context),
+            _buildShimmerField(),
             SizedBox(height: 16.h),
-            _buildShimmerField(context),
+            _buildShimmerField(),
             SizedBox(height: 30.h),
             Container(
               width: double.infinity,
               height: 50.h,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(10.r),
               ),
             ),
@@ -403,7 +383,7 @@ class ProfileShimmerLoading extends StatelessWidget {
             Container(
               width: double.infinity,
               height: 170.h,
-              color: Theme.of(context).colorScheme.surface,
+              color: Colors.white,
             ),
             SizedBox(height: 40.h),
           ],
@@ -412,21 +392,17 @@ class ProfileShimmerLoading extends StatelessWidget {
     );
   }
 
-  Widget _buildShimmerField(BuildContext context) {
+  Widget _buildShimmerField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 100.w,
-          height: 10.h,
-          color: Theme.of(context).colorScheme.surface,
-        ),
+        Container(width: 100.w, height: 10.h, color: Colors.white),
         SizedBox(height: 6.h),
         Container(
           width: double.infinity,
           height: 50.h,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(10.r),
           ),
         ),
@@ -446,7 +422,7 @@ class LogoutConfirmationDialog extends ConsumerWidget {
         // ✅ 3px border with specific color from your Figma
         side: BorderSide(color: const Color(0xFF8981A4), width: 3.w),
       ),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.white,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 30.h),
         child: Column(
@@ -458,7 +434,7 @@ class LogoutConfirmationDialog extends ConsumerWidget {
               style: AppTextStyles.poppins(
                 fontSize: 24.sp,
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface,
+                color: AppColors.black,
                 height: 20 / 24,
                 letterSpacing: 0.01,
               ),
@@ -486,7 +462,7 @@ class LogoutConfirmationDialog extends ConsumerWidget {
               style: AppTextStyles.poppins(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w400,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: AppColors.grey102,
                 height: 19 / 16,
                 letterSpacing: 0.01,
               ),
@@ -512,7 +488,7 @@ class LogoutConfirmationDialog extends ConsumerWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  backgroundColor: Colors.white,
                 ),
                 child: Text(
                   'Logout',

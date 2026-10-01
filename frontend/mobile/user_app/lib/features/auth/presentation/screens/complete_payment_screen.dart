@@ -224,15 +224,15 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: AppColors.grey102,
             size: 25.r,
           ),
           // ✅ Disable back during payment init to prevent broken states
@@ -243,7 +243,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
           style: AppTextStyles.poppins(
             fontSize: 24.sp,
             fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: AppColors.black,
             height: 20 / 24,
             letterSpacing: 0.01,
           ),
@@ -270,10 +270,10 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
             Container(
               padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 20.h),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -4),
                   ),
@@ -298,8 +298,8 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                           ? SizedBox(
                               height: 24.r,
                               width: 24.r,
-                              child: CircularProgressIndicator(
-                                color: Theme.of(context).colorScheme.surface,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
                                 strokeWidth: 2,
                               ),
                             )
