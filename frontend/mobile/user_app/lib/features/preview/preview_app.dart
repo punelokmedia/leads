@@ -1,3 +1,4 @@
+import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -93,6 +94,41 @@ class _PreviewHomeState extends State<PreviewHome> {
                 tab == 'Closed' && l.closed),
       )
       .toList();
+
+  bool _exitDialogOpen = false;
+
+  Future<void> _handleBack() async {
+    if (page != 0) {
+      setState(() => page = 0);
+      return;
+    }
+    if (_exitDialogOpen) return;
+    _exitDialogOpen = true;
+    try {
+      final shouldExit = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Exit app?'),
+          content: const Text('Do you want to exit the app?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('No'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Yes'),
+            ),
+          ],
+        ),
+      );
+      if (shouldExit == true && mounted) {
+        await SystemNavigator.pop();
+      }
+    } finally {
+      _exitDialogOpen = false;
+    }
+  }
 
   void categories() => Navigator.push(
     context,
@@ -193,168 +229,179 @@ class _PreviewHomeState extends State<PreviewHome> {
   }
 
   @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: store,
-    builder: (context, _) => Scaffold(
-      // The preview banner already handles the top system inset.
-      primary: store.isLive,
-      appBar: AppBar(
+  Widget build(BuildContext context) => PopScope<Object?>(
+    canPop: page == 0 && (ModalRoute.of(context)?.canPop ?? false),
+    onPopInvokedWithResult: (didPop, result) {
+      if (!didPop) _handleBack();
+    },
+    child: ListenableBuilder(
+      listenable: store,
+      builder: (context, _) => Scaffold(
+        // The preview banner already handles the top system inset.
         primary: store.isLive,
-        toolbarHeight: 40,
-        centerTitle: false,
-        title: page == 0
-            ? Image.asset(
-                'assets/Icons/appIcon/nextLeads_logo.png',
-                width: 40,
-                height: 30,
-                fit: BoxFit.contain,
-                semanticLabel: 'NextLeads',
-              )
-            : Text(['Home', 'All Leads', 'Payments', 'Profile', 'More'][page]),
-        actions: [
-          if (page == 0)
-            IconButton(
-              tooltip: 'My profile',
-              icon: const Icon(Icons.account_circle_outlined),
-              onPressed: () => setState(() => page = 3),
-            ),
-          if (page == 0)
-            IconButton(
-              tooltip: 'Notifications',
-              icon: Badge(
-                isLabelVisible: store.unread,
-                child: const Icon(Icons.notifications_outlined),
+        appBar: AppBar(
+          primary: store.isLive,
+          toolbarHeight: 40,
+          centerTitle: false,
+          title: page == 0
+              ? Image.asset(
+                  'assets/Icons/appIcon/nextLeads_logo.png',
+                  width: 40,
+                  height: 30,
+                  fit: BoxFit.contain,
+                  semanticLabel: 'NextLeads',
+                )
+              : Text(
+                  ['Home', 'All Leads', 'Payments', 'Profile', 'More'][page],
+                ),
+          actions: [
+            if (page == 0)
+              IconButton(
+                tooltip: 'My profile',
+                icon: const Icon(Icons.account_circle_outlined),
+                onPressed: () => setState(() => page = 3),
               ),
-              onPressed: () {
-                store.markRead();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => NotificationsPreview(store: store),
-                  ),
-                );
-              },
-            ),
-          if (page == 1)
-            IconButton(
-              tooltip: 'Filter leads',
-              onPressed: filters,
-              icon: const Icon(Icons.filter_alt_outlined),
-            ),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: switch (page) {
-            0 => Stack(
-              children: [
-                Positioned.fill(child: home()),
-                if (showFeaturePrompt && store.leads.isNotEmpty)
-                  Positioned(
-                    top: 8,
-                    left: 16,
-                    right: 16,
-                    child: Dismissible(
-                      key: const ValueKey('feature-prompt'),
-                      direction: DismissDirection.horizontal,
-                      onDismissed: (_) =>
-                          setState(() => showFeaturePrompt = false),
-                      child: Card(
-                        elevation: 6,
-                        color: Theme.of(context).colorScheme.surface,
-                        clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute<void>(
-                              builder: (_) => LeadDetailsPreview(
-                                lead: store.leads.first,
-                                store: store,
+            if (page == 0)
+              IconButton(
+                tooltip: 'Notifications',
+                icon: Badge(
+                  isLabelVisible: store.unread,
+                  child: const Icon(Icons.notifications_outlined),
+                ),
+                onPressed: () {
+                  store.markRead();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => NotificationsPreview(store: store),
+                    ),
+                  );
+                },
+              ),
+            if (page == 1)
+              IconButton(
+                tooltip: 'Filter leads',
+                onPressed: filters,
+                icon: const Icon(Icons.filter_alt_outlined),
+              ),
+          ],
+        ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: switch (page) {
+              0 => Stack(
+                children: [
+                  Positioned.fill(child: home()),
+                  if (showFeaturePrompt && store.leads.isNotEmpty)
+                    Positioned(
+                      top: 8,
+                      left: 16,
+                      right: 16,
+                      child: Dismissible(
+                        key: const ValueKey('feature-prompt'),
+                        direction: DismissDirection.horizontal,
+                        onDismissed: (_) =>
+                            setState(() => showFeaturePrompt = false),
+                        child: Card(
+                          elevation: 6,
+                          color: Theme.of(context).colorScheme.surface,
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute<void>(
+                                builder: (_) => LeadDetailsPreview(
+                                  lead: store.leads.first,
+                                  store: store,
+                                ),
                               ),
                             ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 8, 16),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.tips_and_updates_outlined,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Explore your first lead',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        'Tap to see project details. Swipe left or right to dismiss.',
-                                      ),
-                                    ],
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 8, 16),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.tips_and_updates_outlined,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Dismiss feature prompt',
-                                  onPressed: () =>
-                                      setState(() => showFeaturePrompt = false),
-                                  icon: const Icon(Icons.close, size: 20),
-                                ),
-                              ],
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Explore your first lead',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          'Tap to see project details. Swipe left or right to dismiss.',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Dismiss feature prompt',
+                                    onPressed: () => setState(
+                                      () => showFeaturePrompt = false,
+                                    ),
+                                    icon: const Icon(Icons.close, size: 20),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                ],
+              ),
+              1 => leads(),
+              2 => payments(),
+              3 => profile(),
+              _ => more(),
+            },
+          ),
+        ),
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SupportBar(store: store),
+            NavigationBar(
+              selectedIndex: page,
+              onDestinationSelected: (i) => setState(() => page = i),
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.description_outlined),
+                  label: 'Leads',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.credit_card),
+                  label: 'Payments',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  label: 'Profile',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.more_horiz),
+                  label: 'More',
+                ),
               ],
             ),
-            1 => leads(),
-            2 => payments(),
-            3 => profile(),
-            _ => more(),
-          },
+          ],
         ),
-      ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SupportBar(store: store),
-          NavigationBar(
-            selectedIndex: page,
-            onDestinationSelected: (i) => setState(() => page = i),
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                label: 'Home',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.description_outlined),
-                label: 'Leads',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.credit_card),
-                label: 'Payments',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline),
-                label: 'Profile',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.more_horiz),
-                label: 'More',
-              ),
-            ],
-          ),
-        ],
       ),
     ),
   );
@@ -362,53 +409,7 @@ class _PreviewHomeState extends State<PreviewHome> {
   Widget home() => ListView(
     padding: const EdgeInsets.all(16),
     children: [
-      Container(
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          gradient: _gradient,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'High Quality Leads',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 23,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'High Value Projects',
-                    style: TextStyle(
-                      color: Colors.amber,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    store.isLive
-                        ? 'Browse project budgets'
-                        : '₹1L – ₹1Cr Projects',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  SizedBox(height: 18),
-                  Text(
-                    'Limited vendor slots per lead',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.trending_up, color: Colors.amber, size: 52),
-          ],
-        ),
-      ),
+      const HomeBannerCarousel(),
       const SizedBox(height: 12),
       FilledButton.icon(
         onPressed: () => setState(() {
@@ -1034,17 +1035,19 @@ class TrustStrip extends StatelessWidget {
       alignment: WrapAlignment.center,
       spacing: 16,
       runSpacing: 8,
-      children: store?.isLive == true ? [
-        Text('${store!.categories.length} service categories'),
-        Text('${store!.cities.length} cities'),
-        const Text('Two buyers per lead'),
-        const Text('Support inbox available 24/7'),
-      ] : const [
-        Text('✦ Verified & quality leads'),
-        Text('⌖ Pan India • 1000+ cities'),
-        Text('✓ Secure platform'),
-        Text('Trusted by professionals'),
-      ],
+      children: store?.isLive == true
+          ? [
+              Text('${store!.categories.length} service categories'),
+              Text('${store!.cities.length} cities'),
+              const Text('Two buyers per lead'),
+              const Text('Support inbox available 24/7'),
+            ]
+          : const [
+              Text('✦ Verified & quality leads'),
+              Text('⌖ Pan India • 1000+ cities'),
+              Text('✓ Secure platform'),
+              Text('Trusted by professionals'),
+            ],
     ),
   );
 }
@@ -1099,9 +1102,15 @@ class _CategoryPreviewState extends State<CategoryPreview> {
                             fontSize: 18,
                           ),
                         ),
-                        Text(store.isLive ? '${store.cities.length} cities in our catalog' : 'Leads available in 1000+ cities'),
                         Text(
-                          store.isLive ? 'Select a category to see current availability' : 'Coverage claims shown as mock copy',
+                          store.isLive
+                              ? '${store.cities.length} cities in our catalog'
+                              : 'Leads available in 1000+ cities',
+                        ),
+                        Text(
+                          store.isLive
+                              ? 'Select a category to see current availability'
+                              : 'Coverage claims shown as mock copy',
                           style: TextStyle(fontSize: 10),
                         ),
                       ],
@@ -1799,17 +1808,19 @@ class NotificationsPreview extends StatelessWidget {
         children: store.notifications.isEmpty
             ? [const ListTile(title: Text('No notifications yet'))]
             : store.notifications
-            .map(
-              (n) => ListTile(
-                leading: Icon(
-                  Icons.notifications_active_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                title: Text(n),
-                subtitle: Text(store.isLive ? 'Account update' : 'Test notification'),
-              ),
-            )
-            .toList(),
+                  .map(
+                    (n) => ListTile(
+                      leading: Icon(
+                        Icons.notifications_active_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      title: Text(n),
+                      subtitle: Text(
+                        store.isLive ? 'Account update' : 'Test notification',
+                      ),
+                    ),
+                  )
+                  .toList(),
       ),
     ),
   );

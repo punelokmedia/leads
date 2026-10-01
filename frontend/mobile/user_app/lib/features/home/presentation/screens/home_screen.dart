@@ -1,3 +1,4 @@
+import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
 import 'dart:developer';
 import 'package:user_app/features/home/infra/category_controller.dart';
 import 'package:user_app/features/home/presentation/screens/category_picker.dart';
@@ -93,7 +94,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Expanded(
               child: CustomScrollView(
                 slivers: [
-                  const SliverToBoxAdapter(child: _HeroBanner()),
+                  SliverToBoxAdapter(
+                    child: HomeBannerCarousel(
+                      padding: EdgeInsets.fromLTRB(16.w, 4.h, 12.w, 12.h),
+                    ),
+                  ),
                   const SliverToBoxAdapter(child: _FilterRow()),
                   const SliverToBoxAdapter(child: _TopCategories()),
                   SliverToBoxAdapter(
@@ -224,149 +229,6 @@ class _NextLeadsAppBar extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
         ],
-      ),
-    );
-  }
-}
-
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 4.h, 12.w, 12.h),
-      height: 138.h,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2B0E7A), Color(0xFF5B34C9)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20.w,
-            top: -20.h,
-            child: Container(
-              width: 120.w,
-              height: 120.h,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 20.w,
-            bottom: -30.h,
-            child: Container(
-              width: 80.w,
-              height: 80.h,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.06),
-              ),
-            ),
-          ),
-
-          Positioned(right: 16.w, bottom: 16.h, child: _ChartIllustration()),
-
-          Padding(
-            padding: EdgeInsets.all(20.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'High Quality Leads',
-                  style: AppTextStyles.poppins(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  'High Value Projects',
-                  style: AppTextStyles.poppins(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.amber,
-                  ),
-                ),
-                SizedBox(height: 10.h),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.settings_rounded,
-                      color: Colors.white70,
-                      size: 14.r,
-                    ),
-                    SizedBox(width: 6.w),
-                    Text(
-                      'Only 2 Vendors per Lead',
-                      style: AppTextStyles.poppins(
-                        fontSize: 11.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChartIllustration extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(bottom: 30.h, right: 4.w),
-          child: Icon(
-            Icons.trending_up_rounded,
-            color: Colors.white,
-            size: 32.r,
-          ),
-        ),
-        // Bars
-        _Bar(height: 28.h, color: Colors.amber),
-        SizedBox(width: 4.w),
-        _Bar(height: 44.h, color: Colors.orange),
-        SizedBox(width: 4.w),
-        _Bar(height: 60.h, color: Color(0xFFFF3E6C)),
-      ],
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  final double height;
-  final Color color;
-  const _Bar({required this.height, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 14.w,
-      height: height,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4.r),
       ),
     );
   }
