@@ -13,6 +13,7 @@ import category from "./Routes/categories.routes.js";
 import cart from "./Routes/cart.routes.js";
 import city from "./Routes/city.routes.js";
 import { supportRouter } from "./Routes/support.routes.js";
+import { accountDeletionRouter } from "./Routes/accountDeletion.routes.js";
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use(`/api/${API_VERSION}/categories`, category);
 app.use(`/api/${API_VERSION}/cities`, city);
 app.use(`/api/${API_VERSION}/cart`, cart);
 app.use(`/api/${API_VERSION}/support`, supportRouter);
+app.use(`/api/${API_VERSION}/account-deletion-requests`, accountDeletionRouter);
 
 app.get("/", (req, res) => {
   return res.json({

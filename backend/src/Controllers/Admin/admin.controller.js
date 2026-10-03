@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
 import mongoose from "mongoose";
 import { User } from "../../Models/user.model.js";
 import { sendAdminOtpEmail } from "../../Utils/email.resend.utils.js";
@@ -111,7 +112,7 @@ const sendOtpForAdminLogin = async (req, res) => {
         message: "Admin account is blocked",
       });
     }
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const otp = crypto.randomInt(1000, 10000).toString();
 
     const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
     admin.resetOtp = otp;
@@ -169,10 +170,10 @@ const verifyAdminOtp = async (req, res) => {
     const { email, otp } = req.body;
     const normalizedEmail = email?.trim();
 
-    if (!normalizedEmail) {
+    if (!normalizedEmail || typeof otp !== "string" || !/^\d{4}$/.test(otp)) {
       return res.status(400).json({
         success: false,
-        message: "Email is required",
+        message: "Email and a valid 4-digit OTP are required",
       });
     }
 
@@ -191,14 +192,14 @@ const verifyAdminOtp = async (req, res) => {
       });
     }
 
-    if (admin.resetOtp !== otp) {
+    if (!admin.resetOtp || admin.resetOtp !== otp) {
       return res.status(400).json({
         success: false,
         message: "Invalid OTP",
       });
     }
 
-    if (admin.resetOtpExpire < new Date()) {
+    if (!admin.resetOtpExpire || admin.resetOtpExpire <= new Date()) {
       return res.status(400).json({
         success: false,
         message: "OTP expired",

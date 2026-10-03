@@ -151,4 +151,14 @@ UserSchema.index(
   },
 );
 
+UserSchema.set("toJSON", {
+  transform(_document, result) {
+    for (const field of ["password", "resetOtp", "resetOtpExpire", "loginOtp", "loginOtpExpire", "pendingPhoneNumber"]) {
+      delete result[field];
+    }
+    if (result.registrationPayment) delete result.registrationPayment.razorpaySignature;
+    return result;
+  },
+});
+
 export const User = mongoose.model("User", UserSchema);

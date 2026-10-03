@@ -453,7 +453,7 @@ const getUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).select("-password").lean();
+    const user = await User.findById(userId).select("-password -resetOtp -resetOtpExpire -loginOtp -loginOtpExpire -pendingPhoneNumber -registrationPayment.razorpaySignature").lean();
 
     if (!user) {
       return res.status(404).json({
@@ -551,6 +551,9 @@ const updateUserProfile = async (req, res) => {
 };
 
 const requestMobileOtp = async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(503).json({ success: false, code: "SMS_NOT_CONFIGURED", message: "Phone verification is unavailable. Please use email or Google login." });
+  }
   try {
     const normalizedPhone = normalizeIndianPhone(req.body?.phoneNumber);
 
@@ -623,6 +626,9 @@ const requestMobileOtp = async (req, res) => {
 };
 
 const requestSessionMobileOtp = async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(503).json({ success: false, code: "SMS_NOT_CONFIGURED", message: "Phone verification is unavailable. Please contact support." });
+  }
   try {
     const userId = req.user.id;
     const normalizedPhone = normalizeIndianPhone(req.body?.phoneNumber);
