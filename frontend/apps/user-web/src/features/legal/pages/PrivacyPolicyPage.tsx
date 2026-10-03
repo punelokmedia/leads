@@ -1,7 +1,11 @@
 import { Fragment } from 'react'
+import { Link } from 'react-router-dom'
 import { privacyPolicyBlocks } from '../data/privacyPolicy'
 
 function PolicyText({ text }: { text: string }) {
+  if (text === '**Account Deletion Page:** [INSERT PUBLIC ACCOUNT DELETION URL]') {
+    return <><strong className="font-semibold text-stone-900">Account Deletion Page: </strong><Link to="/account-deletion" className="font-semibold text-stone-900 underline">Request account deletion</Link></>
+  }
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
     part.startsWith('**') ? <strong key={index} className="font-semibold text-stone-900">{part.slice(2, -2)}</strong> : <Fragment key={index}>{part}</Fragment>,
   )
@@ -11,8 +15,8 @@ export function PrivacyPolicyPage() {
   return (
     <div className="bg-[#efefef]">
       <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-16">
-        <p className="inline-flex rounded-full bg-[#F8B020] px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">NextLeads ? Legal</p>
-        <h1 className="mt-3 text-4xl font-black text-stone-900 sm:text-5xl">Privacy Policy ? NextLeads</h1>
+        <p className="inline-flex rounded-full bg-[#F8B020] px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">NextLeads · Legal</p>
+        <h1 className="mt-3 text-4xl font-black text-stone-900 sm:text-5xl">Privacy Policy — NextLeads</h1>
       </section>
       <section className="mx-auto max-w-5xl px-4 pb-14 sm:px-6">
         <article className="rounded-2xl border border-stone-300 bg-white p-6 text-sm leading-relaxed text-stone-600 shadow-sm sm:p-10">

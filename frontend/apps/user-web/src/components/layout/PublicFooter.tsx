@@ -26,6 +26,9 @@ export function PublicFooter() {
                 <Link to="/privacy-policy" className="transition hover:text-[#F8B020]">
                   Privacy Policy
                 </Link>
+                <Link to="/account-deletion" className="transition hover:text-[#F8B020]">
+                  Delete Account
+                </Link>
                 <Link to="/terms-service" className="transition hover:text-[#F8B020]">
                   Terms & Service
                 </Link>

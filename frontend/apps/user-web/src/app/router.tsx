@@ -4,6 +4,7 @@ import { HomePage } from '@/features/home/pages/HomePage'
 import { PricingPage } from '@/features/pricing/pages/PricingPage'
 import { ContactPage } from '@/features/contact/pages/ContactPage'
 import { PrivacyPolicyPage } from '@/features/legal/pages/PrivacyPolicyPage'
+import { AccountDeletionPage } from '@/features/legal/pages/AccountDeletionPage'
 import { TermsServicePage } from '@/features/legal/pages/TermsServicePage'
 import { CookiePolicyPage } from '@/features/legal/pages/CookiePolicyPage'
 import { ContactSupportPage } from '@/features/legal/pages/ContactSupportPage'
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
       { path: 'pricing', element: <PricingPage /> },
       { path: 'contact', element: <ContactPage /> },
       { path: 'privacy-policy', element: <PrivacyPolicyPage /> },
+      { path: 'account-deletion', element: <AccountDeletionPage /> },
       { path: 'terms-service', element: <TermsServicePage /> },
       { path: 'cookie-policy', element: <CookiePolicyPage /> },
       { path: 'contact-support', element: <ContactSupportPage /> },
