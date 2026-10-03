@@ -1,15 +1,19 @@
 import mongoose from "mongoose";
 
+let connectionPromise;
+
 const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.DATABASE_URL);
-    console.log(`⚙️  MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error("❌ DB connection error:", error.message);
-    console.log("error",error);
-    
-    process.exit(1);
+  if (mongoose.connection.readyState === 1) return mongoose;
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured");
+  if (!connectionPromise) {
+    connectionPromise = mongoose.connect(process.env.DATABASE_URL, {
+      serverSelectionTimeoutMS: 10000,
+    }).catch((error) => {
+      connectionPromise = undefined;
+      throw error;
+    });
   }
+  return connectionPromise;
 };
 
 export { connectDB };

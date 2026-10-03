@@ -1,4 +1,6 @@
+import "./Config/env.config.js";
 import express from "express";
+import { connectDB } from "./Config/db.connection.config.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import passport from "./Config/passport.js";
@@ -50,7 +52,20 @@ app.use(cors(corsOptions));
 
 app.use(passport.initialize());
 
-const API_VERSION = process.env.API_VERSION;
+const API_VERSION = process.env.API_VERSION || "v1";
+
+// Reuse a database connection across requests in each Vercel instance.
+if (process.env.VERCEL) {
+  app.use(`/api/${API_VERSION}`, async (_req, res, next) => {
+    try {
+      await connectDB();
+      next();
+    } catch (error) {
+      console.error("Database connection failed:", error.message);
+      res.status(503).json({ success: false, message: "Database unavailable" });
+    }
+  });
+}
 
 app.use(`/api/${API_VERSION}/auth`, Auth);
 app.use(`/api/${API_VERSION}/admin`, Admin);
@@ -69,3 +84,4 @@ app.get("/", (req, res) => {
 });
 
 export { app };
+export default app;
