@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/config/api'
 import {
   createContext,
   useCallback,
@@ -8,8 +9,6 @@ import {
 } from 'react'
 
 const AUTH_STORAGE_KEY = 'admin_auth_session'
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:5000'
 const ADMIN_AUTH_BASE = `${API_BASE_URL}/api/v1/admin`
 
 type AdminSession = {

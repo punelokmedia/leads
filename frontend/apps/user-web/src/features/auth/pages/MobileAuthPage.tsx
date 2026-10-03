@@ -1,10 +1,9 @@
+import { API_BASE_URL } from '@/config/api'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
-const API_BASE_URL_CANDIDATES = Array.from(
-  new Set([CONFIGURED_API_BASE_URL, `${window.location.protocol}//${window.location.hostname}:5000`].filter(Boolean)),
-)
+const CONFIGURED_API_BASE_URL = API_BASE_URL
+const API_BASE_URL_CANDIDATES = [API_BASE_URL]
 
 const TOTAL_STEPS = 6
 const OTP_RESEND_SECONDS = 25

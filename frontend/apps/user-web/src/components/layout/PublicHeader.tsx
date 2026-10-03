@@ -1,14 +1,8 @@
+import { API_BASE_URL } from '@/config/api'
 import { useEffect, useState, type FormEvent } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
-const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
-const API_BASE_URL_CANDIDATES = Array.from(
-  new Set(
-    [CONFIGURED_API_BASE_URL, `${window.location.protocol}//${window.location.hostname}:5000`].filter(
-      (value): value is string => Boolean(value),
-    ),
-  ),
-)
+const API_BASE_URL_CANDIDATES = [API_BASE_URL]
 
 const buildAuthUrl = (apiBaseUrl: string, path: string) =>
   `${apiBaseUrl}/api/v1/auth${path}`

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/config/api'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAdminAuth } from '@/features/auth/context/AdminAuthContext'
@@ -34,7 +35,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/v1/cities/get-all-cities')
+        const response = await fetch(`${API_BASE_URL}/api/v1/cities/get-all-cities`)
         const payload = (await response.json()) as { success?: boolean; data?: Array<{ _id: string; name: string }> }
         if (response.ok && payload.success) {
           setCities(payload.data ?? [])

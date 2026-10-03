@@ -1,12 +1,10 @@
+import { API_BASE_URL } from '@/config/api'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
 
 const PAGE_LIMIT = 10
-const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
-const API_BASE_URL_CANDIDATES = Array.from(
-  new Set(['http://localhost:5000', CONFIGURED_API_BASE_URL].filter(Boolean)),
-)
+const API_BASE_URL_CANDIDATES = [API_BASE_URL]
 type CityOption = {
   _id: string
   name: string

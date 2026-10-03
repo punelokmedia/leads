@@ -1,8 +1,9 @@
+import { API_BASE_URL } from '@/config/api'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Message = { _id: string; text: string; sender: string; createdAt: string }
 type Thread = { _id: string; text: string; sender: string; updatedAt: string }
-const base = `${import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:5000'}/api/v1/support/admin`
+const base = `${API_BASE_URL}/api/v1/support/admin`
 async function request<T>(path: string, body?: object): Promise<T> {
   const token = JSON.parse(localStorage.getItem('admin_auth_session') ?? '{}').token
   const response = await fetch(`${base}${path}`, {
