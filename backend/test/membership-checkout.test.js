@@ -22,10 +22,16 @@ for (const [name, paid, purchased] of [['lifetime member', true, false], ['exist
     t.mock.method(User, 'findById', () => ({ select: async () => ({ registrationFeePaid: paid }) }));
     t.mock.method(Order, 'exists', async () => purchased ? { _id: 'prior-order' } : null);
     const previous = process.env.RAZORPAY_KEY_ID;
-    delete process.env.RAZORPAY_KEY_ID;
+    const previousAlias = process.env.RAZORPAY_KEY;
+    process.env.RAZORPAY_KEY_ID = '';
+    process.env.RAZORPAY_KEY = '';
     const res = response();
     try { await createOrder({ user: { id: 'existing-user' }, body: {} }, res); }
-    finally { process.env.RAZORPAY_KEY_ID = previous; }
+    finally {
+      process.env.RAZORPAY_KEY_ID = previous;
+      if (previousAlias !== undefined) process.env.RAZORPAY_KEY = previousAlias;
+      else delete process.env.RAZORPAY_KEY;
+    }
     assert.equal(res.body.code, 'PAYMENTS_UNAVAILABLE');
   });
 }

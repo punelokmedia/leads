@@ -17,6 +17,7 @@ import { supportRouter } from "./Routes/support.routes.js";
 const app = express();
 
 const allowedOrigins = [
+  process.env.CLIENT_URL,
   process.env.FRONTEND_URL,
   process.env.ADMIN_FRONTEND_URL,
   "http://localhost:5173",

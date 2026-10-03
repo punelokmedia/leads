@@ -1104,6 +1104,7 @@ export function PublicHeader() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: forgotForm.email,
+          otp: forgotForm.otpDigits.join(''),
           newPassword: forgotForm.newPassword,
           confirmPassword: forgotForm.confirmPassword,
         }),

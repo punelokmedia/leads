@@ -288,12 +288,7 @@ const forgetPassword = async (req, res) => {
       });
     }
 
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
-
-    console.log("forgetPassword : ", {
-      email: email,
-      otp: otp,
-    });
+    const otp = crypto.randomInt(1000, 10000).toString();
 
     const expiry = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -359,9 +354,9 @@ const verifyOtp = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   try {
-    const { email, newPassword, confirmPassword } = req.body;
+    const { email, otp, newPassword, confirmPassword } = req.body;
 
-    if (!email || !newPassword || !confirmPassword) {
+    if (!email || !otp || !newPassword || !confirmPassword) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -376,6 +371,10 @@ const resetPassword = async (req, res) => {
     }
 
     const user = await User.findOne({ email });
+
+    if (!user || !user.resetOtp || user.resetOtp !== String(otp) || !user.resetOtpExpire || user.resetOtpExpire <= new Date()) {
+      return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+    }
 
     const hashed = await hashPassword(newPassword);
 

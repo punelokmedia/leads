@@ -133,6 +133,13 @@ const LeadSchema = new Schema(
       min: 1,
     },
 
+    reservations: [{
+      _id: false,
+      order: { type: Schema.Types.ObjectId, ref: "Order", required: true },
+      user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+      expiresAt: { type: Date, required: true },
+    }],
+
     expiresAt: {
       type: Date,
       required: true,
@@ -171,6 +178,7 @@ const buildLeadDisplayId = (leadId) =>
   `NL${String(leadId || "").slice(-8).toUpperCase()}`;
 
 LeadSchema.pre("validate", function () {
+  this.maxBuyers = 2;
   if (this._id) {
     this.leadDisplayId = buildLeadDisplayId(this._id);
   }
