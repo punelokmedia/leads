@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@/config/api'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useToast } from '@/components/feedback/ToastProvider'
+import { useToast } from '@/components/feedback/useToast'
 
 const AUTH_STORAGE_KEY = 'admin_auth_session'
 const PAGE_SIZE = 10

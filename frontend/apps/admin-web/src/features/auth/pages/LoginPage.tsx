@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminAuth } from '@/features/auth/context/AdminAuthContext'
-import { useToast } from '@/components/feedback/ToastProvider'
+import { useToast } from '@/components/feedback/useToast'
 
 export function LoginPage() {
   const navigate = useNavigate()

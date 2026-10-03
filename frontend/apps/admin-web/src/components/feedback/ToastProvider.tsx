@@ -1,14 +1,12 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useMemo,
   useRef,
   useState,
   type PropsWithChildren,
 } from 'react'
 
-type ToastVariant = 'success' | 'error' | 'info'
+import { ToastContext, type ToastApi, type ToastInput, type ToastVariant } from './useToast'
 
 type ToastItem = {
   id: string
@@ -16,21 +14,6 @@ type ToastItem = {
   description?: string
   variant: ToastVariant
 }
-
-type ToastInput = {
-  title: string
-  description?: string
-  durationMs?: number
-}
-
-type ToastApi = {
-  show: (input: ToastInput & { variant?: ToastVariant }) => void
-  success: (input: ToastInput | string) => void
-  error: (input: ToastInput | string) => void
-  info: (input: ToastInput | string) => void
-}
-
-const ToastContext = createContext<ToastApi | null>(null)
 
 const variantStyles: Record<ToastVariant, { chip: string; dot: string }> = {
   success: {
@@ -131,12 +114,4 @@ export function ToastProvider({ children }: PropsWithChildren) {
       </div>
     </ToastContext.Provider>
   )
-}
-
-export function useToast() {
-  const context = useContext(ToastContext)
-  if (!context) {
-    throw new Error('useToast must be used within ToastProvider')
-  }
-  return context
 }
