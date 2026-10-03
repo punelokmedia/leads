@@ -529,7 +529,7 @@ export const privacyPolicyBlocks = [
   },
   {
     "type": "paragraph",
-    "text": "**App:** NextLeads  \r\n**Developer/Company:** [INSERT EXACT LEGAL/PLAY CONSOLE DEVELOPER NAME]  \r\n**Email:** [INSERT PRIVACY/SUPPORT EMAIL]  \r\n**Website:** [INSERT OFFICIAL WEBSITE]  \r\n**Address:** [INSERT BUSINESS ADDRESS, IF APPLICABLE]"
+    "text": "App: NextLeads  \r\nCompany:techifylabs  \r\nEmail: info@techifylabs.in  \r\n Website:trynextlead.in  \r\nAddress: clover hills plaza 10th floor 1029,  NIBM Road pune MH 12"
   },
   {
     "type": "paragraph",
