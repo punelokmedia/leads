@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:user_app/features/profile/presentation/widgets/referral_section.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/features/profile/infra/profile_repository.dart';
@@ -87,6 +88,8 @@ class ProfileScreen extends ConsumerWidget {
                                   value: profile.gstNumber,
                                 ),
                                 SizedBox(height: 30.h),
+                                const ReferralSection(),
+                                SizedBox(height: 24.h),
                                 LogoutTile(
                                   onTap: () {
                                     showDialog(

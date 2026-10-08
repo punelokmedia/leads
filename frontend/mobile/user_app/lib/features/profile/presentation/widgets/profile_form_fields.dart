@@ -2,65 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
-import 'package:user_app/core/widgets/app_network_image.dart';
 
 // ── Shared shadow decoration ──────────────────────────────────────────────────
-BoxDecoration cardDeco({double radius = 24}) => BoxDecoration(
-  color: Colors.white,
-  borderRadius: BorderRadius.circular(radius.r),
-  boxShadow: [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.06),
-      blurRadius: 10,
-      offset: const Offset(0, 4),
-    ),
-  ],
-);
+BoxDecoration cardDeco(BuildContext context, {double radius = 24}) =>
+    BoxDecoration(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(radius.r),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.06),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
 class EditProfileAvatar extends StatelessWidget {
-  final String? avatarUrl;
-  final VoidCallback onEditTap;
-  const EditProfileAvatar({super.key, this.avatarUrl, required this.onEditTap});
-
+  const EditProfileAvatar({super.key});
   @override
   Widget build(BuildContext context) => Center(
-    child: Stack(
-      children: [
-        ClipOval(
-          child: AppNetworkImage(
-            url: avatarUrl,
-            width: 96.r,
-            height: 96.r,
-            fit: BoxFit.cover,
-            errorWidget: CircleAvatar(
-              radius: 48.r,
-              backgroundColor: Colors.grey[200],
-              child: Icon(Icons.person, size: 48.r, color: Colors.grey),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: onEditTap,
-            child: Container(
-              padding: EdgeInsets.all(6.r),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8B020),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.edit, size: 16.r, color: Colors.white),
-            ),
-          ),
-        ),
-      ],
+    child: CircleAvatar(
+      radius: 48.r,
+      child: Icon(Icons.person, size: 48.r),
     ),
   );
 }
 
-// ── Form label ────────────────────────────────────────────────────────────────
 class FormLabel extends StatelessWidget {
   final String text;
   const FormLabel({super.key, required this.text});
@@ -71,7 +39,7 @@ class FormLabel extends StatelessWidget {
     style: AppTextStyles.poppins(
       fontSize: 15.sp,
       fontWeight: FontWeight.w500,
-      color: Colors.black87,
+      color: Theme.of(context).colorScheme.onSurface,
     ),
   );
 }
@@ -131,7 +99,7 @@ class AddAddressRow extends StatelessWidget {
     child: Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
-      decoration: cardDeco(),
+      decoration: cardDeco(context),
       child: Row(
         children: [
           Text(
@@ -139,14 +107,14 @@ class AddAddressRow extends StatelessWidget {
             style: AppTextStyles.poppins(
               fontSize: 15.sp,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const Spacer(),
           Icon(
             Icons.arrow_forward_ios_rounded,
             size: 16.r,
-            color: Colors.grey[400],
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ],
       ),
@@ -166,7 +134,7 @@ class PasswordWithChangeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    decoration: cardDeco(),
+    decoration: cardDeco(context),
     child: Row(
       children: [
         Expanded(
@@ -177,13 +145,17 @@ class PasswordWithChangeButton extends StatelessWidget {
             decoration: InputDecoration(
               hintText: '••••••••',
               hintStyle: AppTextStyles.poppins(
-                color: AppColors.grey163,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 20.sp,
               ),
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 20.w,
                 vertical: 16.h,
               ),
+              filled: true,
+              fillColor: Colors.transparent,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
               border: InputBorder.none,
             ),
           ),

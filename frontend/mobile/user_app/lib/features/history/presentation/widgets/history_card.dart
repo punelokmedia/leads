@@ -240,7 +240,7 @@ class _CardDetails extends ConsumerWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            "File saved to Downloads!",
+                            "File downloaded. Tap Open to view.",
                             style: AppTextStyles.roboto(
                               fontSize: 13.sp,
                               color: Colors.white,

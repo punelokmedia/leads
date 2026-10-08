@@ -23,7 +23,6 @@ class AuthController extends StateNotifier<AuthState> {
     required String businessName,
     required String workType,
     required String address,
-    String? profilePicPath,
     required void Function() onSuccess,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -37,7 +36,6 @@ class AuthController extends StateNotifier<AuthState> {
         businessName: businessName,
         workType: workType,
         address: address,
-        profilePicPath: profilePicPath,
       );
 
       // Update the state with the newly completed user profile
@@ -168,7 +166,7 @@ class AuthController extends StateNotifier<AuthState> {
       _ref.read(profileDraftProvider.notifier).clearDraft();
       _ref.read(profileDraftProvider.notifier).updateBasicDetails(
         fullName: result.user.fullName, email: result.user.email,
-        businessName: '', city: '', workType: '', address: '', profilePicPath: '',
+        businessName: '', city: '', workType: '', address: '',
       );
       // A cart failure must not turn a successful sign-in into a login error.
       // The repository retains the local cart when synchronization fails.

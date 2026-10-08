@@ -427,11 +427,7 @@ class CartController extends StateNotifier<CartState> {
   }
 
   Future<Directory> getDownloadDirectory() async {
-    if (Platform.isAndroid) {
-      final dir = Directory('/storage/emulated/0/Download');
-      if (!await dir.exists()) await dir.create(recursive: true);
-      return dir;
-    }
+
     return await getApplicationDocumentsDirectory();
   }
 }

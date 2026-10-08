@@ -1,61 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:flutter_svg/svg.dart';
+
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
-import 'package:user_app/core/widgets/app_network_image.dart';
 
 class EditProfileAvatar extends StatelessWidget {
-  final String? avatarUrl;
-  final VoidCallback onEditTap;
-
-  const EditProfileAvatar({super.key, this.avatarUrl, required this.onEditTap});
-
+  const EditProfileAvatar({super.key});
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Main Circle Avatar
-          Container(
-            width: 91.r,
-            height: 91.r,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.grey229,
-              border: Border.all(color: AppColors.orange248, width: 2),
-            ),
-            child: Center(
-              child: avatarUrl != null && avatarUrl!.trim().isNotEmpty
-                  ? ClipOval(
-                      child: AppNetworkImage(
-                        url: avatarUrl,
-                        width: 91.r,
-                        height: 91.r,
-                        fit: BoxFit.cover,
-                        errorWidget: SvgPicture.asset(
-                          "assets/Icons/svg/navbar/profile.svg",
-                          height: 48.75.h,
-                          width: 39.w,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    )
-                  : SvgPicture.asset(
-                      "assets/Icons/svg/navbar/profile.svg",
-                      height: 48.75.h,
-                      width: 39.w,
-                      fit: BoxFit.contain,
-                    ),
-            ),
-          ),
-          SizedBox(height: 10.h),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+    child: CircleAvatar(
+      radius: 48.r,
+      child: Icon(Icons.person, size: 48.r),
+    ),
+  );
 }
 
 class UpdateButton extends StatelessWidget {
@@ -133,7 +90,7 @@ class _ChangePasswordFieldState extends State<ChangePasswordField> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -147,10 +104,16 @@ class _ChangePasswordFieldState extends State<ChangePasswordField> {
         controller: widget.controller,
         obscureText: _obscure,
         validator: widget.validator,
-        style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+        style: TextStyle(
+          fontSize: 14.sp,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
         decoration: InputDecoration(
           hintText: widget.hintText,
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
+          hintStyle: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 14.sp,
+          ),
           filled: true,
           fillColor: Colors.transparent,
           contentPadding: EdgeInsets.symmetric(
@@ -174,7 +137,7 @@ class _ChangePasswordFieldState extends State<ChangePasswordField> {
               _obscure
                   ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               size: 20.r,
             ),
             onPressed: () => setState(() => _obscure = !_obscure),

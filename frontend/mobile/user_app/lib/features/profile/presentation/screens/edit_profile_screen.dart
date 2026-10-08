@@ -105,7 +105,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              EditProfileAvatar(avatarUrl: null, onEditTap: () {}),
+              const EditProfileAvatar(),
               SizedBox(height: 24.h),
               Row(
                 children: [

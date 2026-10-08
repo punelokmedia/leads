@@ -103,6 +103,8 @@ class CustomProfileDropdown extends StatelessWidget {
             initialValue: (value != null && items.contains(value))
                 ? value
                 : null,
+            isExpanded: true,
+            dropdownColor: Theme.of(context).colorScheme.surface,
             icon: Icon(
               Icons.keyboard_arrow_down,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -119,7 +121,10 @@ class CustomProfileDropdown extends StatelessWidget {
                 value: item,
                 child: Text(
                   item,
-                  style: AppTextStyles.poppins(fontSize: 15.sp),
+                  style: AppTextStyles.poppins(
+                    fontSize: 15.sp,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               );
             }).toList(),
@@ -138,7 +143,7 @@ Widget _buildContainer(BuildContext context, {required Widget child}) {
       color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(20.r),
       border: Border.all(
-        color: Color.fromRGBO(221, 221, 221, 1),
+        color: Theme.of(context).colorScheme.outlineVariant,
         width: 1,
       ), // Distinct light grey border
       boxShadow: const [
@@ -161,6 +166,13 @@ Widget _buildContainer(BuildContext context, {required Widget child}) {
 InputDecoration _buildInputDecoration(BuildContext context, String hint) {
   return InputDecoration(
     hintText: hint,
+    filled: true,
+    fillColor: Colors.transparent,
+    enabledBorder: InputBorder.none,
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(20.r),
+      borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+    ),
     hintStyle: AppTextStyles.poppins(
       fontSize: 15.sp,
       color: Theme.of(context).colorScheme.onSurfaceVariant,

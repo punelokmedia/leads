@@ -3,6 +3,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:user_app/core/errors/app_exception.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // ✅ Import secure storage
 import 'package:user_app/core/network/api_endpoints.dart';
@@ -24,7 +27,6 @@ class AuthRepository {
     required List<String> categories,
     required String businessName,
     required String workType,
-    String? profilePicPath,
   }) async {
     // ✅ FIX 1: Use FormData for multipart/form-data instead of a standard Map
     final formData = FormData.fromMap({
@@ -42,12 +44,6 @@ class AuthRepository {
       formData.fields.add(MapEntry('categories[]', category));
     }
 
-    // Optional: How to attach the image file if you add it later
-    if (profilePicPath != null && profilePicPath.isNotEmpty) {
-      formData.files.add(
-        MapEntry('profilePic', await MultipartFile.fromFile(profilePicPath)),
-      );
-    }
 
     // ✅ FIX 3: Backend route is POST /auth/mobile/complete-profile
     final res = await _dio.post(ApiEndpoints.completeProfile, data: formData);
@@ -144,40 +140,81 @@ class AuthRepository {
   // ── GET /auth/google ──────────────────────────────────────────────────────
   Future<({AuthUser user, String token})> googleAuth() async {
     // 1. Trigger the native Google Sign-In UI
-    final serverClientId = dotenv.env['USER_GOOGLE_WEB_CLIENT_ID']?.trim();
+    final configuredClientId = dotenv.env['MOBILE_USER_GOOGLE_CLIENT_ID']?.trim();
+    final serverClientId = configuredClientId != null && configuredClientId.isNotEmpty
+        ? configuredClientId
+        : (dotenv.env['USER_GOOGLE_WEB_CLIENT_ID'] ??
+            dotenv.env['USER_GOOGLE_CLIENT_ID'])?.trim();
     if (serverClientId == null || serverClientId.isEmpty) {
-      throw Exception(
-        'Google sign-in is not configured: USER_GOOGLE_WEB_CLIENT_ID is missing.',
+      throw const AppException(
+        'Google sign-in is not configured: MOBILE_USER_GOOGLE_CLIENT_ID is missing.',
       );
     }
     final GoogleSignIn googleSignIn = GoogleSignIn(
       scopes: ['email', 'profile'],
       serverClientId: serverClientId,
     );
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    GoogleSignInAccount? googleUser;
+    GoogleSignInAuthentication googleAuth;
+    try {
+      if (kDebugMode) debugPrint('[GoogleAuth] Opening Google account picker');
+      googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        throw const AppException('Google Sign-In canceled');
+      }
+      googleAuth = await googleUser.authentication;
+    } on PlatformException catch (error) {
+      if (kDebugMode) {
+        debugPrint('[GoogleAuth] Native sign-in failed: ${error.code}; ${error.message}');
+      }
+      if (error.code == 'sign_in_canceled') {
+        throw const AppException('Google Sign-In canceled');
+      }
+      if (RegExp(r'\b10\b').hasMatch(error.message ?? '')) {
+        throw const AppException(
+          'Google sign-in configuration error (10). Check the Android package, release SHA-1 and Web client ID in Google Cloud.',
+        );
+      }
+      throw AppException('Google account sign-in failed (${error.code}). Please retry and report this code.');
+    }
 
     if (googleUser == null) {
       throw Exception('Google Sign-In canceled');
     }
 
     // 2. Extract the secure ID Token from Google
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
     final String? idToken = googleAuth.idToken;
 
     if (idToken == null) {
-      throw Exception('Failed to retrieve Google ID Token.');
+      throw const AppException('Google did not return an ID token. Check the Web client ID configuration.');
     }
 
     // 3. Send the token to YOUR backend
-    final res = await _dio.post(
-      ApiEndpoints.googleAuth,
-      data: {'idToken': idToken},
-      // A sleeping development backend can take about a minute to respond.
-      options: Options(receiveTimeout: const Duration(seconds: 90)),
-    );
+    if (kDebugMode) {
+      debugPrint('[GoogleAuth] ID token received; contacting ${_dio.options.baseUrl}${ApiEndpoints.googleAuth}');
+    }
+    late final Response<dynamic> res;
+    try {
+      res = await _dio.post(
+        ApiEndpoints.googleAuth,
+        data: {'idToken': idToken},
+        options: Options(receiveTimeout: const Duration(seconds: 90)),
+      );
+    } on DioException catch (error) {
+      if (kDebugMode) {
+        debugPrint('[GoogleAuth] Backend request failed: ${error.type.name}; HTTP ${error.response?.statusCode ?? "no response"}');
+      }
+      rethrow;
+    }
+    if (kDebugMode) debugPrint('[GoogleAuth] Backend responded: HTTP ${res.statusCode}');
 
-    final body = res.data as Map<String, dynamic>;
+    final body = res.data;
+    if (body is! Map<String, dynamic> ||
+        body['user'] is! Map<String, dynamic> ||
+        body['token'] is! String ||
+        (body['token'] as String).isEmpty) {
+      throw const AppException('The server returned an unexpected Google login response. Check the deployed mobile authentication endpoint.');
+    }
     final userData = body['user'] as Map<String, dynamic>;
     final token = body['token'] as String;
 

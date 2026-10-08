@@ -67,7 +67,6 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
           city: draft.cityId.isNotEmpty ? draft.cityId : draft.city,
           categories: _selectedCategoryIds.toList(),
           address: draft.address,
-          profilePicPath: draft.profilePicPath,
           onSuccess: () {
             if (!mounted) return;
             ref.read(authControllerProvider.notifier).clearError();

@@ -10,7 +10,6 @@ class ProfileDraft {
   final String address;
   final String workType;
   final List<String> categories;
-  final String profilePicPath; // ✅ ADDED
 
   ProfileDraft({
     this.fullName = '',
@@ -21,7 +20,6 @@ class ProfileDraft {
     this.workType = '',
     this.address = '',
     this.categories = const [],
-    this.profilePicPath = '', // ✅ ADDED
   });
 
   ProfileDraft copyWith({
@@ -33,7 +31,6 @@ class ProfileDraft {
     String? address,
     String? workType,
     List<String>? categories,
-    String? profilePicPath, // ✅ ADDED
   }) {
     return ProfileDraft(
       fullName: fullName ?? this.fullName,
@@ -44,7 +41,6 @@ class ProfileDraft {
       workType: workType ?? this.workType,
       categories: categories ?? this.categories,
       address: address ?? this.address,
-      profilePicPath: profilePicPath ?? this.profilePicPath, // ✅ ADDED
     );
   }
 }
@@ -60,7 +56,6 @@ class ProfileDraftNotifier extends StateNotifier<ProfileDraft> {
     String cityId = '', 
     required String workType,
     required String address,
-    required String profilePicPath, 
   }) {
     state = state.copyWith(
       fullName: fullName,
@@ -70,7 +65,6 @@ class ProfileDraftNotifier extends StateNotifier<ProfileDraft> {
       cityId: cityId.isNotEmpty ? cityId : state.cityId,
       workType: workType,
       address: address,
-      profilePicPath: profilePicPath, 
     );
   }
 

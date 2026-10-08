@@ -1,12 +1,10 @@
 // features/auth/presentation/screens/tell_us_about_yourself_screen.dart
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
@@ -36,9 +34,6 @@ class _TellUsAboutYourselfScreenState
   String? _selectedCityId;
   String? _selectedWorkType;
 
-  String? _profilePicPath;
-  final ImagePicker _picker = ImagePicker();
-
   final List<String> _fallbackCities = ["Mumbai", "Delhi", "Bengaluru", "Pune"];
   final List<String> _fallbackWorkTypes = [
     "Carpenter",
@@ -57,9 +52,6 @@ class _TellUsAboutYourselfScreenState
       if (draft.email.isNotEmpty) _emailCtrl.text = draft.email;
       if (draft.businessName.isNotEmpty) _bizCtrl.text = draft.businessName;
       if (draft.address.isNotEmpty) _addressCtrl.text = draft.address;
-      if (draft.profilePicPath.isNotEmpty) {
-        setState(() => _profilePicPath = draft.profilePicPath);
-      }
       if (draft.city.isNotEmpty) {
         setState(() {
           _selectedCity = draft.city;
@@ -79,19 +71,6 @@ class _TellUsAboutYourselfScreenState
     _emailCtrl.dispose();
     _addressCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        setState(() {
-          _profilePicPath = image.path;
-        });
-      }
-    } catch (e) {
-      SnackbarHelper.showError(context, 'Failed to pick image: $e');
-    }
   }
 
   void _onContinue() {
@@ -123,7 +102,6 @@ class _TellUsAboutYourselfScreenState
           cityId: _selectedCityId ?? '',
           workType: _selectedWorkType!,
           address: _addressCtrl.text.trim(),
-          profilePicPath: _profilePicPath ?? '',
         );
 
     context.push(AppRouter.chooseWorkCityPath);
@@ -135,14 +113,18 @@ class _TellUsAboutYourselfScreenState
     final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F0FF),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFF3F0FF),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF3F0FF),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).scaffoldBackgroundColor
+            : const Color(0xFFF3F0FF),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           onPressed: () => context.pop(),
         ),
@@ -151,7 +133,7 @@ class _TellUsAboutYourselfScreenState
           style: AppTextStyles.poppins(
             fontSize: 20.sp,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: false,
@@ -166,73 +148,9 @@ class _TellUsAboutYourselfScreenState
               children: [
                 SizedBox(height: 16.h),
 
-                // ── Avatar Upload ──
-                GestureDetector(
-                  // ✅ Wrap with GestureDetector
-                  onTap: _pickImage, // ✅ Trigger Image Picker
-                  child: Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      Container(
-                        width: 90.r,
-                        height: 90.r,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD6CCFF),
-                          shape: BoxShape.circle,
-                          // ✅ Show image if selected
-                          image:
-                              _profilePicPath != null &&
-                                  _profilePicPath!.isNotEmpty
-                              ? DecorationImage(
-                                  image: FileImage(File(_profilePicPath!)),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        // ✅ Hide icon if image is selected
-                        child:
-                            _profilePicPath == null || _profilePicPath!.isEmpty
-                            ? Icon(
-                                Icons.person,
-                                size: 50.r,
-                                color: const Color(0xFF9B8FCC),
-                              )
-                            : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10.w,
-                            vertical: 4.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.purple73,
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Upload',
-                                style: AppTextStyles.poppins(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(width: 4.w),
-                              Icon(
-                                Icons.add_circle_outline,
-                                color: Colors.white,
-                                size: 14.r,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                CircleAvatar(
+                  radius: 45.r,
+                  child: Icon(Icons.person, size: 50.r),
                 ),
 
                 SizedBox(height: 24.h),
@@ -386,7 +304,7 @@ class _TellUsAboutYourselfScreenState
         style: AppTextStyles.poppins(
           fontSize: 13.sp,
           fontWeight: FontWeight.w500,
-          color: const Color(0xFF888888),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
     );
@@ -400,7 +318,7 @@ class _TellUsAboutYourselfScreenState
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -416,14 +334,16 @@ class _TellUsAboutYourselfScreenState
         style: AppTextStyles.poppins(
           fontSize: 14.sp,
           fontWeight: FontWeight.w500,
-          color: Colors.black87,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
         decoration: InputDecoration(
           hintText: hint,
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
           hintStyle: AppTextStyles.poppins(
             fontSize: 14.sp,
             fontWeight: FontWeight.w400,
-            color: const Color(0xFFAAAAAA),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
@@ -433,7 +353,10 @@ class _TellUsAboutYourselfScreenState
           enabledBorder: InputBorder.none,
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(color: AppColors.purple73, width: 1.5),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: 1.5,
+            ),
           ),
         ),
       ),
@@ -450,7 +373,7 @@ class _TellUsAboutYourselfScreenState
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -468,21 +391,21 @@ class _TellUsAboutYourselfScreenState
             style: AppTextStyles.poppins(
               fontSize: 14.sp,
               fontWeight: FontWeight.w400,
-              color: const Color(0xFFAAAAAA),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           isExpanded: true,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: Colors.grey,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             size: 22.r,
           ),
           style: AppTextStyles.poppins(
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
-          dropdownColor: Colors.white,
+          dropdownColor: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12.r),
           items: items
               .toSet()

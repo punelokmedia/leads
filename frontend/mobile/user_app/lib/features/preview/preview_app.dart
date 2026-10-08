@@ -1,5 +1,7 @@
 import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
 import 'package:flutter/material.dart';
+import 'package:user_app/features/payments/presentation/widgets/wallet_card.dart';
+import 'package:user_app/features/profile/presentation/widgets/referral_section.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'preview_data.dart';
@@ -373,7 +375,6 @@ class _PreviewHomeState extends State<PreviewHome> {
         bottomNavigationBar: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SupportBar(store: store),
             NavigationBar(
               selectedIndex: page,
               onDestinationSelected: (i) => setState(() => page = i),
@@ -570,6 +571,8 @@ class _PreviewHomeState extends State<PreviewHome> {
   Widget payments() => ListView(
     padding: const EdgeInsets.all(16),
     children: [
+      const WalletCard(),
+      const SizedBox(height: 24),
       Text(
         store.isLive ? 'Payment history' : 'Test payment history',
         style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -677,6 +680,9 @@ class _PreviewHomeState extends State<PreviewHome> {
           }),
         ),
       ),
+      const SizedBox(height: 16),
+      const ReferralSection(),
+      const SizedBox(height: 16),
       if (!store.isLive)
         const Text(
           'This sample profile is for reviewing the mockup. Your real account is not used.',
@@ -689,13 +695,46 @@ class _PreviewHomeState extends State<PreviewHome> {
     padding: const EdgeInsets.all(16),
     children: [
       ListTile(
+        leading: const Icon(Icons.account_balance_wallet_outlined),
+        title: const Text('Wallet'),
+        subtitle: const Text('Sample balance · Frontend preview'),
+        trailing: Text(
+          '₹600',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        onTap: () => setState(() => page = 2),
+      ),
+      ListTile(
+        leading: const Icon(Icons.card_giftcard_outlined),
+        title: const Text('Refer & Earn'),
+        subtitle: const Text('Sample referral rewards: ₹100'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('Refer & Earn')),
+              body: const SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: ReferralSection(initiallyExpanded: true),
+              ),
+            ),
+          ),
+        ),
+      ),
+      ListTile(
         leading: const Icon(Icons.grid_view),
         title: const Text('All Categories & Pricing'),
         onTap: categories,
       ),
       ListTile(
         leading: const Icon(Icons.support_agent),
-        title: const Text('24/7 Support'),
+        title: const Text('Chat & Support'),
+        subtitle: const Text('Get help from our support team'),
         onTap: () => openSupport(context, store),
       ),
       ListTile(
@@ -1070,7 +1109,6 @@ class _CategoryPreviewState extends State<CategoryPreview> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('All Categories')),
-    bottomNavigationBar: SupportBar(store: widget.store),
     body: Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
@@ -1595,7 +1633,6 @@ class LeadDetailsPreview extends StatelessWidget {
               style: TextStyle(fontSize: 11),
             ),
             const SizedBox(height: 8),
-            SupportBar(store: store),
           ],
         ),
       ),

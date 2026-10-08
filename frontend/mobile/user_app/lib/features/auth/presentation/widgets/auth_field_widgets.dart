@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
-import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
-TextStyle _fieldStyle() => AppTextStyles.poppins(
+TextStyle _fieldStyle(BuildContext context) => AppTextStyles.poppins(
   fontSize: 16.sp,
-  color: AppColors.grey77,
+  color: Theme.of(context).colorScheme.onSurfaceVariant,
   fontWeight: FontWeight.w500,
   height: 20 / 16,
   letterSpacing: 0.1,
@@ -54,7 +53,7 @@ class AuthTextField extends StatelessWidget {
         style: AppTextStyles.poppins(
           fontSize: 18.sp,
           fontWeight: FontWeight.w500,
-          color: AppColors.grey77,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           height: 20 / 18,
           letterSpacing: 0.1,
         ),
@@ -62,7 +61,7 @@ class AuthTextField extends StatelessWidget {
       SizedBox(height: 6.h),
       Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
@@ -79,10 +78,12 @@ class AuthTextField extends StatelessWidget {
           validator: validator,
           textInputAction: textInputAction,
           inputFormatters: inputFormatters,
-          style: _fieldStyle(),
+          style: _fieldStyle(
+            context,
+          ).copyWith(color: Theme.of(context).colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: _fieldStyle(),
+            hintStyle: _fieldStyle(context),
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: Colors.transparent,
@@ -139,7 +140,7 @@ class _PasswordFieldState extends State<PasswordField> {
       child: Icon(
         _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
         size: 20.r,
-        color: Colors.grey[400],
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     ),
   );
