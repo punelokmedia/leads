@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@/config/api'
 import { useEffect, useState, type FormEvent } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 
 const API_BASE_URL_CANDIDATES = [API_BASE_URL]
 
@@ -97,8 +97,8 @@ type City = {
 
 export function PublicHeader() {
   const navigate = useNavigate()
+  const isReferralPage = useLocation().pathname === '/referrals'
   const [panelMode, setPanelMode] = useState<
-    | 'account'
     | 'history'
     | 'cart'
     | 'login'
@@ -132,25 +132,6 @@ export function PublicHeader() {
     newPassword: '',
     confirmPassword: '',
   })
-  const [isProfileLoading, setIsProfileLoading] = useState(false)
-  const [accountForm, setAccountForm] = useState({
-    firstname: '',
-    lastname: '',
-    phoneNumber: '',
-    email: '',
-  })
-  const [addressForm, setAddressForm] = useState({
-    label: 'HOME',
-    street: '',
-    landmark: '',
-    city: '',
-    state: '',
-    country: '',
-    zipcode: '',
-  })
-  const [isAddressFormOpen, setIsAddressFormOpen] = useState(false)
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [profilePic, setProfilePic] = useState('')
   const [historyLeads, setHistoryLeads] = useState<HistoryLead[]>([])
   const [isHistoryLoading, setIsHistoryLoading] = useState(false)
   const [cartLeads, setCartLeads] = useState<CartLead[]>([])
@@ -170,19 +151,6 @@ export function PublicHeader() {
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
   const isPanelOpen = panelMode !== null
   const userToken = localStorage.getItem('user_token')
-  const hasSavedAddress = Boolean(
-    addressForm.street || addressForm.city || addressForm.state || addressForm.zipcode,
-  )
-  const primaryAddressParts = [addressForm.street, addressForm.landmark].filter(Boolean)
-  const secondaryAddressParts = [
-    addressForm.city,
-    addressForm.state,
-    addressForm.country,
-  ].filter(Boolean)
-  const addressSummary = `${primaryAddressParts.join(', ')}${
-    primaryAddressParts.length > 0 && secondaryAddressParts.length > 0 ? ', ' : ''
-  }${secondaryAddressParts.join(', ')}${addressForm.zipcode ? ` - ${addressForm.zipcode}` : ''}`
-
   const resetAuthMessages = () => {
     setAuthError('')
     setAuthSuccess('')
@@ -244,7 +212,8 @@ export function PublicHeader() {
       }
       setAuthSuccess(payload?.message ?? 'Logged in successfully.')
       setIsMobileMenuOpen(false)
-      setPanelMode('account')
+      setPanelMode(null)
+                navigate('/profile')
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Login failed.')
     } finally {
@@ -704,134 +673,6 @@ export function PublicHeader() {
     void fetchHistoryLeads()
   }
 
-  const fetchProfile = async () => {
-    if (!userToken) return
-
-    try {
-      setIsProfileLoading(true)
-      resetAuthMessages()
-      const response = await requestAuth('/profile', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
-      })
-      const payload = await response.json()
-
-      if (!response.ok || !payload?.success) {
-        throw new Error(payload?.message ?? 'Unable to fetch profile.')
-      }
-
-      const data = payload?.data ?? {}
-      setAccountForm({
-        firstname: data.firstname ?? '',
-        lastname: data.lastname ?? '',
-        phoneNumber: data.phoneNumber ?? '',
-        email: data.email ?? '',
-      })
-      setProfilePic(data.profilePic ?? '')
-
-      const address = data.address ?? {}
-      setAddressForm({
-        label: address.label ?? 'HOME',
-        street: address.street ?? '',
-        landmark: address.landmark ?? '',
-        city: address.city ?? '',
-        state: address.state ?? '',
-        country: address.country ?? '',
-        zipcode: address.zipcode ?? '',
-      })
-      setIsEditingProfile(false)
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Unable to fetch profile.')
-    } finally {
-      setIsProfileLoading(false)
-    }
-  }
-
-  const handleProfileUpdate = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    resetAuthMessages()
-
-    if (!isEditingProfile) {
-      setAuthError('Click "Edit Profile" first.')
-      return
-    }
-
-    if (!userToken) {
-      setAuthError('Please login first.')
-      setPanelMode('login')
-      return
-    }
-
-    try {
-      setIsLoading(true)
-      const response = await requestAuth('/update-profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${userToken}`,
-        },
-        body: JSON.stringify({
-          firstname: accountForm.firstname,
-          lastname: accountForm.lastname,
-          phoneNumber: accountForm.phoneNumber,
-        }),
-      })
-      const payload = await response.json()
-
-      if (!response.ok || !payload?.success) {
-        throw new Error(payload?.message ?? 'Unable to update profile.')
-      }
-
-      setAuthSuccess(payload?.message ?? 'Profile updated successfully.')
-      setIsEditingProfile(false)
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Profile update failed.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleAddAddress = async (event?: FormEvent<HTMLFormElement>) => {
-    event?.preventDefault()
-    resetAuthMessages()
-
-    if (!userToken) {
-      setAuthError('Please login first.')
-      setPanelMode('login')
-      return
-    }
-
-    try {
-      setIsLoading(true)
-      const response = await requestAuth('/add-address', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${userToken}`,
-        },
-        body: JSON.stringify({
-          ...addressForm,
-          label: addressForm.label || 'HOME',
-          country: addressForm.country || 'India',
-        }),
-      })
-      const payload = await response.json()
-
-      if (!response.ok || !payload?.success) {
-        throw new Error(payload?.message ?? 'Unable to save address.')
-      }
-
-      setAuthSuccess(payload?.message ?? 'Address saved successfully.')
-      setIsAddressFormOpen(false)
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Address save failed.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleLogout = async () => {
     resetAuthMessages()
     try {
@@ -949,12 +790,6 @@ export function PublicHeader() {
     }
     fetchCities()
   }, [])
-
-  useEffect(() => {
-    if (panelMode === 'account' && userToken) {
-      fetchProfile()
-    }
-  }, [panelMode, userToken])
 
   useEffect(() => {
     if (panelMode === 'history' && userToken) {
@@ -1127,7 +962,16 @@ export function PublicHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 shadow-sm backdrop-blur">
+      {isReferralPage ? (
+        <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 shadow-sm backdrop-blur">
+          <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4 sm:px-6">
+            <NavLink to="/" aria-label="Back to marketplace" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-stone-200 text-stone-600 hover:bg-stone-50">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
+            </NavLink>
+            <div><h1 className="text-2xl font-black tracking-tight text-stone-900">Refer & Earn</h1><p className="text-sm text-stone-600">Invite friends and earn credit for leads.</p></div>
+          </div>
+        </header>
+      ) : <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 shadow-sm backdrop-blur">
         <div className="border-b border-stone-100 bg-stone-50">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2 text-[11px] text-stone-600 sm:px-6 sm:text-xs">
             <p className="min-w-0 truncate">Trusted by interior professionals across India</p>
@@ -1284,6 +1128,24 @@ export function PublicHeader() {
             <button
               type="button"
               onClick={() => {
+                resetAuthMessages()
+                setIsMobileMenuOpen(false)
+                setPanelMode(null)
+                navigate('/referrals')
+              }}
+              className="grid h-9 w-9 place-items-center rounded-full border border-violet-300 bg-white text-violet-700 transition hover:bg-violet-50"
+              aria-label="Refer & Earn"
+              title="Refer & Earn"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="8" width="18" height="4" rx="1" />
+                <path d="M5 12v9h14v-9M12 8v13" />
+                <path d="M12 8H8a3 3 0 1 1 3-3l1 3Zm0 0h4a3 3 0 1 0-3-3l-1 3Z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
                 if (!userToken) {
                   navigate('/auth/mobile')
                   return
@@ -1313,7 +1175,8 @@ export function PublicHeader() {
                   return
                 }
                 resetAuthMessages()
-                setPanelMode('account')
+                setPanelMode(null)
+                navigate('/profile')
               }}
               className="grid h-9 w-9 place-items-center rounded-full border border-stone-300 bg-white text-stone-600 transition hover:border-stone-400 hover:text-stone-800"
               aria-label="Profile"
@@ -1570,7 +1433,7 @@ export function PublicHeader() {
             </nav>
           </div>
         ) : null}
-      </header>
+      </header>}
 
       <div
         className={`fixed inset-0 z-40 transition ${
@@ -1582,8 +1445,8 @@ export function PublicHeader() {
         }}
       >
         <aside
-          className={`absolute top-0 right-0 h-full w-full max-w-sm overflow-y-auto bg-[#efefef] shadow-2xl transition-transform duration-300 ease-out ${
-            isPanelOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`absolute top-0 h-full w-full overflow-y-auto bg-[#efefef] transition-transform duration-300 ease-out ${
+            `right-0 max-w-sm shadow-2xl ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`
           }`}
           onClick={(event) => event.stopPropagation()}
         >
@@ -1595,7 +1458,7 @@ export function PublicHeader() {
                 setPanelMode(null)
               }}
               className="rounded-full p-2 text-stone-500 transition hover:bg-stone-200 hover:text-stone-800"
-              aria-label="Close auth panel"
+              aria-label="Close panel"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6 6 18M6 6l12 12" />
@@ -1605,12 +1468,7 @@ export function PublicHeader() {
 
           <div className="-mt-2 bg-[#efefef] px-4 pb-5 text-center">
             <img src="/logo.png" alt="Interiorwala" className="mx-auto h-16 w-auto" />
-            {panelMode === 'account' ? (
-              <>
-                <h2 className="mt-2 text-4xl font-black text-stone-900">My Account</h2>
-                <p className="mt-1 text-sm text-stone-600">Manage your profile and sign-in options</p>
-              </>
-            ) : panelMode === 'history' ? (
+            {panelMode === 'history' ? (
               <>
                 <h2 className="mt-2 text-4xl font-black text-stone-900">History</h2>
                 <p className="mt-1 text-sm text-stone-600">Your purchased leads</p>
@@ -1863,320 +1721,6 @@ export function PublicHeader() {
                     </button>
                   </div>
                 </>
-              )}
-            </div>
-          ) : panelMode === 'account' ? (
-            <div className="rounded-t-[34px] bg-gradient-to-b from-[#efe7b8] via-[#f2db72] to-[#f4cd2f]">
-              <div className="px-4 py-4 text-white">
-                <div className="flex items-center gap-2 text-base font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setPanelMode(null)}
-                    className="rounded-full p-1.5 text-white/95 hover:bg-white/20"
-                    aria-label="Back"
-                  >
-                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="m15 18-6-6 6-6" />
-                    </svg>
-                  </button>
-                  My Account
-                </div>
-                <p className="mt-3 text-[13px] text-white/90">
-                  {userToken
-                    ? 'Manage your profile details'
-                    : 'Log in or sign up to view your complete profile'}
-                </p>
-                {!userToken ? (
-                  <button
-                    type="button"
-                    onClick={() => setPanelMode('login')}
-                    className="mt-4 w-full rounded-2xl border border-stone-300 bg-white py-3 text-lg font-semibold text-stone-500 shadow-[0_5px_12px_rgba(0,0,0,0.14)] transition hover:bg-stone-50"
-                  >
-                    Continue to sign in
-                  </button>
-                ) : null}
-              </div>
-
-              {userToken ? (
-                <form
-                  className="min-h-[58vh] space-y-4 rounded-t-3xl bg-[#efefef] px-4 pt-6 pb-10"
-                  onSubmit={handleProfileUpdate}
-                >
-                  {isProfileLoading ? (
-                    <p className="text-center text-sm font-medium text-stone-600">Loading profile...</p>
-                  ) : (
-                    <>
-                      {isAddressFormOpen ? (
-                        <div className="space-y-4 rounded-3xl bg-[#efefef]">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setIsAddressFormOpen(false)}
-                              className="rounded-full p-1 text-stone-700 hover:bg-stone-200"
-                              aria-label="Back to account"
-                            >
-                              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="m15 18-6-6 6-6" />
-                              </svg>
-                            </button>
-                            <h3 className="text-2xl font-black text-stone-900">Add Address</h3>
-                          </div>
-
-                          <label className="block text-sm font-semibold text-stone-700">
-                            Flat no. / Street Name
-                            <input
-                              type="text"
-                              placeholder="Flat 203, Sai Residency"
-                              value={addressForm.street}
-                              onChange={(event) =>
-                                setAddressForm((prev) => ({ ...prev, street: event.target.value }))
-                              }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
-                            />
-                          </label>
-
-                          <label className="block text-sm font-semibold text-stone-700">
-                            Landmark
-                            <input
-                              type="text"
-                              placeholder="Near Hospital"
-                              value={addressForm.landmark}
-                              onChange={(event) =>
-                                setAddressForm((prev) => ({ ...prev, landmark: event.target.value }))
-                              }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
-                            />
-                          </label>
-
-                          <label className="block text-sm font-semibold text-stone-700">
-                            City
-                            <select
-                              value={addressForm.city}
-                              onChange={(event) =>
-                                setAddressForm((prev) => ({ ...prev, city: event.target.value }))
-                              }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
-                            >
-                              <option value="">Select City</option>
-                              <option value="Nashik">Nashik</option>
-                              <option value="Mumbai">Mumbai</option>
-                              <option value="Pune">Pune</option>
-                              <option value="Bengaluru">Bengaluru</option>
-                              <option value="Delhi">Delhi</option>
-                            </select>
-                          </label>
-
-                          <label className="block text-sm font-semibold text-stone-700">
-                            State
-                            <input
-                              type="text"
-                              placeholder="Maharashtra"
-                              value={addressForm.state}
-                              onChange={(event) =>
-                                setAddressForm((prev) => ({ ...prev, state: event.target.value }))
-                              }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
-                            />
-                          </label>
-
-                          <label className="block text-sm font-semibold text-stone-700">
-                            Zipcode
-                            <input
-                              type="text"
-                              placeholder="411 853"
-                              value={addressForm.zipcode}
-                              onChange={(event) =>
-                                setAddressForm((prev) => ({ ...prev, zipcode: event.target.value }))
-                              }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
-                            />
-                          </label>
-
-                          <div>
-                            <p className="text-sm font-semibold text-stone-600">Save address as</p>
-                            <div className="mt-2 flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setAddressForm((prev) => ({ ...prev, label: 'HOME' }))
-                                }
-                                className={`rounded-lg border px-4 py-1.5 text-xs font-semibold ${
-                                  addressForm.label === 'HOME'
-                                    ? 'border-[#F8B020] bg-[#F8B020] text-white'
-                                    : 'border-stone-300 bg-white text-stone-600'
-                                }`}
-                              >
-                                Home
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setAddressForm((prev) => ({ ...prev, label: 'OFFICE' }))
-                                }
-                                className={`rounded-lg border px-4 py-1.5 text-xs font-semibold ${
-                                  addressForm.label === 'OFFICE'
-                                    ? 'border-[#F8B020] bg-[#F8B020] text-white'
-                                    : 'border-stone-300 bg-white text-stone-600'
-                                }`}
-                              >
-                                Office
-                              </button>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            disabled={isLoading}
-                            onClick={() => {
-                              void handleAddAddress()
-                            }}
-                            className="mt-3 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
-                          >
-                            {isLoading ? 'Please wait...' : 'Save'}
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex justify-center">
-                            <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-[#F8B020] bg-white">
-                              <img
-                                src={profilePic || '/logo.png'}
-                                alt="Profile"
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <label className="block text-sm font-semibold text-stone-700">
-                              First Name
-                              <input
-                                type="text"
-                                value={accountForm.firstname}
-                                readOnly={!isEditingProfile}
-                                onChange={(event) =>
-                                  setAccountForm((prev) => ({ ...prev, firstname: event.target.value }))
-                                }
-                                className={`mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm shadow-md outline-none ${
-                                  isEditingProfile
-                                    ? 'text-stone-800 focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]'
-                                    : 'text-stone-500'
-                                }`}
-                              />
-                            </label>
-                            <label className="block text-sm font-semibold text-stone-700">
-                              Last Name
-                              <input
-                                type="text"
-                                value={accountForm.lastname}
-                                readOnly={!isEditingProfile}
-                                onChange={(event) =>
-                                  setAccountForm((prev) => ({ ...prev, lastname: event.target.value }))
-                                }
-                                className={`mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm shadow-md outline-none ${
-                                  isEditingProfile
-                                    ? 'text-stone-800 focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]'
-                                    : 'text-stone-500'
-                                }`}
-                              />
-                            </label>
-                          </div>
-
-                          <label className="block text-sm font-semibold text-stone-700">
-                            Mobile Number
-                            <input
-                              type="tel"
-                              value={accountForm.phoneNumber}
-                              readOnly={!isEditingProfile}
-                              onChange={(event) =>
-                                setAccountForm((prev) => ({ ...prev, phoneNumber: event.target.value }))
-                              }
-                              className={`mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm shadow-md outline-none ${
-                                isEditingProfile
-                                  ? 'text-stone-800 focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]'
-                                  : 'text-stone-500'
-                              }`}
-                            />
-                          </label>
-
-                          <label className="block text-sm font-semibold text-stone-700">
-                            Email ID
-                            <input
-                              type="email"
-                              value={accountForm.email}
-                              readOnly
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-500 shadow-md outline-none"
-                            />
-                          </label>
-
-                          <div className="rounded-2xl border border-stone-300 bg-white px-3 py-2 shadow-md">
-                            <p className="text-sm font-semibold text-stone-700">Password</p>
-                            <div className="mt-1 flex items-center justify-between">
-                              <p className="text-sm text-stone-500">********</p>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setIsAddressFormOpen(true)}
-                            className="flex w-full items-center justify-between rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-700 shadow-md"
-                          >
-                            {hasSavedAddress ? 'Edit Address' : 'Add Address'}
-                            <span>›</span>
-                          </button>
-
-                          {hasSavedAddress ? (
-                            <div className="rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-700 shadow-sm">
-                              <p className="font-semibold text-stone-800">
-                                {addressForm.label || 'HOME'} Address
-                              </p>
-                              <p className="mt-1 text-xs leading-relaxed text-stone-600">
-                                {addressSummary}
-                              </p>
-                            </div>
-                          ) : null}
-
-                          <button
-                        type="button"
-                        onClick={() => {
-                          resetAuthMessages()
-                          setIsEditingProfile(true)
-                        }}
-                        className="w-full rounded-2xl border border-[#F8B020] bg-white py-3 text-base font-semibold text-[#F8B020] shadow-sm transition hover:bg-[#FFF7E8]"
-                      >
-                        Edit Profile
-                      </button>
-
-                      <button
-                            type="submit"
-                        disabled={isLoading || isProfileLoading || !isEditingProfile}
-                            className="mt-2 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
-                          >
-                        {isLoading ? 'Please wait...' : 'Update Profile'}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={handleLogout}
-                            className="w-full rounded-2xl border border-red-300 bg-white py-3 text-base font-semibold text-red-500 shadow-sm"
-                          >
-                            Log Out
-                          </button>
-                        </>
-                      )}
-                    </>
-                  )}
-                </form>
-              ) : (
-                <div className="min-h-[58vh] rounded-t-3xl bg-[#efefef] px-4 pt-6 pb-10">
-                  <div className="mt-4 flex justify-center">
-                    <img
-                      src="/trust-team.jpg"
-                      alt=""
-                      className="h-44 w-52 rounded-2xl object-cover opacity-95"
-                    />
-                  </div>
-                </div>
               )}
             </div>
           ) : panelMode === 'forgot-email' ? (

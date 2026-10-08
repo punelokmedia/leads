@@ -1,6 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { HomePage } from '@/features/home/pages/HomePage'
+import { ProfilePage } from '@/features/profile/pages/ProfilePage'
+import { ReferralPage } from '@/features/profile/pages/ReferralPage'
 import { PricingPage } from '@/features/pricing/pages/PricingPage'
 import { ContactPage } from '@/features/contact/pages/ContactPage'
 import { PrivacyPolicyPage } from '@/features/legal/pages/PrivacyPolicyPage'
@@ -17,6 +19,8 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'profile', element: <ProfilePage /> },
+      { path: 'referrals', element: <ReferralPage /> },
       { path: 'pricing', element: <PricingPage /> },
       { path: 'contact', element: <ContactPage /> },
       { path: 'privacy-policy', element: <PrivacyPolicyPage /> },

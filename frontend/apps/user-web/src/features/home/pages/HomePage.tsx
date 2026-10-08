@@ -126,14 +126,14 @@ const mapLeadsForCards = (items: LeadsApiItem[], startIndex: number): HomeLead[]
 
 const trustPoints = [
   {
-    title: 'Human- Verified Leads',
+    title: 'Human-Verified Leads',
     description:
       'Every enquiry is called and verified by our team before hitting the marketplace.',
   },
   {
-    title: 'Human- Verified Leads',
+    title: 'Instant Lead Alerts',
     description:
-      'Get notified the second a high-intend lead matches your service area.',
+      'Get notified the second a high-intent lead matches your service area.',
   },
 ]
 
@@ -440,7 +440,7 @@ export function HomePage() {
             transition={{ duration: 0.45, delay: 0.15 }}
           >
             Access high-conversion interior design opportunities curated by experts.
-            Stop chasing cold prospects and start building beautiful spaced today.
+            Stop chasing cold prospects and start building beautiful spaces today.
           </motion.p>
 
           <motion.div
