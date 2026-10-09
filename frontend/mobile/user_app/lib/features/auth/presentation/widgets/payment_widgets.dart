@@ -36,7 +36,7 @@ class PricingCardWidget extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    '₹ 499',
+                    '₹ 1',
                     style: AppTextStyles.poppins(
                       fontSize: 54.sp,
                       fontWeight: FontWeight.w800,
@@ -251,7 +251,7 @@ class PaymentSummaryWidget extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "₹ 499",
+                      "₹ 1",
                       style: AppTextStyles.poppins(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w400,
@@ -280,7 +280,7 @@ class PaymentSummaryWidget extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "₹ 499",
+                      "₹ 1",
                       style: AppTextStyles.poppins(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w700,

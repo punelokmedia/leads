@@ -258,7 +258,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                 child: Column(
                   children: [
                     const Text(
-                      'Pay ₹499 once before your first lead purchase. Lifetime access with no recurring subscription. Lead prices are separate.',
+                      'Pay ₹1 once before your first lead purchase. Lifetime access with no recurring subscription. Lead prices are separate.',
                     ),
                     SizedBox(height: 16.h),
                     const PricingCardWidget(),
@@ -308,7 +308,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                               ),
                             )
                           : Text(
-                              "Pay  ₹499 Securely",
+                              "Pay  ₹1 Securely",
                               style: AppTextStyles.poppins(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,

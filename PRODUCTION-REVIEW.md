@@ -8,6 +8,8 @@ production backend `https://leads-qa6h.vercel.app`, user frontend
 Fixed missing lead reservation schema fields and enforced the two-buyer limit.
 Password reset now requires the correct, unexpired OTP in the final request;
 the user frontend sends it. Password reset OTPs are no longer logged.
+Admin login now rejects missing OTPs and missing expiry dates. User JSON and
+profile responses exclude passwords, OTPs and payment signatures.
 
 Before accepting production users:
 
@@ -32,12 +34,20 @@ Before accepting production users:
   the deployed application. These external services were not verified locally.
 - Add durable request and OTP attempt limits before exposing authentication to
   unrestricted public traffic. No such limits were found in the reviewed routes.
+- Implement SMS delivery before enabling phone registration and phone verification.
+  These routes previously generated codes without sending them. Production now
+  returns `503 SMS_NOT_CONFIGURED`; Twilio environment variables alone do not
+  implement delivery. Google onboarding that requires phone verification is
+  affected too.
 
-Validation rerun on October 3, 2026: all 46 backend tests pass, both web
+Validation rerun on October 3, 2026: all 50 backend tests pass, both web
 production builds pass, and both web lint commands pass. The admin Fast Refresh
 export error was fixed by moving the toast context and hook into `useToast.ts`.
 The user frontend still has five hook dependency warnings, and its production
 build reports a JavaScript bundle size warning.
+Read-only requests to the deployed URLs failed with connection errors from this
+execution environment. No conclusion about deployed availability can be drawn
+from those failures; live service verification remains outstanding.
 
 This review covered backend and web frontend configuration, authentication,
 checkout, existing backend tests, builds and lint. It is not a full security

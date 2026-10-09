@@ -25,7 +25,7 @@ export async function createOrder(req, res) {
     if (!user) throw new CheckoutError('USER_NOT_FOUND', 'User not found.', 404);
     const hasPurchased = await Order.exists({ user: req.user.id, status: 'PAID' });
     if (!user.registrationFeePaid && !hasPurchased) {
-      throw new CheckoutError('MEMBERSHIP_REQUIRED', 'Activate lifetime membership for ₹499 before your first lead purchase. No recurring subscription; lead prices are separate.', 403);
+      throw new CheckoutError('MEMBERSHIP_REQUIRED', 'Activate lifetime membership for ₹1 before your first lead purchase. No recurring subscription; lead prices are separate.', 403);
     }
     const keyId = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY;
     if (!keyId) throw new CheckoutError('PAYMENTS_UNAVAILABLE', 'Payments are not configured.', 503);

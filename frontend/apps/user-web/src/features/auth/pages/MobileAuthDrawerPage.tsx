@@ -690,7 +690,7 @@ export function MobileAuthDrawerPage() {
           ) : null}
           {step === 5 ? (
             <div className="mt-6 space-y-4">
-              <p className="text-sm text-[#4f4a73]">Pay ₹499 once before your first lead purchase. Lifetime access, no recurring subscription. Each lead is purchased separately.</p>
+              <p className="text-sm text-[#4f4a73]">Pay ₹1 once before your first lead purchase. Lifetime access, no recurring subscription. Each lead is purchased separately.</p>
               <div className="rounded-2xl border border-[#ded8f6] bg-[#f7f5ff] p-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#6f66ad]">
                   Lifetime membership
