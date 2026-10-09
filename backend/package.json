@@ -4,6 +4,8 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
+    "build": "node scripts/check-build.js",
+    "test": "node --test test/*.test.js",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "seed:admin": "node src/seeders/admin.seed.js",

@@ -75,6 +75,7 @@ const UserSchema = new Schema(
     },
 
     phoneNumber: String,
+    referralVersion: { type: Number, default: 0, select: false },
     referralCode: {
       type: String,
       immutable: true,

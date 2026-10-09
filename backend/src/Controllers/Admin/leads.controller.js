@@ -415,7 +415,7 @@ const updateLead = async (req, res) => {
     }
 
     const updatedLead = await Lead.findByIdAndUpdate(id, updates, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }).populate("category", "name");
 

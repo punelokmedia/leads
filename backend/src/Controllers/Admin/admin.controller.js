@@ -346,7 +346,7 @@ const changeUserRoleToAdmin = async (req, res) => {
       user = await User.findByIdAndUpdate(
         user._id,
         { $set: { role: "ADMIN" } },
-        { new: true },
+        { returnDocument: "after" },
       );
 
       if (!user) {
@@ -411,7 +411,7 @@ const removeAdminRole = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       user._id,
       { $set: { role: "USER" } },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     return res.status(200).json({
@@ -462,7 +462,7 @@ const updateUserBlockStatus = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       user._id,
       { $set: { isBlocked: targetBlockedState } },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     return res.status(200).json({

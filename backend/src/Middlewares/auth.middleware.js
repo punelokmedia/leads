@@ -37,7 +37,8 @@ const auth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error("Auth Error:", error);
+    const expectedTokenError = ['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError'].includes(error.name);
+    if (!expectedTokenError) console.error('Authentication failed:', error.message);
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token",

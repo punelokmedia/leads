@@ -28,7 +28,7 @@ async function fixture(buyers = 3) {
   return { lead, users };
 }
 async function gatewayOrder(reserved) {
-  return Order.findByIdAndUpdate(reserved.order._id, { $set: { razorpayOrderId: `order_${reserved.order._id}`, status: 'CREATED' } }, { new: true });
+  return Order.findByIdAndUpdate(reserved.order._id, { $set: { razorpayOrderId: `order_${reserved.order._id}`, status: 'CREATED' } }, { returnDocument: "after" });
 }
 function payment(order) {
   return { id: `pay_${order._id}`, order_id: order.razorpayOrderId, status: 'captured', currency: 'INR', amount: Math.round(order.totalAmount * 100) };

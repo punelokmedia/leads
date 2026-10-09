@@ -4,7 +4,10 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
+import { Referral } from '../src/Models/referral.model.js';
+import { Order } from '../src/Models/orders.models.js';
+import { qualifyReferral } from '../src/Services/referral.service.js';
 import { User } from '../src/Models/user.model.js';
 import { referralRouter } from '../src/Routes/referral.routes.js';
 
@@ -13,8 +16,9 @@ before(async () => {
   process.env.JWT_SECRET = 'referral-test-secret';
   // Test the new index independently of unrelated existing user indexes.
   User.schema.set('autoIndex', false);
-  mongo = await MongoMemoryServer.create({ binary: { version: '7.0.24' } });
+  mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 }, binary: { version: '7.0.24' } });
   await mongoose.connect(mongo.getUri());
+  await Referral.init();
   await User.collection.createIndex({ referralCode: 1 }, {
     unique: true, partialFilterExpression: { referralCode: { $type: 'string' } },
   });
@@ -32,6 +36,37 @@ after(async () => {
   if (server) await new Promise(resolve => server.close(resolve));
   await mongoose.disconnect();
   if (mongo) await mongo.stop();
+});
+
+test('referrals apply once under concurrent retries and qualification is atomic and idempotent', async () => {
+  const code = (await call('/me', 0)).data.referralCode;
+  const results = await Promise.all(Array.from({ length: 3 }, () => call('/apply', 1, { referralCode: code })));
+  assert.ok(results.every(result => result.status === 200));
+  assert.equal(await Referral.countDocuments({ referredUser: users[1]._id }), 1);
+  const orderId = new mongoose.Types.ObjectId();
+  const session = await mongoose.startSession();
+  try {
+    await assert.rejects(session.withTransaction(async () => {
+      await qualifyReferral(users[1]._id, orderId, session);
+      throw new Error('rollback');
+    }), /rollback/);
+    assert.equal((await Referral.findOne({ referredUser: users[1]._id })).status, 'PENDING');
+    await session.withTransaction(() => qualifyReferral(users[1]._id, orderId, session));
+    await session.withTransaction(() => qualifyReferral(users[1]._id, new mongoose.Types.ObjectId(), session));
+  } finally { await session.endSession(); }
+  const referral = await Referral.findOne({ referredUser: users[1]._id });
+  assert.equal(referral.status, 'QUALIFIED');
+  assert.equal(String(referral.qualifyingOrder), String(orderId));
+  const stats = await call('/me', 0);
+  assert.equal(stats.data.invited, 1);
+  assert.equal(stats.data.qualified, 1);
+  assert.equal((await call('/history', 0)).data.length, 1);
+  assert.equal((await call('/history', 1)).data.length, 0);
+  const another = await User.create({ firstname: 'Other', lastname: 'User', email: 'other@example.invalid' });
+  assert.equal((await call('/apply', 1, { referralCode: another.referralCode })).status, 409);
+  await Order.create({ user: another._id, leads: [], totalAmount: 1, status: 'PAID' });
+  const { applyReferral } = await import('../src/Services/referral.service.js');
+  await assert.rejects(applyReferral(another._id, code), { status: 409 });
 });
 
 async function call(path, user = 0, body, cookie = false) {
@@ -66,6 +101,10 @@ test('legacy users get one stable code across concurrent requests', async () => 
 test('shared API requires authentication and validates normalized codes without exposing users', async () => {
   assert.equal((await call('/me', null)).status, 401);
   const ownCode = (await call('/me')).data.referralCode;
+  const share = (await call('/me')).data;
+  const invitation = new URL(share.referralLink);
+  assert.equal(invitation.pathname, '/auth/mobile');
+  assert.equal(invitation.searchParams.get('ref'), ownCode);
   const web = await call('/me', 0, undefined, true);
   assert.equal(web.status, 200);
   assert.equal(web.data.referralCode, ownCode);

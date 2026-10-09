@@ -35,6 +35,10 @@ test("trusted admin preflight succeeds without database access", async (t) => {
       headers: { Origin: "https://untrusted.example", "Access-Control-Request-Method": "POST" },
     });
     assert.equal(blocked.headers.get("access-control-allow-origin"), null);
+    assert.equal(blocked.status, 403);
+    assert.deepEqual(await blocked.json(), {
+      success: false, code: 'CORS_ORIGIN_DENIED', message: 'Origin is not allowed.',
+    });
   } finally {
     await new Promise(resolve => server.close(resolve));
   }

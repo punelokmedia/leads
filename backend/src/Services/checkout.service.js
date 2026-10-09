@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { qualifyReferral } from './referral.service.js';
 import mongoose from 'mongoose';
 import { Lead } from '../Models/leads.model.js';
 import { Order } from '../Models/orders.models.js';
@@ -58,7 +59,7 @@ export async function reserveCheckout(userId, selectedIds) {
       }, {
         $set: { maxBuyers: BUYER_LIMIT },
         $push: { reservations: { order: orderId, user: userId, expiresAt: deadline } },
-      }, { new: true, session });
+      }, { returnDocument: "after", session });
       if (!lead) {
         const current = await Lead.findById(item.lead).session(session);
         const status = current ? inventory(current, now).status : 'MISSING';
@@ -78,7 +79,7 @@ export async function reserveCheckout(userId, selectedIds) {
 
 export async function cancelCheckout(orderId, userId, status = 'CANCELLED') {
   return transaction(async (session) => {
-    const order = await Order.findOneAndUpdate({ _id: orderId, user: userId, status: { $in: activeStates } }, { $set: { status } }, { new: true, session });
+    const order = await Order.findOneAndUpdate({ _id: orderId, user: userId, status: { $in: activeStates } }, { $set: { status } }, { returnDocument: "after", session });
     if (order) await release(order, session);
     return order;
   });
@@ -131,7 +132,7 @@ export async function settleCapturedPayment(payment, userId) {
       const updated = await Lead.findOneAndUpdate({
         _id: lead._id, buyersCount: { $lt: BUYER_LIMIT },
         reservations: { $elemMatch: { order: order._id, user: order.user, expiresAt: { $gt: now } } },
-      }, { $inc: { buyersCount: 1 }, $pull: { reservations: { order: order._id } }, $set: { maxBuyers: BUYER_LIMIT, status: lead.buyersCount + 1 >= BUYER_LIMIT ? 'SOLD_OUT' : 'ACTIVE' } }, { new: true, session });
+      }, { $inc: { buyersCount: 1 }, $pull: { reservations: { order: order._id } }, $set: { maxBuyers: BUYER_LIMIT, status: lead.buyersCount + 1 >= BUYER_LIMIT ? 'SOLD_OUT' : 'ACTIVE' } }, { returnDocument: "after", session });
       if (!updated) throw new Error('Reservation changed while completing purchase');
       await LeadPurchase.create([{ lead: lead._id, user: order.user, order: order._id, quantity: 1, fulfillmentVersion: 2 }], { session });
     }
@@ -140,6 +141,7 @@ export async function settleCapturedPayment(payment, userId) {
     order.paidAt = now;
     await order.save({ session });
     await Cart.updateOne({ user: order.user }, { $pull: { leads: { lead: { $in: order.leads.map((i) => i.lead) } } } }, { session });
+    await qualifyReferral(order.user, order._id, session);
     return { status: 'PAID', orderId: order._id, message: 'Payment confirmed. Contact access unlocked.' };
   });
 }
@@ -150,7 +152,7 @@ export async function processRefunds(gateway) {
   const jobs = await PaymentRefund.find({ status: { $ne: 'REFUNDED' }, nextAttemptAt: { $lte: now }, $or: [{ lockedUntil: { $exists: false } }, { lockedUntil: { $lte: now } }] }).limit(20).lean();
   for (const job of jobs) {
     const lockedUntil = new Date(Date.now() + 120000);
-    const claimed = await PaymentRefund.findOneAndUpdate({ _id: job._id, $or: [{ lockedUntil: { $exists: false } }, { lockedUntil: { $lte: now } }] }, { $set: { lockedUntil }, $inc: { attempts: 1 } }, { new: true });
+    const claimed = await PaymentRefund.findOneAndUpdate({ _id: job._id, $or: [{ lockedUntil: { $exists: false } }, { lockedUntil: { $lte: now } }] }, { $set: { lockedUntil }, $inc: { attempts: 1 } }, { returnDocument: "after" });
     if (!claimed) continue;
     try {
       const payment = await gateway.payments.fetch(job.paymentId);

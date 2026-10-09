@@ -27,12 +27,12 @@ const addToCart = async (req, res) => {
 
 const removeFromCart = async (req, res) => {
   if (!mongoose.isValidObjectId(req.body.leadId)) return res.status(400).json({ success: false, message: 'Valid lead ID required.' });
-  const cart = await Cart.findOneAndUpdate({ user: req.user.id }, { $pull: { leads: { lead: req.body.leadId } } }, { new: true });
+  const cart = await Cart.findOneAndUpdate({ user: req.user.id }, { $pull: { leads: { lead: req.body.leadId } } }, { returnDocument: "after" });
   return res.json({ success: true, message: 'Lead removed.', data: cart });
 };
 
 const clearCart = async (req, res) => {
-  const cart = await Cart.findOneAndUpdate({ user: req.user.id }, { $set: { leads: [] } }, { new: true });
+  const cart = await Cart.findOneAndUpdate({ user: req.user.id }, { $set: { leads: [] } }, { returnDocument: "after" });
   return res.json({ success: true, message: 'Cart cleared.', data: cart });
 };
 

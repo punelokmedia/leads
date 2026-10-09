@@ -42,13 +42,19 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    return callback(Object.assign(new Error('Origin is not allowed.'), { code: 'CORS_ORIGIN_DENIED' }));
   },
   credentials: true,
 };
 
 // Handle browser preflight before parsing bodies or accessing the database.
 app.use(cors(corsOptions));
+app.use((error, _req, res, next) => {
+  if (error.code === 'CORS_ORIGIN_DENIED') {
+    return res.status(403).json({ success: false, code: error.code, message: error.message });
+  }
+  return next(error);
+});
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb", verify: (req, _res, buffer) => {
   if (req.originalUrl.split('?')[0].endsWith('/payments/razorpay-webhook')) req.rawBody = Buffer.from(buffer);

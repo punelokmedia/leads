@@ -37,7 +37,7 @@ export async function createOrder(req, res) {
         receipt: String(order._id), notes: { internalOrderId: String(order._id) },
       });
       await Order.updateOne({ _id: order._id }, { $set: { razorpayOrderId: gatewayOrder.id } });
-      order = await Order.findOneAndUpdate({ _id: order._id, status: 'RESERVED', reservationExpiresAt: { $gt: new Date() } }, { $set: { status: 'CREATED' } }, { new: true });
+      order = await Order.findOneAndUpdate({ _id: order._id, status: 'RESERVED', reservationExpiresAt: { $gt: new Date() } }, { $set: { status: 'CREATED' } }, { returnDocument: "after" });
       if (!order) throw new CheckoutError('RESERVATION_EXPIRED', 'Checkout expired or was cancelled. Please start again.');
     }
     return res.status(reserved.reused ? 200 : 201).json({ success: true, message: 'Your slot is reserved for checkout.', data: {

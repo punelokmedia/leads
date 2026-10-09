@@ -520,7 +520,7 @@ const updateUserProfile = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: updateData },
-      { new: true, runValidators: true },
+      { returnDocument: "after", runValidators: true },
     ).select("-password");
 
     if (!user) {
@@ -927,7 +927,7 @@ const completeMobileProfile = async (req, res) => {
           role: "USER",
         },
       },
-      { new: true, runValidators: true },
+      { returnDocument: "after", runValidators: true },
     ).select("-password");
 
     if (!user) {
@@ -1052,7 +1052,7 @@ const verifyMobileRegistrationPayment = async (req, res) => {
         $set: { registrationFeePaid: true, registrationFeePaidAt: new Date(), registrationPayment: {
           razorpayOrderId, razorpayPaymentId, razorpaySignature, amount: REGISTRATION_FEE_AMOUNT_INR, currency: 'INR',
         } },
-      }, { new: true }).select('-password');
+      }, { returnDocument: "after" }).select('-password');
       const member = user || await User.findById(req.user.id).select('-password');
       if (!member) return res.status(404).json({ success: false, message: 'User not found.' });
       return res.json({ success: true, message: 'Lifetime membership activated.', data: member });

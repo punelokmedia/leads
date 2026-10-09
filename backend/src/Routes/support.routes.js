@@ -30,7 +30,7 @@ async function send(req, res) {
   const values = { ...key, sender: req.params.userId ? 'support' : 'user', text: text.trim() };
   let message;
   try {
-    message = await SupportMessage.findOneAndUpdate(key, { $setOnInsert: values }, { upsert: true, new: true, runValidators: true });
+    message = await SupportMessage.findOneAndUpdate(key, { $setOnInsert: values }, { upsert: true, returnDocument: "after", runValidators: true });
   } catch (error) {
     if (error.code !== 11000) throw error;
     message = await SupportMessage.findOne(key);
