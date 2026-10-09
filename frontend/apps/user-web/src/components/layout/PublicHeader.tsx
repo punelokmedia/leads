@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '@/config/api'
-import { useEffect, useState, type FormEvent } from 'react'
+import { ReferralCard } from './ReferralCard'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 
 const API_BASE_URL_CANDIDATES = [API_BASE_URL]
@@ -151,16 +152,16 @@ export function PublicHeader() {
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
   const isPanelOpen = panelMode !== null
   const userToken = localStorage.getItem('user_token')
-  const resetAuthMessages = () => {
+  const resetAuthMessages = useCallback(() => {
     setAuthError('')
     setAuthSuccess('')
-  }
+  }, [])
 
   const requestAuth = async (path: string, init?: RequestInit) => {
     return requestApi(`/auth${path}`, init)
   }
 
-  const requestApi = async (path: string, init?: RequestInit) => {
+  const requestApi = useCallback(async (path: string, init?: RequestInit) => {
     let lastNetworkError: Error | null = null
 
     for (const baseUrl of API_BASE_URL_CANDIDATES) {
@@ -173,7 +174,7 @@ export function PublicHeader() {
     }
 
     throw lastNetworkError ?? new Error('Unable to connect to auth server.')
-  }
+  }, [])
 
   const storeUserSession = (token: string, user?: unknown) => {
     localStorage.setItem('user_token', token)
@@ -275,7 +276,7 @@ export function PublicHeader() {
     window.location.assign(googleAuthUrl)
   }
 
-  const fetchHistoryLeads = async () => {
+  const fetchHistoryLeads = useCallback(async () => {
     if (!userToken) return
 
     try {
@@ -323,9 +324,9 @@ export function PublicHeader() {
     } finally {
       setIsHistoryLoading(false)
     }
-  }
+  }, [userToken, requestApi, resetAuthMessages])
 
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     if (!userToken) {
       setCartLeads([])
       setRemovedCartLeads([])
@@ -360,7 +361,7 @@ export function PublicHeader() {
     } finally {
       setIsCartLoading(false)
     }
-  }
+  }, [userToken, requestApi, resetAuthMessages])
 
   const handleAddCartQuantity = async (leadId: string) => {
     if (!userToken) {
@@ -744,7 +745,7 @@ export function PublicHeader() {
         workType?: string
       }
 
-      if (!profile.firstname || !profile.email || !profile.city || !profile.businessName || !profile.workType) {
+      if (sessionStorage.getItem('pending_referral_code') || !profile.firstname || !profile.email || !profile.city || !profile.businessName || !profile.workType) {
         navigate('/auth/mobile?flow=google', { replace: true })
         return
       }
@@ -771,7 +772,7 @@ export function PublicHeader() {
       }
     }
     fetchCategories()
-  }, [])
+  }, [requestApi])
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -789,19 +790,19 @@ export function PublicHeader() {
       }
     }
     fetchCities()
-  }, [])
+  }, [requestApi])
 
   useEffect(() => {
     if (panelMode === 'history' && userToken) {
       void fetchHistoryLeads()
     }
-  }, [panelMode, userToken])
+  }, [panelMode, userToken, fetchHistoryLeads])
 
   useEffect(() => {
     if (panelMode === 'cart' && userToken) {
       void fetchCart()
     }
-  }, [panelMode, userToken])
+  }, [panelMode, userToken, fetchCart])
 
   useEffect(() => {
     if (userToken) {
@@ -811,7 +812,7 @@ export function PublicHeader() {
       setRemovedCartLeads([])
       setCartSummary({ totalItems: 0, totalAmount: 0 })
     }
-  }, [userToken])
+  }, [userToken, fetchCart])
 
   useEffect(() => {
     if (!userToken) return
@@ -824,7 +825,7 @@ export function PublicHeader() {
     return () => {
       window.removeEventListener('cart:updated', handleCartUpdated)
     }
-  }, [userToken])
+  }, [userToken, fetchCart])
 
   const handleForgotPasswordRequest = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -1518,6 +1519,8 @@ export function PublicHeader() {
           ) : null}
 
           {panelMode === 'history' ? (
+            <>
+            {userToken && <ReferralCard token={userToken} />}
             <div className="min-h-[58vh] rounded-t-[34px] bg-[#efefef] px-4 pt-6 pb-8">
               {!userToken ? (
                 <button
@@ -1591,6 +1594,7 @@ export function PublicHeader() {
                 </div>
               )}
             </div>
+            </>
           ) : panelMode === 'cart' ? (
             <div className="min-h-[58vh] rounded-t-[34px] bg-[#efefef] px-4 pt-6 pb-8">
               {!userToken ? (

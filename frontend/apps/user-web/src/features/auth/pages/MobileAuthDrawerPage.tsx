@@ -39,6 +39,11 @@ export function MobileAuthDrawerPage() {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
   const [token, setToken] = useState('')
+  const [referralCode, setReferralCode] = useState(() => searchParams.get('ref')?.trim().toUpperCase() || sessionStorage.getItem('pending_referral_code') || '')
+  useEffect(() => {
+    const code = searchParams.get('ref')?.trim().toUpperCase()
+    if (code) { sessionStorage.setItem('pending_referral_code', code); setReferralCode(code) }
+  }, [searchParams])
   const [otpSecondsLeft, setOtpSecondsLeft] = useState(0)
   const [toastMessage, setToastMessage] = useState('')
   const [profileForm, setProfileForm] = useState<ProfileForm>({
@@ -103,7 +108,7 @@ export function MobileAuthDrawerPage() {
       Boolean(profile.businessName) &&
       Boolean(profile.workType)
 
-    if (hasProfile && (!isMembershipFlow || profile.registrationFeePaid)) {
+    if (hasProfile && !sessionStorage.getItem('pending_referral_code') && (!isMembershipFlow || profile.registrationFeePaid)) {
       navigate('/', { replace: true })
     } else {
       setStep(isMembershipFlow ? 5 : 4)
@@ -244,7 +249,7 @@ export function MobileAuthDrawerPage() {
           localStorage.setItem('user_profile', JSON.stringify(payload?.data ?? {}))
           setToken(userToken)
         }
-        if (authIntent === 'signup' || payload?.meta?.needsProfile) {
+        if (authIntent === 'signup' || payload?.meta?.needsProfile || referralCode.trim()) {
           setStep(4)
         } else {
           localStorage.setItem('auth_provider', 'mobile-otp')
@@ -259,6 +264,7 @@ export function MobileAuthDrawerPage() {
   }
 
   const handleCompleteProfile = async () => {
+    if (isLoading) return
     setError('')
     if (!profileForm.fullName || !profileForm.email || !profileForm.businessName || !profileForm.workType || !profileForm.city) {
       return setError('Please fill all required profile details.')
@@ -268,6 +274,19 @@ export function MobileAuthDrawerPage() {
     }
     try {
       setIsLoading(true)
+      const code = referralCode.trim().toUpperCase()
+      if (code) {
+        const referralResponse = await requestApi('/referrals/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (token || localStorage.getItem('user_token') || '') },
+          body: JSON.stringify({ referralCode: code }),
+        })
+        const referralPayload = await referralResponse.json()
+        if (!referralResponse.ok || referralPayload?.success !== true) {
+          throw new Error(referralPayload?.message || 'Unable to apply referral code.')
+        }
+        sessionStorage.removeItem('pending_referral_code')
+      }
       const response = await requestAuth('/mobile/complete-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (token || localStorage.getItem('user_token') || '') },
@@ -503,6 +522,8 @@ export function MobileAuthDrawerPage() {
           {step === 5 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Lifetime membership</h1> : null}
 
           {step === 1 ? <p className="mt-1 text-sm text-[#8A89A2]">Login to continue</p> : null}
+          {referralCode && step < 4 && <p className="mt-3 break-all rounded-xl bg-violet-50 p-3 text-sm text-violet-800">Invitation code: {referralCode}. It will be filled in during profile setup.</p>}
+          <button type="button" disabled className="mt-3 rounded-xl border border-stone-200 px-3 py-2 text-sm text-stone-500">Download app — coming soon (preview)</button>
           {step === 2 ? <p className="mt-1 text-sm text-[#8A89A2]">We will send you an OTP on this number</p> : null}
           {step === 3 ? <p className="mt-1 text-sm text-[#8A89A2]">We have sent a 6 digit OTP on +91 {phoneNumber}</p> : null}
 
@@ -678,6 +699,30 @@ export function MobileAuthDrawerPage() {
                   </option>
                 ))}
               </select>
+              <div>
+                <label htmlFor="referral-code" className="mb-1 block text-sm font-medium text-[#1F1D35]">
+                  Referral code (optional)
+                </label>
+                <input
+                  id="referral-code"
+                  type="text"
+                  value={referralCode}
+                onChange={(event) => {
+                  const code = event.target.value.toUpperCase()
+                  setReferralCode(code)
+                  if (code.trim()) sessionStorage.setItem('pending_referral_code', code.trim())
+                  else sessionStorage.removeItem('pending_referral_code')
+                }}
+                  maxLength={26}
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  spellCheck={false}
+                  disabled={isLoading}
+                  placeholder="Enter your invite code"
+                  className="h-11 w-full rounded-xl border border-[#D9D7EC] px-3 text-sm outline-none focus:border-[#4B2CF5]"
+                />
+                <p className="mt-1 text-xs text-stone-600">Leave blank if you do not have a code.</p>
+              </div>
               <button
                 type="button"
                 disabled={isLoading}

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '@/config/api'
+import { ReferralSection } from '../components/ReferralSection'
 
 export function ProfilePage() {
   const navigate = useNavigate()
@@ -204,6 +205,7 @@ export function ProfilePage() {
         <div className="px-4 py-6 sm:px-6">
           <span className="rounded-full bg-[#F8B020] px-3 py-1 text-xs font-bold text-white">YOUR ACCOUNT</span>
           <h1 className="mt-3 text-4xl font-black tracking-tight text-stone-900">My Profile</h1>
+          {userToken && <div className="mt-4"><ReferralSection initiallyOpen /></div>}
           <p className="mt-2 text-sm text-stone-600">Manage your personal details and saved address.</p>
         </div>
         {authError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{authError}</p>}
