@@ -874,8 +874,6 @@ const processLeadsInBackground = async (
             min: budgetMin ? Number(budgetMin) : undefined,
             max: budgetMax ? Number(budgetMax) : undefined,
           },
-          customerName,
-          phone,
           image,
           maxBuyers,
           expiresAt: expiryDate,
