@@ -20,7 +20,7 @@ const buildMobilePlaceholderEmail = (phoneNumber) =>
   `${phoneNumber}.${Date.now()}@mobile.nextleads.local`;
 const MOBILE_OTP_TTL_MS = 30 * 60 * 1000;
 const MOBILE_OTP_RESEND_COOLDOWN_MS = 30 * 1000;
-const REGISTRATION_FEE_AMOUNT_INR = 499;
+const REGISTRATION_FEE_AMOUNT_INR = 1;
 const RAZORPAY_PUBLIC_KEY =
   process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || "";
 const RAZORPAY_SECRET_KEY =

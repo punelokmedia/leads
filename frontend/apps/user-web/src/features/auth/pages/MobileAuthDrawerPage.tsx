@@ -5,7 +5,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 const CONFIGURED_API_BASE_URL = API_BASE_URL
 const API_BASE_URL_CANDIDATES = [API_BASE_URL]
 const OTP_RESEND_SECONDS = 25
-const REGISTRATION_AMOUNT_INR = 499
+const REGISTRATION_AMOUNT_INR = 1
 
 type ProfileForm = {
   fullName: string

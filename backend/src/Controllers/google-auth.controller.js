@@ -10,12 +10,16 @@ export function createGoogleTokenLogin({ verify = (options) => client.verifyIdTo
     if (typeof idToken !== "string" || !idToken.trim()) {
       return res.status(400).json({ success: false, message: "Google ID token is required." });
     }
-    if (!process.env.USER_GOOGLE_CLIENT_ID || !process.env.JWT_SECRET) {
+    const audiences = [...new Set([
+      process.env.USER_GOOGLE_CLIENT_ID,
+      process.env.MOBILE_USER_GOOGLE_CLIENT_ID,
+    ].map((value) => value?.trim()).filter(Boolean))];
+    if (!audiences.length || !process.env.JWT_SECRET) {
       return res.status(503).json({ success: false, message: "Google login is not configured." });
     }
     let payload;
     try {
-      const ticket = await verify({ idToken, audience: process.env.USER_GOOGLE_CLIENT_ID });
+      const ticket = await verify({ idToken, audience: audiences });
       payload = ticket.getPayload();
       if (!payload?.sub || !payload.email || payload.email_verified !== true) throw new Error("Invalid identity");
     } catch {

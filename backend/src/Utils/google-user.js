@@ -36,6 +36,6 @@ export async function resolveGoogleUser(profile) {
 }
 
 export function publicGoogleUser(user) {
-  const fields = ["_id", "firstname", "lastname", "email", "phoneNumber", "role", "profilePic", "city", "businessName", "workType", "registrationFeePaid"];
+  const fields = ["_id", "firstname", "lastname", "email", "phoneNumber", "role", "profilePic", "city", "businessName", "workType", "registrationFeePaid", "referralCode"];
   return Object.fromEntries(fields.map((key) => [key, user[key]]));
 }

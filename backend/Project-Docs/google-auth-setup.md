@@ -11,6 +11,7 @@ Set these in the backend environment (examples for local development):
 
 ```dotenv
 USER_GOOGLE_CLIENT_ID=<Web application OAuth client ID>
+MOBILE_USER_GOOGLE_CLIENT_ID=<Web application OAuth client ID used by native mobile>
 USER_GOOGLE_CLIENT_SECRET=<Web application OAuth client secret>
 USER_GOOGLE_CALLBACK_URL=http://localhost:5000/api/v1/auth/google/callback
 API_BASE_URL=http://localhost:5000
@@ -33,12 +34,16 @@ redirect URIs. `localhost` on a phone refers to the phone itself.
 In `frontend/mobile/user_app/.env.local`, set:
 
 ```dotenv
-USER_GOOGLE_WEB_CLIENT_ID=<same Web application client ID as backend USER_GOOGLE_CLIENT_ID>
+MOBILE_USER_GOOGLE_CLIENT_ID=<same Web application client ID as backend MOBILE_USER_GOOGLE_CLIENT_ID>
 BASE_URL=<backend origin reachable from the phone>
 ```
 
-Never put the OAuth client secret in the Flutter app. Set the mobile public client ID to the new user Web client ID. The new user
-credential fields are intentionally blank until that client is created.
+Never put the OAuth client secret in the Flutter app. The mobile serverClientId must
+be a Web application OAuth client ID, even when it is dedicated to mobile login.
+The backend token endpoint accepts both USER_GOOGLE_CLIENT_ID and
+MOBILE_USER_GOOGLE_CLIENT_ID as audiences. Browser OAuth continues to use
+USER_GOOGLE_CLIENT_ID and its matching secret. Set both IDs in Vercel's production
+environment and redeploy after changing them; rebuild mobile after changing its environment.
 
 In the same Google Cloud project, register an **Android** OAuth client with:
 
@@ -48,7 +53,7 @@ In the same Google Cloud project, register an **Android** OAuth client with:
 Obtain signing fingerprints from `android/gradlew.bat signingReport` in the
 Flutter project. Register the debug certificate for debug APKs and the actual
 release/Play signing certificate for distributed APKs. The current release
-build uses debug signing. Native iOS requires a separate iOS OAuth client and
+build uses the configured release keystore. Native iOS requires a separate iOS OAuth client and
 its reversed-client-ID URL scheme; that account-specific setup is not included.
 
 Rebuild Flutter after updating its environment file.

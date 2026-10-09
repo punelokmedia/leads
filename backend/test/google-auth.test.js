@@ -6,6 +6,7 @@ import { resolveGoogleUser } from "../src/Utils/google-user.js";
 import { User } from "../src/Models/user.model.js";
 
 process.env.USER_GOOGLE_CLIENT_ID = "test-client";
+delete process.env.MOBILE_USER_GOOGLE_CLIENT_ID;
 process.env.GOOGLE_CLIENT_ID = "legacy-admin-client-must-not-be-used";
 process.env.ADMIN_GOOGLE_CLIENT_ID = "admin-client-must-not-be-used";
 process.env.JWT_SECRET = "test-secret-only";
@@ -70,10 +71,24 @@ test("requires a token before verification", async () => {
 test("rejects invalid signatures, expiry or audience before accessing users", async () => {
   const res = response();
   await createGoogleTokenLogin({ verify: async (options) => {
-    assert.equal(options.audience, "test-client");
+    assert.deepEqual(options.audience, ["test-client"]);
     throw new Error("invalid token");
   }, resolveUser: () => assert.fail("must not access database") })({ body: { idToken: "invalid" } }, res);
   assert.equal(res.statusCode, 401);
+});
+test("accepts the separately configured mobile audience alongside web", async () => {
+  process.env.MOBILE_USER_GOOGLE_CLIENT_ID = "mobile-web-client";
+  try {
+    const res = response();
+    await createGoogleTokenLogin({ verify: async (options) => {
+      assert.deepEqual(options.audience, ["test-client", "mobile-web-client"]);
+      return { getPayload: () => ({ ...identity, aud: "mobile-web-client" }) };
+    }, resolveUser: async () => ({ _id: "mobile-user", email: identity.email, role: "USER" }) })({ body: { idToken: "token" } }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(jwt.verify(res.body.token, process.env.JWT_SECRET).id, "mobile-user");
+  } finally {
+    delete process.env.MOBILE_USER_GOOGLE_CLIENT_ID;
+  }
 });
 test("rejects unverified Google emails", async () => {
   const res = response();

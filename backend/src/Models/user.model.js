@@ -75,6 +75,15 @@ const UserSchema = new Schema(
     },
 
     phoneNumber: String,
+    referralCode: {
+      type: String,
+      immutable: true,
+      default: function () {
+        // The complete account ID keeps codes unique without collision retries.
+        return `NL${this._id.toString().toUpperCase()}`;
+      },
+      match: /^NL[A-F0-9]{24}$/,
+    },
     businessName: {
       type: String,
       trim: true,
@@ -143,6 +152,10 @@ UserSchema.index(
 );
 
 UserSchema.index({ "address.city": 1, "address.state": 1 });
+UserSchema.index(
+  { referralCode: 1 },
+  { unique: true, partialFilterExpression: { referralCode: { $type: "string" } } },
+);
 UserSchema.index(
   { phoneNumber: 1 },
   {

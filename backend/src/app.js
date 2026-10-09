@@ -14,6 +14,7 @@ import cart from "./Routes/cart.routes.js";
 import city from "./Routes/city.routes.js";
 import { supportRouter } from "./Routes/support.routes.js";
 import { accountDeletionRouter } from "./Routes/accountDeletion.routes.js";
+import { referralRouter } from "./Routes/referral.routes.js";
 
 const app = express();
 
@@ -21,12 +22,13 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
   process.env.FRONTEND_URL,
   process.env.ADMIN_FRONTEND_URL,
+  ...(process.env.CORS_ALLOWED_ORIGINS || "").split(","),
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5000",
   "http://localhost:3000",
 
-].filter(Boolean).map((origin) => origin.trim().replace(/\/+$/, ""));
+].map((origin) => origin?.trim().replace(/\/+$/, "")).filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -45,12 +47,13 @@ const corsOptions = {
   credentials: true,
 };
 
+// Handle browser preflight before parsing bodies or accessing the database.
+app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb", verify: (req, _res, buffer) => {
   if (req.originalUrl.split('?')[0].endsWith('/payments/razorpay-webhook')) req.rawBody = Buffer.from(buffer);
 } }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cors(corsOptions));
 
 app.use(passport.initialize());
 
@@ -78,6 +81,7 @@ app.use(`/api/${API_VERSION}/cities`, city);
 app.use(`/api/${API_VERSION}/cart`, cart);
 app.use(`/api/${API_VERSION}/support`, supportRouter);
 app.use(`/api/${API_VERSION}/account-deletion-requests`, accountDeletionRouter);
+app.use(`/api/${API_VERSION}/referrals`, referralRouter);
 
 app.get("/", (req, res) => {
   return res.json({
