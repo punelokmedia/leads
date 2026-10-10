@@ -1,15 +1,15 @@
+import 'package:user_app/core/network/dio_provider.dart';
+import 'package:user_app/features/payments/presentation/widgets/wallet_card.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/shared/auth_providers.dart';
-import 'package:user_app/features/profile/shared/profile_providers.dart';
 import '../../shared/cart_providers.dart';
 import '../widgets/cart_item_card.dart';
 
@@ -21,47 +21,14 @@ class CartScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<CartScreen> {
-  late Razorpay _razorpay;
+  bool _purchasing = false;
 
   @override
   void initState() {
     super.initState();
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(cartControllerProvider.notifier).loadCart();
     });
-  }
-
-  @override
-  void dispose() {
-    _razorpay.clear();
-    super.dispose();
-  }
-
-  // ── PAYMENT HANDLERS ───────────────────────────────────────────────────────
-
-  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
-    final internalId = await ref
-        .read(cartControllerProvider.notifier)
-        .verifyFinalPayment(response);
-
-    if (internalId != null && mounted) {
-      context.go(AppRouter.paymentsuccessPath, extra: internalId);
-    } else if (mounted) {
-      _showSnack(
-        ref.read(cartControllerProvider).error ??
-            'Payment confirmation pending. Check your purchases before paying again.',
-        isError: true,
-      );
-    }
-  }
-
-  void _handlePaymentError(PaymentFailureResponse response) async {
-    await ref.read(cartControllerProvider.notifier).cancelActiveReservation();
-    if (!mounted) return;
-    _showSnack("Payment failed: ${response.message}", isError: true);
   }
 
   void _showSnack(String msg, {bool isError = false}) {
@@ -79,9 +46,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     final error = ref.watch(cartErrorProvider);
     final isLoggedIn = ref.watch(isLoggedInProvider);
     final notifier = ref.read(cartControllerProvider.notifier);
-
-    final profileState = ref.watch(profileControllerProvider);
-    final userProfile = profileState.profile;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -136,13 +100,17 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           ? _EmptyCartView()
           : ListView.builder(
               padding: EdgeInsets.symmetric(vertical: 8.h),
-              itemCount: items.length,
-              itemBuilder: (_, i) => CartItemCard(
-                item: items[i],
-                onToggleSelect: () => notifier.toggleSelect(items[i].id),
-                onDelete: () => notifier.deleteItem(items[i].id),
-                onAddToCart: () => notifier.addToCart(items[i].id),
-              ),
+              itemCount: items.length + 1,
+              itemBuilder: (_, index) {
+                if (index == 0) return const WalletCard();
+                final i = index - 1;
+                return CartItemCard(
+                  item: items[i],
+                  onToggleSelect: () => notifier.toggleSelect(items[i].id),
+                  onDelete: () => notifier.deleteItem(items[i].id),
+                  onAddToCart: () => notifier.addToCart(items[i].id),
+                );
+              },
             ),
       bottomNavigationBar: items.isEmpty
           ? null
@@ -169,7 +137,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     ],
                   ),
                   child: ElevatedButton(
-                    onPressed: isLoading
+                    onPressed: (isLoading || _purchasing)
                         ? null
                         : () async {
                             // 1. Auth Guard
@@ -190,78 +158,36 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               return;
                             }
 
-                            // 3. Start Razorpay Process
-                            await notifier.startPaymentProcess(
-                              onError: (msg) {
-                                if (!mounted) return;
-                                if (msg == 'MEMBERSHIP_REQUIRED') {
-                                  context.push(AppRouter.completePaymentPath);
-                                } else {
-                                  _showSnack(msg, isError: true);
-                                }
-                              },
-                              onOrderCreated: (data) async {
-                                String rawPhone =
-                                    userProfile?.phoneNumber ?? '';
-                                // Remove all spaces, dashes, parentheses, etc.
-                                String cleanPhone = rawPhone.replaceAll(
-                                  RegExp(r'[^\d+]'),
-                                  '',
-                                );
-
-                                if (cleanPhone.startsWith('+91')) {
-                                  cleanPhone = cleanPhone.substring(3);
-                                } else if (cleanPhone.startsWith('91') &&
-                                    cleanPhone.length == 12) {
-                                  cleanPhone = cleanPhone.substring(2);
-                                }
-
-                                final keyId = data['keyId']?.toString();
-                                final orderId =
-                                    (data['razorpayOrderId'] ?? data['orderId'])
-                                        ?.toString();
-
-                                if (keyId == null ||
-                                    keyId.isEmpty ||
-                                    orderId == null ||
-                                    orderId.isEmpty) {
-                                  _showSnack(
-                                    'Invalid payment order. Please try again.',
-                                    isError: true,
+                            if (_purchasing) return;
+                            setState(() => _purchasing = true);
+                            try {
+                              final response = await ref
+                                  .read(dioProvider)
+                                  .post(
+                                    'api/v1/wallet/purchase',
+                                    data: {
+                                      'leadIds': selected
+                                          .map((e) => e.id)
+                                          .toList(),
+                                    },
                                   );
-                                  return;
-                                }
-
-                                var options = {
-                                  'key': keyId,
-                                  'amount': data['amount'],
-                                  'name': 'Leads Sell',
-                                  'order_id': orderId,
-                                  'currency': data['currency'] ?? 'INR',
-                                  'timeout':
-                                      ((data['expiresIn'] as num?)?.toInt() ??
-                                              300)
-                                          .clamp(1, 600),
-                                  'prefill': {
-                                    'name': userProfile?.fullName ?? '',
-                                    'email': userProfile?.email ?? '',
-                                    'contact': cleanPhone,
-                                  },
-                                  'theme': {'color': '#4522C2'},
-                                };
-                                try {
-                                  _razorpay.open(options);
-                                } catch (e) {
-                                  await notifier.cancelActiveReservation();
-                                  if (!mounted) return;
-                                  debugPrint("Error opening Razorpay: $e");
-                                  _showSnack(
-                                    "Unable to launch payment gateway",
-                                    isError: true,
-                                  );
-                                }
-                              },
-                            );
+                              ref.invalidate(walletProvider);
+                              await notifier.loadCart();
+                              if (!mounted) return;
+                              this.context.go(
+                                AppRouter.paymentsuccessPath,
+                                extra: response.data['data']['orderId']
+                                    .toString(),
+                              );
+                            } catch (error) {
+                              if (!mounted) return;
+                              _showSnack(
+                                'Purchase failed. Check membership and wallet balance, then refresh before retrying.',
+                                isError: true,
+                              );
+                            } finally {
+                              if (mounted) setState(() => _purchasing = false);
+                            }
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
@@ -271,7 +197,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       ),
                     ),
                     child: Text(
-                      'Proceed to Pay',
+                      'Pay from wallet',
                       style: AppTextStyles.poppins(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.w600,

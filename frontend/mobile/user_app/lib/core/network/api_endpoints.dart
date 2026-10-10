@@ -3,8 +3,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ApiEndpoints {
   // ── Base ───────────────────────────────────────────────
   static String get razorpayKeyId => dotenv.env['RAZORPAY_KEY_ID'] ?? '';
-  static String get razorpayKeySecret =>
-      dotenv.env['RAZORPAY_KEY_SECRET'] ?? '';
 
   static const String _v = 'v1';
   static const String _api = 'api';

@@ -5,6 +5,8 @@ import 'package:user_app/features/profile/presentation/widgets/referral_section.
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'preview_data.dart';
+import 'live_store.dart';
+import '../profile/presentation/widgets/live_referral_section.dart';
 import '../../core/theme/app_theme.dart';
 
 const _purple = Color(0xFF5722CE);
@@ -681,7 +683,10 @@ class _PreviewHomeState extends State<PreviewHome> {
         ),
       ),
       const SizedBox(height: 16),
-      const ReferralSection(),
+      if (store is LiveStore)
+        LiveReferralSection(dio: (store as LiveStore).dio)
+      else
+        const ReferralSection(),
       const SizedBox(height: 16),
       if (!store.isLive)
         const Text(
@@ -711,16 +716,18 @@ class _PreviewHomeState extends State<PreviewHome> {
       ListTile(
         leading: const Icon(Icons.card_giftcard_outlined),
         title: const Text('Refer & Earn'),
-        subtitle: const Text('Sample referral rewards: ₹100'),
+        subtitle: Text(store.isLive ? 'Your invitation code and referral activity' : 'Sample referral rewards: ₹100'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute<void>(
             builder: (_) => Scaffold(
               appBar: AppBar(title: const Text('Refer & Earn')),
-              body: const SingleChildScrollView(
+              body: SingleChildScrollView(
                 padding: EdgeInsets.all(16),
-                child: ReferralSection(initiallyExpanded: true),
+                child: store is LiveStore
+                    ? LiveReferralSection(dio: (store as LiveStore).dio)
+                    : const ReferralSection(initiallyExpanded: true),
               ),
             ),
           ),

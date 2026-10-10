@@ -10,6 +10,7 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
+  const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [infoMessage, setInfoMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -84,7 +85,7 @@ export function LoginPage() {
     setIsVerifying(true)
 
     try {
-      const success = await verifyOtp(cleanOtp)
+      const success = await verifyOtp(cleanOtp, password)
       if (!success) {
         const message = 'Incorrect OTP. Please check and try again.'
         setErrorMessage(message)
@@ -280,11 +281,14 @@ export function LoginPage() {
                 {isSending ? 'Sending OTP...' : 'Send OTP'}
               </button>
               <p className="text-center text-xs text-slate-500">
-                Fast, secure, passwordless login for admins.
+                Verify your email OTP and admin password.
               </p>
             </form>
           ) : (
             <form className="space-y-4" onSubmit={handleVerifyOtp}>
+              <label className="block text-xs font-medium text-slate-600">Admin password
+                <input type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} className="mt-2 block w-full rounded-xl border border-slate-300 px-4 py-3" />
+              </label>
               <label className="block text-xs font-medium text-slate-600">
                 One Time Password
                 <input

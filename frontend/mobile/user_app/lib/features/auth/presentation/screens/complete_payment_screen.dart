@@ -1,18 +1,16 @@
+import 'package:user_app/core/network/dio_provider.dart';
+import 'package:user_app/features/payments/presentation/widgets/wallet_card.dart';
 // features/auth/presentation/screens/complete_payment_screen.dart
-
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/presentation/widgets/payment_widgets.dart';
-import 'package:user_app/features/auth/shared/profile_draft_provider.dart';
 import '../../shared/auth_providers.dart';
 
 class CompletePaymentScreen extends ConsumerStatefulWidget {
@@ -24,180 +22,22 @@ class CompletePaymentScreen extends ConsumerStatefulWidget {
 }
 
 class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
-  late Razorpay _razorpay;
-
-  // ✅ Local loading flag — avoids conflicts with controller's isLoading
   bool _isPaymentInitializing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initRazorpay();
-  }
-
-  void _initRazorpay() {
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-  }
-
-  @override
-  void dispose() {
-    _razorpay.clear();
-    super.dispose();
-  }
-
-  // ── Razorpay Success Handler ──
-  void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    final orderId = response.orderId;
-    final paymentId = response.paymentId;
-    final signature = response.signature;
-
-    if (orderId == null || paymentId == null || signature == null) {
-      SnackbarHelper.showError(
-        context,
-        'Payment succeeded but details are incomplete. Please contact support.',
-      );
-      return;
-    }
-
-    final draft = ref.read(profileDraftProvider);
-    final user = ref.read(authControllerProvider).user;
-    final city = draft.cityId.isNotEmpty ? draft.cityId : draft.city;
-    final fullName = draft.fullName.isNotEmpty
-        ? draft.fullName
-        : (user?.fullName ?? '');
-    final email = draft.email.isNotEmpty ? draft.email : (user?.email ?? '');
-
-    ref
-        .read(authControllerProvider.notifier)
-        .verifyPayment(
-          orderId: orderId,
-          paymentId: paymentId,
-          signature: signature,
-          fullName: fullName,
-          email: email,
-          city: city,
-          categories: draft.categories,
-          businessName: draft.businessName,
-          workType: draft.workType,
-          onSuccess: () {
-            ref.read(authControllerProvider.notifier).clearError();
-            ref.read(profileDraftProvider.notifier).clearDraft();
-            SnackbarHelper.showSuccess(
-              context,
-              'Lifetime membership activated!',
-            );
-            context.go(AppRouter.cartPath);
-          },
-        );
-  }
-
-  // ── Razorpay Error Handler ──
-  void _handlePaymentError(PaymentFailureResponse response) {
-    // ✅ Code 0 = dismissed by user, not a real error
-    if (response.code == Razorpay.PAYMENT_CANCELLED) {
-      SnackbarHelper.showWarning(context, "Payment cancelled.");
-    } else {
-      SnackbarHelper.showError(context, "Payment Failed: ${response.message}");
-    }
-  }
-
-  // ── Razorpay External Wallet Handler ──
-  void _handleExternalWallet(ExternalWalletResponse response) {
-    SnackbarHelper.showWarning(
-      context,
-      "External Wallet selected: ${response.walletName}",
-    );
-  }
 
   Future<void> _startPayment() async {
     if (_isPaymentInitializing) return;
     setState(() => _isPaymentInitializing = true);
-
     try {
-      final orderData = await ref
-          .read(authControllerProvider.notifier)
-          .createPaymentOrder();
-
+      await ref.read(dioProvider).post('api/v1/wallet/membership');
+      ref.invalidate(walletProvider);
       if (!mounted) return;
-      if (orderData == null) return;
-
-      final user = ref.read(authControllerProvider).user;
-
-      final keyId = orderData['keyId']?.toString();
-      // Backend registration order returns `orderId`; cart orders return `razorpayOrderId`.
-      final orderId = (orderData['orderId'] ?? orderData['razorpayOrderId'])
-          ?.toString();
-      final currency = orderData['currency']?.toString() ?? 'INR';
-
-      // Registration API already returns amount in paise.
-      final rawAmount = orderData['amount'];
-      final int amount = (rawAmount is int)
-          ? rawAmount
-          : (rawAmount is double)
-          ? rawAmount.toInt()
-          : int.tryParse(rawAmount.toString()) ?? 0;
-
-      log("=== RAZORPAY OPTIONS ===");
-      log("key: $keyId");
-      log("orderId: $orderId");
-      log("amount: $amount (type: ${amount.runtimeType})");
-      log("currency: $currency");
-      log("=======================");
-
-      if (keyId == null ||
-          keyId.isEmpty ||
-          orderId == null ||
-          orderId.isEmpty ||
-          amount == 0) {
-        SnackbarHelper.showError(
-          context,
-          "Invalid order data. Please try again.",
-        );
-        return;
-      }
-
-      // ✅ Validate orderId format — must start with 'order_'
-      if (!orderId.startsWith('order_')) {
-        SnackbarHelper.showError(context, "Invalid Razorpay order ID format.");
-        return;
-      }
-
-      final options = <String, dynamic>{
-        'key': keyId,
-        'amount': amount,
-        'currency': currency,
-        'name': 'Next Leads',
-        'description': 'Lifetime membership - one-time fee',
-        'order_id': orderId,
-        'prefill': <String, dynamic>{
-          'contact': user?.phone ?? user?.phoneNumber ?? '',
-          'email': user?.email ?? '',
-        },
-        'retry': <String, dynamic>{'enabled': false},
-        'send_sms_hash': true,
-        'theme': <String, dynamic>{'color': '#4522C2'},
-      };
-
-      // ✅ Re-init Razorpay fresh every time — prevents stale listener issues
-      _razorpay.clear();
-      _razorpay = Razorpay();
-      _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-      _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-      _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-
-      await Future.delayed(const Duration(milliseconds: 400));
-      if (!mounted) return;
-
-      _razorpay.open(options);
-    } catch (e) {
-      debugPrint('Razorpay launch error: $e');
+      SnackbarHelper.showSuccess(context, 'Lifetime membership activated!');
+      context.go(AppRouter.cartPath);
+    } catch (_) {
       if (mounted) {
         SnackbarHelper.showError(
           context,
-          "Could not initiate payment. Please try again.",
+          'Add sufficient money to your wallet, then retry.',
         );
       }
     } finally {
@@ -257,6 +97,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
                 child: Column(
                   children: [
+                    const WalletCard(),
                     const Text(
                       'Pay ₹1 once before your first lead purchase. Lifetime access with no recurring subscription. Lead prices are separate.',
                     ),
@@ -308,7 +149,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                               ),
                             )
                           : Text(
-                              "Pay  ₹1 Securely",
+                              'Pay ₹1 from wallet',
                               style: AppTextStyles.poppins(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,

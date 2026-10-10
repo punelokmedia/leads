@@ -10,6 +10,9 @@ import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/media_url.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
+import 'package:user_app/core/network/dio_provider.dart';
+import 'package:user_app/core/errors/error_handler.dart';
+import 'package:user_app/core/errors/app_exception.dart';
 import 'package:user_app/features/auth/infra/category_repository.dart';
 import 'package:user_app/features/auth/presentation/widgets/auth_common_widgets.dart';
 
@@ -27,6 +30,14 @@ class ChooseCategoryScreen extends ConsumerStatefulWidget {
 class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
   final Set<String> _selectedCategoryIds = {};
   bool _hasPreselected = false;
+  final _referralCode = TextEditingController();
+  bool _applyingReferral = false;
+
+  @override
+  void dispose() {
+    _referralCode.dispose();
+    super.dispose();
+  }
 
   final List<Color> _uiColors = [
     const Color(0xFF4522C2),
@@ -43,12 +54,33 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
   ];
 
   Future<void> _onContinue() async {
+    if (_applyingReferral || ref.read(authControllerProvider).isLoading) return;
     if (_selectedCategoryIds.isEmpty) {
       SnackbarHelper.showWarning(
         context,
         'Please select at least one category',
       );
       return;
+    }
+
+    final code = _referralCode.text.trim().toUpperCase();
+    if (code.isNotEmpty) {
+      setState(() => _applyingReferral = true);
+      try {
+        final response = await ref.read(dioProvider).post(
+          'api/v1/referrals/apply',
+          data: {'referralCode': code},
+        );
+        if (response.data['success'] != true) {
+          throw AppException(response.data['message']?.toString() ?? 'Unable to apply referral code.');
+        }
+      } catch (error) {
+        if (mounted) SnackbarHelper.showError(context, ErrorHandler.handle(error).message);
+        return;
+      } finally {
+        if (mounted) setState(() => _applyingReferral = false);
+      }
+      if (!mounted) return;
     }
 
     final draft = ref.read(profileDraftProvider);
@@ -78,7 +110,7 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authControllerProvider).isLoading;
+    final isLoading = ref.watch(authControllerProvider).isLoading || _applyingReferral;
     final categoriesAsync = ref.watch(categoriesProvider);
     ref.listen(authErrorProvider, (previous, next) {
       if (next != null && next != previous) SnackbarHelper.showError(context, next);
@@ -139,6 +171,23 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                       ),
                     ),
                     SizedBox(height: 24.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      child: TextField(
+                        controller: _referralCode,
+                        enabled: !isLoading,
+                        maxLength: 26,
+                        textCapitalization: TextCapitalization.characters,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        decoration: const InputDecoration(
+                          labelText: 'Referral code (optional)',
+                          helperText: 'Have an invite code? Enter it before continuing.',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
 
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 24.w),

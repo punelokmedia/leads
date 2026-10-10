@@ -21,7 +21,7 @@ type AdminAuthContextValue = {
   userEmail: string
   pendingEmail: string
   sendOtp: (email: string) => Promise<{ message?: string; devOtp?: string }>
-  verifyOtp: (otp: string) => Promise<boolean>
+  verifyOtp: (otp: string, password?: string) => Promise<boolean>
   resetOtpFlow: () => void
   logout: () => void
 }
@@ -101,7 +101,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const verifyOtp = useCallback(
-    async (otp: string) => {
+    async (otp: string, password?: string) => {
       if (!pendingEmail) {
         return false
       }
@@ -111,7 +111,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: pendingEmail, otp }),
+        body: JSON.stringify({ email: pendingEmail, otp, password }),
       })
       const { ok, payload } = await parseApiResponse<VerifyOtpResponseData>(response)
 
@@ -137,10 +137,15 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
+    if (session?.token) {
+      void fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+        headers: { Authorization: `Bearer ${session.token}` },
+      }).catch(() => {})
+    }
     setSession(null)
     setPendingEmail('')
     window.localStorage.removeItem(AUTH_STORAGE_KEY)
-  }, [])
+  }, [session])
 
   const value = useMemo<AdminAuthContextValue>(
     () => ({

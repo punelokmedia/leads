@@ -1,211 +1,225 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:user_app/core/network/dio_provider.dart';
 
-/// Wallet UI preview. No payments or wallet updates are submitted.
-class WalletCard extends StatelessWidget {
+final walletProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final response = await ref.watch(dioProvider).get('api/v1/wallet');
+  return Map<String, dynamic>.from(response.data['data']);
+});
+
+class WalletCard extends ConsumerStatefulWidget {
   const WalletCard({super.key});
+  @override
+  ConsumerState<WalletCard> createState() => _WalletCardState();
+}
 
-  void _addMoney(BuildContext context) {
-    var amount = 500;
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setState) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Add money',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Choose a top-up amount. This is a frontend preview; no payment will be collected.',
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final value in [100, 500, 1000, 2000])
-                      ChoiceChip(
-                        label: Text('₹$value'),
-                        selected: amount == value,
-                        onSelected: (_) => setState(() => amount = value),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () {
-                      Navigator.pop(sheetContext);
-                      showDialog<void>(
-                        context: context,
-                        builder: (dialogContext) => AlertDialog(
-                          title: const Text('Payment preview'),
-                          content: Text(
-                            'Selected amount: ₹$amount\n\nRazorpay top-up will be connected later. No money has been charged and your wallet balance has not changed.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(dialogContext),
-                              child: const Text('Done'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Text('Preview ₹$amount top-up'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+class _WalletCardState extends ConsumerState<WalletCard> {
+  late final Razorpay _gateway;
+  bool _busy = false;
+  bool _loadingHistory = false;
+  final List<dynamic> _olderEntries = [];
+  String? _nextCursor;
+  bool _historyLoaded = false;
+
+  void _refresh() {
+    _olderEntries.clear();
+    _nextCursor = null;
+    _historyLoaded = false;
+    ref.invalidate(walletProvider);
   }
 
-  void _history(BuildContext context) {
-    showModalBottomSheet<void>(
+  Future<void> _loadHistory(String cursor) async {
+    if (_loadingHistory) return;
+    setState(() => _loadingHistory = true);
+    try {
+      final response = await ref
+          .read(dioProvider)
+          .get('api/v1/wallet/history', queryParameters: {'cursor': cursor});
+      if (!mounted) return;
+      setState(() {
+        _olderEntries.addAll(response.data['data']['entries'] as List);
+        _nextCursor = response.data['data']['nextCursor'] as String?;
+        _historyLoaded = true;
+      });
+    } catch (_) {
+      _message('Unable to load older transactions. Please retry.');
+    } finally {
+      if (mounted) setState(() => _loadingHistory = false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _gateway = Razorpay();
+    _gateway.on(Razorpay.EVENT_PAYMENT_SUCCESS, (
+      PaymentSuccessResponse payment,
+    ) async {
+      try {
+        await ref
+            .read(dioProvider)
+            .post(
+              'api/v1/wallet/verify',
+              data: {
+                'razorpayOrderId': payment.orderId,
+                'razorpayPaymentId': payment.paymentId,
+                'razorpaySignature': payment.signature,
+              },
+            );
+        _message('Money added to your wallet.');
+      } catch (_) {
+        _message(
+          'Confirmation pending. Refresh your wallet before paying again.',
+        );
+      }
+      if (mounted) {
+        setState(() => _busy = false);
+        _refresh();
+      }
+    });
+    _gateway.on(Razorpay.EVENT_PAYMENT_ERROR, (PaymentFailureResponse payment) {
+      if (mounted) setState(() => _busy = false);
+      _message('Payment cancelled or failed.');
+    });
+  }
+
+  void _message(String text) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    }
+  }
+
+  @override
+  void dispose() {
+    _gateway.clear();
+    super.dispose();
+  }
+
+  Future<void> _addMoney() async {
+    final amount = await showDialog<int>(
       context: context,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Sample wallet activity',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Illustrative transactions only. These are separate from your payment receipts.',
-              ),
-              for (final item in [
-                ('Wallet top-up', 'Paid credit', '+₹500'),
-                ('Referral reward', 'Friend A · First purchase', '+₹50'),
-                ('Referral reward', 'Friend B · First purchase', '+₹50'),
-              ])
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.add_circle_outline),
-                  title: Text(item.$1),
-                  subtitle: Text(item.$2),
-                  trailing: Text(item.$3),
-                ),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        ),
+      builder: (context) => SimpleDialog(
+        title: const Text('Add money with Razorpay'),
+        children: [
+          for (final value in [100, 500, 1000, 2000])
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, value),
+              child: Text('₹$value'),
+            ),
+        ],
       ),
     );
+    if (amount == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final response = await ref
+          .read(dioProvider)
+          .post('api/v1/wallet/topup', data: {'amountPaise': amount * 100});
+      final data = response.data['data'];
+      _gateway.open({
+        'key': data['keyId'],
+        'order_id': data['razorpayOrderId'],
+        'amount': data['amountPaise'],
+        'currency': 'INR',
+        'name': 'Next Leads',
+        'description': 'Wallet top-up',
+      });
+    } catch (_) {
+      if (mounted) setState(() => _busy = false);
+      _message('Unable to start top-up. Please retry.');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final wallet = ref.watch(walletProvider);
     return Card(
-      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.account_balance_wallet_outlined,
-                  color: colors.primary,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'My Wallet',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const Text(
-                  'PREVIEW',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                ),
-              ],
+            const Text(
+              'My Wallet',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
-            const Text('Sample available balance'),
-            Text(
-              '₹600',
-              style: TextStyle(
-                fontSize: 38,
-                fontWeight: FontWeight.bold,
-                color: colors.primary,
+            wallet.when(
+              loading: () => const LinearProgressIndicator(),
+              error: (_, _) => TextButton(
+                onPressed: () => ref.invalidate(walletProvider),
+                child: const Text('Retry loading wallet'),
+              ),
+              data: (data) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '₹${((data['balancePaise'] as num) / 100).toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 36),
+                  ),
+                  const Text(
+                    'Referral rewards: eligible purchases of at least INR 50; up to INR 100 total.',
+                  ),
+                  const SizedBox(height: 16),
+                  if (data['frozen'] == true)
+                    const Text('Wallet under security review. Contact support before making payments.', style: TextStyle(color: Colors.red)),
+                  const Text(
+                    'Wallet history',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  if ((data['entries'] as List).isEmpty)
+                    const Text(
+                      'No transactions yet. Your confirmed top-ups will appear here.',
+                    ),
+                  for (final entry in [
+                    ...data['entries'] as List,
+                    ..._olderEntries,
+                  ])
+                    ListTile(
+                      title: Text(switch (entry['kind']) {
+                        'TOPUP' => 'Money added via Razorpay',
+                        'REFERRAL' => 'Referral reward',
+                        'LEAD' => 'Lead purchase',
+                        'MEMBERSHIP' => 'Membership purchase',
+                        'REVERSAL' => 'Payment or referral reversal',
+                        _ => 'Wallet transaction',
+                      }),
+                      subtitle: Text(
+                        DateTime.parse(
+                          entry['createdAt'].toString(),
+                        ).toLocal().toString().split('.').first,
+                      ),
+                      trailing: Text(
+                        '${(entry['amountPaise'] as num) >= 0 ? '+' : '-'}₹${((entry['amountPaise'] as num).abs() / 100).toStringAsFixed(2)}',
+                      ),
+                    ),
+                  if ((_historyLoaded ? _nextCursor : data['nextCursor']) !=
+                      null)
+                    TextButton(
+                      onPressed: _loadingHistory
+                          ? null
+                          : () => _loadHistory(
+                              (_historyLoaded
+                                      ? _nextCursor
+                                      : data['nextCursor'])
+                                  as String,
+                            ),
+                      child: Text(
+                        _loadingHistory
+                            ? 'Loading…'
+                            : 'Load older transactions',
+                      ),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            const Wrap(
-              spacing: 24,
-              runSpacing: 12,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Paid credit'),
-                    Text(
-                      '₹500',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Referral rewards'),
-                    Text(
-                      '₹100',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            FilledButton(
+              onPressed: _busy ? null : _addMoney,
+              child: Text(_busy ? 'Payment in progress…' : 'Add money'),
             ),
-            const SizedBox(height: 20),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  onPressed: () => _addMoney(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add money'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => _history(context),
-                  icon: const Icon(Icons.receipt_long_outlined),
-                  label: const Text('Wallet activity'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Frontend preview only. Sample credit cannot be spent. Wallet payments and referral credits will be connected later.',
-              style: TextStyle(fontSize: 12),
+            TextButton(
+              onPressed: _loadingHistory ? null : _refresh,
+              child: const Text('Refresh balance'),
             ),
           ],
         ),
