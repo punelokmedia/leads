@@ -1,0 +1,5 @@
+
+> server@1.0.0 build
+> node scripts/check-build.js
+
+Backend build check passed: 58 JavaScript files. Start with npm start.

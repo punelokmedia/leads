@@ -1,3 +1,4 @@
+import { startGoogleLogin } from '../googleHandoff'
 import { API_BASE_URL } from '@/config/api'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -69,7 +70,7 @@ export function MobileAuthPage() {
       return
     }
 
-    window.location.href = `${preferredBaseUrl}/api/v1/auth/google`
+    void startGoogleLogin(`${preferredBaseUrl}/api/v1/auth/google`).catch(() => setError('Unable to start Google login.'))
   }
 
   const clearMessages = () => {

@@ -1,0 +1,8 @@
+
+> lint:admin
+> npm run lint -w admin-web
+
+
+> admin-web@0.0.0 lint
+> eslint .
+

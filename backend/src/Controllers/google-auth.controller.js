@@ -28,7 +28,7 @@ export function createGoogleTokenLogin({ verify = (options) => client.verifyIdTo
     try {
       const user = await resolveUser(payload);
       if (user.isBlocked) return res.status(403).json({ success: false, message: "Your account has been blocked." });
-      const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+      const token = jwt.sign({ id: user._id, sv: user.sessionVersion ?? 0, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
       return res.json({ success: true, token, user: publicGoogleUser(user) });
     } catch (error) {
       return res.status(error.status || 500).json({ success: false, message: error.status ? error.message : "Unable to complete Google login." });

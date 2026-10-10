@@ -3,6 +3,8 @@
 !.env.example
 
 node_modules/
+.npm-cache/
+.tool-profile/
 
 logs
 *.log

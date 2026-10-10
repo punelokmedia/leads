@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { Category } from '../src/Models/category.model.js';
 import { Lead } from '../src/Models/leads.model.js';
 import { UploadLog } from '../src/Models/uploadLog.model.js';
@@ -17,11 +17,13 @@ test('bulk XLSX upload saves primary phone and normalized customer name, rejecti
     'Budget Range': '5-8 lakh', Timeline: 'Within one month',
     Price: 100, 'Expires At': '2099-12-31',
   };
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
-    row, { ...row, 'Mobile Number (Primary)': '123' },
-  ]), 'Leads');
-  const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet('Leads');
+  sheet.addRow(Object.keys(row));
+  sheet.addRow(Object.values(row));
+  sheet.addRow(Object.values({ ...row, 'Mobile Number (Primary)': '123' }));
+  sheet.addRow(Object.values({ ...row, Category: '507f1f77bcf86cd799439099' }));
+  const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
   t.mock.method(Category, 'find', async () => [{ _id: categoryId, name: 'interior design' }]);
   t.mock.method(UploadLog, 'create', async () => ({ _id: 'upload-test' }));
   let complete;
@@ -44,14 +46,14 @@ test('bulk XLSX upload saves primary phone and normalized customer name, rejecti
     user: { id: categoryId },
   }, response);
   assert.equal(response.statusCode, 202);
-  assert.equal(response.body.totalRows, 2);
+  assert.equal(response.body.totalRows, 3);
   await finished;
   assert.equal(inserted.length, 1);
   assert.equal(inserted[0].primaryPhone, '9876543210');
   assert.equal(inserted[0].phone, '9876543210');
   assert.equal(inserted[0].customerName, 'Sample Customer');
-  const progress = updates.find(update => update.processedRows === 2);
+  const progress = updates.find(update => update.processedRows === 3);
   assert.equal(progress.successCount, 1);
-  assert.equal(progress.failedCount, 1);
-  assert.deepEqual(progress.$push.logs.$each, [{ row: 3, message: 'Invalid primary phone' }]);
+  assert.equal(progress.failedCount, 2);
+  assert.deepEqual(progress.$push.logs.$each, [{ row: 3, message: 'Invalid primary phone' }, { row: 4, message: 'Invalid category' }]);
 }, { timeout: 10000 });

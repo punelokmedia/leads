@@ -6,7 +6,7 @@ export function PublicLayout() {
   return (
     <div className="flex min-h-dvh flex-col">
       <PublicHeader />
-      <main className="flex-1">
+      <main id="account-page-content" className="flex-1">
         <Outlet />
       </main>
       <PublicFooter />

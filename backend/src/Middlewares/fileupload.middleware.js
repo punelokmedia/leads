@@ -4,8 +4,8 @@ const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   if (
-    file.mimetype.includes("sheet") ||
-    file.originalname.endsWith(".xlsx")
+    ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream'].includes(file.mimetype) &&
+    file.originalname.toLowerCase().endsWith(".xlsx")
   ) {
     cb(null, true);
   } else {
@@ -15,7 +15,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 10, parts: 11, fieldSize: 8192 },
   fileFilter,
 });
 

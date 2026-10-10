@@ -5,6 +5,10 @@ const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false,
+  requireTLS: true,
+  tls: { rejectUnauthorized: true },
+  disableFileAccess: true,
+  disableUrlAccess: true,
   auth: {
     user: ENV.EMAIL_USER,
     pass: ENV.EMAIL_PASSWORD,
@@ -15,6 +19,10 @@ const adminTransporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false,
+  requireTLS: true,
+  tls: { rejectUnauthorized: true },
+  disableFileAccess: true,
+  disableUrlAccess: true,
   auth: {
     user: ENV.ADMIN_SMTP_USER,
     pass: ENV.ADMIN_SMTP_PASSWORD,

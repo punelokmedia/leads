@@ -1,0 +1,18 @@
+# Payment signatures and replay protection
+
+Date: 2026-10-10. Scope: local source, installed dependencies, loopback HTTP, disposable MongoDB 7.0.24 replica sets, synthetic users and mocked Razorpay. No production database queries/writes, real payments, deployment or application fixes were performed. This is a targeted local verification, not a certification or exhaustive penetration test.
+
+Backend result: 99 tests, 93 pass, 6 fail. Failing security expectations remain enabled to make the findings reproducible. Evidence: [complete backend output](evidence/backend-tests.txt).
+
+| Test | Method | Expected | Actual | Status | Severity | Recommended fix | Evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Valid callback / invalid signature | HMAC callback and actual /wallet/verify route with mocked gateway fetch | Only correctly signed captured payment can credit | Valid credit accepted; zero-signature forgery rejected | PASS | None observed | None | VER-07; wallet.test.js API history |
+| Amount/currency/order/status/owner | Signed callback paired with fetched mismatched or failed payment and foreign user | Reject with no wallet credit | Failed status, wrong amount/currency/order rejected; foreign ownership 404; balance unchanged | PASS | None observed | None | [VER-07](../test/security-verification.test.js); [run](evidence/backend-tests.txt) |
+| Callback replay | Repeat same signed callback | Same topup credited once | 10,000 paise once, one entry; balance/signature/audit reconcile | PASS | None observed | None | [VER-07](../test/security-verification.test.js); [run](evidence/backend-tests.txt) |
+| Raw-body signature / 20 webhooks | Loopback actual app raw buffer capture; forged event then 20 identical valid captured events | Reject forgery; only one credit | Forged event 400 with zero balance; all 20 valid deliveries 200; one 50,000 paise credit | PASS | None observed | None | [VER-06](../test/security-verification.test.js); [run](evidence/backend-tests.txt) |
+| Financial unique identifiers | Inspect actual local indexes | Unique wallet key, gateway order and payment IDs | Unique indexes present for WalletEntry.key, WalletTopup.gatewayOrderId/paymentId and purchase lead+user | PASS | None observed | Verify matching production indexes | [VER-12](../test/security-verification.test.js); [run](evidence/backend-tests.txt) |
+| Gateway event-ID uniqueness | Schema/webhook inspection | Repeated gateway events cannot repeat financial effects | No separate persisted event-ID deduplication table; deduplication uses unique business/payment IDs and transactional paid state; repeated effects tested | PASS | Low traceability enhancement | Consider recording gateway event ID in attributable audit without relying on it as the only deduplication key | ../src/Models/wallet.model.js; ../src/Controllers/orders/payment.controller.js |
+| Refund/webhook authenticity | Existing forged/refund signatures and concurrent cumulative reversals | Verified authoritative reversal once | Tests pass; gateway payment state fetched before reversal | PASS | None observed | None | wallet.test.js signed refund webhook test |
+| Gateway infrastructure/test-mode delivery | SDK calls replaced with in-process mocks; no credentials used for remote payments | Razorpay test dashboard integration and actual webhook delivery work | Not exercised | NOT TESTED | High operational assurance gap | Staging test-mode order/capture/refund/dispute reconciliation; configure webhook secret and retry worker | ../Project-Docs/wallet-security-operations.md |
+
+No real Razorpay order, payment or refund was initiated. Mock success demonstrates application verification behavior, not live gateway configuration.

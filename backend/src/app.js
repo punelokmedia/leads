@@ -1,5 +1,9 @@
+import { authLimits } from './Middlewares/security-limits.js';
+import walletRouter from './Routes/wallet.routes.js';
 import "./Config/env.config.js";
 import express from "express";
+import helmet from 'helmet';
+import { requestSecurity, safeErrors } from './Middlewares/request-security.js';
 import { connectDB } from "./Config/db.connection.config.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -17,16 +21,22 @@ import { accountDeletionRouter } from "./Routes/accountDeletion.routes.js";
 import { referralRouter } from "./Routes/referral.routes.js";
 
 const app = express();
+app.disable('x-powered-by');
+// Keep proxy trust disabled until the deployment's trusted proxy addresses are verified.
+app.set('trust proxy', false);
+app.use(helmet());
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
   process.env.FRONTEND_URL,
   process.env.ADMIN_FRONTEND_URL,
   ...(process.env.CORS_ALLOWED_ORIGINS || "").split(","),
+  ...(process.env.NODE_ENV === 'production' ? [] : [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5000",
   "http://localhost:3000",
+  ]),
 
 ].map((origin) => origin?.trim().replace(/\/+$/, "")).filter(Boolean);
 
@@ -35,8 +45,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     const isAllowed =
-      allowedOrigins.includes(origin) ||
-      origin.startsWith("chrome-extension://");
+      allowedOrigins.includes(origin);
 
     if (isAllowed) {
       return callback(null, true);
@@ -56,10 +65,11 @@ app.use((error, _req, res, next) => {
   return next(error);
 });
 app.use(cookieParser());
-app.use(express.json({ limit: "10mb", verify: (req, _res, buffer) => {
+app.use(express.json({ limit: "256kb", verify: (req, _res, buffer) => {
   if (req.originalUrl.split('?')[0].endsWith('/payments/razorpay-webhook')) req.rawBody = Buffer.from(buffer);
 } }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false, limit: '32kb', parameterLimit: 100 }));
+app.use(requestSecurity);
 
 app.use(passport.initialize());
 
@@ -78,9 +88,10 @@ if (process.env.VERCEL) {
   });
 }
 
-app.use(`/api/${API_VERSION}/auth`, Auth);
-app.use(`/api/${API_VERSION}/admin`, Admin);
+app.use(`/api/${API_VERSION}/auth`, authLimits, Auth);
+app.use(`/api/${API_VERSION}/admin`, authLimits, Admin);
 app.use(`/api/${API_VERSION}/payments`, Payment);
+app.use(`/api/${API_VERSION}/wallet`, walletRouter);
 app.use(`/api/${API_VERSION}/leads`, Lead);
 app.use(`/api/${API_VERSION}/categories`, category);
 app.use(`/api/${API_VERSION}/cities`, city);
@@ -96,5 +107,6 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use(safeErrors);
 export { app };
 export default app;

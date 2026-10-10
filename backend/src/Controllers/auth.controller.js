@@ -1,3 +1,4 @@
+import { OAuthHandoff } from '../Models/oauth-handoff.model.js';
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { User } from "../Models/user.model.js";
@@ -113,7 +114,10 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
+    if (req.is && !req.is('application/json') && !req.is('application/x-www-form-urlencoded')) return res.status(415).json({ success: false, message: 'Unsupported Content-Type.' });
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) return res.status(400).json({ success: false, message: 'Invalid login body.' });
     const { email, password } = req.body;
+    if (typeof email !== 'string' || typeof password !== 'string') return res.status(400).json({ success: false, message: 'Email and password must be strings.' });
 
     if (!email || !password) {
       return res.status(400).json({
@@ -162,7 +166,7 @@ const loginUser = async (req, res) => {
 
     user.password = undefined;
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, sv: user.sessionVersion ?? 0 }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -186,6 +190,8 @@ const loginUser = async (req, res) => {
 
 const logOutUser = async (req, res) => {
   try {
+    await User.updateOne({ _id: req.user.id }, { $inc: { sessionVersion: 1 } });
+    res.set?.("Cache-Control", "no-store");
     return res.status(200).json({
       success: true,
       code: "LOGOUT_SUCCESS",
@@ -227,36 +233,13 @@ const googleCallback = async (req, res) => {
       return res.redirect(302, redirectUrl.toString());
     }
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" },
-    );
-
-    const redirectUrl = new URL("/", frontendBaseUrl);
-    redirectUrl.searchParams.set("gauth", "1");
-    redirectUrl.searchParams.set("token", token);
-    redirectUrl.searchParams.set(
-      "user",
-      JSON.stringify({
-        _id: user._id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        profilePic: user.profilePic,
-        city: user.city || "",
-        businessName: user.businessName || "",
-        workType: user.workType || "",
-        registrationFeePaid: Boolean(user.registrationFeePaid),
-      }),
-    );
-
+    const challenge = req.query?.state;
+    if (typeof challenge !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(challenge)) throw new Error('Invalid OAuth state');
+    const code = crypto.randomBytes(32).toString('hex');
+    await OAuthHandoff.create({ codeHash: crypto.createHash('sha256').update(code).digest('hex'), challenge, user: user._id, sessionVersion: user.sessionVersion ?? 0, expiresAt: new Date(Date.now() + 60000) });
+    const redirectUrl = new URL('/', frontendBaseUrl);
+    redirectUrl.searchParams.set('gauth', '1');
+    redirectUrl.hash = 'oauth_code=' + code;
     return res.redirect(302, redirectUrl.toString());
   } catch (error) {
     console.error("Google Callback Error:", error);
@@ -453,7 +436,7 @@ const getUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).select("-password -resetOtp -resetOtpExpire -loginOtp -loginOtpExpire -pendingPhoneNumber -registrationPayment.razorpaySignature").lean();
+    const user = await User.findById(userId).select("-password -resetOtp -resetOtpExpire -loginOtp -loginOtpExpire -pendingPhoneNumber -sessionVersion -registrationPayment.razorpaySignature").lean();
 
     if (!user) {
       return res.status(404).json({
@@ -722,29 +705,8 @@ const verifyMobileOtp = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ phoneNumber: normalizedPhone });
-    const isOtpValid =
-      user &&
-      user.loginOtp === otp &&
-      user.loginOtpExpire &&
-      user.loginOtpExpire > new Date();
-
-    if (!isOtpValid) {
-      return res.status(400).json({
-        success: false,
-        code: "INVALID_OTP",
-        message: "Invalid or expired OTP.",
-      });
-    }
-
-    if (user.isBlocked) {
-      return res.status(403).json({
-        success: false,
-        code: "ACCOUNT_BLOCKED",
-        message: "Your account has been blocked. Please contact support.",
-      });
-    }
-
+    const user = await User.findOneAndUpdate({ phoneNumber: normalizedPhone, loginOtp: otp, loginOtpExpire: { $gt: new Date() }, isBlocked: { $ne: true } }, { $unset: { loginOtp: 1, loginOtpExpire: 1 } }, { returnDocument: 'after' });
+    if (!user) return res.status(400).json({ success: false, code: 'INVALID_OTP', message: 'Invalid or expired OTP.' });
     const isNewUser = user.firstname === "New" && user.lastname === "User";
     const needsProfile =
       !user.businessName ||
@@ -752,11 +714,7 @@ const verifyMobileOtp = async (req, res) => {
       !user.city ||
       isNewUser;
 
-    user.loginOtp = null;
-    user.loginOtpExpire = null;
-    await user.save();
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, sv: user.sessionVersion ?? 0 }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -838,11 +796,9 @@ const verifySessionMobileOtp = async (req, res) => {
       });
     }
 
-    user.phoneNumber = normalizedPhone;
-    user.loginOtp = null;
-    user.loginOtpExpire = null;
-    user.pendingPhoneNumber = "";
-    await user.save();
+    const consumed = await User.findOneAndUpdate({ _id: userId, loginOtp: otp, loginOtpExpire: { $gt: new Date() }, pendingPhoneNumber: normalizedPhone, isBlocked: { $ne: true } }, { $set: { phoneNumber: normalizedPhone }, $unset: { loginOtp: 1, loginOtpExpire: 1, pendingPhoneNumber: 1 } }, { returnDocument: 'after', runValidators: true });
+    if (!consumed) return res.status(400).json({ success: false, code: 'INVALID_OTP', message: 'Invalid or expired OTP.' });
+    user.phoneNumber = consumed.phoneNumber;
 
     return res.status(200).json({
       success: true,

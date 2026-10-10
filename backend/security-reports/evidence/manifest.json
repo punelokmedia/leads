@@ -1,0 +1,135 @@
+{
+  "generatedAt": "2026-10-10T12:12:22.689Z",
+  "node": "v24.21.0",
+  "testTotals": {
+    "tests": 99,
+    "pass": 93,
+    "fail": 6
+  },
+  "files": [
+    {
+      "path": "security-reports\\evidence\\admin-web-build.txt",
+      "sha256": "c0fa4af84c6bc6141da100e77230348cf66fc0a7aa745fcab8cbbbed1f23c155"
+    },
+    {
+      "path": "security-reports\\evidence\\admin-web-lint.txt",
+      "sha256": "0866cd0d5ced78f01616f115581758608db4ef262720ea7e890a58060e1265a8"
+    },
+    {
+      "path": "security-reports\\evidence\\backend-audit.json",
+      "sha256": "8414bd860b97b74336773144a931f2f83e92fdee7cb8cd32484f5d65048e18c5"
+    },
+    {
+      "path": "security-reports\\evidence\\backend-audit.txt",
+      "sha256": "4b02d4a3c23d969c46bd2041360f80bfcb1fe760d9db864009acdd710f9de601"
+    },
+    {
+      "path": "security-reports\\evidence\\backend-build.txt",
+      "sha256": "a02d0bb166d03301c4522f29c56de2f12cea950957a978e156fff7099c3dc1dd"
+    },
+    {
+      "path": "security-reports\\evidence\\backend-production-audit.json",
+      "sha256": "8414bd860b97b74336773144a931f2f83e92fdee7cb8cd32484f5d65048e18c5"
+    },
+    {
+      "path": "security-reports\\evidence\\backend-production-audit.txt",
+      "sha256": "4b02d4a3c23d969c46bd2041360f80bfcb1fe760d9db864009acdd710f9de601"
+    },
+    {
+      "path": "security-reports\\evidence\\backend-tests.txt",
+      "sha256": "ccfb804164534d27ed2b30259fe0dbc3ac89231539c4352e324777ec958feddc"
+    },
+    {
+      "path": "security-reports\\evidence\\backend-tree.json",
+      "sha256": "7632b3f6f068d89085ac1664c406fb0e67590301cb7d55e83addea08a2378595"
+    },
+    {
+      "path": "security-reports\\evidence\\backend-tree.txt",
+      "sha256": "46404e43380e66d2c145d2575c96d65e44a0e3328eaca4854e1c6e4a54384cff"
+    },
+    {
+      "path": "security-reports\\evidence\\frontend-audit.json",
+      "sha256": "b3a872219368ab1affad00f668ec7a81db750b468cf67f0a1257fda31de9f313"
+    },
+    {
+      "path": "security-reports\\evidence\\frontend-production-audit.json",
+      "sha256": "686e682882fdc1616cd67ede54a3d151def41741fecfd9050ad956e39d487408"
+    },
+    {
+      "path": "security-reports\\evidence\\mobile-analyze.txt",
+      "sha256": "61ac90a7542ae1433771828237f32d7b97f7f69c9c9e3d8ff6b40331bb2e02db"
+    },
+    {
+      "path": "security-reports\\evidence\\mobile-tests.txt",
+      "sha256": "df2a2a7f1c6b6b3cdda9fa2516242fd60553747c8a58e2746cafc59573a1a95b"
+    },
+    {
+      "path": "security-reports\\evidence\\static-checks.json",
+      "sha256": "6262941c4545437f15f09728cb1422159f72031b7701ec864648efbab5ed640b"
+    },
+    {
+      "path": "security-reports\\evidence\\user-web-build.txt",
+      "sha256": "5cf58433f01042e210647db3ca2d12e64b22134825bdc6f1af11a94644bcfc0a"
+    },
+    {
+      "path": "security-reports\\evidence\\user-web-lint.txt",
+      "sha256": "75084ae551dd763e4510b41da4031ac07a8533f3e2fd784b9394b62ea2492ca6"
+    },
+    {
+      "path": "security-reports\\evidence\\user-web-test.txt",
+      "sha256": "42cbb4e7e0faff94b400d990e2dacf792a71d950a9791ca54ae60f8e940b6af5"
+    },
+    {
+      "path": "test\\security-verification.test.js",
+      "sha256": "7f616db20f874168ebcdbbf68a191830fee23e70c105f96a442a5b5a274e52b2"
+    },
+    {
+      "path": "test\\security-excel-verification.test.js",
+      "sha256": "9e89750c7bebd2b63a7f3b7c646d57802f9a64df2d1de50a0ed412fe57ee1ed5"
+    },
+    {
+      "path": "test\\bulk-lead-upload.test.js",
+      "sha256": "9dd52850a75d816c473dfaf193a3c4baf19741f06100aee8612adbe896184975"
+    },
+    {
+      "path": "src\\app.js",
+      "sha256": "76a85e1728c9f62d2e4143952aa089fef963e4a3fb6a1b2119a424c1387bf2e0"
+    },
+    {
+      "path": "src\\Middlewares\\auth.middleware.js",
+      "sha256": "3cfa6dba6784a31c49ae5d013aab4fdd723ca3e627d8d0fda3a4e417588ff037"
+    },
+    {
+      "path": "src\\Controllers\\auth.controller.js",
+      "sha256": "7dc94e699846a027f80e863cdf46fdf4d0b82cd071ee3abcb54dcbf7e832492c"
+    },
+    {
+      "path": "src\\Models\\user.model.js",
+      "sha256": "3318503edff0ad4757e18dfadc2d24d2217c2c87d90a65b8093f59009b0ca9a7"
+    },
+    {
+      "path": "src\\Services\\wallet.service.js",
+      "sha256": "00878674c1d4980fcc16953d9188514bb2a6a42fe791462981b7078b510b5005"
+    },
+    {
+      "path": "src\\Services\\checkout.service.js",
+      "sha256": "f85f2d885b26ab25f552cfc763ba31c7cd82f2ac8ac9e2830d9deeb924294556"
+    },
+    {
+      "path": "src\\Services\\referral.service.js",
+      "sha256": "c307b4f9af61cd492148bc018a857e1038469e043d0f5eaed6090a094a809cc0"
+    },
+    {
+      "path": "src\\Models\\wallet.model.js",
+      "sha256": "c909fa2a8d6a6ec9eb90a3b7cc5d2339c2a9d1e8ab8267df1035adc5da69e3c2"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "2448f93544c88522f0667ed35f6adcde714e1ddcbededf56c5131a7cd7c8e830"
+    },
+    {
+      "path": "..\\frontend\\package-lock.json",
+      "sha256": "40be89a0ee0ea97744f67defb6eaee9063e0c737c347432864b37a79610a389f"
+    }
+  ]
+}

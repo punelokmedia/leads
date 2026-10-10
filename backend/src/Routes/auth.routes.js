@@ -1,4 +1,5 @@
 import express from "express";
+import { exchangeGoogleCode } from '../Controllers/oauth-handoff.controller.js';
 import multer from "multer";
 import passport from "../Config/passport.js";
 import { auth } from "../Middlewares/auth.middleware.js";
@@ -38,14 +39,15 @@ const requireUserGoogleConfig = (req, res, next) => {
   next();
 };
 router.post("/google", googleTokenLogin);
+router.post('/google/exchange', exchangeGoogleCode);
 
 router.get(
   "/google",
   requireUserGoogleConfig,
-  passport.authenticate("google-user", {
-    scope: ["profile", "email"],
-    session: false,
-  }),
+  (req, res, next) => {
+    if (typeof req.query.challenge !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(req.query.challenge)) return res.status(400).json({ success: false, message: 'Start Google login from the application.' });
+    return passport.authenticate('google-user', { scope: ['profile', 'email'], session: false, state: req.query.challenge })(req, res, next);
+  },
 );
 
 router.get(
@@ -58,7 +60,6 @@ router.get(
           success: false,
           code: "OAUTH_ERROR",
           message: "Google authentication failed. Please try again.",
-          error: err.message,
         });
       }
 

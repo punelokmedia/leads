@@ -12,6 +12,7 @@ import { User } from '../src/Models/user.model.js';
 import { referralRouter } from '../src/Routes/referral.routes.js';
 
 let mongo, server, base, users, tokens;
+process.env.WALLET_REFERRAL_MIN_PURCHASE_PAISE = '0';
 before(async () => {
   process.env.JWT_SECRET = 'referral-test-secret';
   // Test the new index independently of unrelated existing user indexes.

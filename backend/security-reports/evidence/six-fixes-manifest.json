@@ -1,0 +1,41 @@
+{
+  "createdAt": "2026-10-10T12:27:09.486Z",
+  "files": [
+    {
+      "file": "six-fixes-admin-build.txt",
+      "sha256": "53816a8b32ccaa8972d290cc1534dc5dcdc900f54090a649f27df7a382e1a2a9"
+    },
+    {
+      "file": "six-fixes-admin-lint.txt",
+      "sha256": "0866cd0d5ced78f01616f115581758608db4ef262720ea7e890a58060e1265a8"
+    },
+    {
+      "file": "six-fixes-audit.txt",
+      "sha256": "4b02d4a3c23d969c46bd2041360f80bfcb1fe760d9db864009acdd710f9de601"
+    },
+    {
+      "file": "six-fixes-backend-build.txt",
+      "sha256": "2fc41ceb88f3a687cdb7c0612b19475ed7fb0b7fda3bef25b4e2308572181f9a"
+    },
+    {
+      "file": "six-fixes-focused.txt",
+      "sha256": "34a98fc36bb620e98845b0769aeb4beabb34f7639f836f98ecd8b8f660d48cdd"
+    },
+    {
+      "file": "six-fixes-full.txt",
+      "sha256": "dc08071127cd227a6f13ac20483db2b2402636819c7cb143653526bdbe0aa77a"
+    },
+    {
+      "file": "six-fixes-production-audit.txt",
+      "sha256": "4b02d4a3c23d969c46bd2041360f80bfcb1fe760d9db864009acdd710f9de601"
+    },
+    {
+      "file": "six-fixes-web-build.txt",
+      "sha256": "50ff317a15981e2fbb88dc9c21dc4488d7eaf9b9174f72ac81bca73c41b10d83"
+    },
+    {
+      "file": "six-fixes-web-lint.txt",
+      "sha256": "ff4c3d4ed44432e6f2df261dddf235db45c996f1576b7a1ca3c680b62e43147e"
+    }
+  ]
+}

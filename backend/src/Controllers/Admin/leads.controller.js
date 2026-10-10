@@ -1,4 +1,4 @@
-import XLSX from "xlsx";
+import { readLeadSpreadsheet } from '../../Services/excel-import.js';
 import ExcelJS from "exceljs";
 import mongoose from "mongoose";
 import { Lead, resolveLeadStatus } from "../../Models/leads.model.js";
@@ -660,9 +660,9 @@ const uploadLeadsFromExcel = async (req, res) => {
       });
     }
 
-    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet);
+    let data;
+    try { data = await readLeadSpreadsheet(req.file.buffer); }
+    catch { return res.status(400).json({ success: false, message: 'Invalid spreadsheet. Use an .xlsx file with at most 5,000 rows and no formulas or macros.' }); }
 
     if (!data.length) {
       return res.status(400).json({
@@ -974,7 +974,7 @@ const getUserHistory = async (req, res) => {
     })
       .populate({
         path: "leads.lead",
-        select: "title city customerName address phone image",
+        select: "title city customerName address phone primaryPhone image",
       })
       .sort({ createdAt: -1 });
 
@@ -1009,7 +1009,7 @@ const getUserHistory = async (req, res) => {
             city: lead.city || "N/A",
             customerName: lead.customerName || "N/A",
             address: lead.address || "N/A",
-            phone: lead.phone || "N/A",
+            phone: lead.primaryPhone || lead.phone || "N/A",
             price,
             quantity,
             total: price * quantity, 

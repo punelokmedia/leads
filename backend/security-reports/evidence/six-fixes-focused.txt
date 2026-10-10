@@ -1,0 +1,41 @@
+◇ injected env (30) from .env // tip: ⌘ suppress logs { quiet: true }
+✔ VER-01 wallet rejects invalid topups and ignores foreign user/balance input (1611.6177ms)
+✔ VER-02 JWT validation, admin authorization and blocked-account access (23.3735ms)
+✔ VER-03 mobile OTP expires, is consumed after success and attempts are limited (92.3087ms)
+✔ VER-04 real app parser, CORS, prototype/operator and content-type probes (54.5146ms)
+✔ VER-05 forwarded IP spoofing cannot reset a shared IP limiter (32.6379ms)
+✔ VER-06 20 captured webhook duplicates credit exactly once and reconcile (225.4264ms)
+✔ VER-07 callback rejects failed/mismatched/wrong-order/foreign payments before credit (124.4044ms)
+✔ VER-08 20 competing debits never overspend; client price is ignored (831.1297ms)
+✔ VER-09 20 qualified referral retries reward once; self/invalid/prequalification rejected (308.8049ms)
+✔ VER-10 20 buyers cannot exceed the two-vendor inventory limit (1328.5404ms)
+✔ VER-11 failure after wallet debit rolls back access/ledger/audit and permits retry (123.1551ms)
+✔ VER-12 required financial unique indexes exist in disposable database (4.652ms)
+✔ VER-13 declared User indexes can be created on supported MongoDB (security expectation) (596.7594ms)
+✔ VER-14 logout invalidates a previously issued token (security expectation) (29.5142ms)
+✔ VER-15 concurrent use of one mobile OTP issues at most one session (security expectation) (34.8878ms)
+Google Callback Error: Error: Invalid OAuth state
+    at googleCallback (file:///C:/Users/punel/leads/backend/src/Controllers/auth.controller.js:237:88)
+    at TestContext.<anonymous> (file:///C:/Users/punel/leads/backend/test/security-verification.test.js:263:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+✔ VER-17 Google redirect does not put a bearer JWT in the URL (security expectation) (8.3057ms)
+✔ VER-18 unsupported login content-type returns a client error (security expectation) (11.134ms)
+✔ VER-19 transient transaction failure retries without duplicate debit or allocation (91.9628ms)
+✔ VER-20 successful admin role promotion creates an attributable audit record (security expectation) (46.724ms)
+✔ FIX-13 phone readiness detects duplicates; empty phones excluded and real phones unique (165.0228ms)
+✔ FIX-14 revoked legacy token stays rejected while fresh password login works (151.699ms)
+✔ FIX-17 PKCE handoff exposes no bearer, rejects wrong verifier, consumes once and expires (73.3703ms)
+✔ FIX-18 malformed login bodies return 400 (27.468ms)
+✔ FIX-20 audit failure rolls back promotion; success records actor, target and roles (35.0176ms)
+✔ FIX-15 authenticated phone verification also consumes an OTP once (27.3937ms)
+✔ VER-16 login account attempts limited and production admin requires MFA claim (82.6027ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7436.168

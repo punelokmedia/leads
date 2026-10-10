@@ -1,4 +1,6 @@
+import { SecurityAudit } from '../../Services/security-audit.js';
 import jwt from "jsonwebtoken";
+import { comparePassword } from '../../Utils/hash.js';
 import crypto from "node:crypto";
 import mongoose from "mongoose";
 import { User } from "../../Models/user.model.js";
@@ -36,6 +38,7 @@ const resolveAdminByEmail = async (email = "") => {
 
   if (user) {
     if (user.role === "ADMIN") return user;
+    if (process.env.NODE_ENV === 'production') return null;
 
     if (isEnvAdminEmail(email)) {
       user.role = "ADMIN";
@@ -47,6 +50,7 @@ const resolveAdminByEmail = async (email = "") => {
   }
 
   if (!isEnvAdminEmail(email)) return null;
+  if (process.env.NODE_ENV === 'production') return null;
 
   const envAdminEmail = ENV.ADMIN_EMAIL?.trim().toLowerCase();
   if (!envAdminEmail) return null;
@@ -207,11 +211,14 @@ const verifyAdminOtp = async (req, res) => {
     }
 
     admin.resetOtp = null;
+    if (process.env.NODE_ENV === 'production' && (!admin.password || typeof req.body.password !== 'string' || !await comparePassword(req.body.password, admin.password))) {
+      return res.status(401).json({ success: false, message: 'Valid admin password and email OTP are required.' });
+    }
     admin.resetOtpExpire = null;
     await admin.save();
 
     const token = jwt.sign(
-      { id: admin._id, role: admin.role },
+      { id: admin._id, sv: admin.sessionVersion ?? 0, role: admin.role, mfa: process.env.NODE_ENV === 'production' },
       process.env.JWT_SECRET,
       { expiresIn: "1d" },
     );
@@ -237,142 +244,27 @@ const verifyAdminOtp = async (req, res) => {
 };
 
 const changeUserRoleToAdmin = async (req, res) => {
+  const { userId, email, firstname, lastname } = req.body ?? {};
+  if (req.user.role !== 'ADMIN') return res.status(403).json({ success: false, message: 'Access denied.' });
+  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  if (normalizedEmail ? !isValidEmail(normalizedEmail) : typeof userId !== 'string' || !mongoose.isValidObjectId(userId)) return res.status(400).json({ success: false, message: 'Provide a valid userId or email.' });
+  const session = await mongoose.startSession();
   try {
-    const { userId, email, firstname, lastname } = req.body;
-
-    console.log("req.user.role ", req.user.role);
-
-    if (req.user.role !== "ADMIN") {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied. Only admin can change roles.",
-      });
-    }
-
-    const trimmedUserId = typeof userId === "string" ? userId.trim() : "";
-    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
-
-    // 🔍 2. Validate input
-    if (!trimmedUserId && !normalizedEmail) {
-      return res.status(400).json({
-        success: false,
-        message: "Either userId or email is required",
-      });
-    }
-
-    const useEmailFlow = Boolean(normalizedEmail);
-
-    if (
-      !useEmailFlow &&
-      trimmedUserId &&
-      !mongoose.Types.ObjectId.isValid(trimmedUserId)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid userId format",
-      });
-    }
-
-    let user = null;
-    let responseMessage = "User promoted to admin successfully";
-    let createdNewAdmin = false;
-
-    if (!useEmailFlow && trimmedUserId) {
-      user = await User.findById(trimmedUserId);
-
+    const result = await session.withTransaction(async () => {
+      let user = await User.findOne(normalizedEmail ? { email: getEmailMatcher(normalizedEmail) } : { _id: userId }).session(session);
+      const oldRole = user?.role ?? null;
+      if (oldRole === 'ADMIN') return { status: 400, body: { success: false, message: 'User is already an admin' } };
+      if (!user && !normalizedEmail) return { status: 404, body: { success: false, message: 'User not found' } };
       if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
-      }
-    } else {
-      if (!isValidEmail(normalizedEmail)) {
-        return res.status(400).json({
-          success: false,
-          message: "Please provide a valid email",
-        });
-      }
-
-      user = await User.findOne({
-        email: getEmailMatcher(normalizedEmail),
-      });
-
-      if (!user) {
-        const safeFirstName = (firstname || "").trim() || getNameFromEmail(normalizedEmail);
-        const safeLastName = (lastname || "").trim() || "Admin";
-
-        try {
-          user = await User.create({
-            firstname: safeFirstName,
-            lastname: safeLastName,
-            email: normalizedEmail,
-            role: "ADMIN",
-            providers: ["LOCAL"],
-          });
-        } catch (createError) {
-          // In race conditions, same email may be created by another request.
-          if (createError?.code === 11000) {
-            user = await User.findOne({
-              email: getEmailMatcher(normalizedEmail),
-            });
-          } else {
-            throw createError;
-          }
-        }
-
-        if (!user) {
-          return res.status(409).json({
-            success: false,
-            message: "Unable to create admin for this email",
-          });
-        }
-
-        responseMessage = "Admin account created successfully";
-        createdNewAdmin = true;
-      }
-    }
-
-    // ⚠️ 4. Prevent changing already ADMIN
-    if (user.role === "ADMIN" && !createdNewAdmin) {
-      return res.status(400).json({
-        success: false,
-        message: "User is already an admin",
-      });
-    }
-
-    // 🔄 5. Update role
-    if (!createdNewAdmin) {
-      user = await User.findByIdAndUpdate(
-        user._id,
-        { $set: { role: "ADMIN" } },
-        { returnDocument: "after" },
-      );
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
-      }
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: responseMessage,
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
+        [user] = await User.create([{ firstname: typeof firstname === 'string' && firstname.trim() || getNameFromEmail(normalizedEmail), lastname: typeof lastname === 'string' && lastname.trim() || 'Admin', email: normalizedEmail, role: 'ADMIN', providers: ['LOCAL'] }], { session });
+      } else { user.role = 'ADMIN'; await user.save({ session }); }
+      const timestamp = new Date();
+      await SecurityAudit.create([{ eventKey: 'admin-role:' + new mongoose.Types.ObjectId(), event: 'ADMIN_ROLE_PROMOTED', subject: String(user._id), createdAt: timestamp, detail: { actor: String(req.user.id), target: String(user._id), oldRole, newRole: 'ADMIN', timestamp: timestamp.toISOString(), action: 'ADMIN_ROLE_PROMOTED' } }], { session });
+      return { status: 200, body: { success: true, message: oldRole ? 'User promoted to admin successfully' : 'Admin account created successfully', user: { id: user._id, email: user.email, role: user.role } } };
     });
-  } catch (error) {
-    console.error("Change Role Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong",
-    });
-  }
+    return res.status(result.status).json(result.body);
+  } catch { return res.status(503).json({ success: false, message: 'Unable to change role. Please retry.' }); }
+  finally { await session.endSession(); }
 };
 
 const removeAdminRole = async (req, res) => {

@@ -1,7 +1,7 @@
 import { API_BASE_URL } from '@/config/api'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 
 const PAGE_LIMIT = 10
 const API_BASE_URL_CANDIDATES = [API_BASE_URL]
@@ -147,6 +147,8 @@ const fadeUp = {
 }
 
 export function HomePage() {
+  const navigate = useNavigate()
+  const [buyingLeadId, setBuyingLeadId] = useState<string | null>(null)
   const [cityLinks, setCityLinks] = useState<string[]>([])
   const firstRowCategories = cityLinks.slice(0, 6)
   const secondRowCategories = cityLinks.slice(6)
@@ -162,7 +164,6 @@ export function HomePage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [activeCartLeadId, setActiveCartLeadId] = useState<string | null>(null)
   const [cartFeedback, setCartFeedback] = useState('')
-  const [leadQuantities, setLeadQuantities] = useState<Record<string, number>>({})
   const [leadsError, setLeadsError] = useState('')
   const [selectedLeadDetails, setSelectedLeadDetails] = useState<LeadDetails | null>(null)
   const [isLeadDetailsLoading, setIsLeadDetailsLoading] = useState(false)
@@ -324,19 +325,8 @@ export function HomePage() {
     })()
   }
 
-  useEffect(() => {
-    setLeadQuantities((prev) => {
-      const next: Record<string, number> = {}
-      for (const lead of allLeads) {
-        const maxAllowed = 1
-        const current = prev[lead.id] ?? 1
-        next[lead.id] = Math.min(Math.max(current, 1), maxAllowed)
-      }
-      return next
-    })
-  }, [allLeads])
 
-  const handleAddToCart = async (leadId: string, quantity: number) => {
+  const handleAddToCart = async (leadId: string) => {
     if (!userToken) {
       setCartFeedback('Please login first to add leads in cart.')
       return
@@ -354,7 +344,7 @@ export function HomePage() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${userToken}`,
           },
-          body: JSON.stringify({ leadId, quantity }),
+          body: JSON.stringify({ leadId, quantity: 1 }),
         })
         const payload = await response.json()
 
@@ -373,6 +363,33 @@ export function HomePage() {
 
     setCartFeedback(networkError?.message ?? 'Unable to add lead in cart.')
     setActiveCartLeadId(null)
+  }
+
+  const handleBuyNow = async (leadId: string) => {
+    if (buyingLeadId || activeCartLeadId) return
+    if (!userToken) { navigate('/login'); return }
+    setBuyingLeadId(leadId)
+    setCartFeedback('')
+    try {
+      const addResponse = await fetch(`${API_BASE_URL}/api/v1/cart/add-cart`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken}` },
+        body: JSON.stringify({ leadId, quantity: 1 }),
+      })
+      const added = await addResponse.json()
+      if (!addResponse.ok || !added.success) throw new Error(added.message || 'Unable to prepare this lead.')
+      window.dispatchEvent(new Event('cart:updated'))
+      const response = await fetch(`${API_BASE_URL}/api/v1/wallet/purchase`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken}` },
+        body: JSON.stringify({ leadIds: [leadId] }),
+      })
+      const payload = await response.json()
+      if (payload.code === 'MEMBERSHIP_REQUIRED') { navigate('/auth/mobile?flow=membership'); return }
+      if (payload.code === 'INSUFFICIENT_BALANCE') { navigate('/wallet'); return }
+      if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to purchase this lead.')
+      window.dispatchEvent(new Event('cart:updated'))
+      navigate('/history')
+    } catch (error) { setCartFeedback(error instanceof Error ? error.message : 'Purchase failed. Check history before retrying.') }
+    finally { setBuyingLeadId(null) }
   }
 
   const handleViewDetails = async (leadId: string) => {
@@ -619,58 +636,18 @@ export function HomePage() {
                       <br />
                       {lead.sharing}
                     </p>
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <p className="text-sm font-bold text-green-600">
                         {lead.oldPrice > lead.price ? (
                           <span className="mr-1 text-red-500 line-through">₹{lead.oldPrice.toFixed(2)}</span>
                         ) : null}
                         ₹{lead.price}/-
                       </p>
-                      <div className="flex items-center gap-2">
-                        <div className="inline-flex items-center rounded-full border border-stone-300 bg-white">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setLeadQuantities((prev) => ({
-                                ...prev,
-                                [lead.id]: Math.max(1, (prev[lead.id] ?? 1) - 1),
-                              }))
-                            }
-                            className="h-8 w-8 rounded-l-full text-base font-bold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40"
-                            disabled={lead.isSoldOut || (leadQuantities[lead.id] ?? 1) <= 1}
-                            aria-label="Decrease quantity"
-                          >
-                            -
-                          </button>
-                          <span className="min-w-7 text-center text-sm font-semibold text-stone-800">
-                            {leadQuantities[lead.id] ?? 1}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setLeadQuantities((prev) => ({
-                                ...prev,
-                                [lead.id]: Math.min(
-                                  1,
-                                  (prev[lead.id] ?? 1) + 1,
-                                ),
-                              }))
-                            }
-                            className="h-8 w-8 rounded-r-full text-base font-bold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40"
-                            disabled={
-                              lead.isSoldOut ||
-                              (leadQuantities[lead.id] ?? 1) >=
-                                1
-                            }
-                            aria-label="Increase quantity"
-                          >
-                            +
-                          </button>
-                        </div>
+                      <div className="flex flex-wrap items-center gap-2">
                         <motion.button
                           type="button"
                           onClick={() => {
-                            void handleAddToCart(lead.id, leadQuantities[lead.id] ?? 1)
+                            void handleAddToCart(lead.id)
                           }}
                           whileHover={{ scale: 1.04 }}
                           whileTap={{ scale: 0.97 }}
@@ -679,7 +656,7 @@ export function HomePage() {
                               ? 'cursor-not-allowed bg-stone-400'
                               : 'bg-green-500 hover:bg-green-600'
                           }`}
-                          disabled={lead.isSoldOut || activeCartLeadId === lead.id}
+                          disabled={lead.isSoldOut || activeCartLeadId !== null || buyingLeadId !== null}
                         >
                           {lead.isSoldOut
                             ? lead.unavailableLabel
@@ -687,6 +664,9 @@ export function HomePage() {
                               ? 'Adding...'
                               : 'Add'}
                         </motion.button>
+                        <button type="button" onClick={() => void handleBuyNow(lead.id)} disabled={lead.isSoldOut || buyingLeadId !== null || activeCartLeadId !== null} aria-busy={buyingLeadId === lead.id} className={`rounded-lg bg-[#F8B020] px-3 py-1.5 text-xs font-semibold text-stone-900 enabled:hover:bg-[#E2A11D] ${lead.isSoldOut ? 'cursor-not-allowed opacity-50' : buyingLeadId === lead.id ? 'cursor-wait opacity-70' : ''}`}>
+                          {buyingLeadId === lead.id ? 'Buying…' : 'Buy now'}
+                        </button>
                         {userToken ? (
                           <button
                             type="button"
@@ -706,9 +686,12 @@ export function HomePage() {
           </div>
         )}
         {cartFeedback ? (
-          <p className="mt-4 rounded-xl border border-[#F8B020]/40 bg-[#FFF7E8] px-4 py-2 text-sm font-medium text-stone-700">
-            {cartFeedback}
-          </p>
+          <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] flex justify-center px-4">
+            <div role="status" aria-live="polite" className="pointer-events-auto flex w-full max-w-lg items-center justify-between gap-4 rounded-xl border border-[#F8B020]/40 bg-[#FFF7E8] px-4 py-3 text-sm font-medium text-stone-700 shadow-lg">
+              <p>{cartFeedback}</p>
+              <button type="button" onClick={() => setCartFeedback('')} aria-label="Dismiss notification" className="shrink-0 rounded-lg px-2 py-1 font-semibold hover:bg-amber-100">Dismiss</button>
+            </div>
+          </div>
         ) : null}
 
         {hasMoreLeads && !isLeadsLoading ? (

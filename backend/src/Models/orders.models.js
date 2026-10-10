@@ -53,6 +53,7 @@ const OrderSchema = new mongoose.Schema(
       index: true,
     },
 
+    paymentMethod: { type: String, enum: ['RAZORPAY', 'WALLET'], default: 'RAZORPAY' },
     paidAt: Date,
     reservationExpiresAt: Date,
     cartHash: String,

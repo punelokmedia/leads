@@ -1,4 +1,7 @@
+import { startGoogleLogin } from '@/features/auth/googleHandoff'
+import { createPortal } from 'react-dom'
 import { API_BASE_URL } from '@/config/api'
+import { notifyUserSessionChanged } from '@/features/auth/useUserToken'
 import { ReferralCard } from './ReferralCard'
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
@@ -8,9 +11,6 @@ const API_BASE_URL_CANDIDATES = [API_BASE_URL]
 const buildAuthUrl = (apiBaseUrl: string, path: string) =>
   `${apiBaseUrl}/api/v1/auth${path}`
 const buildApiUrl = (apiBaseUrl: string, path: string) => `${apiBaseUrl}/api/v1${path}`
-const RAZORPAY_KEY_ID =
-  import.meta.env.VITE_RAZORPAY_KEY_ID ?? import.meta.env.VITE_RAZORPAY_KEY ?? 'demo_key'
-
 const getLeadPreviewImage = (id: string) => {
   const lastChar = id?.slice(-1) ?? ''
   const parsed = Number.parseInt(lastChar, 16)
@@ -26,19 +26,6 @@ declare global {
   interface Window {
     Razorpay?: new (options: Record<string, unknown>) => RazorpayCheckout
   }
-}
-
-const ensureRazorpayLoaded = async () => {
-  if (window.Razorpay) return
-
-  await new Promise<void>((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Unable to load Razorpay checkout script.'))
-    document.body.appendChild(script)
-  })
 }
 
 type HistoryLead = {
@@ -98,17 +85,15 @@ type City = {
 
 export function PublicHeader() {
   const navigate = useNavigate()
-  const isReferralPage = useLocation().pathname === '/referrals'
-  const [panelMode, setPanelMode] = useState<
-    | 'history'
-    | 'cart'
-    | 'login'
-    | 'signup'
-    | 'forgot-email'
-    | 'forgot-otp'
-    | 'forgot-reset'
-    | null
-  >(null)
+  const pathname = useLocation().pathname
+  const isReferralPage = pathname === '/referrals'
+  const pagePaths = { history: '/history', cart: '/cart', login: '/login', signup: '/signup', 'forgot-email': '/forgot-password', 'forgot-otp': '/forgot-password/verify', 'forgot-reset': '/forgot-password/reset' } as const
+  type PanelMode = keyof typeof pagePaths
+  const panelMode = (Object.keys(pagePaths) as PanelMode[]).find(mode => pagePaths[mode] === pathname) ?? null
+  const setPanelMode = (mode: PanelMode | null) => { navigate(mode ? pagePaths[mode] : '/') }
+  const [pageContainer, setPageContainer] = useState<HTMLElement | null>(null)
+  useEffect(() => { setPageContainer(document.getElementById('account-page-content')) }, [])
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [authError, setAuthError] = useState('')
@@ -178,6 +163,7 @@ export function PublicHeader() {
 
   const storeUserSession = (token: string, user?: unknown) => {
     localStorage.setItem('user_token', token)
+    notifyUserSessionChanged()
     if (user) {
       localStorage.setItem('user_profile', JSON.stringify(user))
     }
@@ -273,7 +259,7 @@ export function PublicHeader() {
   const handleGoogleLogin = () => {
     resetAuthMessages()
     const googleAuthUrl = buildAuthUrl(API_BASE_URL_CANDIDATES[0], '/google')
-    window.location.assign(googleAuthUrl)
+    void startGoogleLogin(googleAuthUrl).catch(() => setAuthError('Unable to start Google login.'))
   }
 
   const fetchHistoryLeads = useCallback(async () => {
@@ -494,117 +480,25 @@ export function PublicHeader() {
   }
 
   const handleProceedToPay = async () => {
-    if (!userToken) {
-      setAuthError('Please login first.')
-      setPanelMode('login')
-      return
-    }
-
-    if (cartLeads.length === 0) {
-      setAuthError('Your cart is empty.')
-      return
-    }
-
+    if (isPaymentProcessing) return
+    if (!userToken) { setAuthError('Please login first.'); setPanelMode('login'); return }
+    if (!cartLeads.length) { setAuthError('Your cart is empty.'); return }
+    setIsPaymentProcessing(true)
+    resetAuthMessages()
     try {
-      setIsPaymentProcessing(true)
-      resetAuthMessages()
-
-      const createResponse = await requestApi('/payments/create', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
-      })
-      const createPayload = await createResponse.json()
-
-      if (createPayload?.code === 'MEMBERSHIP_REQUIRED') {
-        setPanelMode(null)
-        navigate('/auth/mobile?flow=membership')
-        return
-      }
-      if (!createResponse.ok || !createPayload?.success) {
-        throw new Error(createPayload?.message ?? 'Unable to create payment order.')
-      }
-
-      const orderData = createPayload?.data ?? {}
-      if (!orderData?.razorpayOrderId) {
-        throw new Error('Payment order ID missing. Please try again.')
-      }
-      const internalOrderId =
-        typeof orderData?.internalOrderId === 'string' ? orderData.internalOrderId : ''
-
-      await ensureRazorpayLoaded()
-      if (!window.Razorpay) {
-        throw new Error('Razorpay checkout unavailable right now.')
-      }
-
-      const razorpay = new window.Razorpay({
-        key: orderData.keyId || RAZORPAY_KEY_ID,
-        amount: Math.round(Number(orderData.amount) * 100),
-        timeout: Math.max(1, Math.min(600, Number(orderData.expiresIn) || 300)),
-        currency: orderData.currency ?? 'INR',
-        name: 'Leads Solution',
-        description: `${orderData.leadsCount ?? cartSummary.totalItems} lead(s) purchase`,
-        order_id: orderData.razorpayOrderId,
-        modal: {
-          ondismiss: () => {
-            if (internalOrderId) void requestApi('/payments/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken}` }, body: JSON.stringify({ orderId: internalOrderId }) }).catch(() => {});
-            setAuthError('Payment cancelled.')
-            setIsPaymentProcessing(false)
-          },
-        },
-        handler: async (response: {
-          razorpay_order_id: string
-          razorpay_payment_id: string
-          razorpay_signature: string
-        }) => {
-          try {
-            const verifyResponse = await requestApi('/payments/verify', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${userToken}`,
-              },
-              body: JSON.stringify({
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-              }),
-            })
-            const verifyPayload = await verifyResponse.json()
-
-            if (!verifyResponse.ok || !verifyPayload?.success) {
-              throw new Error(verifyPayload?.message ?? 'Payment verification failed.')
-            }
-
-            setAuthSuccess(verifyPayload?.message ?? 'Payment successful.')
-            await fetchCart()
-            if (internalOrderId) {
-              setDownloadOrderId(internalOrderId)
-              setIsDownloadPopupOpen(true)
-            } else {
-              setPanelMode('history')
-              void fetchHistoryLeads()
-            }
-          } catch (error) {
-            setAuthError(error instanceof Error ? error.message : 'Payment verification failed.')
-          } finally {
-            setIsPaymentProcessing(false)
-          }
-        },
-      })
-
-      razorpay.on('payment.failed', (response: Record<string, unknown>) => {
-        const error = response?.error as { description?: string } | undefined
-        setAuthError(error?.description || 'Payment Failed')
-        setIsPaymentProcessing(false)
-      })
-
-      razorpay.open()
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Unable to start payment.')
-      setIsPaymentProcessing(false)
-    }
+      const response = await requestApi('/wallet/purchase', { method: 'POST', headers: { Authorization: 'Bearer ' + userToken } })
+      const payload = await response.json()
+      if (payload.code === 'MEMBERSHIP_REQUIRED') { setPanelMode(null); navigate('/auth/mobile?flow=membership'); return }
+      if (payload.code === 'INSUFFICIENT_BALANCE') { setAuthError('Add money to your wallet before purchasing.'); setPanelMode(null); navigate('/wallet'); return }
+      if (!response.ok || !payload.success) throw new Error(payload.message || 'Wallet purchase failed.')
+      setAuthSuccess('Paid from your wallet. Your leads are ready.')
+      await fetchCart()
+      setPanelMode('history')
+      await fetchHistoryLeads()
+      const orderId = payload.data?.orderId
+      if (orderId) { setDownloadOrderId(String(orderId)) }
+    } catch (error) { setAuthError(error instanceof Error ? error.message : 'Wallet purchase failed.') }
+    finally { setIsPaymentProcessing(false) }
   }
 
   const handleDownloadLead = async (orderId: string) => {
@@ -687,6 +581,7 @@ export function PublicHeader() {
       // Ignore logout API errors and clear local session anyway.
     } finally {
       localStorage.removeItem('user_token')
+      notifyUserSessionChanged()
       localStorage.removeItem('user_profile')
       sessionStorage.clear()
 
@@ -713,48 +608,25 @@ export function PublicHeader() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('gauth') !== '1') return
-
-    const token = params.get('token')
-    const serializedUser = params.get('user')
+    const code = new URLSearchParams(window.location.hash.slice(1)).get('oauth_code')
+    const verifier = sessionStorage.getItem('google_verifier')
     const googleError = params.get('error')
-
-    if (googleError) {
-      setAuthError(googleError)
-      navigate('/', { replace: true })
-      return
-    }
-
-    if (token) {
-      let parsedUser: unknown = undefined
-      if (serializedUser) {
-        try {
-          parsedUser = JSON.parse(serializedUser)
-        } catch {
-          parsedUser = undefined
-        }
-      }
-      storeUserSession(token, parsedUser)
-      setPanelMode(null)
-      setIsMobileMenuOpen(false)
-      const profile = (parsedUser ?? {}) as {
-        registrationFeePaid?: boolean
-        firstname?: string
-        email?: string
-        city?: string
-        businessName?: string
-        workType?: string
-      }
-
-      if (sessionStorage.getItem('pending_referral_code') || !profile.firstname || !profile.email || !profile.city || !profile.businessName || !profile.workType) {
-        navigate('/auth/mobile?flow=google', { replace: true })
-        return
-      }
-
-      setAuthSuccess('Logged in successfully using Google.')
-    }
-
-    navigate('/', { replace: true })
-  }, [navigate])
+    window.history.replaceState({}, '', window.location.pathname)
+    if (googleError || !code || !verifier) { setAuthError(googleError || 'Google login expired. Please retry.'); return }
+    sessionStorage.removeItem('google_verifier')
+    void (async () => {
+      try {
+        const response = await requestApi('/auth/google/exchange', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier }) })
+        const payload = await response.json()
+        if (!response.ok || !payload.success || !payload.token) throw new Error('Login exchange failed')
+        storeUserSession(payload.token, payload.data)
+        setIsMobileMenuOpen(false)
+        const profile = payload.data
+        if (sessionStorage.getItem('pending_referral_code') || !profile.firstname || !profile.email || !profile.city || !profile.businessName || !profile.workType) navigate('/auth/mobile?flow=google', { replace: true })
+        else { setAuthSuccess('Logged in successfully using Google.'); navigate('/', { replace: true }) }
+      } catch { setAuthError('Unable to complete Google login. Please retry.'); navigate('/', { replace: true }) }
+    })()
+  }, [navigate, requestApi])
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -1126,6 +998,7 @@ export function PublicHeader() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <NavLink to="/wallet" onClick={() => { setIsMobileMenuOpen(false); setPanelMode(null) }} className="rounded-full border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-stone-800 hover:bg-amber-50">Wallet</NavLink>
             <button
               type="button"
               onClick={() => {
@@ -1436,39 +1309,28 @@ export function PublicHeader() {
         ) : null}
       </header>}
 
-      <div
-        className={`fixed inset-0 z-40 transition ${
-          isPanelOpen ? 'pointer-events-auto bg-black/45' : 'pointer-events-none bg-black/0'
-        }`}
-        onClick={() => {
-          resetAuthMessages()
-          setPanelMode(null)
-        }}
-      >
-        <aside
-          className={`absolute top-0 h-full w-full overflow-y-auto bg-[#efefef] transition-transform duration-300 ease-out ${
-            `right-0 max-w-sm shadow-2xl ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`
-          }`}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <div className="sticky top-0 z-10 flex justify-end bg-[#efefef] px-4 pt-4">
+      {isPanelOpen && pageContainer && createPortal(
+        <section className="min-h-[70vh] bg-[#efefef] px-4 py-8 sm:py-12">
+        <div className={panelMode === 'cart' || panelMode === 'history' ? 'mx-auto w-full max-w-5xl' : 'mx-auto w-full max-w-lg'}>
+          <div className="mb-6 flex justify-start px-4">
             <button
               type="button"
               onClick={() => {
                 resetAuthMessages()
-                setPanelMode(null)
+                if (window.history.state?.idx > 0) navigate(-1)
+                else navigate('/')
               }}
-              className="rounded-full p-2 text-stone-500 transition hover:bg-stone-200 hover:text-stone-800"
-              aria-label="Close panel"
+              className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              aria-label="Go back"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6 6 18M6 6l12 12" />
+                <path d="m12 5-7 7 7 7M5 12h14" />
               </svg>
+              Back
             </button>
           </div>
 
           <div className="-mt-2 bg-[#efefef] px-4 pb-5 text-center">
-            <img src="/logo.png" alt="Interiorwala" className="mx-auto h-16 w-auto" />
             {panelMode === 'history' ? (
               <>
                 <h2 className="mt-2 text-4xl font-black text-stone-900">History</h2>
@@ -1535,7 +1397,7 @@ export function PublicHeader() {
               ) : historyLeads.length === 0 ? (
                 <p className="text-center text-sm text-stone-600">No purchase history found.</p>
               ) : (
-                <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
                   {historyLeads.map((lead) => (
                     <article
                       key={lead.id}
@@ -1562,7 +1424,8 @@ export function PublicHeader() {
                           <p className="text-xs text-stone-500">{new Date(lead.paidAt).toLocaleString()}</p>
                         </div>
                         <p>{lead.address}</p>
-                        <p>{lead.phone}</p>
+                        <a href={lead.phone === 'N/A' ? undefined : `tel:${lead.phone}`} className="font-semibold text-violet-700">{lead.phone}</a>
+                        <p className="mt-2 text-sm font-semibold">Purchased for ₹{lead.price.toLocaleString('en-IN')}</p>
                         <div className="mt-2 flex items-center justify-between">
                           <p className="text-xs text-stone-600">
                             {lead.quantity} {lead.quantity > 1 ? 'Sharing Leads' : 'Sharing Lead'}
@@ -1586,7 +1449,7 @@ export function PublicHeader() {
                               : 'border-[#B3BA70] bg-white text-[#99A13E] hover:bg-[#F8FADF]'
                           }`}
                         >
-                          {lead.isDownloaded ? 'Already Downloaded' : 'Download Leads'}
+                          {lead.isDownloaded ? 'Excel already downloaded' : 'Download Excel'}
                         </button>
                       </div>
                     </article>
@@ -1608,7 +1471,10 @@ export function PublicHeader() {
               ) : isCartLoading ? (
                 <p className="text-center text-sm font-medium text-stone-600">Loading cart...</p>
               ) : cartLeads.length === 0 ? (
-                <p className="text-center text-sm text-stone-600">Your cart is empty.</p>
+                <div className="rounded-2xl border border-stone-200 bg-white px-6 py-12 text-center">
+                  <p className="text-lg font-semibold text-stone-800">Your cart is empty.</p>
+                  <button type="button" onClick={() => navigate('/')} className="mt-5 rounded-xl bg-[#F8B020] px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-[#E2A11D]">Browse leads</button>
+                </div>
               ) : (
                 <>
                   {removedCartLeads.length > 0 ? (
@@ -1712,7 +1578,7 @@ export function PublicHeader() {
                       disabled={isPaymentProcessing || isLoading}
                       className="w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D] disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {isPaymentProcessing ? 'Opening Payment...' : 'Proceed to Pay'}
+                      {isPaymentProcessing ? 'Processing...' : 'Pay from wallet'}
                     </button>
                     <button
                       type="button"
@@ -2123,8 +1989,9 @@ export function PublicHeader() {
               </p>
             </form>
           )}
-        </aside>
-      </div>
+        </div>
+        </section>, pageContainer
+      )}
       {isDownloadPopupOpen ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-5 text-center shadow-2xl">

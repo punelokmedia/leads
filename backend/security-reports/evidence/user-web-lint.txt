@@ -1,0 +1,14 @@
+
+> lint:user
+> npm run lint -w user-web
+
+
+> user-web@0.0.0 lint
+> eslint .
+
+
+C:\Users\punel\leads\frontend\apps\user-web\src\components\layout\PublicHeader.tsx
+  651:6  warning  React Hook useEffect has a missing dependency: 'setPanelMode'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+✖ 1 problem (0 errors, 1 warning)
+

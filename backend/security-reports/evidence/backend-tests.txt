@@ -1,0 +1,266 @@
+
+> server@1.0.0 test
+> node --test test/*.test.js
+
+(node:23072) [MONGOOSE] Warning: Mongoose: `Document.prototype.validateSync()` is deprecated and will be removed in Mongoose 10. Use `Document.prototype.validate()` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ rejects invalid contact details and non-string inputs before saving (2.5497ms)
+✔ saves normalized contact details and reason without accepting a client-supplied status (9.5702ms)
+✔ allows submitting without a reason (0.437ms)
+✔ does not claim success when saving fails or expose database errors (0.5599ms)
+◇ injected env (32) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+✔ admin OTP uses Gmail without attempting Resend (3.0314ms)
+✔ SMTP failures are reported without switching to the unverified domain (1.8211ms)
+Processed 3/3
+✔ bulk XLSX upload saves primary phone and normalized customer name, rejecting invalid phones (191.7564ms)
+✔ three simultaneous checkouts: exactly two reserve; third never gets an order (1481.427ms)
+✔ duplicate callback/webhook deliveries allocate a purchase only once (161.7863ms)
+✔ same buyer cannot reserve twice, buy twice or consume two slots (105.3184ms)
+✔ expired reservation frees a slot; late captured payment queues refund and grants nothing (122.5768ms)
+✔ cancellation releases only its own slots, even when repeated (102.413ms)
+✔ wrong owner, non-captured payments and amount mismatches never unlock contacts (54.3275ms)
+✔ multi-lead reservation rolls back entirely when any lead is sold out (58.7142ms)
+✔ legacy maxBuyers=3 records still stop at two and multi-line settlement never partially unlocks (99.9384ms)
+✔ refund job retries safely after a lost gateway response (81.1635ms)
+◇ injected env (30) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+✔ trusted admin preflight succeeds without database access (1439.1823ms)
+(node:22424) [MONGOOSE] Warning: Mongoose: `Document.prototype.validateSync()` is deprecated and will be removed in Mongoose 10. Use `Document.prototype.validate()` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ private Google beta rejects unlisted emails before database access (3.3111ms)
+✔ private Google beta accepts normalized listed emails (0.725ms)
+✔ new Google users without a surname pass schema validation (12.7252ms)
+✔ existing Google identity cannot be replaced by a different subject (0.8593ms)
+✔ missing user credentials never fall back to admin credentials (0.7697ms)
+✔ requires a token before verification (0.2802ms)
+✔ rejects invalid signatures, expiry or audience before accessing users (1.3259ms)
+✔ accepts the separately configured mobile audience alongside web (6.029ms)
+✔ rejects unverified Google emails (0.57ms)
+✔ blocked users do not receive a session (1.4312ms)
+✔ returns the mobile session contract without exposing private user fields (1.805ms)
+✔ guest details hide contacts and calculate capacity from buyersCount (2.9086ms)
+✔ only a recorded purchase belonging to the current user unlocks contacts (1.8297ms)
+✔ listing marks paid purchases but never includes client contacts (1.2399ms)
+✔ optional authentication allows guests and rejects invalid supplied tokens (0.8663ms)
+✔ two paid buyers sell out even a legacy lead configured for three (1.6787ms)
+✔ pending reservations consume slots but expired ones do not (1.1908ms)
+✔ expired leads cannot expose availability and historic oversold counts are preserved (0.286ms)
+✔ model always normalizes new/imported lead limits to two (17.5129ms)
+✔ cart schema rejects buying two quantities of one lead (6.5694ms)
+◇ injected env (32) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+✔ first-time unpaid user is shown membership before any lead reservation (2.9395ms)
+✔ lifetime member skips membership on subsequent checkout (78.0036ms)
+✔ existing lead buyer skips membership on subsequent checkout (0.9024ms)
+✔ membership rejects uncaptured payment (1.3495ms)
+✔ membership rejects wrong amount payment (0.3621ms)
+✔ membership rejects wrong account payment (0.328ms)
+✔ membership rejects lead order payment (0.2472ms)
+✔ captured membership payment activates once without requiring profile fields (0.8612ms)
+◇ injected env (32) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+✔ password reset requires an OTP before querying users (1.8179ms)
+✔ password reset rejects incorrect and expired OTPs (0.7245ms)
+✔ valid password reset hashes the password and consumes the OTP (72.3359ms)
+◇ injected env (32) from .env // tip: ⌘ enable debugging { debug: true }
+✔ admin login rejects missing OTP before database access (1.6914ms)
+✔ admin login rejects an OTP without an expiry (0.7068ms)
+✔ production phone OTP does not claim delivery without an SMS integration (1.6306ms)
+✔ user JSON omits passwords, OTPs and payment signatures (10.4795ms)
+✔ referrals apply once under concurrent retries and qualification is atomic and idempotent (1439.6593ms)
+✔ new users get distinct persisted immutable codes enforced by a unique index (9.0214ms)
+✔ legacy users get one stable code across concurrent requests (68.5208ms)
+✔ shared API requires authentication and validates normalized codes without exposing users (129.3295ms)
+✔ HTTP guards reject Mongo operators, prototype paths, malformed and oversized bodies (139.0503ms)
+✔ spreadsheet import rejects formulas, prototype headers, macros and archive expansion (604.0451ms)
+✔ ExcelJS compatible uuid override preserves conditional-format export (40.4278ms)
+✔ EXCEL-01 upload middleware rejects invalid extension, MIME and over-5MiB file (151.525ms)
+✔ EXCEL-02 excessive rows and columns fail before bulk database writes (382.8775ms)
+✔ EXCEL-03 export strings beginning with formula characters remain text on roundtrip (18.5472ms)
+◇ injected env (30) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+✔ VER-01 wallet rejects invalid topups and ignores foreign user/balance input (1947.3961ms)
+✔ VER-02 JWT validation, admin authorization and blocked-account access (26.1585ms)
+✔ VER-03 mobile OTP expires, is consumed after success and attempts are limited (86.8925ms)
+Login Error: TypeError: Cannot destructure property 'email' of 'req.body' as it is undefined.
+    at loginUser (file:///C:/Users/punel/leads/backend/src/Controllers/auth.controller.js:116:13)
+    at Layer.handleRequest (C:\Users\punel\leads\backend\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\punel\leads\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (C:\Users\punel\leads\backend\node_modules\router\lib\route.js:117:3)
+    at handle (C:\Users\punel\leads\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (C:\Users\punel\leads\backend\node_modules\router\lib\layer.js:152:17)
+    at C:\Users\punel\leads\backend\node_modules\router\index.js:295:15
+    at processParams (C:\Users\punel\leads\backend\node_modules\router\index.js:582:12)
+    at next (C:\Users\punel\leads\backend\node_modules\router\index.js:291:5)
+    at router.handle (C:\Users\punel\leads\backend\node_modules\router\index.js:186:3)
+    at router (C:\Users\punel\leads\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (C:\Users\punel\leads\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\punel\leads\backend\node_modules\router\index.js:342:13)
+    at C:\Users\punel\leads\backend\node_modules\router\index.js:297:9
+    at processParams (C:\Users\punel\leads\backend\node_modules\router\index.js:582:12)
+    at next (C:\Users\punel\leads\backend\node_modules\router\index.js:291:5)
+✔ VER-04 real app parser, CORS, prototype/operator and content-type probes (32.2983ms)
+✔ VER-05 forwarded IP spoofing cannot reset a shared IP limiter (23.6199ms)
+✔ VER-06 20 captured webhook duplicates credit exactly once and reconcile (192.989ms)
+✔ VER-07 callback rejects failed/mismatched/wrong-order/foreign payments before credit (129.2708ms)
+✔ VER-08 20 competing debits never overspend; client price is ignored (796.7768ms)
+✔ VER-09 20 qualified referral retries reward once; self/invalid/prequalification rejected (408.4085ms)
+✔ VER-10 20 buyers cannot exceed the two-vendor inventory limit (1401.2824ms)
+✔ VER-11 failure after wallet debit rolls back access/ledger/audit and permits retry (148.0831ms)
+✔ VER-12 required financial unique indexes exist in disposable database (5.2696ms)
+✖ VER-13 declared User indexes can be created on supported MongoDB (security expectation) (491.8204ms)
+✖ VER-14 logout invalidates a previously issued token (security expectation) (40.9875ms)
+✖ VER-15 concurrent use of one mobile OTP issues at most one session (security expectation) (34.641ms)
+✖ VER-17 Google redirect does not put a bearer JWT in the URL (security expectation) (7.3359ms)
+Login Error: TypeError: Cannot destructure property 'email' of 'req.body' as it is undefined.
+    at loginUser (file:///C:/Users/punel/leads/backend/src/Controllers/auth.controller.js:116:13)
+    at Layer.handleRequest (C:\Users\punel\leads\backend\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\punel\leads\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (C:\Users\punel\leads\backend\node_modules\router\lib\route.js:117:3)
+    at handle (C:\Users\punel\leads\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (C:\Users\punel\leads\backend\node_modules\router\lib\layer.js:152:17)
+    at C:\Users\punel\leads\backend\node_modules\router\index.js:295:15
+    at processParams (C:\Users\punel\leads\backend\node_modules\router\index.js:582:12)
+    at next (C:\Users\punel\leads\backend\node_modules\router\index.js:291:5)
+    at router.handle (C:\Users\punel\leads\backend\node_modules\router\index.js:186:3)
+    at router (C:\Users\punel\leads\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (C:\Users\punel\leads\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\punel\leads\backend\node_modules\router\index.js:342:13)
+    at C:\Users\punel\leads\backend\node_modules\router\index.js:297:9
+    at processParams (C:\Users\punel\leads\backend\node_modules\router\index.js:582:12)
+    at next (C:\Users\punel\leads\backend\node_modules\router\index.js:291:5)
+✖ VER-18 unsupported login content-type returns a client error (security expectation) (15.5969ms)
+✔ VER-19 transient transaction failure retries without duplicate debit or allocation (113.7377ms)
+req.user.role  ADMIN
+✖ VER-20 successful admin role promotion creates an attributable audit record (security expectation) (26.7274ms)
+✔ VER-16 login account attempts limited and production admin requires MFA claim (62.3788ms)
+✔ support enforces authentication and message validation (790.5979ms)
+✔ concurrent retries save one message and cannot expose another user history (56.5478ms)
+✔ admin replies persist and are visible only to the conversation owner (31.4848ms)
+◇ injected env (32) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+✔ Vercel entry exports an app without opening a listener or database connection (1278.5046ms)
+✔ database failures reject without exiting and a later attempt can retry (2.3356ms)
+✔ Add money API verifies payment then exposes updated balance and complete private paginated history (1451.7089ms)
+✔ refund/dispute reversals are cumulative, idempotent and freeze spent funds as debt (92.7134ms)
+✔ ledger signs content, prohibits mutation and records transactional audit (13.3607ms)
+✔ shared limits enforce five attempts and isolate account identities (30.9308ms)
+✔ low-spend referrals enter review without granting a reward (46.2172ms)
+◇ injected env (31) from .env // tip: ⌘ suppress logs { quiet: true }
+✔ signed refund webhooks reject forgery and reverse credit once across retries (47.9457ms)
+✔ production admin OTP alone cannot issue a privileged session (186.7028ms)
+✔ referral credits are revoked once when the referred payment is refunded (83.6296ms)
+✔ captured top-ups require ownership, exact amount and currency, and credit once under concurrent retries (54.492ms)
+✔ membership cannot overdraw and concurrent activation charges once (42.9199ms)
+✔ referral rewards roll back, credit once, and cannot exceed the lifetime ₹100 cap (128.3543ms)
+✔ lead purchase uses server price and commits access with debit; insufficient funds roll back (132.3692ms)
+ℹ tests 99
+ℹ suites 0
+ℹ pass 93
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9071.0971
+
+✖ failing tests:
+
+test at test\security-verification.test.js:231:1
+✖ VER-13 declared User indexes can be created on supported MongoDB (security expectation) (491.8204ms)
+  Error [MongoServerError]: Error in specification { unique: true, partialFilterExpression: { phoneNumber: { $type: "string", $ne: "" } }, name: "phoneNumber_1", key: { phoneNumber: 1 }, v: 2 } :: caused by :: Expression not supported in partial index: $not
+      phoneNumber $eq ""
+  
+      at Connection.sendCommand (C:\Users\punel\leads\backend\node_modules\mongodb\lib\cmap\connection.js:322:27)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Connection.command (C:\Users\punel\leads\backend\node_modules\mongodb\lib\cmap\connection.js:349:26)
+      at async Server.command (C:\Users\punel\leads\backend\node_modules\mongodb\lib\sdam\server.js:208:29)
+      at async executeOperationWithRetries (C:\Users\punel\leads\backend\node_modules\mongodb\lib\operations\execute_operation.js:217:32)
+      at async executeOperation (C:\Users\punel\leads\backend\node_modules\mongodb\lib\operations\execute_operation.js:85:16)
+      at async Collection.createIndex (C:\Users\punel\leads\backend\node_modules\mongodb\lib\collection.js:373:25) {
+    errorLabelSet: Set(0) {},
+    errorResponse: { ok: 0, errmsg: 'Error in specification { unique: true, partialFilterExpression: { phoneNumber: { $type: "string", $ne: "" } }, name: "phoneNumber_1", key: { phoneNumber: 1 }, v: 2 } :: caused by :: Expression not supported in partial index: $not\n    phoneNumber $eq ""\n', code: 67, codeName: 'CannotCreateIndex', '$clusterTime': { clusterTime: [Object], signature: [Object] }, operationTime: { high: 1791634060, low: 45, unsigned: true } },
+    ok: 0,
+    code: 67,
+    codeName: 'CannotCreateIndex',
+    '$clusterTime': { clusterTime: { high: 1791634060, low: 45, unsigned: true }, signature: { hash: [Object], keyId: 0 } },
+    operationTime: { high: 1791634060, low: 45, unsigned: true }
+  }
+
+test at test\security-verification.test.js:236:1
+✖ VER-14 logout invalidates a previously issued token (security expectation) (40.9875ms)
+  AssertionError [ERR_ASSERTION]: Logged-out JWT remains valid until expiration
+  
+  200 !== 401
+  
+      at TestContext.<anonymous> (file:///C:/Users/punel/leads/backend/test/security-verification.test.js:240:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 200,
+    expected: 401,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\security-verification.test.js:243:1
+✖ VER-15 concurrent use of one mobile OTP issues at most one session (security expectation) (34.641ms)
+  AssertionError [ERR_ASSERTION]: Concurrent OTP submissions both issued sessions
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///C:/Users/punel/leads/backend/test/security-verification.test.js:257:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\security-verification.test.js:260:1
+✖ VER-17 Google redirect does not put a bearer JWT in the URL (security expectation) (7.3359ms)
+  AssertionError [ERR_ASSERTION]: Google callback exposes bearer token in URL
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///C:/Users/punel/leads/backend/test/security-verification.test.js:265:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\security-verification.test.js:268:1
+✖ VER-18 unsupported login content-type returns a client error (security expectation) (15.5969ms)
+  AssertionError [ERR_ASSERTION]: Unsupported Content-Type returned 500
+      at TestContext.<anonymous> (file:///C:/Users/punel/leads/backend/test/security-verification.test.js:270:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test\security-verification.test.js:289:1
+✖ VER-20 successful admin role promotion creates an attributable audit record (security expectation) (26.7274ms)
+  AssertionError [ERR_ASSERTION]: Admin promotion committed without a persisted security audit event
+      at TestContext.<anonymous> (file:///C:/Users/punel/leads/backend/test/security-verification.test.js:296:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

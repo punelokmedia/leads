@@ -1,3 +1,6 @@
+import { exportSecurityAudit } from '../../Services/security-audit.js';
+import { WalletTopup } from '../../Models/wallet.model.js';
+import { creditCapturedTopup, reverseTopup } from '../../Services/wallet.service.js';
 ﻿import crypto from 'node:crypto';
 import mongoose from 'mongoose';
 import { User } from '../../Models/user.model.js';
@@ -84,9 +87,22 @@ export async function webhookHandler(req, res) {
     if (!Buffer.isBuffer(req.rawBody) || !validSignature(req.rawBody, req.headers['x-razorpay-signature'], process.env.RAZORPAY_WEBHOOK_SECRET)) {
       return res.status(400).json({ success: false, message: 'Invalid webhook signature.' });
     }
+    if (['refund.processed', 'refund.created'].includes(req.body.event)) {
+      const id = req.body.payload?.refund?.entity?.payment_id;
+      if (typeof id !== 'string') return res.status(400).json({ success: false });
+      await reverseTopup(await razorpay.payments.fetch(id));
+    }
+    if (req.body.event?.startsWith('payment.dispute.')) {
+      const id = req.body.payload?.dispute?.entity?.payment_id;
+      if (typeof id !== 'string') return res.status(400).json({ success: false });
+      // Signed dispute events conservatively freeze and reverse the credited top-up.
+      // Winning a dispute requires reviewed restoration; no automatic unlock.
+      await reverseTopup(await razorpay.payments.fetch(id), true);
+    }
     if (req.body.event === 'payment.captured') {
       const entity = req.body.payload?.payment?.entity;
       if (!entity?.id) return res.status(400).json({ success: false });
+      if (await WalletTopup.exists({ gatewayOrderId: entity.order_id })) await creditCapturedTopup(await razorpay.payments.fetch(entity.id));
       // Registration orders have their own verification flow.
       const known = await Order.exists({ razorpayOrderId: entity.order_id });
       if (known) {
@@ -113,7 +129,16 @@ export function startPaymentMaintenance() {
         } catch (error) { console.error('Payment reconciliation failed:', error.message); }
         await Order.updateOne({ _id: order._id }, { $set: { lastReconciledAt: new Date() } });
       }
+      const topups = await WalletTopup.find({ status: 'CREATED', gatewayOrderId: { $type: 'string' } }).sort({ updatedAt: 1 }).limit(20);
+      for (const topup of topups) {
+        try {
+          const payments = await razorpay.orders.fetchPayments(topup.gatewayOrderId);
+          for (const payment of payments.items ?? []) if (payment.status === 'captured') await creditCapturedTopup(await razorpay.payments.fetch(payment.id));
+        } catch (error) { console.error('Top-up reconciliation failed:', error.message); }
+        await WalletTopup.updateOne({ _id: topup._id }, { $set: { updatedAt: new Date() } });
+      }
       await processRefunds(razorpay);
+      await exportSecurityAudit();
     } catch (error) { console.error('Payment maintenance failed:', error.message); }
     finally { running = false; }
   };

@@ -1,3 +1,6 @@
+import { WalletEntry } from '../Models/wallet.model.js';
+import { WalletTopup } from '../Models/wallet.model.js';
+import { SecurityAudit } from './security-audit.js';
 import { User } from '../Models/user.model.js';
 import mongoose from 'mongoose';
 import { Referral } from '../Models/referral.model.js';
@@ -38,9 +41,30 @@ export async function applyReferral(userId, value) {
 
 export async function qualifyReferral(userId, orderId, session) {
   await User.updateOne({ _id: userId }, { $inc: { referralVersion: 1 } }, { session });
-  await Referral.updateOne({ referredUser: userId, status: 'PENDING' }, {
+  const referral = await Referral.findOneAndUpdate({ referredUser: userId, status: 'PENDING' }, {
     $set: { status: 'QUALIFIED', qualifyingOrder: orderId, qualifiedAt: new Date() },
-  }, { session });
+  }, { session, returnDocument: 'after' });
+  if (referral) {
+    const owner = await User.findById(referral.referrer).select('+referralCreditPaise').session(session);
+    const buyer = await User.findById(userId).session(session);
+    const minimum = Number(process.env.WALLET_REFERRAL_MIN_PURCHASE_PAISE ?? 5000);
+    if (!Number.isSafeInteger(minimum) || minimum < 0) throw new Error('Invalid referral minimum');
+    const order = await Order.findOne({ _id: orderId, user: userId, status: 'PAID' }).session(session);
+    const topups = await WalletTopup.find({ user: userId, status: 'PAID', disputed: { $ne: true } }).session(session);
+    const deposited = topups.reduce((sum, item) => sum + item.amountPaise - (item.reversedPaise || 0), 0);
+    const reciprocal = await Referral.exists({ referrer: userId, referredUser: referral.referrer }).session(session);
+    if ((minimum > 0 && (!order || Math.round(order.totalAmount * 100) < minimum || deposited < minimum)) ||
+        (buyer?.phoneNumber && buyer.phoneNumber === owner?.phoneNumber) || reciprocal || buyer?.walletFrozen || owner?.walletFrozen) {
+      await Referral.updateOne({ _id: referral._id }, { $set: { status: 'REVIEW' } }, { session });
+      await SecurityAudit.updateOne({ eventKey: `referral-review:${referral.id}` }, { $setOnInsert: { event: 'REFERRAL_REVIEW_REQUIRED', subject: String(userId) } }, { upsert: true, session });
+      return;
+    }
+    const reward = Math.min(5000, 10000 - (owner?.referralCreditPaise ?? 0));
+    if (owner && !owner.isBlocked && reward > 0) {
+      await User.updateOne({ _id: owner._id }, { $inc: { walletBalancePaise: reward, referralCreditPaise: reward } }, { session });
+      await WalletEntry.create([{ user: owner._id, key: 'referral:' + referral.id, kind: 'REFERRAL', amountPaise: reward }], { session });
+    }
+  }
 }
 
 export const referralCodeForId = (id) => `NL${id.toString().toUpperCase()}`;

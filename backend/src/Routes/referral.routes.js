@@ -1,10 +1,12 @@
 import express from 'express';
+import { referralLimit } from '../Middlewares/security-limits.js';
 import { auth } from '../Middlewares/auth.middleware.js';
 import { ensureReferralCode, findReferralOwner, normalizeReferralCode, applyReferral, ReferralError } from '../Services/referral.service.js';
 import { Referral } from '../Models/referral.model.js';
 
 export const referralRouter = express.Router();
 referralRouter.use(auth);
+referralRouter.use((req, res, next) => req.method === 'POST' ? referralLimit(req, res, next) : next());
 
 referralRouter.get('/me', async (req, res) => {
   try {

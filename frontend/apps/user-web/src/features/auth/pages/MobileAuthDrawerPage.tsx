@@ -1,3 +1,4 @@
+import { startGoogleLogin } from '../googleHandoff'
 import { API_BASE_URL } from '@/config/api'
 import { useEffect, useState, type KeyboardEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -138,17 +139,6 @@ export function MobileAuthDrawerPage() {
 
   const requestAuth = async (path: string, init?: RequestInit) => requestApi(`/auth${path}`, init)
 
-  const loadRazorpayScript = async () => {
-    if (window.Razorpay) return true
-    return new Promise<boolean>((resolve) => {
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.async = true
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
 
   const handleGoogleLogin = () => {
     const preferredBaseUrl =
@@ -156,7 +146,7 @@ export function MobileAuthDrawerPage() {
         ? CONFIGURED_API_BASE_URL
         : API_BASE_URL_CANDIDATES[0]
     if (!preferredBaseUrl) return setError('Google login is not configured right now.')
-    window.location.href = `${preferredBaseUrl}/api/v1/auth/google`
+    void startGoogleLogin(`${preferredBaseUrl}/api/v1/auth/google`).catch(() => setError('Unable to start Google login.'))
   }
 
   const startOtpTimer = () => {
@@ -246,6 +236,7 @@ export function MobileAuthDrawerPage() {
         const userToken = payload?.token as string
         if (userToken) {
           localStorage.setItem('user_token', userToken)
+          window.dispatchEvent(new Event('user-session-changed'))
           localStorage.setItem('user_profile', JSON.stringify(payload?.data ?? {}))
           setToken(userToken)
         }
@@ -302,93 +293,20 @@ export function MobileAuthDrawerPage() {
   }
 
   const handleRegistrationPayment = async () => {
-    setError('')
-    setSuccess('')
+    if (isLoading) return
+    setError(''); setSuccess(''); setIsLoading(true)
     try {
-      setIsLoading(true)
-      const isRazorpayReady = await loadRazorpayScript()
-      if (!isRazorpayReady || !window.Razorpay) {
-        throw new Error('Unable to load payment gateway. Please retry.')
-      }
-
-      const orderResponse = await requestAuth('/mobile/create-registration-order', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token || localStorage.getItem('user_token') || ''}`,
-        },
+      const response = await fetch(API_BASE_URL + '/api/v1/wallet/membership', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + (token || localStorage.getItem('user_token') || '') },
       })
-      const orderPayload = await orderResponse.json()
-      if (!orderResponse.ok || !orderPayload?.success) {
-        throw new Error(orderPayload?.message ?? 'Unable to start payment.')
-      }
-
-      const { orderId, amount, currency, keyId } = orderPayload.data ?? {}
-      if (!orderId || !amount || !currency || !keyId) {
-        throw new Error('Invalid order response from server.')
-      }
-
-      const razorpay = new window.Razorpay({
-        key: keyId,
-        amount,
-        currency,
-        name: 'Leads Sell',
-        description: 'Lifetime membership - one-time fee',
-        order_id: orderId,
-        image: '/logo.png',
-        prefill: {
-          name: profileForm.fullName,
-          email: profileForm.email,
-          contact: phoneNumber,
-        },
-        modal: { ondismiss: () => setIsLoading(false) },
-        theme: {
-          color: '#4B2CF5',
-        },
-        handler: async (paymentResponse: Record<string, string>) => {
-          try {
-            const verifyResponse = await requestAuth('/mobile/verify-registration-payment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token || localStorage.getItem('user_token') || ''}`,
-              },
-              body: JSON.stringify({
-                razorpayOrderId: paymentResponse.razorpay_order_id,
-                razorpayPaymentId: paymentResponse.razorpay_payment_id,
-                razorpaySignature: paymentResponse.razorpay_signature,
-                membershipOnly: true,
-                ...profileForm,
-                email: profileForm.email.trim().toLowerCase(),
-              }),
-            })
-            const verifyPayload = await verifyResponse.json()
-            if (!verifyResponse.ok || !verifyPayload?.success) {
-              throw new Error(verifyPayload?.message ?? 'Payment verification failed.')
-            }
-
-            localStorage.setItem('user_profile', JSON.stringify(verifyPayload?.data ?? {}))
-            localStorage.setItem('auth_provider', 'mobile-otp')
-            setToastMessage('Lifetime membership activated! Return to your cart to purchase leads.')
-            window.setTimeout(() => {
-              navigate('/')
-            }, 900)
-          } catch (verifyError) {
-            setError(
-              verifyError instanceof Error
-                ? verifyError.message
-                : 'Payment completed but verification failed.',
-            )
-          } finally {
-            setIsLoading(false)
-          }
-        },
-      })
-
-      razorpay.open()
-    } catch (paymentError) {
-      setError(paymentError instanceof Error ? paymentError.message : 'Unable to process payment.')
-      setIsLoading(false)
-    }
+      const payload = await response.json()
+      if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to activate membership from your wallet.')
+      const profileResponse = await requestAuth('/profile', { headers: { Authorization: 'Bearer ' + (token || localStorage.getItem('user_token') || '') } })
+      if (profileResponse.ok) { const profile = await profileResponse.json(); if (profile.success) localStorage.setItem('user_profile', JSON.stringify(profile.data)) }
+      setToastMessage('Lifetime membership activated using your wallet!')
+      navigate('/')
+    } catch (error) { setError(error instanceof Error ? error.message : 'Wallet payment failed.') }
+    finally { setIsLoading(false) }
   }
 
   const handleOtpDigitChange = (index: number, rawValue: string) => {
@@ -472,13 +390,13 @@ export function MobileAuthDrawerPage() {
   }, [step])
 
   return (
-    <div className="fixed inset-x-0 top-[74px] bottom-0 z-20 bg-black/35">
+    <div className="min-h-[70vh] bg-[#efefef] px-4 py-8 sm:py-12">
       {toastMessage ? (
-        <div className="pointer-events-none fixed right-4 top-24 z-50 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-lg">
+        <div role="status" className="mx-auto mb-4 max-w-xl rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
           {toastMessage}
         </div>
       ) : null}
-      <div className="ml-auto h-full w-full max-w-[380px] overflow-y-auto bg-white p-6 sm:p-7">
+      <div className="mx-auto w-full max-w-xl rounded-3xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-3 flex items-center justify-between">
             {step > 0 ? (
               <button
@@ -763,8 +681,9 @@ export function MobileAuthDrawerPage() {
                 onClick={() => void handleRegistrationPayment()}
                 className="h-12 w-full rounded-xl bg-[#4B2CF5] text-sm font-semibold text-white hover:bg-[#3C20D9] disabled:opacity-70"
               >
-                {isLoading ? 'Processing...' : `Pay ₹${REGISTRATION_AMOUNT_INR} Securely`}
+                {isLoading ? 'Processing...' : `Pay ₹${REGISTRATION_AMOUNT_INR} from wallet`}
               </button>
+              <button type="button" disabled={isLoading} onClick={() => navigate('/wallet')} className="mt-3 w-full rounded-xl border border-amber-300 py-3 text-sm font-semibold">Add money to wallet</button>
             </div>
           ) : null}
           {stepImageByScreen[step] ? (

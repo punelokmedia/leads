@@ -23,6 +23,7 @@ const auth = async (req, res, next) => {
         message: "User not found",
       });
     }
+    if ((decoded.sv ?? 0) !== (user.sessionVersion ?? 0)) return res.status(401).json({ success: false, message: 'Session revoked. Please login.' });
     if (user.isBlocked) {
       return res.status(403).json({
         success: false,
@@ -33,6 +34,7 @@ const auth = async (req, res, next) => {
       id: user._id,
       email: user.email,
       role: user.role,
+      mfa: decoded.mfa === true,
     };
 
     next();
@@ -47,6 +49,9 @@ const auth = async (req, res, next) => {
 };
 
 const checkAccountType = (expectedRole) => (req, res, next) => {
+  if (expectedRole === 'ADMIN' && process.env.NODE_ENV === 'production' && !req.user.mfa) {
+    return res.status(403).json({ success: false, message: 'Admin password and OTP verification required.' });
+  }
   if (req.user.role !== expectedRole) {
     return res.status(403).json({
       success: false,
@@ -63,4 +68,4 @@ const optionalAuth = (req, res, next) => {
   if (req.header("Authorization") || req.cookies?.token) return auth(req, res, next);
   return next();
 };
-export { auth, isAdmin, optionalAuth };
+export { auth, isAdmin, optionalAuth, checkAccountType };

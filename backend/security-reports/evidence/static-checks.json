@@ -1,0 +1,131 @@
+{
+  "urlBearerToken": [
+    {
+      "file": "backend/src/Controllers/auth.controller.js",
+      "line": 242
+    }
+  ],
+  "browserTokenStorage": [
+    {
+      "file": "frontend/apps/user-web/src/features/auth/pages/MobileAuthDrawerPage.tsx",
+      "line": 232
+    },
+    {
+      "file": "frontend/apps/user-web/src/features/auth/pages/MobileAuthDrawerPage.tsx",
+      "line": 237
+    },
+    {
+      "file": "frontend/apps/user-web/src/features/auth/pages/MobileAuthDrawerPage.tsx",
+      "line": 239
+    },
+    {
+      "file": "frontend/apps/user-web/src/features/auth/pages/MobileAuthDrawerPage.tsx",
+      "line": 245
+    },
+    {
+      "file": "frontend/apps/user-web/src/features/auth/pages/MobileAuthDrawerPage.tsx",
+      "line": 287
+    },
+    {
+      "file": "frontend/apps/user-web/src/features/auth/pages/MobileAuthDrawerPage.tsx",
+      "line": 304
+    },
+    {
+      "file": "frontend/apps/admin-web/src/features/auth/context/AdminAuthContext.tsx",
+      "line": 128
+    }
+  ],
+  "mobileOtpLogging": [
+    {
+      "file": "frontend/mobile/user_app/lib/features/auth/presentation/screens/verify_number_screen.dart",
+      "line": 65
+    },
+    {
+      "file": "frontend/mobile/user_app/lib/features/auth/presentation/screens/verify_number_screen.dart",
+      "line": 83
+    }
+  ],
+  "mobileSecureStorage": [
+    {
+      "file": "frontend/mobile/user_app/lib/features/auth/shared/auth_providers.dart",
+      "line": 10
+    },
+    {
+      "file": "frontend/mobile/user_app/lib/features/auth/shared/auth_providers.dart",
+      "line": 13
+    },
+    {
+      "file": "frontend/mobile/user_app/lib/features/auth/shared/auth_providers.dart",
+      "line": 32
+    }
+  ],
+  "userWebLogout": [
+    {
+      "file": "frontend/apps/user-web/src/components/layout/PublicHeader.tsx",
+      "line": 582
+    }
+  ],
+  "httpFallback": [
+    {
+      "file": "frontend/mobile/user_app/lib/core/network/dio_provider.dart",
+      "line": 16
+    }
+  ],
+  "bundledMobileEnv": [
+    {
+      "file": "frontend/mobile/user_app/pubspec.yaml",
+      "line": 83
+    }
+  ],
+  "suspectedHardcodedSecrets": [],
+  "trackedEnvFiles": [],
+  "environment": {
+    "backend/.env": {
+      "keyNames": [
+        "ADMIN_EMAIL",
+        "ADMIN_FIRSTNAME",
+        "ADMIN_LASTNAME",
+        "ADMIN_PASSWORD",
+        "API_BASE_URL",
+        "API_VERSION",
+        "CLIENT_URL",
+        "DATABASE_URL",
+        "EMAIL_PASSWORD",
+        "EMAIL_USER",
+        "JWT_SECRET",
+        "NODE_ENV",
+        "PORT",
+        "RAZORPAY_KEY_ID",
+        "RAZORPAY_KEY_SECRET",
+        "RESEND_API_KEY",
+        "RESEND_FROM_EMAIL",
+        "SMS_PROVIDER",
+        "TWILIO_ACCOUNT_SID",
+        "TWILIO_API_KEY_SECRET",
+        "TWILIO_API_KEY_SID",
+        "TWILIO_VERIFY_SERVICE_SID",
+        "CORS_ALLOWED_ORIGINS",
+        "ADMIN_FRONTEND_URL",
+        "ADMIN_GOOGLE_CLIENT_ID",
+        "ADMIN_GOOGLE_CLIENT_SECRET",
+        "ADMIN_GOOGLE_CALLBACK_URL",
+        "GOOGLE_CALLBACK_URL",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "MOBILE_USER_GOOGLE_CLIENT_ID",
+        "USER_GOOGLE_CLIENT_ID",
+        "USER_GOOGLE_CLIENT_SECRET",
+        "USER_GOOGLE_CALLBACK_URL",
+        "FRONTEND_URL"
+      ],
+      "httpsBaseUrl": null
+    },
+    "frontend/mobile/user_app/.env.local": {
+      "keyNames": [
+        "BASE_URL",
+        "MOBILE_USER_GOOGLE_CLIENT_ID"
+      ],
+      "httpsBaseUrl": false
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { HomePage } from '@/features/home/pages/HomePage'
 import { ProfilePage } from '@/features/profile/pages/ProfilePage'
+import { WalletPage } from '@/features/wallet/pages/WalletPage'
 import { ReferralPage } from '@/features/profile/pages/ReferralPage'
 import { PricingPage } from '@/features/pricing/pages/PricingPage'
 import { ContactPage } from '@/features/contact/pages/ContactPage'
@@ -19,7 +20,9 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      ...['cart', 'history', 'login', 'signup', 'forgot-password', 'forgot-password/verify', 'forgot-password/reset'].map(path => ({ path, element: null })),
       { path: 'profile', element: <ProfilePage /> },
+      { path: 'wallet', element: <WalletPage /> },
       { path: 'referrals', element: <ReferralPage /> },
       { path: 'pricing', element: <PricingPage /> },
       { path: 'contact', element: <ContactPage /> },

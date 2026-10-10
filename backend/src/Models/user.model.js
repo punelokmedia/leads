@@ -74,7 +74,13 @@ const UserSchema = new Schema(
       default: [],
     },
 
-    phoneNumber: String,
+    phoneNumber: { type: String, set: value => typeof value === 'string' ? value.trim() || undefined : value },
+    sessionVersion: { type: Number, default: 0 },
+    walletBalancePaise: { type: Number, default: 0, min: 0, max: Number.MAX_SAFE_INTEGER, validate: Number.isSafeInteger, select: false },
+    walletDebtPaise: { type: Number, default: 0, min: 0, max: Number.MAX_SAFE_INTEGER, validate: Number.isSafeInteger, select: false },
+    walletFrozen: { type: Boolean, default: false },
+    walletFrozenReason: { type: String, select: false },
+    referralCreditPaise: { type: Number, default: 0, min: 0, max: 10000, select: false },
     referralVersion: { type: Number, default: 0, select: false },
     referralCode: {
       type: String,
@@ -161,13 +167,13 @@ UserSchema.index(
   { phoneNumber: 1 },
   {
     unique: true,
-    partialFilterExpression: { phoneNumber: { $type: "string", $ne: "" } },
+    partialFilterExpression: { phoneNumber: { $type: "string", $gt: "" } },
   },
 );
 
 UserSchema.set("toJSON", {
   transform(_document, result) {
-    for (const field of ["password", "resetOtp", "resetOtpExpire", "loginOtp", "loginOtpExpire", "pendingPhoneNumber"]) {
+    for (const field of ["sessionVersion", "password", "resetOtp", "resetOtpExpire", "loginOtp", "loginOtpExpire", "pendingPhoneNumber"]) {
       delete result[field];
     }
     if (result.registrationPayment) delete result.registrationPayment.razorpaySignature;
