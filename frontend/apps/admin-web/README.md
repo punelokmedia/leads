@@ -16,6 +16,13 @@ workflow. Local `.env` changes do not update Vercel environment variables; the
 seed command must target the same database as the deployed backend. Redeploy
 the admin frontend to receive the required production password field.
 
+If the existing admin password must be replaced, explicitly run
+`npm.cmd run seed:admin -- --reset-password` from the backend with the verified
+production database and intended ADMIN_EMAIL / ADMIN_PASSWORD configured.
+This replaces the existing ADMIN account password, revokes sessions and clears
+old OTPs. Request a new OTP and enter ADMIN_PASSWORD afterward. The default
+seed command never overwrites an existing password.
+
 ## Notification monitoring
 
 Sign in as an admin and select **Notifications** in the sidebar or mobile navigation.
