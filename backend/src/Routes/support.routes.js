@@ -1,3 +1,4 @@
+import { notifyUser } from '../Services/notification.service.js';
 import express from 'express';
 import mongoose from 'mongoose';
 import { auth, isAdmin } from '../Middlewares/auth.middleware.js';
@@ -35,6 +36,7 @@ async function send(req, res) {
     if (error.code !== 11000) throw error;
     message = await SupportMessage.findOne(key);
   }
+  if (req.params.userId) await notifyUser({ user, eventKey: `support:${message._id}`, type: 'SUPPORT_REPLY', title: 'Support replied', message: 'You have a new reply from support.', targetId: message._id });
   res.json({ success: true, data: message });
 }
 

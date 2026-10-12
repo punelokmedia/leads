@@ -210,10 +210,10 @@ const verifyAdminOtp = async (req, res) => {
       });
     }
 
-    admin.resetOtp = null;
     if (process.env.NODE_ENV === 'production' && (!admin.password || typeof req.body.password !== 'string' || !await comparePassword(req.body.password, admin.password))) {
       return res.status(401).json({ success: false, message: 'Valid admin password and email OTP are required.' });
     }
+    admin.resetOtp = null;
     admin.resetOtpExpire = null;
     await admin.save();
 

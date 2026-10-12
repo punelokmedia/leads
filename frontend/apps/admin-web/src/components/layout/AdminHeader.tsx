@@ -4,6 +4,7 @@ import { useAdminAuth } from '@/features/auth/context/AdminAuthContext'
 type MobileNavItem = { to: string; label: string; end?: boolean }
 
 const mobileNav: MobileNavItem[] = [
+  { to: '/notifications', label: 'Notifications' },
   { to: '/', label: 'Home', end: true },
   { to: '/leads', label: 'Leads' },
   { to: '/web-analytics', label: 'Analytics' },

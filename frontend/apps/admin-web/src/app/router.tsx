@@ -16,6 +16,7 @@ import { WebAnalyticsPage } from '@/features/analytics/pages/WebAnalyticsPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { SupportPage } from '@/features/support/SupportPage'
+import { NotificationsPage } from '@/features/notifications/NotificationsPage'
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
           { path: 'web-analytics', element: <WebAnalyticsPage /> },
           { path: 'settings', element: <SettingsPage /> },
           { path: 'support', element: <SupportPage /> },
+          { path: 'notifications', element: <NotificationsPage /> },
         ],
       },
     ],

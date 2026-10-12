@@ -1,3 +1,4 @@
+import { notifyNewLead } from '../../Services/notification.service.js';
 import { readLeadSpreadsheet } from '../../Services/excel-import.js';
 import ExcelJS from "exceljs";
 import mongoose from "mongoose";
@@ -333,6 +334,7 @@ const createLead = async (req, res) => {
       expiresAt: expiryDate,
       createdBy: req.user.id,
     });
+    await notifyNewLead(lead).catch(error => console.error('Lead notification fanout needs reconciliation:', error.name));
     const resolvedLeadDisplayId = buildLeadDisplayId(lead._id);
 
     if (lead.leadDisplayId !== resolvedLeadDisplayId) {
@@ -901,6 +903,7 @@ const processLeadsInBackground = async (
       }
     }
 
+    for (const lead of insertedDocs) await notifyNewLead(lead).catch(error => console.error('Lead notification fanout needs reconciliation:', error.name));
     totalProcessed += batch.length;
     totalSuccess += insertedDocs.length;
     totalFailed += logs.length;

@@ -72,6 +72,12 @@ export function LoginPage() {
   async function handleVerifyOtp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const cleanOtp = otp.trim()
+    if (import.meta.env.PROD && !password) {
+      const message = 'Enter your admin account password as well as the email OTP.'
+      setErrorMessage(message)
+      toast.error(message)
+      return
+    }
     if (!cleanOtp) {
       setInfoMessage('')
       const message = 'Please enter the OTP code.'
@@ -187,7 +193,7 @@ export function LoginPage() {
             <div className="mt-5 grid grid-cols-3 gap-2 rounded-xl border border-violet-200/70 bg-white/70 p-3 text-center">
               {[
                 ['24/7', 'Monitoring'],
-                ['OTP', 'Zero Password'],
+                ['OTP', 'Email Verification'],
                 ['1 Click', 'Secure Sign-in'],
               ].map(([value, label]) => (
                 <div key={label}>
@@ -287,7 +293,8 @@ export function LoginPage() {
           ) : (
             <form className="space-y-4" onSubmit={handleVerifyOtp}>
               <label className="block text-xs font-medium text-slate-600">Admin password
-                <input type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} className="mt-2 block w-full rounded-xl border border-slate-300 px-4 py-3" />
+                <input type="password" required={import.meta.env.PROD} autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} className="mt-2 block w-full rounded-xl border border-slate-300 px-4 py-3" />
+                <span className="mt-1 block font-normal text-slate-500">Production requires your saved admin account password and a fresh email OTP.</span>
               </label>
               <label className="block text-xs font-medium text-slate-600">
                 One Time Password

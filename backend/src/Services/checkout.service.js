@@ -1,3 +1,4 @@
+import { notifyUser } from './notification.service.js';
 import crypto from 'node:crypto';
 import { User } from '../Models/user.model.js';
 import { WalletEntry } from '../Models/wallet.model.js';
@@ -157,6 +158,7 @@ export async function settleCapturedPayment(payment, userId, wallet = false) {
     await order.save({ session });
     await Cart.updateOne({ user: order.user }, { $pull: { leads: { lead: { $in: order.leads.map((i) => i.lead) } } } }, { session });
     await qualifyReferral(order.user, order._id, session);
+    await notifyUser({ user: order.user, eventKey: `payment:${order._id}`, type: 'PAYMENT_SUCCESS', title: 'Payment successful', message: 'Your lead purchase is confirmed. Contact access is unlocked.', targetId: order._id }, session);
     return { status: 'PAID', orderId: order._id, message: 'Payment confirmed. Contact access unlocked.' };
   });
 }
@@ -183,6 +185,10 @@ export async function processRefunds(gateway) {
         status = refund.status === 'processed' ? 'REFUNDED' : 'SUBMITTED';
       } else if (payment.amount_refunded < job.amount) {
         throw new Error('Partial refund requires reconciliation; no additional refund submitted');
+      }
+      if (status === 'REFUNDED') {
+        const order = await Order.findById(job.order).select('user');
+        if (order) await notifyUser({ user: order.user, eventKey: `refund:${job._id}`, type: 'REFUND_COMPLETED', title: 'Refund completed', message: 'Your payment refund has been confirmed.', targetId: job.order });
       }
       if (status === 'REFUNDED') await Order.updateOne({ _id: job.order, status: 'REFUND_PENDING', razorpayPaymentId: job.paymentId }, { $set: { status: 'REFUNDED' } });
       await PaymentRefund.updateOne({ _id: job._id, lockedUntil }, { $set: { status, refundId, nextAttemptAt: new Date(Date.now() + 60000) }, $unset: { lockedUntil: 1, lastError: 1 } });

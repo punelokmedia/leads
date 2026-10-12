@@ -7,6 +7,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { supportRouter } from '../src/Routes/support.routes.js';
 import { User } from '../src/Models/user.model.js';
 import { SupportMessage } from '../src/Models/supportMessage.model.js';
+import { Notification } from '../src/Models/notification.model.js';
 
 let mongo, server, base, tokens, users;
 before(async () => {
@@ -17,6 +18,7 @@ before(async () => {
   mongo = await MongoMemoryServer.create({ binary: { version: '7.0.24' } });
   await mongoose.connect(mongo.getUri());
   await SupportMessage.init();
+  await Notification.init();
   users = await User.create(['USER', 'USER', 'ADMIN'].map((role, i) => ({ firstname: 'Test', lastname: 'User', email: `support${i}@example.invalid`, role })));
   tokens = users.map(u => jwt.sign({ id: u.id }, process.env.JWT_SECRET));
   const app = express(); app.use(express.json()); app.use('/support', supportRouter);
@@ -47,6 +49,9 @@ test('admin replies persist and are visible only to the conversation owner', asy
   const reply = await call(`/admin/messages/${users[0].id}`, 2, { text: 'Please provide your order ID', clientId: 'reply-one' });
   assert.equal(reply.status, 200);
   assert.equal(reply.data.sender, 'support');
+  await call(`/admin/messages/${users[0].id}`, 2, { text: 'Please provide your order ID', clientId: 'reply-one' });
+  assert.equal(await Notification.countDocuments({ user: users[0]._id, type: 'SUPPORT_REPLY' }), 1);
+  assert.equal(await Notification.countDocuments({ user: users[1]._id }), 0);
   const history = await call('/messages', 0);
   assert.ok(history.data.some(m => m.text === reply.data.text));
   assert.equal((await call('/messages', 1)).data.length, 0);

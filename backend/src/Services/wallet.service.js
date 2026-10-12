@@ -1,3 +1,4 @@
+import { notifyUser } from './notification.service.js';
 import mongoose from 'mongoose';
 import { User } from '../Models/user.model.js';
 import { WalletEntry, WalletTopup } from '../Models/wallet.model.js';
@@ -25,6 +26,7 @@ export async function creditCapturedTopup(payment, userId) {
     const user = await User.updateOne({ _id: topup.user, role: 'USER' }, { $inc: { walletBalancePaise: topup.amountPaise } }, { session });
     if (!user.matchedCount) throw new CheckoutError('USER_NOT_FOUND', 'Account unavailable.', 409);
     await WalletEntry.create([{ user: topup.user, key: `topup:${topup.id}`, kind: 'TOPUP', amountPaise: topup.amountPaise }], { session });
+    await notifyUser({ user: topup.user, eventKey: `topup:${topup._id}`, type: 'WALLET_CREDIT', title: 'Wallet credited', message: 'Your payment is confirmed and money has been added to your wallet.', targetId: topup._id }, session);
     return topup;
   });
 }
@@ -40,6 +42,7 @@ export async function purchaseMembership(userId) {
     }, { session });
     if (!user) throw new CheckoutError('INSUFFICIENT_BALANCE', 'Add money to your wallet first.', 409);
     await WalletEntry.create([{ user: userId, key: `membership:${userId}`, kind: 'MEMBERSHIP', amountPaise: -100 }], { session });
+    await notifyUser({ user: userId, eventKey: `membership:${userId}`, type: 'MEMBERSHIP_ACTIVATED', title: 'Membership activated', message: 'Your lifetime membership is now active.' }, session);
     return { status: 'PAID' };
   });
 }

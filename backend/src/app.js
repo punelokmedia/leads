@@ -1,3 +1,4 @@
+import { notificationRouter } from './Routes/notification.routes.js';
 import { authLimits } from './Middlewares/security-limits.js';
 import walletRouter from './Routes/wallet.routes.js';
 import "./Config/env.config.js";
@@ -97,6 +98,7 @@ app.use(`/api/${API_VERSION}/categories`, category);
 app.use(`/api/${API_VERSION}/cities`, city);
 app.use(`/api/${API_VERSION}/cart`, cart);
 app.use(`/api/${API_VERSION}/support`, supportRouter);
+app.use(`/api/${API_VERSION}/notifications`, notificationRouter);
 app.use(`/api/${API_VERSION}/account-deletion-requests`, accountDeletionRouter);
 app.use(`/api/${API_VERSION}/referrals`, referralRouter);
 

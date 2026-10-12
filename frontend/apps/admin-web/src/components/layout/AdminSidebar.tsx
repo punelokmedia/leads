@@ -7,11 +7,12 @@ type AdminNavItem = {
   to: string
   label: string
   end?: boolean
-  icon: 'dashboard' | 'leads' | 'settings' | 'create' | 'category' | 'admin' | 'payment' | 'analytics' | 'city'
+  icon: 'dashboard' | 'leads' | 'settings' | 'create' | 'category' | 'admin' | 'payment' | 'analytics' | 'city' | 'notification'
   hint?: string
 }
 
 const primaryNav: AdminNavItem[] = [
+  { to: '/notifications', label: 'Notifications', icon: 'notification', hint: 'Counts & receipt tracking' },
   { to: '/support', label: 'Support Inbox', icon: 'leads', hint: 'Customer messages' },
   { to: '/', label: 'Dashboard', end: true, icon: 'dashboard', hint: 'Overview' },
   { to: '/leads', label: 'Leads', icon: 'leads', hint: 'Records' },
@@ -49,6 +50,10 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
   function renderIcon(icon: AdminNavItem['icon']) {
     const iconClass = 'h-4 w-4'
+
+    if (icon === 'notification') {
+      return <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    }
 
     if (icon === 'dashboard') {
       return (
