@@ -59,3 +59,17 @@ test('production requires saved password plus OTP; failure preserves OTP and suc
   assert.equal(admin.resetOtp, null);
   assert.equal(saves, 1);
 });
+
+test('explicit password reset replaces the saved hash and revokes sessions and OTPs', async t => {
+  const original = await hashPassword('old-password');
+  t.mock.method(User, 'findOne', async () => ({ _id: 'admin-id', role: 'ADMIN', password: original }));
+  t.mock.method(User, 'updateOne', async (filter, update) => {
+    assert.equal(filter.password, original);
+    assert.ok(await comparePassword('new-password', update.$set.password));
+    assert.equal(update.$inc.sessionVersion, 1);
+    assert.equal(update.$set.resetOtp, null);
+    assert.equal(update.$set.resetOtpExpire, null);
+    return { modifiedCount: 1 };
+  });
+  assert.deepEqual(await setupAdmin({ email: 'admin@example.invalid', password: 'new-password', resetPassword: true }), { status: 'PASSWORD_RESET' });
+});

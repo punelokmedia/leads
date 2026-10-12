@@ -7,10 +7,11 @@ try {
   if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD are required.');
   await connectDB();
   const result = await setupAdmin({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD,
-    firstname: process.env.ADMIN_FIRSTNAME || 'Super', lastname: process.env.ADMIN_LASTNAME || 'Admin' });
+    firstname: process.env.ADMIN_FIRSTNAME || 'Super', lastname: process.env.ADMIN_LASTNAME || 'Admin', resetPassword: process.argv.includes('--reset-password') });
   const messages = {
     CREATED: 'Admin account created with a password.',
     PASSWORD_INITIALIZED: 'Existing admin password initialized. Previous sessions and OTPs revoked. Request a fresh OTP.',
+    PASSWORD_RESET: 'Existing admin password reset to configured ADMIN_PASSWORD. Previous sessions and OTPs revoked. Request a fresh OTP.',
     EXISTS: 'Admin already has a password. Existing password preserved; ADMIN_PASSWORD does not replace it. Use the password reset workflow if needed.',
   };
   console.log(messages[result.status]);
