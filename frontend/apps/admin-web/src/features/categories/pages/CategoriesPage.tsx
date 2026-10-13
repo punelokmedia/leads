@@ -201,7 +201,7 @@ export function CategoriesPage() {
   }
 
   async function handleDeleteCategory(categoryId: string) {
-    if (!window.confirm('Delete this category?')) return
+    if (!window.confirm('Permanently delete this category and all associated leads? This cannot be undone.')) return
     clearMessages()
     try {
       await fetchWithAuth(`${API_BASE_URL}/api/v1/categories/delete-category`, {
@@ -209,7 +209,7 @@ export function CategoriesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ categoryId }),
       })
-      setSuccessMessage('Category deleted successfully')
+      setSuccessMessage('Category and associated leads deleted successfully')
       await loadCategories()
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to delete category')

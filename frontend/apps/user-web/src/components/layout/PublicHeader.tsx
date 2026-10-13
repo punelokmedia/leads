@@ -135,6 +135,11 @@ export function PublicHeader() {
   const [isCitiesLoading, setIsCitiesLoading] = useState(false)
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
+  useEffect(() => {
+    setIsCategoryDropdownOpen(false)
+    setIsCityDropdownOpen(false)
+    setIsMobileMenuOpen(false)
+  }, [pathname])
   const isPanelOpen = panelMode !== null
   const userToken = localStorage.getItem('user_token')
   const resetAuthMessages = useCallback(() => {
@@ -848,20 +853,20 @@ export function PublicHeader() {
         <div className="border-b border-stone-100 bg-stone-50">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2 text-[11px] text-stone-600 sm:px-6 sm:text-xs">
             <p className="min-w-0 truncate">Trusted by interior professionals across India</p>
-            <p className="hidden sm:block">Support: +91 62058 78945</p>
+            <p className="hidden sm:block">Support: +91 9067777034</p>
           </div>
         </div>
 
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
-          <NavLink to="/" className="shrink-0">
+          <NavLink to="/" aria-label="Next Lead home" className="flex h-14 w-16 shrink-0 items-center justify-center sm:h-16 sm:w-24">
             <img
-              src="/logo.png"
-              alt="Logo"
-              className="h-14 w-auto sm:h-16"
+              src="/logo-cropped-1.png"
+              alt="Next Lead"
+              className="h-full w-full object-contain"
             />
           </NavLink>
 
-          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-transparent px-2 py-1 md:flex">
+          <nav aria-label="Main navigation" className="hidden flex-1 items-center justify-center gap-1 whitespace-nowrap bg-transparent py-1 xl:flex [&>a]:shrink-0 [&>a]:px-3 [&>div]:shrink-0 [&_button]:px-3">
             <NavLink
               to="/"
               className={({ isActive }) =>
@@ -876,11 +881,14 @@ export function PublicHeader() {
             </NavLink>
             <div 
               className="relative"
-              onMouseEnter={() => setIsCategoryDropdownOpen(true)}
+              onMouseEnter={() => { setIsCategoryDropdownOpen(true); setIsCityDropdownOpen(false) }}
               onMouseLeave={() => setIsCategoryDropdownOpen(false)}
             >
               <button
                 type="button"
+                aria-expanded={isCategoryDropdownOpen}
+                onClick={() => { setIsCategoryDropdownOpen(!isCategoryDropdownOpen); setIsCityDropdownOpen(false) }}
+                onKeyDown={(event) => { if (event.key === 'Escape') setIsCategoryDropdownOpen(false) }}
                 className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
                   isCategoryDropdownOpen
                     ? 'bg-stone-200 text-stone-900'
@@ -926,11 +934,14 @@ export function PublicHeader() {
             </div>
             <div
               className="relative"
-              onMouseEnter={() => setIsCityDropdownOpen(true)}
+              onMouseEnter={() => { setIsCityDropdownOpen(true); setIsCategoryDropdownOpen(false) }}
               onMouseLeave={() => setIsCityDropdownOpen(false)}
             >
               <button
                 type="button"
+                aria-expanded={isCityDropdownOpen}
+                onClick={() => { setIsCityDropdownOpen(!isCityDropdownOpen); setIsCategoryDropdownOpen(false) }}
+                onKeyDown={(event) => { if (event.key === 'Escape') setIsCityDropdownOpen(false) }}
                 className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
                   isCityDropdownOpen
                     ? 'bg-stone-200 text-stone-900'
@@ -995,9 +1006,15 @@ export function PublicHeader() {
             >
               Contact Us
             </NavLink>
+            <NavLink
+              to="/download"
+              className={({ isActive }) => `rounded-full px-4 py-2 text-sm font-semibold transition ${isActive ? 'bg-[#F8B020] text-white shadow-sm' : 'text-stone-600 hover:bg-white hover:text-stone-900'}`}
+            >
+              Download App
+            </NavLink>
           </nav>
 
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <div className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-3">
             <NavLink to="/wallet" onClick={() => { setIsMobileMenuOpen(false); setPanelMode(null) }} className="rounded-full border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-stone-800 hover:bg-amber-50">Wallet</NavLink>
             <button
               type="button"
@@ -1069,14 +1086,14 @@ export function PublicHeader() {
                     resetAuthMessages()
                     setPanelMode('history')
                   }}
-                  className="hidden rounded-full border border-[#F8B020] bg-white px-4 py-1.5 text-sm font-semibold text-[#F8B020] shadow-sm transition hover:bg-[#FFF7E8] md:inline-flex"
+                  className="hidden rounded-full border border-[#F8B020] bg-white px-4 py-1.5 text-sm font-semibold text-[#F8B020] shadow-sm transition hover:bg-[#FFF7E8] xl:inline-flex"
                 >
                   History
                 </button>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="hidden rounded-full border border-red-300 bg-white px-4 py-1.5 text-sm font-semibold text-red-500 shadow-sm transition hover:bg-red-50 md:inline-flex"
+                  className="hidden rounded-full border border-red-300 bg-white px-4 py-1.5 text-sm font-semibold text-red-500 shadow-sm transition hover:bg-red-50 xl:inline-flex"
                 >
                   Log Out
                 </button>
@@ -1098,8 +1115,9 @@ export function PublicHeader() {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen((open) => !open)}
-              className="grid h-9 w-9 place-items-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:border-stone-400 md:hidden"
+              className="grid h-9 w-9 place-items-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:border-stone-400 xl:hidden"
               aria-label="Toggle mobile menu"
+              aria-expanded={isMobileMenuOpen}
             >
               {isMobileMenuOpen ? (
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1115,8 +1133,15 @@ export function PublicHeader() {
         </div>
 
         {isMobileMenuOpen ? (
-          <div className="border-t border-stone-200 bg-white px-4 py-3 md:hidden">
+          <div className="max-h-[calc(100dvh-130px)] overflow-y-auto border-t border-stone-200 bg-white px-4 py-3 xl:hidden">
             <nav className="space-y-2">
+              <NavLink
+                to="/download"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={({ isActive }) => `block rounded-xl px-3 py-2 text-sm font-semibold ${isActive ? 'bg-[#F8B020] text-white' : 'text-stone-700 hover:bg-stone-100'}`}
+              >
+                Download App
+              </NavLink>
               <NavLink
                 to="/"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -1145,7 +1170,7 @@ export function PublicHeader() {
               <div className="space-y-1">
                 <button
                   type="button"
-                  onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                  onClick={() => { setIsCategoryDropdownOpen(!isCategoryDropdownOpen); setIsCityDropdownOpen(false) }}
                   className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-stone-700 hover:bg-stone-100"
                 >
                   <span>Categories</span>
@@ -1190,7 +1215,7 @@ export function PublicHeader() {
               <div className="space-y-1">
                 <button
                   type="button"
-                  onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                  onClick={() => { setIsCityDropdownOpen(!isCityDropdownOpen); setIsCategoryDropdownOpen(false) }}
                   className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-stone-700 hover:bg-stone-100"
                 >
                   <span>Cities</span>

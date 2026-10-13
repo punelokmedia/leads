@@ -282,7 +282,7 @@ DELETE /delete-category
 ### 🧠 Description:
 
 * Deletes category
-* Prevents deletion if used in leads
+* Permanently deletes all associated leads before deleting the category
 
 ---
 
@@ -292,23 +292,14 @@ DELETE /delete-category
 {
   "success": true,
   "code": "CATEGORY_DELETED",
-  "message": "Category deleted successfully"
+  "message": "Category and associated leads deleted successfully",
+  "data": { "deletedLeadsCount": 3 }
 }
 ```
 
 ---
 
-### ❌ If Category in Use:
-
-```json
-{
-  "success": false,
-  "code": "CATEGORY_IN_USE",
-  "message": "Category is in use and cannot be deleted"
-}
-```
-
----
+Associated leads are permanently deleted, including inactive and expired leads.
 
 # ⚠️ Common Errors
 

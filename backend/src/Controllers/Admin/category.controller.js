@@ -167,20 +167,15 @@ const deleteCategory = async (req, res) => {
       });
     }
 
-    // ⚠️ Optional: prevent delete if used in leads
-    const isUsed = await Lead.exists({ category: categoryId });
-    if (isUsed) {
-      return res.status(400).json({
-        success: false,
-        message: "Category is in use and cannot be deleted",
-      });
-    }
+    // Remove associated leads before deleting their category.
+    const deletedLeads = await Lead.deleteMany({ category: categoryId });
 
     await Category.findByIdAndDelete(categoryId);
 
     return res.status(200).json({
       success: true,
-      message: "Category deleted successfully",
+      message: "Category and associated leads deleted successfully",
+      data: { deletedLeadsCount: deletedLeads.deletedCount },
     });
   } catch (error) {
     console.error("Delete Category Error:", error);

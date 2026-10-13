@@ -13,6 +13,7 @@ import { CookiePolicyPage } from '@/features/legal/pages/CookiePolicyPage'
 import { ContactSupportPage } from '@/features/legal/pages/ContactSupportPage'
 import { MobileAuthDrawerPage } from '@/features/auth/pages/MobileAuthDrawerPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { DownloadAppPage } from '@/features/download/pages/DownloadAppPage'
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: 'referrals', element: <ReferralPage /> },
       { path: 'pricing', element: <PricingPage /> },
       { path: 'contact', element: <ContactPage /> },
+      { path: 'download', element: <DownloadAppPage /> },
       { path: 'privacy-policy', element: <PrivacyPolicyPage /> },
       { path: 'account-deletion', element: <AccountDeletionPage /> },
       { path: 'terms-service', element: <TermsServicePage /> },
