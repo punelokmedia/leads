@@ -11,7 +11,7 @@ export async function exchangeGoogleCode(req, res) {
     if (!record) return res.status(401).json({ success: false, message: 'Login expired or already used.' });
     const user = await User.findById(record.user);
     if (!user || user.isBlocked || (user.sessionVersion ?? 0) !== record.sessionVersion) return res.status(403).json({ success: false, message: 'Account unavailable.' });
-    const token = jwt.sign({ id: user._id, sv: user.sessionVersion ?? 0 }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, sv: user.sessionVersion ?? 0 }, process.env.JWT_SECRET, { expiresIn: req.header?.('X-Web-Session') === '1' ? '5d' : '7d' });
     return res.json({ success: true, token, data: user });
   } catch { return res.status(503).json({ success: false, message: 'Login unavailable.' }); }
 }

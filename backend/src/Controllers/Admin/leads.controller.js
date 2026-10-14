@@ -2,6 +2,8 @@ import { notifyNewLead } from '../../Services/notification.service.js';
 import { readLeadSpreadsheet } from '../../Services/excel-import.js';
 import ExcelJS from "exceljs";
 import mongoose from "mongoose";
+import { User } from '../../Models/user.model.js';
+import { parseCoordinates } from '../../Utils/location.js';
 import { Lead, resolveLeadStatus } from "../../Models/leads.model.js";
 import { Category } from "../../Models/category.model.js";
 import { UploadLog } from "../../Models/uploadLog.model.js";
@@ -30,6 +32,19 @@ const getAllLeads = async (req, res) => {
     const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
 
     const query = {};
+
+    if (req.query.nearby === 'true') {
+      if (!userId) return res.status(401).json({ success: false, message: 'Login to find leads near your saved location.' });
+      const user = await User.findById(userId).select('devicePermissions currentLocation').lean();
+      if (user?.devicePermissions?.location !== 'granted' || !user.currentLocation?.coordinates?.length) {
+        return res.status(400).json({ success: false, message: 'Grant location permission and send your current coordinates first.' });
+      }
+      const radiusKm = Number(req.query.radiusKm ?? 25);
+      if (!Number.isFinite(radiusKm) || radiusKm <= 0 || radiusKm > 200) {
+        return res.status(400).json({ success: false, message: 'radiusKm must be greater than 0 and at most 200.' });
+      }
+      query.location = { $geoWithin: { $centerSphere: [user.currentLocation.coordinates, radiusKm / 6371.0088] } };
+    }
 
     if (category) query.category = category;
     if (city) query.city = new RegExp(city, "i");
@@ -63,6 +78,7 @@ const getAllLeads = async (req, res) => {
       const isPurchased = purchasedIds.has(String(lead._id));
 
       const obj = lead.toObject();
+      delete obj.location;
 
       delete obj.buyers;
       delete obj.reservations;
@@ -144,6 +160,7 @@ const getLeadDetailsById = async (req, res) => {
     }
 
     if (!isPurchased) {
+      delete responseLead.location;
       responseLead.phone = null;
       responseLead.primaryPhone = null;
       responseLead.alternatePhone = null;
@@ -183,6 +200,11 @@ const getLeadDetailsById = async (req, res) => {
 
 const createLead = async (req, res) => {
   try {
+    let leadLocation;
+    if (req.body.latitude !== undefined || req.body.longitude !== undefined) {
+      try { leadLocation = parseCoordinates(req.body.latitude, req.body.longitude); }
+      catch (error) { return res.status(400).json({ success: false, message: error.message }); }
+    }
     const {
       title,
       description,
@@ -311,6 +333,7 @@ const createLead = async (req, res) => {
     }
 
     const lead = await Lead.create({
+      ...(leadLocation ? { location: leadLocation } : {}),
       title: normalizedTitle,
       description: normalizedDescription,
       category: normalizedCategory,
@@ -398,6 +421,10 @@ const updateLead = async (req, res) => {
     ];
 
     const updates = {};
+    if (req.body.latitude !== undefined || req.body.longitude !== undefined) {
+      try { updates.location = parseCoordinates(req.body.latitude, req.body.longitude); }
+      catch (error) { return res.status(400).json({ success: false, message: error.message }); }
+    }
 
     for (const key of Object.keys(req.body)) {
       if (allowedFields.includes(key)) {

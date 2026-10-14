@@ -107,6 +107,16 @@ const UserSchema = new Schema(
       default: "",
     },
     profilePic: String,
+    devicePermissions: {
+      location: { type: String, enum: ['granted', 'denied', 'not_requested'], default: 'not_requested' },
+      files: { type: String, enum: ['granted', 'denied', 'not_requested', 'limited'], default: 'not_requested' },
+      updatedAt: Date,
+    },
+    currentLocation: {
+      type: { type: String, enum: ['Point'] },
+      coordinates: { type: [Number], default: undefined },
+    },
+    locationUpdatedAt: Date,
     profileAddress: { type: String, trim: true, default: "" },
     categories: [{ type: Schema.Types.ObjectId, ref: "Category" }],
     state: { type: String, trim: true, default: "" },

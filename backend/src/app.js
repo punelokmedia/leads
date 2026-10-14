@@ -55,6 +55,7 @@ const corsOptions = {
     return callback(Object.assign(new Error('Origin is not allowed.'), { code: 'CORS_ORIGIN_DENIED' }));
   },
   credentials: true,
+  exposedHeaders: ['Content-Disposition', 'X-Session-Token'],
 };
 
 // Handle browser preflight before parsing bodies or accessing the database.

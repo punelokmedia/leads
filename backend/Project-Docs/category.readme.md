@@ -320,7 +320,7 @@ Associated leads are permanently deleted, including inactive and expired leads.
 * Category names are stored in lowercase
 * Only admins can create/update/delete
 * Categories are linked with leads
-* Deletion is restricted if in use
+* Admin category deletion also permanently deletes all leads in that category
 
 ---
 

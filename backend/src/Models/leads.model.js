@@ -41,6 +41,10 @@ const LeadSchema = new Schema(
       type: String,
       trim: true,
     },
+    location: {
+      type: { type: String, enum: ['Point'] },
+      coordinates: { type: [Number], default: undefined },
+    },
 
     price: {
       type: Number,
@@ -162,6 +166,7 @@ const LeadSchema = new Schema(
 );
 
 LeadSchema.index({ expiresAt: 1 });
+LeadSchema.index({ location: '2dsphere' });
 LeadSchema.index({ maxBuyers: 1, buyersCount: 1 });
 
 LeadSchema.virtual("remainingSlots").get(function () {

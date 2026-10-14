@@ -1,4 +1,5 @@
 import express from "express";
+import { updateDevicePermissions, uploadProfilePicture } from '../Controllers/device.controller.js';
 import { exchangeGoogleCode } from '../Controllers/oauth-handoff.controller.js';
 import multer from "multer";
 import passport from "../Config/passport.js";
@@ -81,6 +82,8 @@ router.get(
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/profile", auth, getUserProfile);
+router.put('/mobile/permissions', auth, updateDevicePermissions);
+router.put('/profile-picture', auth, parseProfile, uploadProfilePicture);
 router.get("/logout", auth, logOutUser);
 router.put("/update-profile", auth, updateUserProfile);
 

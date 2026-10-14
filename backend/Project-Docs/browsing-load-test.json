@@ -1,0 +1,135 @@
+{
+  "timestamp": "2026-10-13T11:18:04.648Z",
+  "website": "https://www.trynextlead.com",
+  "api": "https://leads-qa6h.vercel.app",
+  "scope": "HTTP browsing only, 2/5/10 workers, 10 seconds per stage, one request per worker per second. No authentication, lead listing, writes or payments. Stops on failure or latency over 5 seconds. Not a browser render or capacity benchmark.",
+  "preflight": [
+    {
+      "endpoint": "website",
+      "status": 200,
+      "ok": true,
+      "ms": 441.8327999999997,
+      "bytes": 745,
+      "cache": "HIT"
+    },
+    {
+      "endpoint": "categories",
+      "status": 200,
+      "ok": true,
+      "ms": 7030.3837,
+      "bytes": 2988,
+      "cache": "MISS"
+    },
+    {
+      "endpoint": "cities",
+      "status": 200,
+      "ok": true,
+      "ms": 1176.7165000000005,
+      "bytes": 579,
+      "cache": "MISS"
+    },
+    {
+      "endpoint": "javascript",
+      "status": 200,
+      "ok": true,
+      "ms": 1511.3360999999986,
+      "bytes": 570824,
+      "cache": "HIT"
+    },
+    {
+      "endpoint": "stylesheet",
+      "status": 200,
+      "ok": true,
+      "ms": 39.651199999998425,
+      "bytes": 54385,
+      "cache": "HIT"
+    }
+  ],
+  "stages": [
+    {
+      "workers": 2,
+      "elapsedSeconds": 9.78,
+      "requestsPerSecond": 1.23,
+      "requests": 12,
+      "failures": 0,
+      "medianMs": 110,
+      "p95Ms": 5562,
+      "maxMs": 5562,
+      "statuses": {
+        "200": 12
+      },
+      "caches": {
+        "HIT": 7,
+        "MISS": 5
+      },
+      "stoppedEarly": true,
+      "endpoints": {
+        "website": {
+          "requests": 3,
+          "failures": 0,
+          "medianMs": 25,
+          "p95Ms": 76,
+          "maxMs": 76,
+          "statuses": {
+            "200": 3
+          },
+          "caches": {
+            "HIT": 3
+          }
+        },
+        "categories": {
+          "requests": 3,
+          "failures": 0,
+          "medianMs": 703,
+          "p95Ms": 2730,
+          "maxMs": 2730,
+          "statuses": {
+            "200": 3
+          },
+          "caches": {
+            "MISS": 3
+          }
+        },
+        "cities": {
+          "requests": 2,
+          "failures": 0,
+          "medianMs": 447,
+          "p95Ms": 5562,
+          "maxMs": 5562,
+          "statuses": {
+            "200": 2
+          },
+          "caches": {
+            "MISS": 2
+          }
+        },
+        "javascript": {
+          "requests": 2,
+          "failures": 0,
+          "medianMs": 110,
+          "p95Ms": 334,
+          "maxMs": 334,
+          "statuses": {
+            "200": 2
+          },
+          "caches": {
+            "HIT": 2
+          }
+        },
+        "stylesheet": {
+          "requests": 2,
+          "failures": 0,
+          "medianMs": 29,
+          "p95Ms": 31,
+          "maxMs": 31,
+          "statuses": {
+            "200": 2
+          },
+          "caches": {
+            "HIT": 2
+          }
+        }
+      }
+    }
+  ]
+}

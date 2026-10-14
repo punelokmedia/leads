@@ -167,7 +167,7 @@ const loginUser = async (req, res) => {
     user.password = undefined;
 
     const token = jwt.sign({ id: user._id, sv: user.sessionVersion ?? 0 }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      expiresIn: req.header?.("X-Web-Session") === "1" ? "5d" : "7d",
     });
 
     return res.status(200).json({
@@ -715,7 +715,7 @@ const verifyMobileOtp = async (req, res) => {
       isNewUser;
 
     const token = jwt.sign({ id: user._id, sv: user.sessionVersion ?? 0 }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      expiresIn: req.header?.("X-Web-Session") === "1" ? "5d" : "7d",
     });
 
     return res.status(200).json({
