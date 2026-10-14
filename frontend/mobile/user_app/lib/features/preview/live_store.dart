@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/errors/error_handler.dart';
 import 'preview_data.dart';
 
 /// API-backed state for the shared design. Never seeds preview fixtures.
@@ -176,10 +177,9 @@ class LiveStore extends PreviewStore {
           );
         }
       }
-    } catch (_) {
+    } catch (failure) {
       if (!_disposed) {
-        error =
-            'Could not load data. Check your connection or sign in again, then retry.';
+        error = ErrorHandler.handle(failure).message;
       }
     } finally {
       loading = false;

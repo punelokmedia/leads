@@ -18,8 +18,10 @@ class AuthStateNotifier extends StateNotifier<bool> {
 
   Future<void> checkAuthStatus() async {
     final token = await _storage.read(key: 'auth_token');
-    state = token != null;
+    state = token != null && token.isNotEmpty;
   }
+
+  void markSessionExpired() => state = false;
 
   // Updates the state and writes to storage
   Future<void> setLoggedIn(String token) async {
@@ -34,7 +36,9 @@ class AuthStateNotifier extends StateNotifier<bool> {
   }
 }
 
-final isLoggedInProvider = StateNotifierProvider<AuthStateNotifier, bool>((ref) {
+final isLoggedInProvider = StateNotifierProvider<AuthStateNotifier, bool>((
+  ref,
+) {
   final storage = ref.watch(secureStorageProvider);
   return AuthStateNotifier(storage);
 });
@@ -42,7 +46,9 @@ final isLoggedInProvider = StateNotifierProvider<AuthStateNotifier, bool>((ref) 
 // 2. API & Controller Logic
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final dio = ref.watch(dioProvider);
-  final storage = ref.watch(storageProvider); // ✅ Ensure you fetch the storage provider
+  final storage = ref.watch(
+    storageProvider,
+  ); // ✅ Ensure you fetch the storage provider
   return AuthRepository(dio, storage); // ✅ Pass both to the repository
 });
 

@@ -8,7 +8,7 @@ import '../auth/shared/auth_providers.dart';
 import '../cart/shared/cart_providers.dart';
 import 'live_store.dart';
 import 'preview_app.dart';
-import '../support/presentation/screens/live_support_screen.dart';
+import '../support/presentation/screens/support_tickets_screen.dart';
 
 final liveStoreProvider = Provider.autoDispose<LiveStore>((ref) {
   final store = LiveStore(
@@ -29,7 +29,7 @@ class LiveHome extends ConsumerWidget {
     final store = ref.watch(liveStoreProvider);
     store.support = (supportContext) => Navigator.of(supportContext).push(
       MaterialPageRoute<void>(
-        builder: (chatContext) => LiveSupportScreen(
+        builder: (chatContext) => SupportTicketsScreen(
           dio: store.dio,
           signedIn: store.signedIn,
           signIn: () {

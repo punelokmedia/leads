@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'background_transformer.dart';
+import 'session_events.dart';
 import 'auth_interceptor.dart'; // ← Import your new interceptor
 
 // Define a storage provider
@@ -29,7 +30,14 @@ final dioProvider = Provider<Dio>((ref) {
   // --- Add Interceptors & Transformers ---
 
   // 1. Add your Auth Interceptor
-  dio.interceptors.add(AuthInterceptor(storage));
+  dio.interceptors.add(
+    AuthInterceptor(
+      storage,
+      onSessionExpired: () {
+        ref.read(sessionExpiredProvider.notifier).state++;
+      },
+    ),
+  );
 
   // 2. Add Background Transformer
   dio.transformer = AppBackgroundTransformer();

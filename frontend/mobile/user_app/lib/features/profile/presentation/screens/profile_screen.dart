@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../app/app_router.dart';
 import 'package:user_app/features/profile/presentation/widgets/live_referral_section.dart';
 import 'package:user_app/core/network/dio_provider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -27,7 +29,27 @@ class ProfileScreen extends ConsumerWidget {
                   // ✅ Shimmer is added here
                   ? const ProfileShimmerLoading()
                   : state.errorMessage != null
-                  ? Center(child: Text(state.errorMessage!))
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            state.errorMessage!,
+                            textAlign: TextAlign.center,
+                          ),
+                          FilledButton(
+                            onPressed: () => ref
+                                .read(profileControllerProvider.notifier)
+                                .loadProfile(),
+                            child: const Text('Retry'),
+                          ),
+                          TextButton(
+                            onPressed: () => context.go(AppRouter.login),
+                            child: const Text('Sign in again'),
+                          ),
+                        ],
+                      ),
+                    )
                   : profile == null
                   ? const SizedBox()
                   : SingleChildScrollView(
@@ -89,7 +111,9 @@ class ProfileScreen extends ConsumerWidget {
                                   value: profile.gstNumber,
                                 ),
                                 SizedBox(height: 30.h),
-                                LiveReferralSection(dio: ref.watch(dioProvider)),
+                                LiveReferralSection(
+                                  dio: ref.watch(dioProvider),
+                                ),
                                 SizedBox(height: 24.h),
                                 LogoutTile(
                                   onTap: () {

@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/legacy.dart';
 import 'package:user_app/features/auth/shared/auth_providers.dart';
 import 'package:user_app/features/profile/infra/profile_controller.dart';
 import '../domain/profile_model.dart';
+import '../../../core/errors/error_handler.dart';
 
 class ProfileState {
   final ProfileModel? profile;
@@ -20,7 +21,7 @@ class ProfileState {
 
   ProfileState copyWith({
     // ✅ Added the ability to explicitly pass null to profile
-    ProfileModel? profile, 
+    ProfileModel? profile,
     bool? isLoading,
     bool? isLoggingOut,
     String? errorMessage,
@@ -38,7 +39,7 @@ class ProfileController extends StateNotifier<ProfileState> {
 
   // ✅ 2. Require Ref in the constructor
   ProfileController(this._repository, this._ref) : super(const ProfileState()) {
-    loadProfile(); 
+    loadProfile();
   }
 
   Future<void> loadProfile() async {
@@ -47,7 +48,10 @@ class ProfileController extends StateNotifier<ProfileState> {
       final profile = await _repository.fetchProfile();
       state = state.copyWith(profile: profile, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Failed to load profile.');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: ErrorHandler.handle(e).message,
+      );
     }
   }
 
@@ -56,25 +60,26 @@ class ProfileController extends StateNotifier<ProfileState> {
     try {
       // 1. Call backend logout API
       await _repository.logout();
-      
+
       // ✅ 3. Use _ref to read the secure storage provider
       final secureStorage = _ref.read(secureStorageProvider);
       await secureStorage.deleteAll();
-      
+
       // ✅ 4. Clear the local profile data from state
-      state = const ProfileState(); 
-      
+      state = const ProfileState();
+
       onSuccess();
     } catch (_) {
-      state = state.copyWith(isLoggingOut: false, errorMessage: 'Logout failed.');
+      state = state.copyWith(
+        isLoggingOut: false,
+        errorMessage: 'Logout failed.',
+      );
     }
   }
 }
 
-final profileControllerProvider = StateNotifierProvider<ProfileController, ProfileState>((ref) {
-  // ✅ 5. Pass the 'ref' into the controller
-  return ProfileController(
-    ref.watch(profileRepositoryProvider), 
-    ref, 
-  );
-});
+final profileControllerProvider =
+    StateNotifierProvider<ProfileController, ProfileState>((ref) {
+      // ✅ 5. Pass the 'ref' into the controller
+      return ProfileController(ref.watch(profileRepositoryProvider), ref);
+    });

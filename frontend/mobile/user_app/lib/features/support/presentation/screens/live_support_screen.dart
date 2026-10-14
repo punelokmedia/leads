@@ -6,30 +6,81 @@ class LiveSupportScreen extends StatefulWidget {
   final Dio dio;
   final bool signedIn;
   final VoidCallback signIn;
+  final Map<String, dynamic>? ticket;
   const LiveSupportScreen({
     super.key,
     required this.dio,
     required this.signedIn,
     required this.signIn,
+    this.ticket,
   });
   @override
   State<LiveSupportScreen> createState() => _LiveSupportScreenState();
 }
 
-class _LiveSupportScreenState extends State<LiveSupportScreen> {
+class _LiveSupportScreenState extends State<LiveSupportScreen>
+    with WidgetsBindingObserver {
   final input = TextEditingController();
   final messages = <Map<String, dynamic>>[];
   Timer? timer;
   bool loading = true, sending = false, fetching = false, hasOlder = false;
   String? error, pendingId, pendingText;
-  static const path = 'api/v1/support/messages';
+  String get conversation => widget.ticket == null
+      ? 'api/v1/support'
+      : 'api/v1/support/tickets/${widget.ticket!['_id']}';
+  String get path => '$conversation/messages';
+  String? ticketStatus;
+  bool humanRequested = false, humanActive = false;
+  String helpIssue = 'PAYMENT';
+  static const helpOptions = [
+    'PAYMENT',
+    'WALLET',
+    'LEAD_QUALITY',
+    'DOWNLOAD',
+    'MEMBERSHIP',
+    'REFERRAL',
+    'ACCOUNT',
+    'OTHER',
+  ];
 
   @override
   void initState() {
     super.initState();
+    helpIssue = '${widget.ticket?['issue'] ?? 'PAYMENT'}';
+    WidgetsBinding.instance.addObserver(this);
     if (widget.signedIn) {
       load();
-      timer = Timer.periodic(const Duration(seconds: 15), (_) => load());
+      timer = Timer.periodic(const Duration(seconds: 15), (_) {
+        if (WidgetsBinding.instance.lifecycleState ==
+            AppLifecycleState.resumed) {
+          load();
+        }
+      });
+    } else {
+      loading = false;
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && widget.signedIn) load();
+  }
+
+  @override
+  void didUpdateWidget(covariant LiveSupportScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.signedIn == widget.signedIn) return;
+    timer?.cancel();
+    messages.clear();
+    if (widget.signedIn) {
+      loading = true;
+      load();
+      timer = Timer.periodic(const Duration(seconds: 15), (_) {
+        if (WidgetsBinding.instance.lifecycleState ==
+            AppLifecycleState.resumed) {
+          load();
+        }
+      });
     } else {
       loading = false;
     }
@@ -39,6 +90,17 @@ class _LiveSupportScreenState extends State<LiveSupportScreen> {
     if (fetching) return;
     fetching = true;
     try {
+      if (widget.ticket != null && !older) {
+        final ticketResponse = await widget.dio.get(conversation);
+        if (mounted) {
+          setState(() {
+            ticketStatus = '${ticketResponse.data['data']['status']}';
+            humanRequested =
+                ticketResponse.data['data']['humanRequestedAt'] != null;
+            humanActive = ticketResponse.data['data']['humanReplyAt'] != null;
+          });
+        }
+      }
       final response = await widget.dio.get(
         path,
         queryParameters: older && messages.isNotEmpty
@@ -62,6 +124,12 @@ class _LiveSupportScreenState extends State<LiveSupportScreen> {
         messages.sort((a, b) => '${a['_id']}'.compareTo('${b['_id']}'));
         error = null;
       });
+      if (rows.isNotEmpty) {
+        await widget.dio.post(
+          '$conversation/read',
+          data: {'through': rows.last['_id']},
+        );
+      }
     } catch (_) {
       if (mounted) {
         setState(
@@ -114,9 +182,34 @@ class _LiveSupportScreenState extends State<LiveSupportScreen> {
     }
   }
 
+  Future<void> automatedHelp(String choice) async {
+    if (sending || widget.ticket == null) return;
+    setState(() {
+      sending = true;
+      error = null;
+    });
+    try {
+      await widget.dio.post(
+        '$conversation/automation',
+        data: {'choice': choice},
+      );
+      await load();
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => error =
+              'Could not confirm your support option. Tap again to retry.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => sending = false);
+    }
+  }
+
   @override
   void dispose() {
     timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     input.dispose();
     super.dispose();
   }
@@ -124,7 +217,11 @@ class _LiveSupportScreenState extends State<LiveSupportScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Chat with Support'),
+      title: Text(
+        widget.ticket == null
+            ? 'Chat with Support'
+            : '${widget.ticket!['ticketId']}',
+      ),
       actions: [
         if (widget.signedIn)
           IconButton(
@@ -144,27 +241,93 @@ class _LiveSupportScreenState extends State<LiveSupportScreen> {
         : SafeArea(
             child: Column(
               children: [
+                if (widget.ticket != null)
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      '${(ticketStatus ?? '${widget.ticket!['status']}').toLowerCase().replaceAll('_', ' ')}\n${widget.ticket!['description']}',
+                    ),
+                  ),
                 const Padding(
                   padding: EdgeInsets.all(12),
                   child: Text(
                     'Send requests 24/7. Our support team will reply here.',
                   ),
                 ),
-                Wrap(
-                  spacing: 8,
-                  children: ['Payment help', 'Lead quality', 'Account help']
-                      .map(
-                        (topic) => ActionChip(
-                          label: Text(topic),
-                          onPressed: sending
-                              ? null
-                              : () {
-                                  input.text = topic;
-                                },
-                        ),
-                      )
-                      .toList(),
-                ),
+                if (widget.ticket != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      humanActive
+                          ? 'A human representative has replied in this conversation.'
+                          : humanRequested
+                          ? 'Transferred to human support. A representative will reply here when available.'
+                          : 'Automated support: choose an issue for guidance.',
+                    ),
+                  ),
+                  if (!humanRequested &&
+                      !humanActive &&
+                      ticketStatus != 'COMPLETED')
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: helpIssue,
+                              items: helpOptions
+                                  .map(
+                                    (value) => DropdownMenuItem(
+                                      value: value,
+                                      child: Text(
+                                        value.toLowerCase().replaceAll(
+                                          '_',
+                                          ' ',
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: sending
+                                  ? null
+                                  : (value) =>
+                                        setState(() => helpIssue = value!),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: sending
+                                ? null
+                                : () => automatedHelp(helpIssue),
+                            child: const Text('Get help'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (!humanRequested &&
+                      !humanActive &&
+                      ticketStatus != 'COMPLETED')
+                    TextButton(
+                      onPressed: sending ? null : () => automatedHelp('HUMAN'),
+                      child: const Text('Still need help - talk to a human'),
+                    ),
+                ],
+                if (widget.ticket == null)
+                  Wrap(
+                    spacing: 8,
+                    children: ['Payment help', 'Lead quality', 'Account help']
+                        .map(
+                          (topic) => ActionChip(
+                            label: Text(topic),
+                            onPressed: sending
+                                ? null
+                                : () {
+                                    input.text = topic;
+                                  },
+                          ),
+                        )
+                        .toList(),
+                  ),
                 if (error != null)
                   Padding(
                     padding: const EdgeInsets.all(12),
@@ -197,8 +360,27 @@ class _LiveSupportScreenState extends State<LiveSupportScreen> {
                                   child: Card(
                                     child: Padding(
                                       padding: const EdgeInsets.all(14),
-                                      child: Text(
-                                        '${m['sender'] == 'user' ? 'You' : 'Support'}: ${m['text']}',
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            m['sender'] == 'user'
+                                                ? 'You'
+                                                : '${m['authorName'] ?? 'Support representative'}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text('${m['text']}'),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${DateTime.tryParse('${m['createdAt']}')?.toLocal() ?? ''}${m['sender'] == 'user' ? (m['readAt'] != null ? ' · Read by support' : ' · Sent') : ''}',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
