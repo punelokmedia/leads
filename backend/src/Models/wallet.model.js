@@ -21,7 +21,7 @@ entrySchema.post('save', async function (doc) {
 export const WalletEntry = mongoose.model('WalletEntry', entrySchema);
 export const WalletTopup = mongoose.model('WalletTopup', new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  amountPaise: { type: Number, required: true, min: 100, max: 1000000, validate: Number.isSafeInteger },
+  amountPaise: { type: Number, required: true, min: 100, max: 10000000, validate: Number.isSafeInteger },
   gatewayOrderId: { type: String, unique: true, sparse: true },
   paymentId: { type: String, unique: true, sparse: true },
   reversedPaise: { type: Number, default: 0 },

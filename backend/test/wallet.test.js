@@ -40,9 +40,9 @@ test('Add money API verifies payment then exposes updated balance and complete p
   const buyer = await user('historybuyer');
   const outsider = await user('historyoutsider');
   t.mock.method(razorpay.orders, 'create', async order => {
-    assert.equal(order.amount, 50000);
+    assert.ok([50000, 10000000].includes(order.amount));
     assert.equal(order.currency, 'INR');
-    return { id: 'order_history' };
+    return { id: order.amount === 10000000 ? 'order_maximum_topup' : 'order_history' };
   });
   t.mock.method(razorpay.payments, 'fetch', async id => {
     assert.equal(id, 'pay_history');
@@ -64,6 +64,12 @@ test('Add money API verifies payment then exposes updated balance and complete p
   try {
     const topup = await call('/topup', buyer, { amountPaise: 50000 });
     assert.equal(topup.data.razorpayOrderId, 'order_history');
+    const maximum = await call('/topup', buyer, { amountPaise: 10000000 });
+    assert.equal(maximum.status, 200);
+    assert.equal(maximum.data.amountPaise, 10000000);
+    for (const amountPaise of [99, 10000001, 123.5, '10000000']) {
+      assert.equal((await call('/topup', buyer, { amountPaise })).status, 400);
+    }
     assert.equal((await call('')).data.balancePaise, 0);
     const body = { razorpayOrderId: 'order_history', razorpayPaymentId: 'pay_history', razorpaySignature: crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update('order_history|pay_history').digest('hex') };
     assert.equal((await call('/verify', outsider, body)).status, 404);
@@ -87,6 +93,20 @@ test('Add money API verifies payment then exposes updated balance and complete p
     assert.equal(new Set([...first.entries, ...second.entries].map(entry => entry._id)).size, 56);
     assert.equal((await call('/history?cursor=invalid')).status, 400);
     assert.equal((await call('/history?cursor=' + first.nextCursor, outsider)).data.entries.length, 0);
+    const previousEnvironment = process.env.NODE_ENV;
+    const previousKey = process.env.WALLET_LEDGER_HMAC_KEY;
+    try {
+      process.env.NODE_ENV = 'production';
+      delete process.env.WALLET_LEDGER_HMAC_KEY;
+      const count = await WalletTopup.countDocuments();
+      const unavailable = await call('/topup', buyer, { amountPaise: 50000 });
+      assert.equal(unavailable.status, 503);
+      assert.equal(unavailable.code, 'WALLET_LEDGER_NOT_CONFIGURED');
+      assert.equal(await WalletTopup.countDocuments(), count);
+    } finally {
+      if (previousEnvironment === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previousEnvironment;
+      if (previousKey === undefined) delete process.env.WALLET_LEDGER_HMAC_KEY; else process.env.WALLET_LEDGER_HMAC_KEY = previousKey;
+    }
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
 

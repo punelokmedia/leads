@@ -5,9 +5,15 @@ export const SecurityAudit = mongoose.model('SecurityAudit', new mongoose.Schema
   createdAt: { type: Date, default: Date.now, immutable: true }, exportedAt: Date,
   detail: mongoose.Schema.Types.Mixed,
 }));
-export function ledgerSignature(entry) {
+export function assertWalletLedgerConfigured() {
   const secret = process.env.WALLET_LEDGER_HMAC_KEY;
-  if (process.env.NODE_ENV === 'production' && (!secret || Buffer.byteLength(secret) < 32)) throw new Error('WALLET_LEDGER_HMAC_KEY must contain at least 32 bytes');
+  if (process.env.NODE_ENV === 'production' && (!secret || Buffer.byteLength(secret) < 32)) {
+    throw Object.assign(new Error('WALLET_LEDGER_HMAC_KEY must contain at least 32 bytes'), { code: 'WALLET_LEDGER_NOT_CONFIGURED' });
+  }
+}
+export function ledgerSignature(entry) {
+  assertWalletLedgerConfigured();
+  const secret = process.env.WALLET_LEDGER_HMAC_KEY;
   if (!secret) { if (process.env.NODE_ENV === 'production') throw new Error('WALLET_LEDGER_HMAC_KEY must be configured'); return undefined; }
   return crypto.createHmac('sha256', secret).update(JSON.stringify([String(entry._id), String(entry.user), entry.key, entry.kind, entry.amountPaise, entry.createdAt?.toISOString()])).digest('hex');
 }

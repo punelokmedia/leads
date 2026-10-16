@@ -8,13 +8,23 @@ import { razorpay } from '../Config/razorpay.config.js';
 import { validSignature } from '../Controllers/orders/payment.controller.js';
 import { creditCapturedTopup, purchaseMembership } from '../Services/wallet.service.js';
 import { purchaseWithWallet } from '../Services/checkout.service.js';
+import { assertWalletLedgerConfigured } from '../Services/security-audit.js';
 
 const router = express.Router();
 router.use(auth, checkAccountType('USER'));
 router.use((req, res, next) => req.method === 'POST' ? walletLimit(req, res, next) : next());
 const handle = work => async (req, res) => {
   try { res.json({ success: true, data: await work(req) }); }
-  catch (error) { res.status(error.status || 503).json({ success: false, code: error.code, message: error.status ? error.message : 'Wallet unavailable. Please retry.' }); }
+  catch (error) {
+    // Keep unexpected failures diagnosable in hosting logs without logging
+    // request bodies, authorization headers, or payment signatures.
+    if (!error.status || error.status >= 500) console.error('Wallet request failed', {
+      method: req.method, path: req.path,
+      requestId: req.headers['x-vercel-id'],
+      error: { name: error.name, code: error.code, message: error.message, stack: error.stack },
+    });
+    res.status(error.status || 503).json({ success: false, code: error.code, message: error.status ? error.message : 'Wallet unavailable. Please retry.' });
+  }
 };
 router.get('/', handle(async req => {
   const user = await User.findById(req.user.id).select('+walletBalancePaise +referralCreditPaise');
@@ -29,10 +39,12 @@ router.get('/history', handle(async req => {
   return { entries: entries.slice(0, 50), nextCursor: entries.length > 50 ? String(entries[49]._id) : null };
 }));
 router.post('/topup', handle(async req => {
+  // Fail before taking payment when production cannot commit a signed credit.
+  assertWalletLedgerConfigured();
   const account = await User.findById(req.user.id).select('walletFrozen');
   if (account?.walletFrozen) throw Object.assign(new Error('Wallet is under security review. Contact support.'), { status: 403, code: 'WALLET_FROZEN' });
   const amount = req.body?.amountPaise;
-  if (!Number.isSafeInteger(amount) || amount < 100 || amount > 1000000) throw Object.assign(new Error('Enter an amount between ₹1 and ₹10,000 in whole paise.'), { status: 400 });
+  if (!Number.isSafeInteger(amount) || amount < 100 || amount > 10000000) throw Object.assign(new Error('Enter an amount between ₹1 and ₹1,00,000 in whole paise.'), { status: 400 });
   const topup = await WalletTopup.create({ user: req.user.id, amountPaise: amount });
   const order = await razorpay.orders.create({ amount, currency: 'INR', receipt: topup.id, notes: { purpose: 'wallet_topup', userId: String(req.user.id) } });
   topup.gatewayOrderId = order.id;
