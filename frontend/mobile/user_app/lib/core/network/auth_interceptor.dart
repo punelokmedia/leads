@@ -12,6 +12,10 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    // Login verifies a provider credential, not the saved application session.
+    if (options.extra['skipSessionAuth'] == true) {
+      return handler.next(options);
+    }
     // 1. Get the token from storage
     final token = await _storage.read(key: 'auth_token');
 
@@ -30,7 +34,8 @@ class AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     try {
       // Ignore old requests that fail after a new login and anonymous failures.
-      if (err.response?.statusCode == 401) {
+      if (err.response?.statusCode == 401 &&
+          err.requestOptions.extra['skipSessionAuth'] != true) {
         final token = await _storage.read(key: 'auth_token');
         if (token != null &&
             token.isNotEmpty &&

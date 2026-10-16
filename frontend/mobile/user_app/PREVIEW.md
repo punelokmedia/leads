@@ -117,5 +117,10 @@ support routes and admin web before using live chat. Requests can be submitted
 Build the live APK:
 
 ```powershell
-flutter build apk --release --build-number=2 --dart-define=BASE_URL=https://leads-e5jv.onrender.com/
+flutter build apk --release --dart-define=BASE_URL=https://leads-qa6h.vercel.app/
 ```
+
+The older Render URL above is a historical verification reference. On October 15,
+2026, it returned HTTP 404; the Vercel cities endpoint returned HTTP 200. Use the
+Vercel origin for current builds and verify Google sign-in on a phone before
+building or uploading an AAB. The build number comes from `pubspec.yaml`.

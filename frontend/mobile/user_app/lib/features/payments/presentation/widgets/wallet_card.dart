@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'wallet_amount_dialog.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:user_app/core/network/dio_provider.dart';
@@ -97,25 +98,16 @@ class _WalletCardState extends ConsumerState<WalletCard> {
   }
 
   Future<void> _addMoney() async {
-    final amount = await showDialog<int>(
+    final amountPaise = await showDialog<int>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('Add money with Razorpay'),
-        children: [
-          for (final value in [100, 500, 1000, 2000])
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(context, value),
-              child: Text('₹$value'),
-            ),
-        ],
-      ),
+      builder: (context) => const WalletAmountDialog(),
     );
-    if (amount == null || !mounted) return;
+    if (amountPaise == null || !mounted) return;
     setState(() => _busy = true);
     try {
       final response = await ref
           .read(dioProvider)
-          .post('api/v1/wallet/topup', data: {'amountPaise': amount * 100});
+          .post('api/v1/wallet/topup', data: {'amountPaise': amountPaise});
       final data = response.data['data'];
       _gateway.open({
         'key': data['keyId'],
@@ -162,7 +154,10 @@ class _WalletCardState extends ConsumerState<WalletCard> {
                   ),
                   const SizedBox(height: 16),
                   if (data['frozen'] == true)
-                    const Text('Wallet under security review. Contact support before making payments.', style: TextStyle(color: Colors.red)),
+                    const Text(
+                      'Wallet under security review. Contact support before making payments.',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   const Text(
                     'Wallet history',
                     style: TextStyle(fontWeight: FontWeight.bold),

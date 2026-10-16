@@ -1,9 +1,8 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../network/api_config.dart';
 
 class MediaUrl {
   static String get _baseUrl {
-    final raw = dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:5000/';
-    return raw.endsWith('/') ? raw : '$raw/';
+    return ApiConfig.baseUrl;
   }
 
   static bool isSvg(String? url) {

@@ -7,6 +7,28 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const storage = FlutterSecureStorage();
 
+  test('Google credential rejection preserves the existing app session', () async {
+    FlutterSecureStorage.setMockInitialValues({'auth_token': 'saved-token'});
+    var expired = 0;
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(storage, onSessionExpired: () => expired++));
+    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+      expect(options.headers.containsKey('Authorization'), isFalse);
+      handler.reject(DioException(
+        requestOptions: options,
+        response: Response(requestOptions: options, statusCode: 401),
+        type: DioExceptionType.badResponse,
+      ), true);
+    }));
+    await expectLater(
+      dio.post('https://example.invalid/api/v1/auth/google',
+        options: Options(extra: {'skipSessionAuth': true})),
+      throwsA(isA<DioException>()),
+    );
+    expect(await storage.read(key: 'auth_token'), 'saved-token');
+    expect(expired, 0);
+  });
+
   for (final status in [401, 403, 429, 500, 503]) {
     test(
       'HTTP $status ${status == 401 ? 'clears rejected' : 'preserves'} session',

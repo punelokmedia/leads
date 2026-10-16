@@ -1,5 +1,6 @@
 import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:user_app/features/payments/presentation/widgets/wallet_card.dart';
 import 'package:user_app/features/profile/presentation/widgets/referral_section.dart';
 import 'package:flutter/services.dart';
@@ -246,6 +247,9 @@ class _PreviewHomeState extends State<PreviewHome> {
         appBar: AppBar(
           primary: store.isLive,
           toolbarHeight: 40,
+          leading: page == 0
+              ? null
+              : BackButton(onPressed: () => setState(() => page = 0)),
           centerTitle: false,
           title: page == 0
               ? Image.asset(
@@ -702,15 +706,24 @@ class _PreviewHomeState extends State<PreviewHome> {
       ListTile(
         leading: const Icon(Icons.account_balance_wallet_outlined),
         title: const Text('Wallet'),
-        subtitle: const Text('Sample balance · Frontend preview'),
-        trailing: Text(
-          '₹600',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
+        subtitle: Text(store.isLive ? 'Available balance' : 'Sample balance · Frontend preview'),
+        trailing: store.isLive
+            ? Consumer(
+                builder: (context, ref, _) => ref.watch(walletProvider).when(
+                  loading: () => const SizedBox(
+                    width: 20, height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  error: (_, _) => TextButton(
+                    onPressed: () => ref.invalidate(walletProvider),
+                    child: const Text('Retry'),
+                  ),
+                  data: (data) => Text(
+                    '₹${((data['balancePaise'] as num) / 100).toStringAsFixed(2)}',
+                  ),
+                ),
+              )
+            : const Text('₹0'),
         onTap: () => setState(() => page = 2),
       ),
       ListTile(

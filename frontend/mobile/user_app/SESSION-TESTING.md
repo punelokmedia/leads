@@ -1,5 +1,15 @@
 # Testing saved-session recovery
 
+## API address for phone tests
+
+API requests and relative media URLs use `ApiConfig.baseUrl`, defaulting to
+`https://leads-qa6h.vercel.app/`. The `.env.local` BASE_URL is no longer used.
+For an intentional emulator/local-backend test, pass
+`--dart-define=BASE_URL=http://10.0.2.2:5000/`. That address targets the emulator
+host; it is not a production backend address. Fully stop and rerun/rebuild after
+changing dart defines. Verify the Google login request uses the expected HTTPS
+origin, then test logout and login again before uploading a release.
+
 Run from the repository root in PowerShell:
 
 ```powershell

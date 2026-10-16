@@ -25,7 +25,14 @@ class ProfileAppBar extends StatelessWidget {
               size: 22.r,
               color: Colors.black87,
             ),
-            onPressed: () {},
+            tooltip: 'Back',
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(AppRouter.homePath);
+              }
+            },
           ),
           Expanded(
             child: Center(

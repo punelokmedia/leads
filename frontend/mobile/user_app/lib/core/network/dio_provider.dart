@@ -1,6 +1,6 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'api_config.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'background_transformer.dart';
@@ -11,10 +11,7 @@ import 'auth_interceptor.dart'; // ← Import your new interceptor
 final storageProvider = Provider((ref) => const FlutterSecureStorage());
 
 final dioProvider = Provider<Dio>((ref) {
-  const configuredUrl = String.fromEnvironment('BASE_URL');
-  final baseUrl = configuredUrl.isNotEmpty
-      ? configuredUrl
-      : dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:5000/';
+  final baseUrl = ApiConfig.baseUrl;
   final storage = ref.watch(storageProvider);
 
   log("🚀 DIO INITIALIZED WITH BASE_URL: $baseUrl");

@@ -2,7 +2,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 // auth/infra/auth_repository.dart
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:user_app/core/errors/app_exception.dart';
@@ -178,10 +177,6 @@ class AuthRepository {
       throw AppException('Google account sign-in failed (${error.code}). Please retry and report this code.');
     }
 
-    if (googleUser == null) {
-      throw Exception('Google Sign-In canceled');
-    }
-
     // 2. Extract the secure ID Token from Google
     final String? idToken = googleAuth.idToken;
 
@@ -198,11 +193,23 @@ class AuthRepository {
       res = await _dio.post(
         ApiEndpoints.googleAuth,
         data: {'idToken': idToken},
-        options: Options(receiveTimeout: const Duration(seconds: 90)),
+        options: Options(
+          receiveTimeout: const Duration(seconds: 90),
+          extra: {'skipSessionAuth': true},
+        ),
       );
     } on DioException catch (error) {
       if (kDebugMode) {
         debugPrint('[GoogleAuth] Backend request failed: ${error.type.name}; HTTP ${error.response?.statusCode ?? "no response"}');
+      }
+      final responseData = error.response?.data;
+      if (responseData is Map &&
+          responseData['protection'] is Map &&
+          responseData['protection']['vercel_auth_enabled'] == true) {
+        throw const AppException(
+          'The app is using a backend protected by Vercel Authentication. '
+          'Use the public production API URL and rebuild the app.',
+        );
       }
       rethrow;
     }
