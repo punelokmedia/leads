@@ -13,15 +13,17 @@ import { CookiePolicyPage } from '@/features/legal/pages/CookiePolicyPage'
 import { ContactSupportPage } from '@/features/legal/pages/ContactSupportPage'
 import { MobileAuthDrawerPage } from '@/features/auth/pages/MobileAuthDrawerPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { DownloadAppPage } from '@/features/download/pages/DownloadAppPage'
 
 export const router = createBrowserRouter([
+  { path: '/login', element: <LoginPage /> },
   {
     path: '/',
     element: <PublicLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      ...['cart', 'history', 'login', 'signup', 'forgot-password', 'forgot-password/verify', 'forgot-password/reset'].map(path => ({ path, element: null })),
+      ...['cart', 'history', 'signup', 'forgot-password', 'forgot-password/verify', 'forgot-password/reset'].map(path => ({ path, element: null })),
       { path: 'profile', element: <ProfilePage /> },
       { path: 'wallet', element: <WalletPage /> },
       { path: 'referrals', element: <ReferralPage /> },

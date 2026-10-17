@@ -1,4 +1,5 @@
 import { apiFetch } from '@/features/auth/session'
+import { ProfileCompletionForm } from './ProfileCompletionForm'
 import { startGoogleLogin } from '../googleHandoff'
 import { API_BASE_URL } from '@/config/api'
 import { useEffect, useState, type KeyboardEvent } from 'react'
@@ -33,7 +34,7 @@ export function MobileAuthDrawerPage() {
   const [searchParams] = useSearchParams()
   const isMembershipFlow = searchParams.get('flow') === 'membership'
   const isGoogleOnboardingFlow = searchParams.get('flow') === 'google'
-  const [step, setStep] = useState(isMembershipFlow ? 5 : isGoogleOnboardingFlow ? 4 : 1)
+  const [step, setStep] = useState(isMembershipFlow ? 5 : isGoogleOnboardingFlow ? 4 : searchParams.get('method') === 'phone' ? 2 : 1)
   const [authIntent, setAuthIntent] = useState<'login' | 'signup'>('login')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -390,6 +391,28 @@ export function MobileAuthDrawerPage() {
     }
   }, [step])
 
+  if (step === 4) {
+    return (
+      <ProfileCompletionForm
+        details={profileForm}
+        onChange={(field, value) => setProfileForm(previous => ({ ...previous, [field]: value }))}
+        workTypes={workTypeOptions}
+        isWorkTypeLoading={isWorkTypeLoading}
+        referralCode={referralCode}
+        onReferralChange={value => {
+          const code = value.toUpperCase()
+          setReferralCode(code)
+          if (code.trim()) sessionStorage.setItem('pending_referral_code', code.trim())
+          else sessionStorage.removeItem('pending_referral_code')
+        }}
+        onContinue={handleCompleteProfile}
+        isLoading={isLoading}
+        error={error}
+        success={success}
+      />
+    )
+  }
+
   return (
     <div className="min-h-[70vh] bg-[#efefef] px-4 py-8 sm:py-12">
       {toastMessage ? (
@@ -437,7 +460,6 @@ export function MobileAuthDrawerPage() {
           {step === 1 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Welcome Back!</h1> : null}
           {step === 2 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Verify Your Number</h1> : null}
           {step === 3 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Enter OTP</h1> : null}
-          {step === 4 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Complete your profile</h1> : null}
           {step === 5 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Lifetime membership</h1> : null}
 
           {step === 1 ? <p className="mt-1 text-sm text-[#8A89A2]">Login to continue</p> : null}
@@ -575,83 +597,6 @@ export function MobileAuthDrawerPage() {
             </div>
           ) : null}
 
-          {step === 4 ? (
-            <div className="mt-6 space-y-3">
-              <input
-                type="text"
-                value={profileForm.fullName}
-                onChange={(event) => setProfileForm((prev) => ({ ...prev, fullName: event.target.value }))}
-                placeholder="Full Name"
-                className="h-11 w-full rounded-xl border border-[#D9D7EC] px-3 text-sm outline-none focus:border-[#4B2CF5]"
-              />
-              <input
-                type="text"
-                value={profileForm.businessName}
-                onChange={(event) => setProfileForm((prev) => ({ ...prev, businessName: event.target.value }))}
-                placeholder="Business / Company Name"
-                className="h-11 w-full rounded-xl border border-[#D9D7EC] px-3 text-sm outline-none focus:border-[#4B2CF5]"
-              />
-              <input
-                type="email"
-                value={profileForm.email}
-                onChange={(event) => setProfileForm((prev) => ({ ...prev, email: event.target.value }))}
-                placeholder="Email"
-                className="h-11 w-full rounded-xl border border-[#D9D7EC] px-3 text-sm outline-none focus:border-[#4B2CF5]"
-              />
-              <input
-                type="text"
-                value={profileForm.city}
-                onChange={(event) => setProfileForm((prev) => ({ ...prev, city: event.target.value }))}
-                placeholder="City"
-                className="h-11 w-full rounded-xl border border-[#D9D7EC] px-3 text-sm outline-none focus:border-[#4B2CF5]"
-              />
-              <select
-                value={profileForm.workType}
-                onChange={(event) => setProfileForm((prev) => ({ ...prev, workType: event.target.value }))}
-                className="h-11 w-full rounded-xl border border-[#D9D7EC] bg-white px-3 text-sm outline-none focus:border-[#4B2CF5]"
-                disabled={isWorkTypeLoading}
-              >
-                <option value="">{isWorkTypeLoading ? 'Loading work types...' : 'Select Work Type'}</option>
-                {workTypeOptions.map((option) => (
-                  <option key={option.id} value={option.label}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <div>
-                <label htmlFor="referral-code" className="mb-1 block text-sm font-medium text-[#1F1D35]">
-                  Referral code (optional)
-                </label>
-                <input
-                  id="referral-code"
-                  type="text"
-                  value={referralCode}
-                onChange={(event) => {
-                  const code = event.target.value.toUpperCase()
-                  setReferralCode(code)
-                  if (code.trim()) sessionStorage.setItem('pending_referral_code', code.trim())
-                  else sessionStorage.removeItem('pending_referral_code')
-                }}
-                  maxLength={26}
-                  autoCapitalize="characters"
-                  autoComplete="off"
-                  spellCheck={false}
-                  disabled={isLoading}
-                  placeholder="Enter your invite code"
-                  className="h-11 w-full rounded-xl border border-[#D9D7EC] px-3 text-sm outline-none focus:border-[#4B2CF5]"
-                />
-                <p className="mt-1 text-xs text-stone-600">Leave blank if you do not have a code.</p>
-              </div>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => void handleCompleteProfile()}
-                className="h-12 w-full rounded-xl bg-[#4B2CF5] text-sm font-semibold text-white hover:bg-[#3C20D9] disabled:opacity-70"
-              >
-                {isLoading ? 'Saving...' : 'Continue'}
-              </button>
-            </div>
-          ) : null}
           {step === 5 ? (
             <div className="mt-6 space-y-4">
               <p className="text-sm text-[#4f4a73]">Pay ₹1 once before your first lead purchase. Lifetime access, no recurring subscription. Each lead is purchased separately.</p>

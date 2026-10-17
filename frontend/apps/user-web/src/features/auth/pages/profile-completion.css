@@ -1,0 +1,192 @@
+﻿.profile-setup-page {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  min-height: 100dvh;
+  padding: 28px 20px;
+  background: #dce9ff;
+  color: #101c30;
+  font-family: Montserrat, Arial, sans-serif;
+}
+
+.profile-setup-background {
+  position: absolute;
+  z-index: -1;
+  width: max(110%, 1000px);
+  max-width: none;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.profile-setup-card {
+  position: relative;
+  width: min(600px, 100%);
+  padding: 28px 56px 24px;
+  border-radius: 40px;
+  background: #f8f9ff;
+}
+
+.profile-setup-card h1 {
+  margin: 0;
+  padding-right: 40px;
+  font-size: 32px;
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1.25;
+}
+
+.profile-setup-subtitle {
+  margin: 0 0 24px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.profile-setup-close {
+  position: absolute;
+  top: 35px;
+  right: 48px;
+  color: #64748b;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.profile-setup-card fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.profile-setup-card label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 650;
+}
+
+.profile-setup-card label > span {
+  color: #ef4444;
+}
+
+.profile-setup-card input,
+.profile-setup-card select {
+  display: block;
+  width: 100%;
+  height: 46px;
+  margin-bottom: 13px;
+  padding: 0 15px;
+  border: 1px solid #8794a8;
+  border-radius: 13px;
+  background: transparent;
+  color: #101c30;
+  font: inherit;
+  font-size: 14px;
+}
+
+.profile-setup-card input::placeholder,
+.profile-setup-card select:has(option[value='']:checked) {
+  color: #64748b;
+}
+
+.profile-setup-card .profile-setup-referral-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 30px;
+}
+
+.profile-setup-referral-label small {
+  padding: 2px 12px;
+  border-radius: 12px;
+  background: #d9dfe5;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.profile-setup-card button[type='submit'] {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 2px;
+  border: 0;
+  border-radius: 30px;
+  background: #0066ff;
+  color: white;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-setup-card button:hover {
+  background: #0050cb;
+}
+
+.profile-setup-card :disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.profile-setup-note {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 8px;
+  color: #94a3b8;
+}
+
+.profile-setup-error,
+.profile-setup-success {
+  margin: 10px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #b91c1c;
+}
+
+.profile-setup-success {
+  color: #008c4f;
+}
+
+.profile-setup-card input:focus-visible,
+.profile-setup-card select:focus-visible,
+.profile-setup-card button:focus-visible,
+.profile-setup-card a:focus-visible {
+  outline: 2px solid #0066ff;
+  outline-offset: 3px;
+}
+
+/* The profile step uses the full-page layout shown in the reference. */
+.flex:has(> main .profile-setup-page) > header,
+.flex:has(> main .profile-setup-page) > footer {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .profile-setup-page {
+    padding: 24px 16px;
+  }
+
+  .profile-setup-card {
+    padding: 30px 24px 24px;
+    border-radius: 30px;
+  }
+
+  .profile-setup-card h1 {
+    font-size: 25px;
+  }
+
+  .profile-setup-close {
+    top: 36px;
+    right: 24px;
+    font-size: 11px;
+  }
+
+  .profile-setup-subtitle {
+    font-size: 12px;
+  }
+}

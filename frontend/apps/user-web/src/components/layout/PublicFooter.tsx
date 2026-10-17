@@ -1,53 +1,10 @@
-import { Link } from 'react-router-dom'
-
+﻿import { Link } from 'react-router-dom'
 export function PublicFooter() {
-  return (
-    <footer className="bg-[#050505] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="rounded-3xl border border-white/10 bg-[#070707] p-6 sm:p-8">
-          <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-start">
-            <div>
-              <img
-                src="/logo.png"
-                alt="Interiorwala"
-                className="h-12 w-auto rounded-md bg-white px-2 py-1"
-              />
-              <p className="mt-5 max-w-xl text-sm leading-relaxed text-stone-300 sm:text-base">
-                Building the future of interior design by bridging the gap between
-                high-intent clients and world-class design professionals.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
-                Quick Links
-              </p>
-              <div className="grid grid-cols-2 gap-3 text-sm text-stone-300">
-                <Link to="/privacy-policy" className="transition hover:text-[#F8B020]">
-                  Privacy Policy
-                </Link>
-                <Link to="/account-deletion" className="transition hover:text-[#F8B020]">
-                  Delete Account
-                </Link>
-                <Link to="/terms-service" className="transition hover:text-[#F8B020]">
-                  Terms & Service
-                </Link>
-                <Link to="/cookie-policy" className="transition hover:text-[#F8B020]">
-                  Cookie Policy
-                </Link>
-                <Link to="/contact-support" className="transition hover:text-[#F8B020]">
-                  Contact Support
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-5 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between">
-            <p>Designed for verified interior design lead discovery across India.</p>
-            <p>{new Date().getFullYear()} Interiorwala. All rights reserved.</p>
-          </div>
-        </div>
-      </div>
-    </footer>
-  )
+  return <footer className="next-footer"><div className="home-container"><div className="footer-grid">
+    <div className="footer-brand"><img src="/New nextlead logo/NextLead_Ribbon_Arrow_Logo-removebg-preview.png" alt="NextLead" /><p>Find the leads.<br />Build Real Business.</p><div className="footer-socials">{['Facebook Icon.svg', 'Linkedine icon.svg', 'Youtube Icon.svg'].map(file => <img key={file} src={`/Icons/${file}`} alt={file.split(' ')[0]} />)}</div></div>
+    <div><h3>Quick Links</h3><Link to="/">Home</Link><Link to="/contact">Contact Us</Link><Link to="/pricing">Plans & Pricing</Link><Link to="/download">Download App</Link></div>
+    <div><h3>Categories</h3>{['POP & False Ceiling Work', 'Interior Design', 'Painting', 'Plumbing', 'Electrical Work'].map(name => <Link key={name} to={`/?browse=1&search=${encodeURIComponent(name)}`}>{name}</Link>)}<Link to="/?browse=1" className="footer-more">View More ?</Link></div>
+    <div><h3>Support</h3><Link to="/contact-support">Help Center</Link><Link to="/contact">Contact Us</Link><Link to="/privacy-policy">Privacy Policy</Link><Link to="/terms-service">Terms & Conditions</Link></div>
+    <div className="footer-stores"><h3>Download Our App</h3><Link to="/download"><img src="/Icons/Link - App Store Badge.svg" alt="Download on the App Store" /></Link><Link to="/download"><img src="/Icons/Link - Google Play Badge.svg" alt="Get it on Google Play" /></Link></div>
+  </div><p className="footer-copyright">© {new Date().getFullYear()} NextLead. All rights reserved.</p></div></footer>
 }

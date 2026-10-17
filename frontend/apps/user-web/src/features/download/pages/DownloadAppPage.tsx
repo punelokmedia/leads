@@ -68,7 +68,7 @@ export function DownloadAppPage() {
       <figure className="app-download-visual">
         <div className="app-phone-orbit" aria-hidden="true" />
         <span className="app-visual-caption">A LITTLE SCREEN.<br /><strong>BIG OPPORTUNITIES.</strong></span>
-        <img src="/images/nextleads-single-phone.png" alt="Illustrative NextLeads home screen with project enquiries and two-vendor lead limits, shown on a single phone" width="1024" height="1536" fetchPriority="high" />
+        <img src="/NextLead App Growth Dashboard.png" alt="NextLead app and business growth dashboard" width="1024" height="1536" fetchPriority="high" />
         <figcaption>NextLeads app preview · Illustrative projects</figcaption>
       </figure>
     </section>
