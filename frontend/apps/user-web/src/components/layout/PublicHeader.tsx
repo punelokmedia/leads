@@ -1,7 +1,8 @@
+import { apiFetch } from '@/features/auth/session'
 import { startGoogleLogin } from '@/features/auth/googleHandoff'
 import { createPortal } from 'react-dom'
 import { API_BASE_URL } from '@/config/api'
-import { notifyUserSessionChanged } from '@/features/auth/useUserToken'
+import { notifyUserSessionChanged, useUserToken } from '@/features/auth/useUserToken'
 import { ReferralCard } from './ReferralCard'
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
@@ -141,7 +142,7 @@ export function PublicHeader() {
     setIsMobileMenuOpen(false)
   }, [pathname])
   const isPanelOpen = panelMode !== null
-  const userToken = localStorage.getItem('user_token')
+  const userToken = useUserToken()
   const resetAuthMessages = useCallback(() => {
     setAuthError('')
     setAuthSuccess('')
@@ -156,7 +157,7 @@ export function PublicHeader() {
 
     for (const baseUrl of API_BASE_URL_CANDIDATES) {
       try {
-        return await fetch(buildApiUrl(baseUrl, path), init)
+        return await apiFetch(buildApiUrl(baseUrl, path), init)
       } catch (error) {
         lastNetworkError =
           error instanceof Error ? error : new Error('Unable to connect to auth server.')
@@ -342,7 +343,10 @@ export function PublicHeader() {
 
       const data = payload?.data ?? {}
       setCartLeads(Array.isArray(data.leads) ? data.leads : [])
-      setRemovedCartLeads(Array.isArray(data.removedLeads) ? data.removedLeads : [])
+      setRemovedCartLeads(previous => Array.from(new Map([
+        ...previous,
+        ...(Array.isArray(data.removedLeads) ? data.removedLeads : []),
+      ].map(lead => [lead._id, lead])).values()))
       setCartSummary({
         totalItems: Number(data.totalItems) || 0,
         totalAmount: Number(data.totalAmount) || 0,
@@ -491,7 +495,11 @@ export function PublicHeader() {
     setIsPaymentProcessing(true)
     resetAuthMessages()
     try {
-      const response = await requestApi('/wallet/purchase', { method: 'POST', headers: { Authorization: 'Bearer ' + userToken } })
+      const response = await requestApi('/wallet/purchase', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + userToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadIds: cartLeads.map(lead => lead._id), expectedTotalPaise: Math.round(cartLeads.reduce((total, lead) => total + lead.price, 0) * 100) }),
+      })
       const payload = await response.json()
       if (payload.code === 'MEMBERSHIP_REQUIRED') { setPanelMode(null); navigate('/auth/mobile?flow=membership'); return }
       if (payload.code === 'INSUFFICIENT_BALANCE') { setAuthError('Add money to your wallet before purchasing.'); setPanelMode(null); navigate('/wallet'); return }
@@ -502,7 +510,10 @@ export function PublicHeader() {
       await fetchHistoryLeads()
       const orderId = payload.data?.orderId
       if (orderId) { setDownloadOrderId(String(orderId)) }
-    } catch (error) { setAuthError(error instanceof Error ? error.message : 'Wallet purchase failed.') }
+    } catch (error) {
+      await fetchCart()
+      setAuthError(error instanceof Error ? error.message : 'Wallet purchase failed. Review your cart before retrying.')
+    }
     finally { setIsPaymentProcessing(false) }
   }
 
@@ -1485,6 +1496,12 @@ export function PublicHeader() {
             </>
           ) : panelMode === 'cart' ? (
             <div className="min-h-[58vh] rounded-t-[34px] bg-[#efefef] px-4 pt-6 pb-8">
+              {userToken && removedCartLeads.length > 0 ? (
+                <div role="status" className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  <p>Unavailable leads were removed. Review the remaining selection before paying.</p>
+                  {removedCartLeads.map(lead => <p key={lead._id}>{lead.title}: {lead.reason}</p>)}
+                </div>
+              ) : null}
               {!userToken ? (
                 <button
                   type="button"
@@ -1502,11 +1519,6 @@ export function PublicHeader() {
                 </div>
               ) : (
                 <>
-                  {removedCartLeads.length > 0 ? (
-                    <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                      Some leads are no longer available and removed from cart.
-                    </div>
-                  ) : null}
                   <div className="space-y-4">
                     {cartLeads.map((lead) => (
                       <article

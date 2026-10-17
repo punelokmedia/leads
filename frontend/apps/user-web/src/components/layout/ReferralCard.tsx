@@ -1,3 +1,4 @@
+import { apiFetch } from '@/features/auth/session'
 import { useEffect, useState } from 'react'
 import { API_BASE_URL } from '@/config/api'
 
@@ -15,7 +16,7 @@ export function ReferralCard({ token }: { token: string }) {
     setCopied(false)
     void (async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/referrals/me`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/v1/referrals/me`, {
           headers: { Authorization: `Bearer ${token}` }, signal: controller.signal,
         })
         const body = await response.json()

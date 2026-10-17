@@ -1,4 +1,4 @@
-import 'package:user_app/core/network/dio_provider.dart';
+import 'package:user_app/core/errors/error_handler.dart';
 import 'package:user_app/features/payments/presentation/widgets/wallet_card.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -44,6 +44,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     final isLoading = ref.watch(cartIsLoadingProvider);
     final items = ref.watch(cartItemsProvider);
     final error = ref.watch(cartErrorProvider);
+    final availabilityMessages = ref
+        .watch(cartControllerProvider)
+        .availabilityMessages;
     final isLoggedIn = ref.watch(isLoggedInProvider);
     final notifier = ref.read(cartControllerProvider.notifier);
 
@@ -82,36 +85,52 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           ),
         ],
       ),
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFFC107)),
-            )
-          : error != null
-          ? Center(
+      body: Column(
+        children: [
+          if (availabilityMessages.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(12),
               child: Text(
-                error,
-                style: AppTextStyles.poppins(
-                  fontSize: 13.sp,
-                  color: Colors.red,
-                ),
+                'Unavailable leads were removed. Review the remaining selection before paying.\n${availabilityMessages.join('\n')}',
+                key: const Key('cart-availability-notice'),
+                style: const TextStyle(color: Colors.orange),
               ),
-            )
-          : items.isEmpty
-          ? _EmptyCartView()
-          : ListView.builder(
-              padding: EdgeInsets.symmetric(vertical: 8.h),
-              itemCount: items.length + 1,
-              itemBuilder: (_, index) {
-                if (index == 0) return const WalletCard();
-                final i = index - 1;
-                return CartItemCard(
-                  item: items[i],
-                  onToggleSelect: () => notifier.toggleSelect(items[i].id),
-                  onDelete: () => notifier.deleteItem(items[i].id),
-                  onAddToCart: () => notifier.addToCart(items[i].id),
-                );
-              },
             ),
+          Expanded(
+            child: isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFFFC107)),
+                  )
+                : error != null
+                ? Center(
+                    child: Text(
+                      error,
+                      style: AppTextStyles.poppins(
+                        fontSize: 13.sp,
+                        color: Colors.red,
+                      ),
+                    ),
+                  )
+                : items.isEmpty
+                ? _EmptyCartView()
+                : ListView.builder(
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                    itemCount: items.length + 1,
+                    itemBuilder: (_, index) {
+                      if (index == 0) return const WalletCard();
+                      final i = index - 1;
+                      return CartItemCard(
+                        item: items[i],
+                        onToggleSelect: () =>
+                            notifier.toggleSelect(items[i].id),
+                        onDelete: () => notifier.deleteItem(items[i].id),
+                        onAddToCart: () => notifier.addToCart(items[i].id),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
       bottomNavigationBar: items.isEmpty
           ? null
           : SafeArea(
@@ -137,7 +156,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     ],
                   ),
                   child: ElevatedButton(
-                    onPressed: (isLoading || _purchasing)
+                    onPressed: (isLoading || _purchasing || error != null)
                         ? null
                         : () async {
                             // 1. Auth Guard
@@ -161,28 +180,21 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             if (_purchasing) return;
                             setState(() => _purchasing = true);
                             try {
-                              final response = await ref
-                                  .read(dioProvider)
-                                  .post(
-                                    'api/v1/wallet/purchase',
-                                    data: {
-                                      'leadIds': selected
-                                          .map((e) => e.id)
-                                          .toList(),
-                                    },
-                                  );
+                              final orderId = await ref
+                                  .read(cartRepositoryProvider)
+                                  .purchaseSelected(selected);
                               ref.invalidate(walletProvider);
                               await notifier.loadCart();
                               if (!mounted) return;
                               this.context.go(
                                 AppRouter.paymentsuccessPath,
-                                extra: response.data['data']['orderId']
-                                    .toString(),
+                                extra: orderId,
                               );
                             } catch (error) {
+                              await notifier.loadCart();
                               if (!mounted) return;
                               _showSnack(
-                                'Purchase failed. Check membership and wallet balance, then refresh before retrying.',
+                                ErrorHandler.handle(error).message,
                                 isError: true,
                               );
                             } finally {

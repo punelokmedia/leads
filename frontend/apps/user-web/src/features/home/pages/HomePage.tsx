@@ -1,3 +1,5 @@
+import { useUserToken } from '@/features/auth/useUserToken'
+import { apiFetch } from '@/features/auth/session'
 import { API_BASE_URL } from '@/config/api'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -170,14 +172,14 @@ export function HomePage() {
   const [pagination, setPagination] = useState<LeadsPagination>({ page: 1, totalPages: 1 })
   const selectedCity = cityParam ? cityParam.trim() : selectedCategory ? selectedCategory : ''
   const hasMoreLeads = pagination.page < pagination.totalPages
-  const userToken = localStorage.getItem('user_token')
+  const userToken = useUserToken()
 
   useEffect(() => {
     const fetchCities = async () => {
       let networkError: Error | null = null
       for (const baseUrl of API_BASE_URL_CANDIDATES) {
         try {
-          const response = await fetch(`${baseUrl}/api/v1/cities/get-all-cities`, { method: 'GET' })
+          const response = await apiFetch(`${baseUrl}/api/v1/cities/get-all-cities`, { method: 'GET' })
           const payload = await response.json()
           if (!response.ok || !payload?.success) {
             throw new Error(payload?.message ?? 'Unable to fetch cities right now.')
@@ -226,7 +228,7 @@ export function HomePage() {
           if (selectedCity) params.set('city', selectedCity)
           if (categoryIdParam) params.set('category', categoryIdParam)
 
-          const response = await fetch(
+          const response = await apiFetch(
             `${baseUrl}/api/v1/leads/get-all-leads?${params.toString()}`,
             {
             method: 'GET',
@@ -292,7 +294,7 @@ export function HomePage() {
           if (selectedCity) params.set('city', selectedCity)
           if (categoryIdParam) params.set('category', categoryIdParam)
 
-          const response = await fetch(
+          const response = await apiFetch(
             `${baseUrl}/api/v1/leads/get-all-leads?${params.toString()}`,
             {
             method: 'GET',
@@ -338,7 +340,7 @@ export function HomePage() {
 
     for (const baseUrl of API_BASE_URL_CANDIDATES) {
       try {
-        const response = await fetch(`${baseUrl}/api/v1/cart/add-cart`, {
+        const response = await apiFetch(`${baseUrl}/api/v1/cart/add-cart`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -371,14 +373,14 @@ export function HomePage() {
     setBuyingLeadId(leadId)
     setCartFeedback('')
     try {
-      const addResponse = await fetch(`${API_BASE_URL}/api/v1/cart/add-cart`, {
+      const addResponse = await apiFetch(`${API_BASE_URL}/api/v1/cart/add-cart`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken}` },
         body: JSON.stringify({ leadId, quantity: 1 }),
       })
       const added = await addResponse.json()
       if (!addResponse.ok || !added.success) throw new Error(added.message || 'Unable to prepare this lead.')
       window.dispatchEvent(new Event('cart:updated'))
-      const response = await fetch(`${API_BASE_URL}/api/v1/wallet/purchase`, {
+      const response = await apiFetch(`${API_BASE_URL}/api/v1/wallet/purchase`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken}` },
         body: JSON.stringify({ leadIds: [leadId] }),
       })
@@ -400,7 +402,7 @@ export function HomePage() {
 
     for (const baseUrl of API_BASE_URL_CANDIDATES) {
       try {
-        const response = await fetch(`${baseUrl}/api/v1/leads/get-lead/${leadId}`, {
+        const response = await apiFetch(`${baseUrl}/api/v1/leads/get-lead/${leadId}`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${userToken}`,

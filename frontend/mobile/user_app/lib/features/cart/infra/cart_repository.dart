@@ -33,17 +33,28 @@ class CartRepository {
   // ── REMOTE (logged-in) ─────────────────────────────────────
 
   /// GET cart
-  Future<List<CartLead>> fetchRemoteCart() async {
+  Future<List<CartLead>> fetchRemoteCart() async =>
+      (await fetchRemoteCartState()).items;
+
+  Future<({List<CartLead> items, List<String> unavailableMessages})>
+  fetchRemoteCartState() async {
     try {
       final res = await _dio.get(ApiEndpoints.cart);
 
       final dynamic data = res.data['data'];
+      final unavailableMessages = <String>[
+        for (final removed in (data?['removedLeads'] as List? ?? []))
+          '${removed['title'] ?? 'Unavailable lead'}: ${removed['reason'] ?? 'No longer available.'}',
+      ];
       if (data != null && data['leads'] != null) {
         final List leadsList = data['leads'];
-        return leadsList.map((e) => CartLead.fromJson(e)).toList();
+        return (
+          items: leadsList.map((e) => CartLead.fromJson(e)).toList(),
+          unavailableMessages: unavailableMessages,
+        );
       }
 
-      return [];
+      return (items: <CartLead>[], unavailableMessages: unavailableMessages);
     } catch (e) {
       rethrow;
     }
@@ -104,8 +115,17 @@ class CartRepository {
     }
   }
 
-  Future<Map<String, dynamic>> createRazorpayOrder(List<String> leadIds) async {
-    final res = await _dio.post(ApiEndpoints.payCart, data: {'ids': leadIds});
+  Future<Map<String, dynamic>> createRazorpayOrder(
+    List<String> leadIds, {
+    int? expectedTotalPaise,
+  }) async {
+    final res = await _dio.post(
+      ApiEndpoints.payCart,
+      data: {
+        'ids': List<String>.of(leadIds),
+        'expectedTotalPaise': ?expectedTotalPaise,
+      },
+    );
     final data = res.data['data'];
     if (data is! Map) {
       throw Exception(
@@ -113,6 +133,30 @@ class CartRepository {
       );
     }
     return Map<String, dynamic>.from(data);
+  }
+
+  Future<String> purchaseSelected(List<CartLead> selection) async {
+    if (selection.isEmpty) throw StateError('Please select at least one lead.');
+    final res = await _dio.post(
+      'api/v1/wallet/purchase',
+      data: {
+        'leadIds': selection.map((item) => item.id).toList(),
+        if (selection.every((item) => item.price != null))
+          'expectedTotalPaise':
+              (selection.fold<num>(0, (sum, item) => sum + item.price!) * 100)
+                  .round(),
+      },
+    );
+    if (res.data['success'] != true || res.data['data']?['status'] != 'PAID') {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        response: res,
+        message:
+            res.data['message']?.toString() ??
+            'Purchase not confirmed. Refresh before retrying.',
+      );
+    }
+    return res.data['data']['orderId'].toString();
   }
 
   /// 2. Verify Payment on Backend

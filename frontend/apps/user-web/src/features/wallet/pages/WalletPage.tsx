@@ -1,3 +1,4 @@
+import { apiFetch } from '@/features/auth/session'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '@/config/api'
@@ -34,7 +35,7 @@ export function WalletPage() {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const request = useCallback(async (path: string, body?: unknown) => {
     let response: Response
-    try { response = await fetch(`${API_BASE_URL}/api/v1/wallet${path}`, {
+    try { response = await apiFetch(`${API_BASE_URL}/api/v1/wallet${path}`, {
       signal: AbortSignal.timeout(15000),
       method: body === undefined ? 'GET' : 'POST',
       headers: { Authorization: `Bearer ${token}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },

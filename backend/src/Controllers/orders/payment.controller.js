@@ -32,7 +32,7 @@ export async function createOrder(req, res) {
     }
     const keyId = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY;
     if (!keyId) throw new CheckoutError('PAYMENTS_UNAVAILABLE', 'Payments are not configured.', 503);
-    reserved = await reserveCheckout(req.user.id, req.body?.leadIds ?? req.body?.ids);
+    reserved = await reserveCheckout(req.user.id, req.body?.leadIds ?? req.body?.ids, false, req.body?.expectedTotalPaise);
     let order = reserved.order;
     if (!reserved.reused) {
       const gatewayOrder = await razorpay.orders.create({

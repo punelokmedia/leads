@@ -35,8 +35,14 @@ In `frontend/mobile/user_app/.env.local`, set:
 
 ```dotenv
 MOBILE_USER_GOOGLE_CLIENT_ID=<same Web application client ID as backend MOBILE_USER_GOOGLE_CLIENT_ID>
-BASE_URL=<backend origin reachable from the phone>
 ```
+
+The API origin is configured in `lib/core/network/api_config.dart`, with production
+default `https://leads-qa6h.vercel.app/`. Override it at build/run time with
+`--dart-define=BASE_URL=https://your-public-api.example/`; `.env.local` BASE_URL
+is not read by the current app. Use a public production domain. A Vercel protected
+preview deployment returns HTTP 401 before the backend runs, even with valid
+Google credentials. Recreating OAuth clients cannot fix deployment protection.
 
 Never put the OAuth client secret in the Flutter app. The mobile serverClientId must
 be a Web application OAuth client ID, even when it is dedicated to mobile login.
@@ -52,11 +58,45 @@ In the same Google Cloud project, register an **Android** OAuth client with:
 
 Obtain signing fingerprints from `android/gradlew.bat signingReport` in the
 Flutter project. Register the debug certificate for debug APKs and the actual
-release/Play signing certificate for distributed APKs. The current release
-build uses the configured release keystore. Native iOS requires a separate iOS OAuth client and
+release/Play signing certificate for distributed APKs. Direct release APK builds
+now use the existing debug signing key registered as Android client 1. Bundle
+tasks retain the upload keystore from `android/key.properties` for Play upload.
+Native iOS requires a separate iOS OAuth client and
 its reversed-client-ID URL scheme; that account-specific setup is not included.
 
 Rebuild Flutter after updating its environment file.
+
+### Release failure investigation (2026-10-16)
+
+The previous directly built release APK used the upload key (`4F:E0:...`),
+which did not match either Android OAuth registration supplied by the user.
+Direct APK signing now selects the existing local debug keystore:
+
+- Package: `com.leadssell.user_app`
+- Direct APK signing SHA-1: `C0:B3:4C:94:20:2B:95:E9:7E:39:9B:02:A3:62:92:7A:0A:6C:FA:31`
+- Google deployment certificate SHA-1: `8C:81:75:00:98:18:33:52:C9:AD:B5:DB:8D:D1:36:00:86:65:69:E0`
+
+Use `flutter build apk --release` for direct installation and
+`flutter build appbundle --release` for Play upload. Keep the existing local
+`%USERPROFILE%/.android/debug.keystore` stable: another machine's automatically
+generated debug key has a different fingerprint and needs its own registration.
+Debug keys are for local testing; production distribution should use Play signing
+or a secured dedicated release key registered with Google OAuth. An APK signed
+with the old upload key cannot be updated in place by the local-key APK; Android
+requires uninstalling that old APK first, which removes its local application data.
+
+Compare these exact values with the Android OAuth client in the same Google Cloud
+project as the configured mobile Web client. This local check does not establish
+what is registered in Google Cloud. Play-distributed builds may use a different
+Play App Signing certificate; check the certificate of the installed distribution.
+
+The screenshot's `Google account sign-in failed (sign_in_failed)` is emitted
+before token exchange with the backend. It cannot be fixed by changing backend
+timeouts. The plugin groups several native failures under this same code. The
+app now preserves Google's numeric status in its error message, including when
+R8 renames the native exception class. Capture that numeric status or connected
+device logs before diagnosing a specific provider failure. Do not recreate OAuth
+clients or signing keys as a troubleshooting step.
 
 ## Verification
 

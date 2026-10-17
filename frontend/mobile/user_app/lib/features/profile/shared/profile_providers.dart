@@ -1,19 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hooks_riverpod/legacy.dart';
-import 'package:user_app/core/network/dio_provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../domain/profile_model.dart';
 import '../infra/profile_repository.dart';
-import '../infra/profile_controller.dart';
-
-final profileRepositoryProvider = Provider<IProfileRepository>((ref){
-  final dio=ref.read(dioProvider);
-  return ProfileRepository(dio);
-});
-
-final profileControllerProvider =
-    StateNotifierProvider<ProfileController, ProfileState>((ref) {
-  return ProfileController(ref.watch(profileRepositoryProvider), ref);
-});
+export '../infra/profile_repository.dart' show profileControllerProvider;
+export '../infra/profile_controller.dart' show profileRepositoryProvider;
 
 // Derived providers
 final profileDataProvider = Provider<ProfileModel?>(

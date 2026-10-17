@@ -97,6 +97,15 @@ class CartItemCard extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
 
+          if (item.price != null)
+            Text(
+              '₹${item.price!.toStringAsFixed(2)}',
+              style: AppTextStyles.poppins(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
             decoration: BoxDecoration(

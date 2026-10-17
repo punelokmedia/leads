@@ -1,10 +1,11 @@
+import { useUserToken } from '@/features/auth/useUserToken'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ReferralCard } from '@/components/layout/ReferralCard'
 
 export function ReferralSection({ initiallyOpen = false }: { initiallyOpen?: boolean }) {
   const [open, setOpen] = useState(initiallyOpen)
-  const token = localStorage.getItem('user_token')
+  const token = useUserToken()
   return <section className="rounded-2xl border border-violet-200 bg-white p-4 text-stone-800">
     <button type="button" aria-expanded={open} aria-controls="referral-details" onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-3 text-left">
       <span className="text-lg font-bold text-violet-800">Invite friends</span>

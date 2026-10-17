@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:user_app/features/preview/preview_app.dart';
 import 'package:user_app/features/preview/preview_data.dart';
+import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
 
 void main() {
   testWidgets('Feature prompt opens details and swipes away over home', (
@@ -9,7 +10,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const PreviewApp());
     await tester.pumpAndSettle();
-    expect(find.text('High Quality Leads'), findsOneWidget);
+    expect(find.byType(HomeBannerCarousel), findsOneWidget);
     await tester.tap(find.text('Explore your first lead'));
     await tester.pumpAndSettle();
     expect(find.byType(LeadDetailsPreview), findsOneWidget);
@@ -21,7 +22,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Explore your first lead'), findsNothing);
-    expect(find.text('High Quality Leads'), findsOneWidget);
+    expect(find.byType(HomeBannerCarousel), findsOneWidget);
     await tester.tap(find.byTooltip('My profile'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Home').last);

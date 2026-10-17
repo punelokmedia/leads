@@ -1,3 +1,4 @@
+import { apiFetch } from '@/features/auth/session'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '@/config/api'
@@ -19,7 +20,7 @@ export function AccountDeletionPage() {
     setPending(true)
     setError('')
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/account-deletion-requests`, {
+      const response = await apiFetch(`${API_BASE_URL}/api/v1/account-deletion-requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.get('email'), phoneNumber: data.get('phoneNumber'), reason: data.get('reason') }),

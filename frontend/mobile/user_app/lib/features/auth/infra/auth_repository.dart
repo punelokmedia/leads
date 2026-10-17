@@ -9,6 +9,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // ✅ Import secure storage
 import 'package:user_app/core/network/api_endpoints.dart';
 import '../domain/auth_model.dart';
+import 'google_sign_in_error.dart';
 
 class AuthRepository {
   final Dio _dio;
@@ -166,15 +167,7 @@ class AuthRepository {
       if (kDebugMode) {
         debugPrint('[GoogleAuth] Native sign-in failed: ${error.code}; ${error.message}');
       }
-      if (error.code == 'sign_in_canceled') {
-        throw const AppException('Google Sign-In canceled');
-      }
-      if (RegExp(r'\b10\b').hasMatch(error.message ?? '')) {
-        throw const AppException(
-          'Google sign-in configuration error (10). Check the Android package, release SHA-1 and Web client ID in Google Cloud.',
-        );
-      }
-      throw AppException('Google account sign-in failed (${error.code}). Please retry and report this code.');
+      throw googleSignInError(error);
     }
 
     // 2. Extract the secure ID Token from Google

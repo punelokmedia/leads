@@ -23,7 +23,7 @@ class ProfileAppBar extends StatelessWidget {
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
               size: 22.r,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             tooltip: 'Back',
             onPressed: () {
@@ -43,7 +43,7 @@ class ProfileAppBar extends StatelessWidget {
                   height: 20 / 24,
                   letterSpacing: 0.01,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),

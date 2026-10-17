@@ -59,5 +59,5 @@ router.post('/verify', handle(async req => {
   return creditCapturedTopup(await razorpay.payments.fetch(razorpayPaymentId), req.user.id);
 }));
 router.post('/membership', handle(req => purchaseMembership(req.user.id)));
-router.post('/purchase', handle(req => purchaseWithWallet(req.user.id, req.body?.leadIds)));
+router.post('/purchase', handle(req => purchaseWithWallet(req.user.id, req.body?.leadIds, req.body?.expectedTotalPaise)));
 export default router;

@@ -78,18 +78,21 @@ class ProfileScreen extends ConsumerWidget {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      'Business Details',
-                                      style: AppTextStyles.roboto(
-                                        fontSize: 20.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                        height: 1,
-                                        letterSpacing: 0.01,
+                                    Expanded(
+                                      child: Text(
+                                        'Business Details',
+                                        style: AppTextStyles.roboto(
+                                          fontSize: 20.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                          height: 1,
+                                          letterSpacing: 0.01,
+                                        ),
                                       ),
                                     ),
+                                    SizedBox(width: 12.w),
                                     const EditButton(),
                                   ],
                                 ),

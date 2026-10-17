@@ -16,7 +16,7 @@ const addToCart = async (req, res) => {
     if (owned) return res.status(409).json({ success: false, message: 'You already purchased this lead.' });
     const available = inventory(lead);
     const ownReservation = lead.reservations.some((r) => String(r.user) === String(user) && r.expiresAt > new Date());
-    if (available.remainingSlots === 0 && !ownReservation) return res.status(409).json({ success: false, code: available.status, message: available.status === 'SOLD_OUT' ? 'Out of stock: two buyers already purchased this lead.' : available.status === 'EXPIRED' ? 'This lead has expired.' : 'Currently unavailable: checkout slots are reserved.' });
+    if (['EXPIRED', 'SOLD_OUT'].includes(available.status) || (available.remainingSlots === 0 && !ownReservation)) return res.status(409).json({ success: false, code: available.status, message: available.status === 'SOLD_OUT' ? 'Out of stock: two buyers already purchased this lead.' : available.status === 'EXPIRED' ? 'This lead has expired.' : 'Currently unavailable: checkout slots are reserved.' });
     try { await Cart.updateOne({ user }, { $setOnInsert: { user, leads: [] } }, { upsert: true }); }
     catch (error) { if (error.code !== 11000) throw error; }
     await Cart.updateOne({ user, 'leads.lead': { $ne: lead._id } }, { $push: { leads: { lead: lead._id, quantity: 1 } } });
@@ -38,21 +38,40 @@ const clearCart = async (req, res) => {
 
 const getCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.user.id }).populate('leads.lead');
+    const cart = await Cart.findOne({ user: req.user.id });
     const data = { leads: [], removedLeads: [], totalItems: 0, totalAmount: 0 };
+    const leadIds = (cart?.leads ?? []).map(item => item.lead);
+    const [leads, purchases, paidOrders] = await Promise.all([
+      Lead.find({ _id: { $in: leadIds } }),
+      LeadPurchase.find({ user: req.user.id, lead: { $in: leadIds } }).select('lead'),
+      Order.find({ user: req.user.id, status: 'PAID', 'leads.lead': { $in: leadIds } }).select('leads.lead'),
+    ]);
+    const byId = new Map(leads.map(lead => [String(lead._id), lead]));
+    const ownedIds = new Set([
+      ...purchases.map(item => String(item.lead)),
+      ...paidOrders.flatMap(order => order.leads.map(item => String(item.lead))),
+    ]);
+    const now = new Date();
     for (const item of cart?.leads ?? []) {
-      const lead = item.lead;
-      if (!lead) continue;
-      const info = inventory(lead);
-      const owned = await LeadPurchase.exists({ user: req.user.id, lead: lead._id });
-      const ownReservation = lead.reservations.some((r) => String(r.user) === String(req.user.id) && r.expiresAt > new Date());
-      if (owned || (info.remainingSlots === 0 && !ownReservation)) {
-        data.removedLeads.push({ _id: lead._id, title: lead.title, reason: owned ? 'Already purchased' : info.status === 'RESERVED' ? 'Currently reserved by other buyers' : 'Out of stock or expired' });
+      const lead = byId.get(String(item.lead));
+      const info = lead ? inventory(lead, now) : null;
+      const ownReservation = lead?.reservations.some(r => String(r.user) === String(req.user.id) && r.expiresAt > now);
+      const code = !lead ? 'MISSING' : ownedIds.has(String(lead._id)) ? 'ALREADY_PURCHASED'
+        : ['EXPIRED', 'SOLD_OUT'].includes(info.status) ? info.status
+        : info.remainingSlots === 0 && !ownReservation ? 'RESERVED' : null;
+      if (code) {
+        const reasons = { MISSING: 'This lead is no longer available.', ALREADY_PURCHASED: 'Already purchased.', EXPIRED: 'This lead has expired.', SOLD_OUT: 'This lead is sold out.', RESERVED: 'Currently reserved by other buyers.' };
+        data.removedLeads.push({ _id: item.lead, title: lead?.title || 'Unavailable lead', code, reason: reasons[code] });
         continue;
       }
       data.leads.push({ _id: lead._id, title: lead.title, price: lead.price, quantity: 1, city: lead.city, state: lead.state, remainingSlots: info.remainingSlots, totalSlots: 2, expiresAt: lead.expiresAt });
       data.totalAmount += lead.price;
     }
+    // Remove only the entries observed as unavailable; never overwrite concurrent additions.
+    // Checkout still validates every explicitly confirmed ID and never substitutes a new set.
+    if (data.removedLeads.length) await Cart.updateOne({ user: req.user.id }, {
+      $pull: { leads: { lead: { $in: data.removedLeads.map(item => item._id) } } },
+    });
     data.totalItems = data.leads.length;
     return res.json({ success: true, message: 'Cart fetched.', data });
   } catch (error) { return res.status(500).json({ success: false, message: 'Could not load cart.' }); }

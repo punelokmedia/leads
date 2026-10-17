@@ -1,3 +1,4 @@
+import { apiFetch } from '@/features/auth/session'
 import { startGoogleLogin } from '../googleHandoff'
 import { API_BASE_URL } from '@/config/api'
 import { useMemo, useState } from 'react'
@@ -47,7 +48,7 @@ export function MobileAuthPage() {
 
     for (const baseUrl of API_BASE_URL_CANDIDATES) {
       try {
-        return await fetch(`${baseUrl}/api/v1/auth${path}`, init)
+        return await apiFetch(`${baseUrl}/api/v1/auth${path}`, init)
       } catch (networkError) {
         lastError =
           networkError instanceof Error

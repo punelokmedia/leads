@@ -14,6 +14,12 @@ if (keystorePropertiesFile.exists()) {
     FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
 }
 
+// Direct APKs use the existing local key registered with Google OAuth (C0:B3...).
+// Play bundles must retain the upload key; Google signs distributed APKs itself.
+val isPlayBundle = gradle.startParameter.taskNames.any {
+    it.substringAfterLast(':').startsWith("bundle", ignoreCase = true)
+}
+
 android {
     namespace = "com.leadssell.user_app"
     compileSdk = flutter.compileSdkVersion
@@ -50,7 +56,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName(if (isPlayBundle) "release" else "debug")
         }
     }
 }

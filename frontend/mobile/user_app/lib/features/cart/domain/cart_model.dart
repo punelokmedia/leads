@@ -11,6 +11,7 @@ class CartLead {
   final String? imageUrl;
   final bool isSelected;
   final int quantity;
+  final num? price;
 
   const CartLead({
     required this.id,
@@ -23,6 +24,7 @@ class CartLead {
     this.imageUrl,
     this.isSelected = true,
     this.quantity = 1,
+    this.price,
   });
 
   CartLead copyWith({bool? isSelected, int? quantity}) => CartLead(
@@ -36,6 +38,7 @@ class CartLead {
     imageUrl: imageUrl,
     isSelected: isSelected ?? this.isSelected,
     quantity: quantity ?? this.quantity,
+    price: price,
   );
 
   Map<String, dynamic> toJson() => {
@@ -49,6 +52,7 @@ class CartLead {
     'imageUrl': imageUrl,
     'isSelected': isSelected,
     'quantity': quantity,
+    'price': price,
   };
 
   factory CartLead.fromJson(Map<String, dynamic> j) => CartLead(
@@ -66,6 +70,7 @@ class CartLead {
     imageUrl: j['imageUrl'],
     isSelected: j['isSelected'] ?? true,
     quantity: j['quantity'] ?? 1,
+    price: j['price'] is num ? j['price'] as num : null,
   );
 }
 
@@ -74,6 +79,7 @@ class CartState {
   final List<CartLead> items;
   final bool isLoading;
   final String? error;
+  final List<String> availabilityMessages;
   final String? activeInternalOrderId;
   final Map<String, dynamic>? lastOrderDetails; // <--- Add this
 
@@ -81,6 +87,7 @@ class CartState {
     this.items = const [],
     this.isLoading = false,
     this.error,
+    this.availabilityMessages = const [],
     this.lastOrderDetails,
     this.activeInternalOrderId,
   });
@@ -89,6 +96,7 @@ class CartState {
     List<CartLead>? items,
     bool? isLoading,
     String? error,
+    List<String>? availabilityMessages,
     Map<String, dynamic>? lastOrderDetails,
     String? activeInternalOrderId,
   }) {
@@ -96,6 +104,7 @@ class CartState {
       items: items ?? this.items,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      availabilityMessages: availabilityMessages ?? this.availabilityMessages,
       activeInternalOrderId:
           activeInternalOrderId ?? this.activeInternalOrderId,
       lastOrderDetails: lastOrderDetails ?? this.lastOrderDetails,

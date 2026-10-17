@@ -59,7 +59,8 @@ void main() {
     await tester.tap(find.byTooltip('Send message'));
     await tester.pumpAndSettle();
     expect(sent[0]['clientId'], sent[1]['clientId']);
-    expect(find.text('You: Where is my receipt?'), findsOneWidget);
+    expect(find.text('You'), findsOneWidget);
+    expect(find.text('Where is my receipt?'), findsOneWidget);
     expect(find.textContaining('simulation'), findsNothing);
     await tester.pumpWidget(const SizedBox());
     dio.close();

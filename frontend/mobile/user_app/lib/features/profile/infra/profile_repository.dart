@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 // Note: hooks_riverpod/legacy.dart is usually not needed if you have flutter_riverpod
 import 'package:user_app/features/auth/shared/auth_providers.dart';
@@ -46,8 +46,10 @@ class ProfileController extends StateNotifier<ProfileState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final profile = await _repository.fetchProfile();
+      if (!mounted) return;
       state = state.copyWith(profile: profile, isLoading: false);
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: ErrorHandler.handle(e).message,
@@ -80,6 +82,7 @@ class ProfileController extends StateNotifier<ProfileState> {
 
 final profileControllerProvider =
     StateNotifierProvider<ProfileController, ProfileState>((ref) {
+      ref.watch(isLoggedInProvider);
       // ✅ 5. Pass the 'ref' into the controller
       return ProfileController(ref.watch(profileRepositoryProvider), ref);
     });

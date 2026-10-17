@@ -1,3 +1,4 @@
+import { apiFetch } from '@/features/auth/session'
 import { startGoogleLogin } from '../googleHandoff'
 import { API_BASE_URL } from '@/config/api'
 import { useEffect, useState, type KeyboardEvent } from 'react'
@@ -126,7 +127,7 @@ export function MobileAuthDrawerPage() {
     let lastError: Error | null = null
     for (const baseUrl of API_BASE_URL_CANDIDATES) {
       try {
-        return await fetch(`${baseUrl}/api/v1${path}`, init)
+        return await apiFetch(`${baseUrl}/api/v1${path}`, init)
       } catch (networkError) {
         lastError =
           networkError instanceof Error
@@ -296,7 +297,7 @@ export function MobileAuthDrawerPage() {
     if (isLoading) return
     setError(''); setSuccess(''); setIsLoading(true)
     try {
-      const response = await fetch(API_BASE_URL + '/api/v1/wallet/membership', {
+      const response = await apiFetch(API_BASE_URL + '/api/v1/wallet/membership', {
         method: 'POST', headers: { Authorization: 'Bearer ' + (token || localStorage.getItem('user_token') || '') },
       })
       const payload = await response.json()

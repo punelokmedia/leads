@@ -43,11 +43,19 @@ class CartController extends StateNotifier<CartState> {
   Future<void> loadCart() async {
     _safeSetState((s) => s.copyWith(isLoading: true));
     try {
-      final items = _isLoggedIn
-          ? await _repo.fetchRemoteCart()
-          : await _repo.fetchLocalCart();
+      final remote = _isLoggedIn ? await _repo.fetchRemoteCartState() : null;
+      final items = remote?.items ?? await _repo.fetchLocalCart();
       if (_isDisposed) return; // ✅ Guard after await
-      _safeSetState((s) => s.copyWith(items: items, isLoading: false));
+      _safeSetState(
+        (s) => s.copyWith(
+          items: items,
+          isLoading: false,
+          availabilityMessages: {
+            ...s.availabilityMessages,
+            ...(remote?.unavailableMessages ?? <String>[]),
+          }.toList(),
+        ),
+      );
     } catch (e) {
       _safeSetState((s) => s.copyWith(isLoading: false, error: e.toString()));
     }
@@ -217,7 +225,16 @@ class CartController extends StateNotifier<CartState> {
 
     _safeSetState((s) => s.copyWith(isLoading: true));
     try {
-      final orderData = await _repo.createRazorpayOrder(selectedIds);
+      final selected = state.items
+          .where((item) => selectedIds.contains(item.id))
+          .toList();
+      final orderData = await _repo.createRazorpayOrder(
+        selectedIds,
+        expectedTotalPaise: selected.every((item) => item.price != null)
+            ? (selected.fold<num>(0, (sum, item) => sum + item.price!) * 100)
+                  .round()
+            : null,
+      );
       if (_isDisposed) return; // ✅
 
       if (orderData['razorpayOrderId'] == null &&
@@ -242,6 +259,10 @@ class CartController extends StateNotifier<CartState> {
 
       onOrderCreated({...orderData, 'amount': finalAmount});
     } catch (e) {
+      if (e is DioException && e.response?.statusCode == 409) {
+        await loadCart();
+        if (_isDisposed) return;
+      }
       if (e is DioException &&
           e.response?.data is Map &&
           e.response?.data['code'] == 'MEMBERSHIP_REQUIRED') {
@@ -427,7 +448,6 @@ class CartController extends StateNotifier<CartState> {
   }
 
   Future<Directory> getDownloadDirectory() async {
-
     return await getApplicationDocumentsDirectory();
   }
 }

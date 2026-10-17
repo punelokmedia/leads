@@ -1,3 +1,5 @@
+import { useUserToken } from '@/features/auth/useUserToken'
+import { apiFetch } from '@/features/auth/session'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '@/config/api'
@@ -28,7 +30,7 @@ export function ProfilePage() {
   const [isAddressFormOpen, setIsAddressFormOpen] = useState(false)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [profilePic, setProfilePic] = useState('')
-  const userToken = localStorage.getItem('user_token')
+  const userToken = useUserToken()
   const hasSavedAddress = Boolean(
     addressForm.street || addressForm.city || addressForm.state || addressForm.zipcode,
   )
@@ -44,7 +46,7 @@ export function ProfilePage() {
 
 
   const resetAuthMessages = () => { setAuthError(''); setAuthSuccess('') }
-  const requestAuth = (path: string, init?: RequestInit) => fetch(`${API_BASE_URL}/api/v1/auth${path}`, init)
+  const requestAuth = (path: string, init?: RequestInit) => apiFetch(`${API_BASE_URL}/api/v1/auth${path}`, init)
   const fetchProfile = async () => {
     if (!userToken) return
 

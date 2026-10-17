@@ -27,7 +27,7 @@ async function release(order, session) {
   }, { session });
 }
 
-export async function reserveCheckout(userId, selectedIds, walletCheckout = false) {
+export async function reserveCheckout(userId, selectedIds, walletCheckout = false, expectedTotalPaise) {
   return transaction(async (session) => {
     const now = new Date();
     const cart = await Cart.findOne({ user: userId }).session(session);
@@ -35,14 +35,19 @@ export async function reserveCheckout(userId, selectedIds, walletCheckout = fals
     if (selectedIds !== undefined && (!Array.isArray(selectedIds) || !selectedIds.length || selectedIds.some((id) => !mongoose.isValidObjectId(id)))) {
       throw new CheckoutError('INVALID_SELECTION', 'Select valid leads from your cart.', 400);
     }
+    if (expectedTotalPaise !== undefined && (!Number.isSafeInteger(expectedTotalPaise) || expectedTotalPaise <= 0)) {
+      throw new CheckoutError('INVALID_SELECTION', 'Review your cart total before checkout.', 400);
+    }
     const ids = [...new Set((selectedIds ?? cart.leads.map((i) => i.lead)).map(String))].sort();
     const items = ids.map((id) => cart.leads.find((item) => sameId(item.lead, id)));
-    if (items.some((item) => !item || item.quantity !== 1)) {
+    if (items.some(item => !item)) throw new CheckoutError('CART_CHANGED', 'Your cart has changed. Review the remaining leads before paying again.');
+    if (items.some((item) => item.quantity !== 1)) {
       throw new CheckoutError('ONE_PER_BUYER', 'Each buyer can purchase a lead only once. Remove old quantities and add it again.', 400);
     }
     const hash = crypto.createHash('sha256').update(ids.join('|')).digest('hex');
     const existing = await Order.findOne({ user: userId, cartHash: hash, status: { $in: activeStates }, reservationExpiresAt: { $gt: now } }).session(session);
     if (existing) {
+      if (expectedTotalPaise !== undefined && Math.round(existing.totalAmount * 100) !== expectedTotalPaise) throw new CheckoutError('PRICE_CHANGED', 'The cart price has changed. Review your cart before paying again.');
       if ((existing.paymentMethod === 'WALLET') !== walletCheckout) throw new CheckoutError('CHECKOUT_ACTIVE', 'Cancel the existing checkout before changing payment method.', 409);
       if (!existing.razorpayOrderId && !walletCheckout) throw new CheckoutError('CHECKOUT_PREPARING', 'Checkout is being prepared. Please retry shortly.');
       return { order: existing, reused: true };
@@ -67,13 +72,15 @@ export async function reserveCheckout(userId, selectedIds, walletCheckout = fals
       if (!lead) {
         const current = await Lead.findById(item.lead).session(session);
         const status = current ? inventory(current, now).status : 'MISSING';
-        throw new CheckoutError(status, status === 'SOLD_OUT' ? 'Out of stock: two buyers already purchased this lead.' : status === 'EXPIRED' ? 'This lead has expired.' : 'Currently unavailable: checkout slots are reserved. Please try later.');
+        throw new CheckoutError(status, status === 'SOLD_OUT' ? 'Out of stock: two buyers already purchased this lead.' : status === 'EXPIRED' ? 'This lead has expired.' : status === 'MISSING' ? 'This lead is no longer available. Review your cart.' : 'Currently unavailable: checkout slots are reserved. Please try later.');
       }
       lines.push({ lead: lead._id, quantity: 1, price: lead.price });
     }
+    const totalAmount = Math.round(lines.reduce((total, line) => total + line.price, 0) * 100) / 100;
+    if (expectedTotalPaise !== undefined && Math.round(totalAmount * 100) !== expectedTotalPaise) throw new CheckoutError('PRICE_CHANGED', 'The cart price has changed. Review your cart before paying again.');
     const [order] = await Order.create([{
       _id: orderId, user: userId, leads: lines,
-      totalAmount: Math.round(lines.reduce((total, l) => total + l.price, 0) * 100) / 100,
+      totalAmount,
       currency: 'INR', status: 'RESERVED', cartHash: hash, paymentMethod: walletCheckout ? 'WALLET' : 'RAZORPAY',
       reservationExpiresAt: deadline, fulfillmentVersion: 2,
     }], { session });
@@ -198,12 +205,12 @@ export async function processRefunds(gateway) {
   }
 }
 
-export async function purchaseWithWallet(userId, selectedIds) {
+export async function purchaseWithWallet(userId, selectedIds, expectedTotalPaise) {
   const buyer = await User.findOne({ _id: userId, role: 'USER', isBlocked: { $ne: true } }).select('registrationFeePaid walletFrozen');
   if (!buyer) throw new CheckoutError('USER_NOT_FOUND', 'Account unavailable.', 403);
   if (buyer.walletFrozen) throw new CheckoutError('WALLET_FROZEN', 'Wallet is under security review. Contact support.', 403);
   if (!buyer.registrationFeePaid) throw new CheckoutError('MEMBERSHIP_REQUIRED', 'Activate lifetime membership from your wallet first.', 403);
-  const { order } = await reserveCheckout(userId, selectedIds, true);
+  const { order } = await reserveCheckout(userId, selectedIds, true, expectedTotalPaise);
   if (order.razorpayOrderId) throw new CheckoutError('CHECKOUT_ACTIVE', 'Cancel the existing gateway checkout first.', 409);
   try { return await settleCapturedPayment({ id: 'wallet:' + order.id, internalOrderId: order.id, status: 'captured', currency: 'INR', amount: Math.round(order.totalAmount * 100) }, userId, true); }
   catch (error) { await cancelCheckout(order._id, userId); throw error; }
