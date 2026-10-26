@@ -1,4 +1,6 @@
 import './cart.css'
+import './signup.css'
+import { animateWindowClose } from './motion'
 import { apiFetch } from '@/features/auth/session'
 import { startGoogleLogin } from '@/features/auth/googleHandoff'
 import { createPortal } from 'react-dom'
@@ -853,7 +855,7 @@ export function PublicHeader() {
 
   return (
     <>
-      <header className="marketplace-header">
+      {userToken && <header className="marketplace-header">
         <MarketplaceHeader loggedIn={Boolean(userToken)} cartCount={cartSummary.totalItems} onLogout={() => { void handleLogout() }} />
 
         {isMobileMenuOpen ? (
@@ -1056,10 +1058,10 @@ export function PublicHeader() {
             </nav>
           </div>
         ) : null}
-      </header>
+      </header>}
 
       {isPanelOpen && pageContainer && createPortal(
-        <section className={`min-h-[70vh] bg-[#f8fafc] px-4 py-8 sm:py-12 ${panelMode === 'cart' ? 'next-cart-page' : panelMode === 'history' ? 'my-leads-page' : ''}`}>
+        <section className={`min-h-[70vh] bg-[#f8fafc] px-4 py-8 sm:py-12 ${panelMode === 'cart' ? 'next-cart-page' : panelMode === 'history' ? 'my-leads-page' : panelMode === 'signup' ? 'next-signup-page' : ''}`}>
         <div className={panelMode === 'cart' || panelMode === 'history' ? 'mx-auto w-full max-w-5xl' : 'mx-auto w-full max-w-lg'}>
           <div className="mb-6 flex justify-start px-4">
             <button
@@ -1490,14 +1492,14 @@ export function PublicHeader() {
             </form>
           ) : (
             <form
-              className="space-y-3 rounded-t-3xl bg-gradient-to-b from-[#efe5ad] to-[#f3cf45] px-4 py-5"
+              className="next-signup-form"
               onSubmit={handleSignupSubmit}
             >
               <label className="block text-sm font-semibold text-stone-700">
                 First Name
                 <input
                   type="text"
-                  placeholder="Anada"
+                  placeholder="Enter your first name"
                   value={signupForm.firstname}
                   onChange={(event) =>
                     setSignupForm((prev) => ({ ...prev, firstname: event.target.value }))
@@ -1510,7 +1512,7 @@ export function PublicHeader() {
                 Last Name
                 <input
                   type="text"
-                  placeholder="Khanna"
+                  placeholder="Enter your last name"
                   value={signupForm.lastname}
                   onChange={(event) =>
                     setSignupForm((prev) => ({ ...prev, lastname: event.target.value }))
@@ -1536,7 +1538,7 @@ export function PublicHeader() {
                 Email ID
                 <input
                   type="email"
-                  placeholder="angad@example.com"
+                  placeholder="you@example.com"
                   value={signupForm.email}
                   onChange={(event) =>
                     setSignupForm((prev) => ({ ...prev, email: event.target.value }))
@@ -1622,7 +1624,7 @@ export function PublicHeader() {
                     resetAuthMessages()
                     setPanelMode('login')
                   }}
-                  className="font-semibold text-red-600 hover:underline"
+                  className="font-semibold text-[#0066ff] hover:underline"
                 >
                   Login
                 </button>
@@ -1633,7 +1635,7 @@ export function PublicHeader() {
         </section>, pageContainer
       )}
       {isDownloadPopupOpen ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4">
+        <div className="next-download-window fixed inset-0 z-50 grid place-items-center bg-black/45 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-5 text-center shadow-2xl">
             <h3 className="text-3xl font-black text-[#0066ff]">Download</h3>
             <div className="mx-auto mt-3 grid h-20 w-20 place-items-center rounded-full bg-[#edf5ff]">
@@ -1656,7 +1658,7 @@ export function PublicHeader() {
             <p className="mt-2 text-xs font-semibold text-red-500">Only one time download available</p>
             <button
               type="button"
-              onClick={() => setIsDownloadPopupOpen(false)}
+              onClick={(event) => animateWindowClose(event.currentTarget.closest('.next-download-window'), () => setIsDownloadPopupOpen(false))}
               className="mt-3 text-sm font-semibold text-stone-500 hover:text-stone-700"
             >
               Close

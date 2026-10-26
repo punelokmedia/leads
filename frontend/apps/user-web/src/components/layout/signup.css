@@ -1,0 +1,77 @@
+.next-signup-page {
+  color: #13233d;
+  background: linear-gradient(180deg, #edf4ff 0%, #f8fafc 70%);
+}
+
+.next-signup-page h2 {
+  color: #0a1c42;
+}
+
+.next-signup-page h2 + p {
+  color: #71829c;
+}
+
+.next-signup-page .next-signup-form {
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+  border: 1px solid #dce7f6;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 12px 40px #0a1c4208;
+}
+
+.next-signup-form label,
+.next-signup-form p {
+  color: #334766;
+}
+
+.next-signup-form label > input:not([type='checkbox']),
+.next-signup-form label > div {
+  border: 1px solid #d3e0f2;
+  border-radius: 10px;
+  background: #f9fbff;
+  box-shadow: none;
+}
+
+.next-signup-form input:not([type='checkbox']) {
+  min-width: 0;
+  min-height: 46px;
+  border-radius: 10px;
+  background: transparent;
+  color: #13233d;
+}
+
+.next-signup-form label > div:focus-within {
+  border-color: #0066ff;
+  box-shadow: 0 0 0 3px #0066ff1a;
+}
+
+.next-signup-form input[type='checkbox'] {
+  accent-color: #0066ff;
+}
+
+.next-signup-form button[type='submit'] {
+  min-height: 48px;
+  margin-top: 0;
+  border-radius: 10px;
+  font-size: 16px;
+  box-shadow: 0 4px 12px #0066ff26;
+}
+
+.next-signup-form button:focus-visible {
+  outline: 2px solid #0066ff;
+  outline-offset: 3px;
+}
+
+.next-signup-form button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+@media (max-width: 480px) {
+  .next-signup-page .next-signup-form {
+    padding: 20px;
+    border-radius: 18px;
+  }
+}

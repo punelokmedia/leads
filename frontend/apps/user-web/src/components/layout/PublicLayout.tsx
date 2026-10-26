@@ -1,5 +1,9 @@
+import { useEffect, useRef } from 'react'
+import './motion.css'
+import { LoginRequired } from '@/features/auth/LoginRequired'
+import { requiresLogin, safeReturnPath } from '@/features/auth/access-policy'
 import '@/features/home/pages/home.css'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { PublicFooter } from '@/components/layout/PublicFooter'
 import { PublicHeader } from '@/components/layout/PublicHeader'
 import { HomeHeader } from '@/components/layout/HomeHeader'
@@ -8,16 +12,32 @@ import { useUserToken } from '@/features/auth/useUserToken'
 
 export function PublicLayout() {
   const location = useLocation()
-  const isHomepage = location.pathname === '/' && !location.search
+  const navigate = useNavigate()
   const userToken = useUserToken()
-  const showHomeHeader = isHomepage && !userToken
+  const content = useRef<HTMLElement>(null)
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const animation = content.current?.animate?.(
+      [{ opacity: 0.35 }, { opacity: 1 }],
+      { duration: 320, easing: 'ease-out' },
+    )
+    return () => animation?.cancel()
+  }, [location.pathname])
+  const locked = !userToken && requiresLogin(location.pathname, location.search)
+  useEffect(() => {
+    if (!userToken || location.pathname !== '/' || location.search) return
+    const target = safeReturnPath(sessionStorage.getItem('login_return_to'))
+    sessionStorage.removeItem('login_return_to')
+    if (target) navigate(target, { replace: true })
+  }, [userToken, location.pathname, location.search, navigate])
+  const showHomeHeader = !userToken
   return (
     <div className={`flex min-h-dvh flex-col ${showHomeHeader ? 'homepage-layout' : ''}`}>
       {showHomeHeader && <HomeHeader />}
       <PublicHeader />
       <SessionNotice />
-      <main id="account-page-content" className="flex-1">
-        <Outlet />
+      <main ref={content} id="account-page-content" className="flex-1">
+        {locked ? <LoginRequired returnTo={location.pathname + location.search} /> : <Outlet />}
       </main>
       <PublicFooter />
     </div>
