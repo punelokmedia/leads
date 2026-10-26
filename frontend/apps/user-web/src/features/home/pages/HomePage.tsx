@@ -1,5 +1,6 @@
-﻿import { Link, useSearchParams } from 'react-router-dom'
-import { LeadsMarketplacePage } from './LeadsMarketplacePage'
+import { Link, useSearchParams } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+const LeadsMarketplacePage = lazy(() => import('./LeadsMarketplacePage').then(module => ({ default: module.LeadsMarketplacePage })))
 import { CategoryGrid } from './CategoryGrid'
 import './home.css'
 import { VendorSection } from './VendorSection'
@@ -7,7 +8,7 @@ import { TestimonialsSection } from './TestimonialsSection'
 
 export function HomePage() {
   const [params] = useSearchParams()
-  if (params.has('category') || params.has('city') || params.has('browse')) return <LeadsMarketplacePage />
+  if (params.has('category') || params.has('city') || params.has('browse')) return <Suspense fallback={<div role="status" className="p-8 text-center text-slate-500">Loading leads…</div>}><LeadsMarketplacePage /></Suspense>
   return <div className="next-home">
     <section className="home-hero">
       <div className="home-ribbon" aria-hidden="true" />
@@ -24,7 +25,7 @@ export function HomePage() {
       </div>
     </section>
     <section id="categories" className="home-categories home-container">
-      <div className="section-heading"><div><p className="home-eyebrow">Browse Categories</p><h2>Explore Leads by Category</h2><p>Find the right leads for your business needs from multiple industries.</p></div><Link to="/?browse=1" className="home-text-link">View All Categories &rarr;</Link></div>
+      <div className="section-heading"><div><p className="home-eyebrow">Browse Categories</p><h2>Explore Leads by Category</h2><p>Find the right leads for your business needs from multiple industries.</p></div><Link to="/categories" className="home-text-link">View All Categories &rarr;</Link></div>
       <CategoryGrid />
     </section>
     <section className="home-steps" id="how-it-works"><div className="steps-ribbon" aria-hidden="true" /><div className="home-container steps-inner"><div className="steps-copy"><p className="home-eyebrow">How It Works</p><h2>Get Qualified Leads in 3 Simple Steps</h2><p>Start driving higher quality enquiries with a simple process.</p><div className="steps-grid">{[

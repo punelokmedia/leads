@@ -37,20 +37,35 @@ for (const [name, paid, purchased] of [['lifetime member', true, false], ['exist
 }
 
 process.env.RESEND_API_KEY = 're_test_only';
-const { verifyMobileRegistrationPayment } = await import('../src/Controllers/auth.controller.js');
+const { createMobileRegistrationOrder, verifyMobileRegistrationPayment } = await import('../src/Controllers/auth.controller.js');
 const { razorpay } = await import('../src/Config/razorpay.config.js');
 const { createHmac } = await import('node:crypto');
+test('membership order uses server price despite a client supplied amount', async (t) => {
+  t.mock.method(User, 'findById', () => ({ select: async () => ({ registrationFeePaid: false }) }));
+  t.mock.method(razorpay.orders, 'create', async order => {
+    assert.equal(order.amount, 49900);
+    assert.equal(order.currency, 'INR');
+    assert.equal(order.notes.userId, 'new-user');
+    return { id: 'order_membership', ...order };
+  });
+  const res = response();
+  await createMobileRegistrationOrder({ user: { id: 'new-user' }, body: { amount: 1 } }, res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.data.amount, 49900);
+});
 const paymentBody = {
   razorpayOrderId: 'order_membership', razorpayPaymentId: 'pay_membership', membershipOnly: true,
   razorpaySignature: createHmac('sha256', 'test_secret').update('order_membership|pay_membership').digest('hex'),
 };
 function gateway(t, overrides = {}, noteOverrides = {}) {
-  t.mock.method(razorpay.orders, 'fetch', async () => ({ amount: 100, currency: 'INR', notes: { userId: 'new-user', purpose: 'signup_registration_fee', ...noteOverrides } }));
-  t.mock.method(razorpay.payments, 'fetch', async () => ({ order_id: 'order_membership', amount: 100, currency: 'INR', status: 'captured', ...overrides }));
+  t.mock.method(razorpay.orders, 'fetch', async () => ({ amount: 49900, currency: 'INR', notes: { userId: 'new-user', purpose: 'signup_registration_fee', ...noteOverrides } }));
+  t.mock.method(razorpay.payments, 'fetch', async () => ({ order_id: 'order_membership', amount: 49900, currency: 'INR', status: 'captured', ...overrides }));
 }
 for (const [label, payment, notes] of [
   ['uncaptured', { status: 'authorized' }, {}],
   ['wrong amount', { amount: 200 }, {}],
+  ['old price', { amount: 100 }, {}],
+  ['refunded', { amount_refunded: 49900 }, {}],
   ['wrong account', {}, { userId: 'another-user' }],
   ['lead order', {}, { purpose: 'lead_purchase' }],
 ]) {
@@ -69,7 +84,7 @@ test('captured membership payment activates once without requiring profile field
   let calls = 0;
   t.mock.method(User, 'findOneAndUpdate', (filter, update) => {
     assert.equal(filter.registrationFeePaid.$ne, true);
-    assert.equal(update.$set.registrationPayment.amount, 1);
+    assert.equal(update.$set.registrationPayment.amount, 499);
     return { select: async () => ++calls === 1 ? member : null };
   });
   t.mock.method(User, 'findById', () => ({ select: async () => member }));

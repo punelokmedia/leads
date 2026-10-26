@@ -1,9 +1,9 @@
 import { useUserToken } from '@/features/auth/useUserToken'
 import { apiFetch } from '@/features/auth/session'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '@/config/api'
-import { ReferralSection } from '../components/ReferralSection'
+import './profile.css'
 
 export function ProfilePage() {
   const navigate = useNavigate()
@@ -30,7 +30,41 @@ export function ProfilePage() {
   const [isAddressFormOpen, setIsAddressFormOpen] = useState(false)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [profilePic, setProfilePic] = useState('')
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoOptionsOpen, setPhotoOptionsOpen] = useState(false)
   const userToken = useUserToken()
+  const uploadPhoto = async (file: File) => {
+    if (!userToken || photoBusy) return
+    resetAuthMessages()
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setAuthError('Choose a JPEG, PNG or WebP image smaller than 2 MB.'); return
+    }
+    setPhotoBusy(true)
+    try {
+      const body = new FormData(); body.append('profilePic', file)
+      const response = await requestAuth('/profile-picture', { method: 'PUT', headers: { Authorization: `Bearer ${userToken}` }, body })
+      const payload = await response.json()
+      if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to upload picture.')
+      setProfilePic(payload.data.profilePic)
+      const cached = JSON.parse(localStorage.getItem('user_profile') || '{}')
+      localStorage.setItem('user_profile', JSON.stringify({ ...cached, profilePic: payload.data.profilePic }))
+      setAuthSuccess('Profile picture updated.'); setPhotoOptionsOpen(false)
+    } catch (failure) { setAuthError(failure instanceof Error ? failure.message : 'Unable to upload picture.') }
+    finally { setPhotoBusy(false) }
+  }
+  const choosePhoto = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) void uploadPhoto(file)
+    event.target.value = ''
+  }
+  const chooseAvatar = (color: string) => {
+    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256
+    const context = canvas.getContext('2d'); if (!context) return
+    context.fillStyle = color; context.fillRect(0, 0, 256, 256)
+    context.fillStyle = '#ffffff'; context.beginPath(); context.arc(128, 88, 44, 0, Math.PI * 2); context.fill()
+    context.beginPath(); context.arc(128, 238, 88, Math.PI, 0); context.fill()
+    canvas.toBlob(blob => { if (blob) void uploadPhoto(new File([blob], 'avatar.png', { type: 'image/png' })) }, 'image/png')
+  }
   const hasSavedAddress = Boolean(
     addressForm.street || addressForm.city || addressForm.state || addressForm.zipcode,
   )
@@ -201,13 +235,13 @@ export function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userToken])
   return (
-    <section className="bg-[#efefef] px-4 py-10 sm:py-14">
-      <div className="mx-auto max-w-xl">
+    <section className="account-profile-page px-4 py-10 sm:py-14">
+      <div className="account-profile-container">
         <Link to="/" className="text-sm font-semibold text-stone-600 hover:text-stone-900">← Back to marketplace</Link>
         <div className="px-4 py-6 sm:px-6">
-          <span className="rounded-full bg-[#F8B020] px-3 py-1 text-xs font-bold text-white">YOUR ACCOUNT</span>
+          <span className="rounded-full bg-[#0066ff] px-3 py-1 text-xs font-bold text-white">YOUR ACCOUNT</span>
           <h1 className="mt-3 text-4xl font-black tracking-tight text-stone-900">My Profile</h1>
-          {userToken && <div className="mt-4"><ReferralSection initiallyOpen /></div>}
+          <nav className="account-profile-shortcuts" aria-label="Account shortcuts"><Link to="/wallet">▣ My Wallet <span>Balance &amp; transactions →</span></Link><Link to="/pricing">♛ Membership <span>View lifetime plan →</span></Link><Link to="/referrals">♧ Refer &amp; Earn <span>Invite your network →</span></Link><Link to="/my-leads">▤ My Leads <span>View purchased leads →</span></Link></nav>
           <p className="mt-2 text-sm text-stone-600">Manage your personal details and saved address.</p>
         </div>
         {authError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{authError}</p>}
@@ -277,7 +311,7 @@ export function ProfilePage() {
                               onChange={(event) =>
                                 setAddressForm((prev) => ({ ...prev, street: event.target.value }))
                               }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
+                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]"
                             />
                           </label>
 
@@ -290,7 +324,7 @@ export function ProfilePage() {
                               onChange={(event) =>
                                 setAddressForm((prev) => ({ ...prev, landmark: event.target.value }))
                               }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
+                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]"
                             />
                           </label>
 
@@ -301,7 +335,7 @@ export function ProfilePage() {
                               onChange={(event) =>
                                 setAddressForm((prev) => ({ ...prev, city: event.target.value }))
                               }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
+                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]"
                             >
                               <option value="">Select City</option>
                               <option value="Nashik">Nashik</option>
@@ -321,7 +355,7 @@ export function ProfilePage() {
                               onChange={(event) =>
                                 setAddressForm((prev) => ({ ...prev, state: event.target.value }))
                               }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
+                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]"
                             />
                           </label>
 
@@ -334,7 +368,7 @@ export function ProfilePage() {
                               onChange={(event) =>
                                 setAddressForm((prev) => ({ ...prev, zipcode: event.target.value }))
                               }
-                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
+                              className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]"
                             />
                           </label>
 
@@ -348,7 +382,7 @@ export function ProfilePage() {
                                 }
                                 className={`rounded-lg border px-4 py-1.5 text-xs font-semibold ${
                                   addressForm.label === 'HOME'
-                                    ? 'border-[#F8B020] bg-[#F8B020] text-white'
+                                    ? 'border-[#0066ff] bg-[#0066ff] text-white'
                                     : 'border-stone-300 bg-white text-stone-600'
                                 }`}
                               >
@@ -361,7 +395,7 @@ export function ProfilePage() {
                                 }
                                 className={`rounded-lg border px-4 py-1.5 text-xs font-semibold ${
                                   addressForm.label === 'OFFICE'
-                                    ? 'border-[#F8B020] bg-[#F8B020] text-white'
+                                    ? 'border-[#0066ff] bg-[#0066ff] text-white'
                                     : 'border-stone-300 bg-white text-stone-600'
                                 }`}
                               >
@@ -376,23 +410,19 @@ export function ProfilePage() {
                             onClick={() => {
                               void handleAddAddress()
                             }}
-                            className="mt-3 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+                            className="mt-3 w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb]"
                           >
                             {isLoading ? 'Please wait...' : 'Save'}
                           </button>
                         </div>
                       ) : (
                         <>
-                          <div className="flex justify-center">
-                            <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-[#F8B020] bg-white">
-                              <img
-                                src={profilePic || '/logo.png'}
-                                alt="Profile"
-                                className="h-full w-full object-cover"
-                              />
+                          <div className="account-profile-photo">
+                            <button type="button" className="account-avatar-trigger" aria-label="Change profile photo" aria-expanded={photoOptionsOpen} aria-controls="profile-photo-options" disabled={photoBusy} onClick={() => setPhotoOptionsOpen(value => !value)}><span className="account-avatar-preview">{profilePic ? <img src={profilePic} alt="Your profile" onError={() => setProfilePic('')} /> : <span aria-label="Default profile avatar">{(accountForm.firstname[0] || 'N').toUpperCase()}{(accountForm.lastname[0] || '').toUpperCase()}</span>}</span><span className="account-avatar-edit" aria-hidden="true">✎</span></button>
+                            <div><h2>{[accountForm.firstname,accountForm.lastname].filter(Boolean).join(' ') || 'Your profile'}</h2><p>Click your profile picture to change it.</p>
+                              {photoOptionsOpen && <div id="profile-photo-options" className="account-photo-options"><label className="account-photo-upload">{photoBusy ? 'Uploading…' : 'Upload photo'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={photoBusy || isLoading} onChange={choosePhoto} /></label><p className="account-photo-hint">JPEG, PNG or WebP · Up to 2 MB</p><div className="account-avatar-choices" role="group" aria-label="Choose a profile avatar">{[['#0066ff','Blue'],['#7c3aed','Purple'],['#059669','Green'],['#e87923','Orange']].map(([color,label]) => <button key={color} type="button" disabled={photoBusy || isLoading} style={{ backgroundColor:color }} aria-label={`Use ${label.toLowerCase()} avatar`} title={`${label} avatar`} onClick={() => chooseAvatar(color)}><svg viewBox="0 0 32 32" fill="white" aria-hidden="true"><circle cx="16" cy="11" r="6"/><path d="M4 31a12 12 0 0 1 24 0Z"/></svg></button>)}</div></div>}
                             </div>
                           </div>
-
                           <div className="grid grid-cols-2 gap-3">
                             <label className="block text-sm font-semibold text-stone-700">
                               First Name
@@ -405,7 +435,7 @@ export function ProfilePage() {
                                 }
                                 className={`mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm shadow-md outline-none ${
                                   isEditingProfile
-                                    ? 'text-stone-800 focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]'
+                                    ? 'text-stone-800 focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]'
                                     : 'text-stone-500'
                                 }`}
                               />
@@ -421,7 +451,7 @@ export function ProfilePage() {
                                 }
                                 className={`mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm shadow-md outline-none ${
                                   isEditingProfile
-                                    ? 'text-stone-800 focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]'
+                                    ? 'text-stone-800 focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]'
                                     : 'text-stone-500'
                                 }`}
                               />
@@ -439,7 +469,7 @@ export function ProfilePage() {
                               }
                               className={`mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm shadow-md outline-none ${
                                 isEditingProfile
-                                  ? 'text-stone-800 focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]'
+                                  ? 'text-stone-800 focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]'
                                   : 'text-stone-500'
                               }`}
                             />
@@ -454,13 +484,6 @@ export function ProfilePage() {
                               className="mt-1.5 h-12 w-full rounded-2xl border border-stone-300 bg-white px-3 text-sm text-stone-500 shadow-md outline-none"
                             />
                           </label>
-
-                          <div className="rounded-2xl border border-stone-300 bg-white px-3 py-2 shadow-md">
-                            <p className="text-sm font-semibold text-stone-700">Password</p>
-                            <div className="mt-1 flex items-center justify-between">
-                              <p className="text-sm text-stone-500">********</p>
-                            </div>
-                          </div>
 
                           <button
                             type="button"
@@ -488,7 +511,7 @@ export function ProfilePage() {
                           resetAuthMessages()
                           setIsEditingProfile(true)
                         }}
-                        className="w-full rounded-2xl border border-[#F8B020] bg-white py-3 text-base font-semibold text-[#F8B020] shadow-sm transition hover:bg-[#FFF7E8]"
+                        className="w-full rounded-2xl border border-[#0066ff] bg-white py-3 text-base font-semibold text-[#0066ff] shadow-sm transition hover:bg-[#edf5ff]"
                       >
                         Edit Profile
                       </button> : <div className="flex gap-3">
@@ -500,7 +523,7 @@ export function ProfilePage() {
                       <button
                             type="submit"
                         disabled={isLoading || isProfileLoading || !isEditingProfile}
-                            className="mt-2 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+                            className="mt-2 w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb]"
                           >
                         {isLoading ? 'Please wait...' : 'Update Profile'}
                           </button>
@@ -520,7 +543,7 @@ export function ProfilePage() {
                   )}
                 </form>
               ) : (
-                <div className="min-h-[58vh] rounded-t-3xl bg-[#efefef] px-4 pt-6 pb-10">
+                <div className="min-h-[58vh] rounded-t-3xl bg-[#f8fafc] px-4 pt-6 pb-10">
                   <div className="mt-4 flex justify-center">
                     <img
                       src="/trust-team.jpg"

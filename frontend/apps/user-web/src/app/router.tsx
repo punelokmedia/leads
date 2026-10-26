@@ -1,42 +1,32 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/PublicLayout'
-import { HomePage } from '@/features/home/pages/HomePage'
-import { ProfilePage } from '@/features/profile/pages/ProfilePage'
-import { WalletPage } from '@/features/wallet/pages/WalletPage'
-import { ReferralPage } from '@/features/profile/pages/ReferralPage'
-import { PricingPage } from '@/features/pricing/pages/PricingPage'
-import { ContactPage } from '@/features/contact/pages/ContactPage'
-import { PrivacyPolicyPage } from '@/features/legal/pages/PrivacyPolicyPage'
-import { AccountDeletionPage } from '@/features/legal/pages/AccountDeletionPage'
-import { TermsServicePage } from '@/features/legal/pages/TermsServicePage'
-import { CookiePolicyPage } from '@/features/legal/pages/CookiePolicyPage'
-import { ContactSupportPage } from '@/features/legal/pages/ContactSupportPage'
-import { MobileAuthDrawerPage } from '@/features/auth/pages/MobileAuthDrawerPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { LoginPage } from '@/features/auth/pages/LoginPage'
-import { DownloadAppPage } from '@/features/download/pages/DownloadAppPage'
 
 export const router = createBrowserRouter([
-  { path: '/login', element: <LoginPage /> },
+  { path: '/login', lazy: async () => ({ Component: (await import('@/features/auth/pages/LoginPage')).LoginPage }) },
   {
     path: '/',
     element: <PublicLayout />,
     children: [
-      { index: true, element: <HomePage /> },
-      ...['cart', 'history', 'signup', 'forgot-password', 'forgot-password/verify', 'forgot-password/reset'].map(path => ({ path, element: null })),
-      { path: 'profile', element: <ProfilePage /> },
-      { path: 'wallet', element: <WalletPage /> },
-      { path: 'referrals', element: <ReferralPage /> },
-      { path: 'pricing', element: <PricingPage /> },
-      { path: 'contact', element: <ContactPage /> },
-      { path: 'download', element: <DownloadAppPage /> },
-      { path: 'privacy-policy', element: <PrivacyPolicyPage /> },
-      { path: 'account-deletion', element: <AccountDeletionPage /> },
-      { path: 'terms-service', element: <TermsServicePage /> },
-      { path: 'cookie-policy', element: <CookiePolicyPage /> },
-      { path: 'contact-support', element: <ContactSupportPage /> },
-      { path: 'auth/mobile', element: <MobileAuthDrawerPage /> },
+      { index: true, lazy: async () => ({ Component: (await import('@/features/home/pages/HomePage')).HomePage }) },
+      { path: 'categories', lazy: async () => ({ Component: (await import('@/features/home/pages/CategoriesPage')).CategoriesPage }) },
+      { path: 'leads/:leadId', lazy: async () => ({ Component: (await import('@/features/home/pages/LeadDetailsPage')).LeadDetailsPage }) },
+      ...['cart', 'my-leads', 'signup', 'forgot-password', 'forgot-password/verify', 'forgot-password/reset'].map(path => ({ path, element: null })),
+      { path: 'history', element: <Navigate to="/my-leads" replace /> },
+      { path: 'profile', lazy: async () => ({ Component: (await import('@/features/profile/pages/ProfilePage')).ProfilePage }) },
+      { path: 'wallet', lazy: async () => ({ Component: (await import('@/features/wallet/pages/WalletPage')).WalletPage }) },
+      { path: 'wallet/success/:topupId', lazy: async () => ({ Component: (await import('@/features/wallet/pages/WalletSuccessPage')).WalletSuccessPage }) },
+      { path: 'referrals', lazy: async () => ({ Component: (await import('@/features/profile/pages/ReferralPage')).ReferralPage }) },
+      { path: 'pricing', lazy: async () => ({ Component: (await import('@/features/pricing/pages/PricingPage')).PricingPage }) },
+      { path: 'membership/success', lazy: async () => ({ Component: (await import('@/features/pricing/pages/MembershipSuccessPage')).MembershipSuccessPage }) },
+      { path: 'contact', lazy: async () => ({ Component: (await import('@/features/contact/pages/ContactPage')).ContactPage }) },
+      { path: 'download', lazy: async () => ({ Component: (await import('@/features/download/pages/DownloadAppPage')).DownloadAppPage }) },
+      { path: 'privacy-policy', lazy: async () => ({ Component: (await import('@/features/legal/pages/PrivacyPolicyPage')).PrivacyPolicyPage }) },
+      { path: 'account-deletion', lazy: async () => ({ Component: (await import('@/features/legal/pages/AccountDeletionPage')).AccountDeletionPage }) },
+      { path: 'terms-service', lazy: async () => ({ Component: (await import('@/features/legal/pages/TermsServicePage')).TermsServicePage }) },
+      { path: 'cookie-policy', lazy: async () => ({ Component: (await import('@/features/legal/pages/CookiePolicyPage')).CookiePolicyPage }) },
+      { path: 'contact-support', lazy: async () => ({ Component: (await import('@/features/legal/pages/ContactSupportPage')).ContactSupportPage }) },
+      { path: 'auth/mobile', lazy: async () => ({ Component: (await import('@/features/auth/pages/AuthEntryPage')).AuthEntryPage }) },
     ],
   },
-  { path: '*', element: <NotFoundPage /> },
+  { path: '*', lazy: async () => ({ Component: (await import('@/pages/NotFoundPage')).NotFoundPage }) },
 ])

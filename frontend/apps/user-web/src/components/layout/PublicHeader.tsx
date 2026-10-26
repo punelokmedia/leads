@@ -1,9 +1,11 @@
+import './cart.css'
 import { apiFetch } from '@/features/auth/session'
 import { startGoogleLogin } from '@/features/auth/googleHandoff'
 import { createPortal } from 'react-dom'
 import { API_BASE_URL } from '@/config/api'
 import { notifyUserSessionChanged, useUserToken } from '@/features/auth/useUserToken'
-import { ReferralCard } from './ReferralCard'
+import './my-leads.css'
+import { MarketplaceHeader } from './MarketplaceHeader'
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 
@@ -87,8 +89,8 @@ type City = {
 export function PublicHeader() {
   const navigate = useNavigate()
   const pathname = useLocation().pathname
-  const isReferralPage = pathname === '/referrals'
-  const pagePaths = { history: '/history', cart: '/cart', login: '/login', signup: '/signup', 'forgot-email': '/forgot-password', 'forgot-otp': '/forgot-password/verify', 'forgot-reset': '/forgot-password/reset' } as const
+
+  const pagePaths = { history: '/my-leads', cart: '/cart', login: '/login', signup: '/signup', 'forgot-email': '/forgot-password', 'forgot-otp': '/forgot-password/verify', 'forgot-reset': '/forgot-password/reset' } as const
   type PanelMode = keyof typeof pagePaths
   const panelMode = (Object.keys(pagePaths) as PanelMode[]).find(mode => pagePaths[mode] === pathname) ?? null
   const setPanelMode = (mode: PanelMode | null) => { navigate(mode ? pagePaths[mode] : '/') }
@@ -851,297 +853,8 @@ export function PublicHeader() {
 
   return (
     <>
-      {isReferralPage ? (
-        <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 shadow-sm backdrop-blur">
-          <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4 sm:px-6">
-            <NavLink to="/" aria-label="Back to marketplace" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-stone-200 text-stone-600 hover:bg-stone-50">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
-            </NavLink>
-            <div><h1 className="text-2xl font-black tracking-tight text-stone-900">Refer & Earn</h1><p className="text-sm text-stone-600">Invite friends and earn credit for leads.</p></div>
-          </div>
-        </header>
-      ) : <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 shadow-sm backdrop-blur">
-        <div className="border-b border-stone-100 bg-stone-50">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2 text-[11px] text-stone-600 sm:px-6 sm:text-xs">
-            <p className="min-w-0 truncate">Trusted by interior professionals across India</p>
-            <p className="hidden sm:block">Support: +91 9067777034</p>
-          </div>
-        </div>
-
-        <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
-          <NavLink to="/" aria-label="Next Lead home" className="flex h-14 w-16 shrink-0 items-center justify-center sm:h-16 sm:w-24">
-            <img
-              src="/logo-cropped-1.png"
-              alt="Next Lead"
-              className="h-full w-full object-contain"
-            />
-          </NavLink>
-
-          <nav aria-label="Main navigation" className="hidden flex-1 items-center justify-center gap-1 whitespace-nowrap bg-transparent py-1 xl:flex [&>a]:shrink-0 [&>a]:px-3 [&>div]:shrink-0 [&_button]:px-3">
-            <NavLink
-              to="/"
-              className={({ isActive }) =>
-                `rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-[#F8B020] text-white shadow-sm'
-                    : 'text-stone-600 hover:bg-white hover:text-stone-900'
-                }`
-              }
-            >
-              Home
-            </NavLink>
-            <div 
-              className="relative"
-              onMouseEnter={() => { setIsCategoryDropdownOpen(true); setIsCityDropdownOpen(false) }}
-              onMouseLeave={() => setIsCategoryDropdownOpen(false)}
-            >
-              <button
-                type="button"
-                aria-expanded={isCategoryDropdownOpen}
-                onClick={() => { setIsCategoryDropdownOpen(!isCategoryDropdownOpen); setIsCityDropdownOpen(false) }}
-                onKeyDown={(event) => { if (event.key === 'Escape') setIsCategoryDropdownOpen(false) }}
-                className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isCategoryDropdownOpen
-                    ? 'bg-stone-200 text-stone-900'
-                    : 'text-stone-600 hover:bg-white hover:text-stone-900'
-                }`}
-              >
-                Categories
-                <svg viewBox="0 0 24 24" className={`h-4 w-4 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              
-              {isCategoryDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-56 rounded-2xl border border-stone-200 bg-white py-2 shadow-xl">
-                  {isCategoriesLoading ? (
-                    <div className="px-4 py-3 text-sm text-stone-500">Loading categories...</div>
-                  ) : categories.length > 0 ? (
-                    <div className="max-h-80 overflow-y-auto">
-                      {categories.map((category) => (
-                        <NavLink
-                          key={category._id}
-                          to={`/?category=${category._id}`}
-                          className="block px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50 hover:text-stone-900"
-                        >
-                          <div className="flex items-center gap-2">
-                            {category.icon && (
-                              category.icon.startsWith('http') ? (
-                                <img src={category.icon} alt="" className="h-5 w-5 object-contain opacity-80" />
-                              ) : (
-                                <span className="text-lg">{category.icon}</span>
-                              )
-                            )}
-                            <span>{category.name}</span>
-                          </div>
-                        </NavLink>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="px-4 py-3 text-sm text-stone-500">No categories found</div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div
-              className="relative"
-              onMouseEnter={() => { setIsCityDropdownOpen(true); setIsCategoryDropdownOpen(false) }}
-              onMouseLeave={() => setIsCityDropdownOpen(false)}
-            >
-              <button
-                type="button"
-                aria-expanded={isCityDropdownOpen}
-                onClick={() => { setIsCityDropdownOpen(!isCityDropdownOpen); setIsCategoryDropdownOpen(false) }}
-                onKeyDown={(event) => { if (event.key === 'Escape') setIsCityDropdownOpen(false) }}
-                className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isCityDropdownOpen
-                    ? 'bg-stone-200 text-stone-900'
-                    : 'text-stone-600 hover:bg-white hover:text-stone-900'
-                }`}
-              >
-                Cities
-                <svg
-                  viewBox="0 0 24 24"
-                  className={`h-4 w-4 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {isCityDropdownOpen ? (
-                <div className="absolute top-full left-0 mt-2 w-52 rounded-2xl border border-stone-200 bg-white py-2 shadow-xl">
-                  {isCitiesLoading ? (
-                    <div className="px-4 py-3 text-sm text-stone-500">Loading cities...</div>
-                  ) : cities.length > 0 ? (
-                    <div className="max-h-72 overflow-y-auto">
-                      {cities.map((city) => (
-                        <NavLink
-                          key={city._id}
-                          to={`/?city=${encodeURIComponent(city.name)}`}
-                          className="block px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50 hover:text-stone-900"
-                        >
-                          {city.name}
-                        </NavLink>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="px-4 py-3 text-sm text-stone-500">No cities found</div>
-                  )}
-                </div>
-              ) : null}
-            </div>
-            <NavLink
-              to="/pricing"
-              className={({ isActive }) =>
-                `rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-[#F8B020] text-white shadow-sm'
-                    : 'text-stone-600 hover:bg-white hover:text-stone-900'
-                }`
-              }
-            >
-              About Us
-            </NavLink>
-            <NavLink
-              to="/contact"
-              className={({ isActive }) =>
-                `rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-[#F8B020] text-white shadow-sm'
-                    : 'text-stone-600 hover:bg-white hover:text-stone-900'
-                }`
-              }
-            >
-              Contact Us
-            </NavLink>
-            <NavLink
-              to="/download"
-              className={({ isActive }) => `rounded-full px-4 py-2 text-sm font-semibold transition ${isActive ? 'bg-[#F8B020] text-white shadow-sm' : 'text-stone-600 hover:bg-white hover:text-stone-900'}`}
-            >
-              Download App
-            </NavLink>
-          </nav>
-
-          <div className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-3">
-            <NavLink to="/wallet" onClick={() => { setIsMobileMenuOpen(false); setPanelMode(null) }} className="rounded-full border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-stone-800 hover:bg-amber-50">Wallet</NavLink>
-            <button
-              type="button"
-              onClick={() => {
-                resetAuthMessages()
-                setIsMobileMenuOpen(false)
-                setPanelMode(null)
-                navigate('/referrals')
-              }}
-              className="grid h-9 w-9 place-items-center rounded-full border border-violet-300 bg-white text-violet-700 transition hover:bg-violet-50"
-              aria-label="Refer & Earn"
-              title="Refer & Earn"
-            >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="8" width="18" height="4" rx="1" />
-                <path d="M5 12v9h14v-9M12 8v13" />
-                <path d="M12 8H8a3 3 0 1 1 3-3l1 3Zm0 0h4a3 3 0 1 0-3-3l-1 3Z" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!userToken) {
-                  navigate('/auth/mobile')
-                  return
-                }
-                resetAuthMessages()
-                setPanelMode('cart')
-              }}
-              className="relative hidden h-9 w-9 place-items-center rounded-full border border-stone-300 bg-white text-stone-600 transition hover:border-stone-400 hover:text-stone-800 sm:grid"
-              aria-label="Cart"
-            >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 5h2l2.2 9.2a2 2 0 0 0 1.95 1.53H17a2 2 0 0 0 1.96-1.61L20 8H7" />
-                <circle cx="10" cy="20" r="1.5" />
-                <circle cx="17" cy="20" r="1.5" />
-              </svg>
-              {cartSummary.totalItems > 0 ? (
-                <span className="absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-[#F8B020] px-1 text-[10px] leading-none font-bold text-white">
-                  {cartSummary.totalItems}
-                </span>
-              ) : null}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!userToken) {
-                  navigate('/auth/mobile')
-                  return
-                }
-                resetAuthMessages()
-                setPanelMode(null)
-                navigate('/profile')
-              }}
-              className="grid h-9 w-9 place-items-center rounded-full border border-stone-300 bg-white text-stone-600 transition hover:border-stone-400 hover:text-stone-800"
-              aria-label="Profile"
-            >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 20c1.5-3.5 4.6-5 8-5s6.5 1.5 8 5" />
-              </svg>
-            </button>
-
-            {userToken ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetAuthMessages()
-                    setPanelMode('history')
-                  }}
-                  className="hidden rounded-full border border-[#F8B020] bg-white px-4 py-1.5 text-sm font-semibold text-[#F8B020] shadow-sm transition hover:bg-[#FFF7E8] xl:inline-flex"
-                >
-                  History
-                </button>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="hidden rounded-full border border-red-300 bg-white px-4 py-1.5 text-sm font-semibold text-red-500 shadow-sm transition hover:bg-red-50 xl:inline-flex"
-                >
-                  Log Out
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetAuthMessages()
-                    navigate('/auth/mobile')
-                  }}
-                  className="hidden rounded-full border border-[#4B2CF5] bg-white px-4 py-1.5 text-sm font-semibold text-[#4B2CF5] transition hover:bg-[#F3EEFF] sm:inline-flex"
-                >
-                  Login / Signup
-                </button>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen((open) => !open)}
-              className="grid h-9 w-9 place-items-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:border-stone-400 xl:hidden"
-              aria-label="Toggle mobile menu"
-              aria-expanded={isMobileMenuOpen}
-            >
-              {isMobileMenuOpen ? (
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 7h16M4 12h16M4 17h16" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
+      <header className="marketplace-header">
+        <MarketplaceHeader loggedIn={Boolean(userToken)} cartCount={cartSummary.totalItems} onLogout={() => { void handleLogout() }} />
 
         {isMobileMenuOpen ? (
           <div className="max-h-[calc(100dvh-130px)] overflow-y-auto border-t border-stone-200 bg-white px-4 py-3 xl:hidden">
@@ -1149,7 +862,7 @@ export function PublicHeader() {
               <NavLink
                 to="/download"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) => `block rounded-xl px-3 py-2 text-sm font-semibold ${isActive ? 'bg-[#F8B020] text-white' : 'text-stone-700 hover:bg-stone-100'}`}
+                className={({ isActive }) => `block rounded-xl px-3 py-2 text-sm font-semibold ${isActive ? 'bg-[#0066ff] text-white' : 'text-stone-700 hover:bg-stone-100'}`}
               >
                 Download App
               </NavLink>
@@ -1158,7 +871,7 @@ export function PublicHeader() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   `block rounded-xl px-3 py-2 text-sm font-semibold ${
-                    isActive ? 'bg-[#F8B020] text-white' : 'text-stone-700 hover:bg-stone-100'
+                    isActive ? 'bg-[#0066ff] text-white' : 'text-stone-700 hover:bg-stone-100'
                   }`
                 }
               >
@@ -1170,7 +883,7 @@ export function PublicHeader() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) =>
                     `block rounded-xl px-3 py-2 text-sm font-semibold ${
-                      isActive ? 'bg-[#5A35F0] text-white' : 'text-[#5A35F0] hover:bg-[#F3EEFF]'
+                      isActive ? 'bg-[#0066ff] text-white' : 'text-[#0066ff] hover:bg-[#F3EEFF]'
                     }`
                   }
                 >
@@ -1271,7 +984,7 @@ export function PublicHeader() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   `block rounded-xl px-3 py-2 text-sm font-semibold ${
-                    isActive ? 'bg-[#F8B020] text-white' : 'text-stone-700 hover:bg-stone-100'
+                    isActive ? 'bg-[#0066ff] text-white' : 'text-stone-700 hover:bg-stone-100'
                   }`
                 }
               >
@@ -1282,7 +995,7 @@ export function PublicHeader() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   `block rounded-xl px-3 py-2 text-sm font-semibold ${
-                    isActive ? 'bg-[#F8B020] text-white' : 'text-stone-700 hover:bg-stone-100'
+                    isActive ? 'bg-[#0066ff] text-white' : 'text-stone-700 hover:bg-stone-100'
                   }`
                 }
               >
@@ -1309,9 +1022,9 @@ export function PublicHeader() {
                         setPanelMode('history')
                         setIsMobileMenuOpen(false)
                       }}
-                      className="w-full rounded-xl border border-[#F8B020] bg-white px-4 py-2 text-sm font-semibold text-[#F8B020]"
+                      className="w-full rounded-xl border border-[#0066ff] bg-white px-4 py-2 text-sm font-semibold text-[#0066ff]"
                     >
-                      History
+                      My Leads
                     </button>
                     <button
                       type="button"
@@ -1333,7 +1046,7 @@ export function PublicHeader() {
                         navigate('/auth/mobile')
                         setIsMobileMenuOpen(false)
                       }}
-                      className="w-full rounded-xl border border-[#4B2CF5] bg-white px-4 py-2 text-sm font-semibold text-[#4B2CF5]"
+                      className="w-full rounded-xl border border-[#0066ff] bg-white px-4 py-2 text-sm font-semibold text-[#0066ff]"
                     >
                       Login / Signup
                     </button>
@@ -1343,10 +1056,10 @@ export function PublicHeader() {
             </nav>
           </div>
         ) : null}
-      </header>}
+      </header>
 
       {isPanelOpen && pageContainer && createPortal(
-        <section className="min-h-[70vh] bg-[#efefef] px-4 py-8 sm:py-12">
+        <section className={`min-h-[70vh] bg-[#f8fafc] px-4 py-8 sm:py-12 ${panelMode === 'cart' ? 'next-cart-page' : panelMode === 'history' ? 'my-leads-page' : ''}`}>
         <div className={panelMode === 'cart' || panelMode === 'history' ? 'mx-auto w-full max-w-5xl' : 'mx-auto w-full max-w-lg'}>
           <div className="mb-6 flex justify-start px-4">
             <button
@@ -1366,15 +1079,15 @@ export function PublicHeader() {
             </button>
           </div>
 
-          <div className="-mt-2 bg-[#efefef] px-4 pb-5 text-center">
+          <div className="-mt-2 bg-[#f8fafc] px-4 pb-5 text-center">
             {panelMode === 'history' ? (
               <>
-                <h2 className="mt-2 text-4xl font-black text-stone-900">History</h2>
-                <p className="mt-1 text-sm text-stone-600">Your purchased leads</p>
+                <h2 className="mt-2 text-4xl font-black text-stone-900">My Leads</h2>
+                <p className="mt-1 text-sm text-stone-600">Access your purchased leads and connect with customers.</p>
               </>
             ) : panelMode === 'cart' ? (
               <>
-                <h2 className="mt-2 text-4xl font-black text-stone-900">Cart</h2>
+                <h2 className="mt-2 text-4xl font-black text-stone-900">My Cart</h2>
                 <p className="mt-1 text-sm text-stone-600">Review selected leads before checkout</p>
               </>
             ) : panelMode === 'forgot-email' ? (
@@ -1418,76 +1131,28 @@ export function PublicHeader() {
 
           {panelMode === 'history' ? (
             <>
-            {userToken && <ReferralCard token={userToken} />}
-            <div className="min-h-[58vh] rounded-t-[34px] bg-[#efefef] px-4 pt-6 pb-8">
+            
+            <div className="min-h-[58vh] rounded-t-[34px] bg-[#f8fafc] px-4 pt-6 pb-8">
               {!userToken ? (
                 <button
                   type="button"
                   onClick={() => setPanelMode('login')}
-                  className="w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+                  className="w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb]"
                 >
                   Continue to Login
                 </button>
               ) : isHistoryLoading ? (
-                <p className="text-center text-sm font-medium text-stone-600">Loading history...</p>
+                <p className="text-center text-sm font-medium text-stone-600">Loading your leads…</p>
               ) : historyLeads.length === 0 ? (
-                <p className="text-center text-sm text-stone-600">No purchase history found.</p>
+                <p className="text-center text-sm text-stone-600">No purchased leads yet. Explore available leads to get started.</p>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                   {historyLeads.map((lead) => (
-                    <article
-                      key={lead.id}
-                      className="rounded-2xl border border-[#B3BA70] bg-white p-3 shadow-sm"
-                    >
-                      <div className="flex items-start gap-3">
-                        <img
-                          src={getLeadPreviewImage(lead.id)}
-                          alt={lead.title}
-                          className="h-10 w-14 rounded-lg object-cover"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <h4 className="truncate text-xl font-black text-stone-900">{lead.title}</h4>
-                          <p className="mt-0.5 flex items-center gap-1 text-xs text-stone-500">
-                            <span>📍</span>
-                            {lead.city}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 rounded-xl bg-stone-100 p-3 text-sm text-stone-700">
-                        <div className="mb-1 flex items-start justify-between gap-3">
-                          <p className="font-medium">{lead.customerName}</p>
-                          <p className="text-xs text-stone-500">{new Date(lead.paidAt).toLocaleString()}</p>
-                        </div>
-                        <p>{lead.address}</p>
-                        <a href={lead.phone === 'N/A' ? undefined : `tel:${lead.phone}`} className="font-semibold text-violet-700">{lead.phone}</a>
-                        <p className="mt-2 text-sm font-semibold">Purchased for ₹{lead.price.toLocaleString('en-IN')}</p>
-                        <div className="mt-2 flex items-center justify-between">
-                          <p className="text-xs text-stone-600">
-                            {lead.quantity} {lead.quantity > 1 ? 'Sharing Leads' : 'Sharing Lead'}
-                          </p>
-                          <span className="rounded-full bg-green-500 px-5 py-1 text-xs font-bold tracking-wide text-white">
-                            {lead.status}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-3">
-                        <button
-                          type="button"
-                          disabled={lead.isDownloaded}
-                          onClick={() => {
-                            void handleDownloadLead(lead.orderId || lead.id)
-                          }}
-                          className={`w-full rounded-xl border px-4 py-2 text-sm font-semibold transition ${
-                            lead.isDownloaded
-                              ? 'cursor-not-allowed border-stone-300 bg-stone-100 text-stone-500'
-                              : 'border-[#B3BA70] bg-white text-[#99A13E] hover:bg-[#F8FADF]'
-                          }`}
-                        >
-                          {lead.isDownloaded ? 'Excel already downloaded' : 'Download Excel'}
-                        </button>
-                      </div>
+                    <article key={lead.id} className="my-lead-card">
+                      <div className="my-lead-card-heading"><img src={getLeadPreviewImage(lead.id)} alt="" /><div><h3><button type="button" onClick={() => navigate(`/leads/${lead.id}`)}>{lead.title}</button></h3><p>⌖ {lead.city}</p></div><span className="my-lead-paid">{lead.status}</span></div>
+                      <div className="my-lead-customer"><div className="my-lead-customer-title"><span>Customer Details</span><span className="my-lead-unlocked">✓ Unlocked</span></div><h4>{lead.customerName || 'Name not provided'}</h4><p>{lead.address || 'Address not provided'}</p><a className="my-lead-phone" href={lead.phone === 'N/A' ? undefined : `tel:${lead.phone}`}>{lead.phone}</a></div>
+                      <div className="my-lead-purchase"><div><span>Purchased for</span><strong>₹{lead.price.toLocaleString('en-IN')}</strong></div><time dateTime={lead.paidAt}>{new Date(lead.paidAt).toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short', timeZone:'Asia/Kolkata' })} IST</time></div>
+                      <div className="my-lead-card-actions"><button type="button" onClick={() => navigate(`/leads/${lead.id}`)}>View Lead Details →</button><button type="button" disabled={lead.isDownloaded} onClick={() => void handleDownloadLead(lead.orderId || lead.id)}>{lead.isDownloaded ? 'Excel downloaded' : 'Download Excel ↓'}</button></div>
                     </article>
                   ))}
                 </div>
@@ -1495,7 +1160,7 @@ export function PublicHeader() {
             </div>
             </>
           ) : panelMode === 'cart' ? (
-            <div className="min-h-[58vh] rounded-t-[34px] bg-[#efefef] px-4 pt-6 pb-8">
+            <div className="min-h-[58vh] rounded-t-[34px] bg-[#f8fafc] px-4 pt-6 pb-8">
               {userToken && removedCartLeads.length > 0 ? (
                 <div role="status" className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
                   <p>Unavailable leads were removed. Review the remaining selection before paying.</p>
@@ -1506,7 +1171,7 @@ export function PublicHeader() {
                 <button
                   type="button"
                   onClick={() => setPanelMode('login')}
-                  className="w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+                  className="w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb]"
                 >
                   Continue to Login
                 </button>
@@ -1515,88 +1180,26 @@ export function PublicHeader() {
               ) : cartLeads.length === 0 ? (
                 <div className="rounded-2xl border border-stone-200 bg-white px-6 py-12 text-center">
                   <p className="text-lg font-semibold text-stone-800">Your cart is empty.</p>
-                  <button type="button" onClick={() => navigate('/')} className="mt-5 rounded-xl bg-[#F8B020] px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-[#E2A11D]">Browse leads</button>
+                  <button type="button" onClick={() => navigate('/')} className="mt-5 rounded-xl bg-[#0066ff] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0050cb]">Browse leads</button>
                 </div>
               ) : (
                 <>
                   <div className="space-y-4">
                     {cartLeads.map((lead) => (
-                      <article
-                        key={lead._id}
-                        className="rounded-2xl border border-[#B3BA70] bg-white p-3 shadow-sm"
-                      >
-                        <div className="flex items-start gap-3">
-                          <img
-                            src={getLeadPreviewImage(lead._id)}
-                            alt={lead.title}
-                            className="h-10 w-14 rounded-lg object-cover"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <h4 className="truncate text-xl font-black text-stone-900">{lead.title}</h4>
-                            <p className="mt-0.5 text-xs text-stone-500">{lead.city} City</p>
-                          </div>
+                      <article key={lead._id} className="next-cart-item">
+                        <img className="next-cart-image" src={getLeadPreviewImage(lead._id)} alt={lead.title} />
+                        <div className="next-cart-item-content">
+                          <h3>{lead.title}</h3>
+                          <p className="next-cart-meta"><span>⌖ {lead.city}, {lead.state}</span><span>Sharing Leads ({lead.totalSlots - lead.remainingSlots}/{lead.totalSlots})</span></p>
+                          <div className="next-cart-quantity" aria-label="Lead quantity"><button type="button" onClick={() => void handleRemoveCartQuantity(lead._id)} disabled={isPaymentProcessing || isLoading} aria-label={`Remove ${lead.title}`}>−</button><span>{lead.quantity}</span><button type="button" onClick={() => void handleAddCartQuantity(lead._id)} disabled title="One purchase per buyer" aria-label="Increase quantity">+</button></div>
+                          <div className="next-cart-item-total"><span>₹{lead.price.toLocaleString('en-IN')} × {lead.quantity}</span><strong>₹{(lead.price * lead.quantity).toLocaleString('en-IN')}</strong></div>
                         </div>
-
-                        <div className="mt-3 rounded-xl bg-stone-100 p-3 text-sm text-stone-700">
-                          <p>
-                            {lead.city}, {lead.state}
-                          </p>
-                          <p className="mt-1 text-xs text-stone-600">
-                            Sharing Leads ({lead.totalSlots - lead.remainingSlots}/{lead.totalSlots})
-                          </p>
-                          <div className="mt-3 flex items-center justify-between gap-2">
-                            <div className="inline-flex items-center rounded-full border border-stone-300 bg-white">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  void handleRemoveCartQuantity(lead._id)
-                                }}
-                                className="h-8 w-8 rounded-l-full text-base font-bold text-stone-700 hover:bg-stone-100"
-                                aria-label="Decrease quantity"
-                              >
-                                -
-                              </button>
-                              <span className="min-w-8 px-2 text-center text-sm font-semibold">
-                                {lead.quantity}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  void handleAddCartQuantity(lead._id)
-                                }}
-                                className="h-8 w-8 rounded-r-full text-base font-bold text-stone-700 hover:bg-stone-100"
-                                aria-label="Increase quantity"
-                                disabled={true}
-                                title="One purchase per buyer"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                void handleDeleteCartItem(lead._id, lead.quantity)
-                              }}
-                              className="rounded-full border border-red-300 px-3 py-1 text-xs font-semibold text-red-500 hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          <p className="text-sm font-bold text-stone-800">
-                            ₹{lead.price} x {lead.quantity}
-                          </p>
-                          <p className="text-base font-black text-[#0DA638]">
-                            ₹{(lead.price * lead.quantity).toLocaleString()}
-                          </p>
-                        </div>
+                        <button type="button" className="next-cart-delete" disabled={isPaymentProcessing || isLoading} onClick={() => void handleDeleteCartItem(lead._id, lead.quantity)}>Delete</button>
                       </article>
                     ))}
                   </div>
 
-                  <div className="mt-5 space-y-3">
+                  <div className="next-cart-checkout mt-5 space-y-3">
                     <div className="rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-700">
                       <div className="flex items-center justify-between">
                         <span>Total Items</span>
@@ -1613,9 +1216,9 @@ export function PublicHeader() {
                         void handleProceedToPay()
                       }}
                       disabled={isPaymentProcessing || isLoading}
-                      className="w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D] disabled:cursor-not-allowed disabled:opacity-70"
+                      className="w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb] disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {isPaymentProcessing ? 'Processing...' : 'Pay from wallet'}
+                      {isPaymentProcessing ? 'Processing...' : 'Purchase Now →'}
                     </button>
                     <button
                       type="button"
@@ -1632,7 +1235,7 @@ export function PublicHeader() {
             </div>
           ) : panelMode === 'forgot-email' ? (
             <form
-              className="space-y-4 rounded-t-[34px] bg-gradient-to-b from-[#efe7b8] via-[#f2db72] to-[#f4cd2f] px-4 pt-6 pb-8"
+              className="space-y-4 rounded-t-[34px] bg-gradient-to-b from-[#f1f7ff] via-[#e6f0ff] to-[#dce9ff] px-4 pt-6 pb-8"
               onSubmit={handleForgotPasswordRequest}
             >
               <label className="block text-sm font-semibold text-stone-700">
@@ -1644,14 +1247,14 @@ export function PublicHeader() {
                   onChange={(event) =>
                     setForgotForm((prev) => ({ ...prev, email: event.target.value }))
                   }
-                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#F8B020] focus:ring-2 focus:ring-[#F8B020]/40"
+                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#0066ff] focus:ring-2 focus:ring-[#0066ff]/40"
                 />
               </label>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mt-2 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+                className="mt-2 w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb]"
               >
                 {isLoading ? 'Please wait...' : 'Get OTP'}
               </button>
@@ -1673,7 +1276,7 @@ export function PublicHeader() {
             </form>
           ) : panelMode === 'forgot-otp' ? (
             <form
-              className="space-y-4 rounded-t-[34px] bg-gradient-to-b from-[#efe7b8] via-[#f2db72] to-[#f4cd2f] px-4 pt-6 pb-8"
+              className="space-y-4 rounded-t-[34px] bg-gradient-to-b from-[#f1f7ff] via-[#e6f0ff] to-[#dce9ff] px-4 pt-6 pb-8"
               onSubmit={handleVerifyOtp}
             >
               <p className="text-sm font-semibold text-stone-800">Enter your Verification Code</p>
@@ -1695,7 +1298,7 @@ export function PublicHeader() {
                         return { ...prev, otpDigits: nextDigits }
                       })
                     }}
-                    className="h-12 w-12 rounded-xl border border-stone-300 bg-white text-center text-lg font-semibold text-stone-800 shadow-sm outline-none focus:border-[#F8B020] focus:ring-2 focus:ring-[#F8B020]/35"
+                    className="h-12 w-12 rounded-xl border border-stone-300 bg-white text-center text-lg font-semibold text-stone-800 shadow-sm outline-none focus:border-[#0066ff] focus:ring-2 focus:ring-[#0066ff]/35"
                   />
                 ))}
               </div>
@@ -1703,7 +1306,7 @@ export function PublicHeader() {
               <button
                 type="button"
                 onClick={handleResendOtp}
-                className="text-xs font-medium text-[#E2A11D] hover:underline"
+                className="text-xs font-medium text-[#0050cb] hover:underline"
               >
                 I didn&apos;t receive the code? Send again
               </button>
@@ -1711,7 +1314,7 @@ export function PublicHeader() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mt-2 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+                className="mt-2 w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb]"
               >
                 {isLoading ? 'Please wait...' : 'Verify'}
               </button>
@@ -1722,7 +1325,7 @@ export function PublicHeader() {
             </form>
           ) : panelMode === 'forgot-reset' ? (
             <form
-              className="space-y-4 rounded-t-[34px] bg-gradient-to-b from-[#efe7b8] via-[#f2db72] to-[#f4cd2f] px-4 pt-6 pb-8"
+              className="space-y-4 rounded-t-[34px] bg-gradient-to-b from-[#f1f7ff] via-[#e6f0ff] to-[#dce9ff] px-4 pt-6 pb-8"
               onSubmit={handleResetForgotPassword}
             >
               <label className="block text-sm font-semibold text-stone-700">
@@ -1734,7 +1337,7 @@ export function PublicHeader() {
                   onChange={(event) =>
                     setForgotForm((prev) => ({ ...prev, newPassword: event.target.value }))
                   }
-                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#F8B020] focus:ring-2 focus:ring-[#F8B020]/40"
+                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#0066ff] focus:ring-2 focus:ring-[#0066ff]/40"
                 />
               </label>
 
@@ -1747,7 +1350,7 @@ export function PublicHeader() {
                   onChange={(event) =>
                     setForgotForm((prev) => ({ ...prev, confirmPassword: event.target.value }))
                   }
-                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#F8B020] focus:ring-2 focus:ring-[#F8B020]/40"
+                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#0066ff] focus:ring-2 focus:ring-[#0066ff]/40"
                 />
               </label>
 
@@ -1758,14 +1361,14 @@ export function PublicHeader() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mt-2 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+                className="mt-2 w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb]"
               >
                 {isLoading ? 'Please wait...' : 'Update'}
               </button>
             </form>
           ) : panelMode === 'login' ? (
             <form
-              className="space-y-4 rounded-t-[34px] bg-gradient-to-b from-[#efe7b8] via-[#f2db72] to-[#f4cd2f] px-4 pt-6 pb-8"
+              className="space-y-4 rounded-t-[34px] bg-gradient-to-b from-[#f1f7ff] via-[#e6f0ff] to-[#dce9ff] px-4 pt-6 pb-8"
               onSubmit={handleLoginSubmit}
             >
               <label className="block text-sm font-semibold text-stone-700">
@@ -1777,7 +1380,7 @@ export function PublicHeader() {
                   onChange={(event) =>
                     setLoginForm((prev) => ({ ...prev, email: event.target.value }))
                   }
-                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#F8B020] focus:ring-2 focus:ring-[#F8B020]/40"
+                  className="mt-1.5 h-13 w-full rounded-2xl border border-stone-300 bg-white px-4 text-sm text-stone-800 shadow-[0_4px_10px_rgba(0,0,0,0.12)] outline-none transition focus:border-[#0066ff] focus:ring-2 focus:ring-[#0066ff]/40"
                 />
               </label>
 
@@ -1899,7 +1502,7 @@ export function PublicHeader() {
                   onChange={(event) =>
                     setSignupForm((prev) => ({ ...prev, firstname: event.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
+                  className="mt-1.5 w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]"
                 />
               </label>
 
@@ -1912,7 +1515,7 @@ export function PublicHeader() {
                   onChange={(event) =>
                     setSignupForm((prev) => ({ ...prev, lastname: event.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
+                  className="mt-1.5 w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]"
                 />
               </label>
 
@@ -1925,7 +1528,7 @@ export function PublicHeader() {
                   onChange={(event) =>
                     setSignupForm((prev) => ({ ...prev, phoneNumber: event.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
+                  className="mt-1.5 w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]"
                 />
               </label>
 
@@ -1938,7 +1541,7 @@ export function PublicHeader() {
                   onChange={(event) =>
                     setSignupForm((prev) => ({ ...prev, email: event.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]"
+                  className="mt-1.5 w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800 shadow-md outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]"
                 />
               </label>
 
@@ -2006,7 +1609,7 @@ export function PublicHeader() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mt-2 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+                className="mt-2 w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb]"
               >
                 {isLoading ? 'Please wait...' : 'Sign Up'}
               </button>
@@ -2032,9 +1635,9 @@ export function PublicHeader() {
       {isDownloadPopupOpen ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-5 text-center shadow-2xl">
-            <h3 className="text-3xl font-black text-[#F8B020]">Download</h3>
-            <div className="mx-auto mt-3 grid h-20 w-20 place-items-center rounded-full bg-[#FFF7E8]">
-              <svg viewBox="0 0 24 24" className="h-10 w-10 text-[#F8B020]" fill="none" stroke="currentColor" strokeWidth="2">
+            <h3 className="text-3xl font-black text-[#0066ff]">Download</h3>
+            <div className="mx-auto mt-3 grid h-20 w-20 place-items-center rounded-full bg-[#edf5ff]">
+              <svg viewBox="0 0 24 24" className="h-10 w-10 text-[#0066ff]" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 3v11" />
                 <path d="m7 10 5 5 5-5" />
                 <rect x="4" y="18" width="16" height="3" rx="1.5" />
@@ -2046,7 +1649,7 @@ export function PublicHeader() {
               onClick={() => {
                 void handleDownloadAfterPayment()
               }}
-              className="mt-4 w-full rounded-2xl bg-[#F8B020] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E2A11D]"
+              className="mt-4 w-full rounded-2xl bg-[#0066ff] py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#0050cb]"
             >
               Download File
             </button>

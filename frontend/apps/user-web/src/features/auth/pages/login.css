@@ -262,3 +262,7 @@
     padding-top: 28px;
   }
 }
+
+.login-brand { background: #f8f9ff; border-radius: 10px; padding: 10px 14px; }
+
+.login-session-notice { color: #475569; background: #eaf2ff; border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.6; margin-top: 16px; }

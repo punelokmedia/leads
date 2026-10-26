@@ -1,14 +1,15 @@
 import { apiFetch } from '@/features/auth/session'
 import { ProfileCompletionForm } from './ProfileCompletionForm'
-import { startGoogleLogin } from '../googleHandoff'
+import { Navigate } from 'react-router-dom'
+
 import { API_BASE_URL } from '@/config/api'
 import { useEffect, useState, type KeyboardEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
-const CONFIGURED_API_BASE_URL = API_BASE_URL
+
 const API_BASE_URL_CANDIDATES = [API_BASE_URL]
 const OTP_RESEND_SECONDS = 25
-const REGISTRATION_AMOUNT_INR = 1
+const REGISTRATION_AMOUNT_INR = 499
 
 type ProfileForm = {
   fullName: string
@@ -142,15 +143,6 @@ export function MobileAuthDrawerPage() {
   const requestAuth = async (path: string, init?: RequestInit) => requestApi(`/auth${path}`, init)
 
 
-  const handleGoogleLogin = () => {
-    const preferredBaseUrl =
-      CONFIGURED_API_BASE_URL && API_BASE_URL_CANDIDATES.includes(CONFIGURED_API_BASE_URL)
-        ? CONFIGURED_API_BASE_URL
-        : API_BASE_URL_CANDIDATES[0]
-    if (!preferredBaseUrl) return setError('Google login is not configured right now.')
-    void startGoogleLogin(`${preferredBaseUrl}/api/v1/auth/google`).catch(() => setError('Unable to start Google login.'))
-  }
-
   const startOtpTimer = () => {
     setOtpSecondsLeft(OTP_RESEND_SECONDS)
     const timer = window.setInterval(() => {
@@ -238,6 +230,7 @@ export function MobileAuthDrawerPage() {
         const userToken = payload?.token as string
         if (userToken) {
           localStorage.setItem('user_token', userToken)
+          localStorage.setItem('has_signed_in', '1')
           window.dispatchEvent(new Event('user-session-changed'))
           localStorage.setItem('user_profile', JSON.stringify(payload?.data ?? {}))
           setToken(userToken)
@@ -391,6 +384,8 @@ export function MobileAuthDrawerPage() {
     }
   }, [step])
 
+  if (step === 0 || step === 1) return <Navigate to={`/login${searchParams.size ? `?${searchParams}` : ''}`} replace />
+
   if (step === 4) {
     return (
       <ProfileCompletionForm
@@ -414,7 +409,7 @@ export function MobileAuthDrawerPage() {
   }
 
   return (
-    <div className="min-h-[70vh] bg-[#efefef] px-4 py-8 sm:py-12">
+    <div className="min-h-[70vh] bg-[#f8fafc] px-4 py-8 sm:py-12">
       {toastMessage ? (
         <div role="status" className="mx-auto mb-4 max-w-xl rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
           {toastMessage}
@@ -440,74 +435,19 @@ export function MobileAuthDrawerPage() {
             ) : (
               <span />
             )}
-            <Link to="/" className="text-xs font-semibold text-[#8A89A2] hover:underline">
+            <Link to="/" className="text-xs font-semibold text-[#7a8fae] hover:underline">
               Close
             </Link>
           </div>
-
-          {step === 0 ? (
-            <div className="flex min-h-[78dvh] flex-col items-center justify-between pb-8 pt-14">
-              <div />
-              <div className="text-center">
-                <img src="/first.png" alt="Next Lead splash" className="mx-auto h-[440px] w-auto max-w-full object-contain" />
-              </div>
-              <div />
-            </div>
-          ) : null}
-
-          {step > 0 ? (
-            <>
-          {step === 1 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Welcome Back!</h1> : null}
-          {step === 2 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Verify Your Number</h1> : null}
-          {step === 3 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Enter OTP</h1> : null}
-          {step === 5 ? <h1 className="text-3xl font-bold text-[#1F1D35]">Lifetime membership</h1> : null}
-
-          {step === 1 ? <p className="mt-1 text-sm text-[#8A89A2]">Login to continue</p> : null}
+          {step === 2 ? <h1 className="text-3xl font-bold text-[#13233d]">Verify Your Number</h1> : null}
+          {step === 3 ? <h1 className="text-3xl font-bold text-[#13233d]">Enter OTP</h1> : null}
+          {step === 5 ? <h1 className="text-3xl font-bold text-[#13233d]">Lifetime membership</h1> : null}
           {referralCode && step < 4 && <p className="mt-3 break-all rounded-xl bg-violet-50 p-3 text-sm text-violet-800">Invitation code: {referralCode}. It will be filled in during profile setup.</p>}
-          <button type="button" disabled className="mt-3 rounded-xl border border-stone-200 px-3 py-2 text-sm text-stone-500">Download app — coming soon (preview)</button>
-          {step === 2 ? <p className="mt-1 text-sm text-[#8A89A2]">We will send you an OTP on this number</p> : null}
-          {step === 3 ? <p className="mt-1 text-sm text-[#8A89A2]">We have sent a 6 digit OTP on +91 {phoneNumber}</p> : null}
+          {step === 2 ? <p className="mt-1 text-sm text-[#7a8fae]">We will send you an OTP on this number</p> : null}
+          {step === 3 ? <p className="mt-1 text-sm text-[#7a8fae]">We have sent a 6 digit OTP on +91 {phoneNumber}</p> : null}
 
           {error ? <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
           {success ? <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
-
-          {step === 1 ? (
-            <div className="mt-6 space-y-4">
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#ded8f6] bg-[#f7f5ff] text-sm font-semibold text-[#4f4a73] transition hover:bg-[#f2efff]"
-              >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-                  <path
-                    fill="#EA4335"
-                    d="M12.24 10.285v3.974h5.518c-.241 1.28-.964 2.365-2.053 3.094l3.318 2.576c1.934-1.783 3.047-4.407 3.047-7.524 0-.729-.066-1.43-.187-2.12h-9.643z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 22c2.76 0 5.075-.914 6.767-2.472l-3.318-2.576c-.922.617-2.1.982-3.449.982-2.652 0-4.899-1.79-5.702-4.198H2.87v2.641A10 10 0 0 0 12 22z"
-                  />
-                  <path
-                    fill="#4A90E2"
-                    d="M6.298 13.736A5.997 5.997 0 0 1 6 12c0-.603.103-1.188.298-1.736V7.623H2.87A10 10 0 0 0 2 12c0 1.62.389 3.152 1.08 4.377l3.218-2.64z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M12 6.066c1.5 0 2.847.516 3.907 1.529l2.93-2.93C17.07 3.02 14.755 2 12 2A10 10 0 0 0 3.08 7.623l3.218 2.64c.803-2.407 3.05-4.197 5.702-4.197z"
-                  />
-                </svg>
-                Continue with Google
-              </button>
-              <p className="text-center text-sm text-[#8A89A2]">or</p>
-              <button
-                type="button"
-                onClick={() => { setError(''); setSuccess(''); setStep(2) }}
-                className="h-11 w-full rounded-xl border border-[#ded8f6] text-sm font-semibold text-[#4f4a73] hover:bg-[#f7f5ff]"
-              >
-                Continue with phone
-              </button>
-            </div>
-          ) : null}
 
           {step === 2 ? (
             <div className="mt-6 space-y-4">
@@ -517,8 +457,8 @@ export function MobileAuthDrawerPage() {
                   onClick={() => setAuthIntent('login')}
                   className={`h-9 rounded-lg text-sm font-semibold transition ${
                     authIntent === 'login'
-                      ? 'bg-white text-[#4B2CF5] shadow-sm'
-                      : 'text-[#7A73A8] hover:text-[#4B2CF5]'
+                      ? 'bg-white text-[#0066ff] shadow-sm'
+                      : 'text-[#7A73A8] hover:text-[#0066ff]'
                   }`}
                 >
                   Login
@@ -528,15 +468,15 @@ export function MobileAuthDrawerPage() {
                   onClick={() => setAuthIntent('signup')}
                   className={`h-9 rounded-lg text-sm font-semibold transition ${
                     authIntent === 'signup'
-                      ? 'bg-white text-[#4B2CF5] shadow-sm'
-                      : 'text-[#7A73A8] hover:text-[#4B2CF5]'
+                      ? 'bg-white text-[#0066ff] shadow-sm'
+                      : 'text-[#7A73A8] hover:text-[#0066ff]'
                   }`}
                 >
                   Signup
                 </button>
               </div>
 
-              <div className="flex items-center rounded-xl border border-[#D9D7EC] px-3">
+              <div className="flex items-center rounded-xl border border-[#d5e1f0] px-3">
                 <span className="text-sm text-[#777396]">+91</span>
                 <input
                   type="tel"
@@ -550,7 +490,7 @@ export function MobileAuthDrawerPage() {
                 type="button"
                 disabled={isLoading}
                 onClick={() => void handleRequestOtp()}
-                className="h-12 w-full rounded-xl bg-[#4B2CF5] text-sm font-semibold text-white hover:bg-[#3C20D9] disabled:opacity-70"
+                className="h-12 w-full rounded-xl bg-[#0066ff] text-sm font-semibold text-white hover:bg-[#0050cb] disabled:opacity-70"
               >
                 {isLoading ? 'Sending OTP...' : 'Send OTP'}
               </button>
@@ -569,7 +509,7 @@ export function MobileAuthDrawerPage() {
                     value={digit}
                     onChange={(event) => handleOtpDigitChange(index, event.target.value)}
                     onKeyDown={(event) => handleOtpKeyDown(index, event)}
-                    className="h-12 w-12 rounded-xl border border-[#D9D7EC] text-center text-lg font-semibold text-[#1F1D35] outline-none focus:border-[#4B2CF5]"
+                    className="h-12 w-12 rounded-xl border border-[#d5e1f0] text-center text-lg font-semibold text-[#13233d] outline-none focus:border-[#0066ff]"
                   />
                 ))}
               </div>
@@ -577,7 +517,7 @@ export function MobileAuthDrawerPage() {
                 type="button"
                 disabled={isLoading}
                 onClick={() => void handleVerifyOtp()}
-                className="h-12 w-full rounded-xl bg-[#4B2CF5] text-sm font-semibold text-white hover:bg-[#3C20D9] disabled:opacity-70"
+                className="h-12 w-full rounded-xl bg-[#0066ff] text-sm font-semibold text-white hover:bg-[#0050cb] disabled:opacity-70"
               >
                 {isLoading ? 'Verifying...' : 'Verify OTP'}
               </button>
@@ -588,7 +528,7 @@ export function MobileAuthDrawerPage() {
                   <button
                     type="button"
                     onClick={() => void handleRequestOtp()}
-                    className="font-semibold text-[#4B2CF5] hover:underline"
+                    className="font-semibold text-[#0066ff] hover:underline"
                   >
                     Didn&apos;t receive OTP? Resend
                   </button>
@@ -599,14 +539,14 @@ export function MobileAuthDrawerPage() {
 
           {step === 5 ? (
             <div className="mt-6 space-y-4">
-              <p className="text-sm text-[#4f4a73]">Pay ₹1 once before your first lead purchase. Lifetime access, no recurring subscription. Each lead is purchased separately.</p>
-              <div className="rounded-2xl border border-[#ded8f6] bg-[#f7f5ff] p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#6f66ad]">
+              <p className="text-sm text-[#536b8b]">Pay ₹499 once before your first lead purchase. Lifetime access, no recurring subscription. Each lead is purchased separately.</p>
+              <div className="rounded-2xl border border-[#dce5f2] bg-[#f1f7ff] p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#627898]">
                   Lifetime membership
                 </p>
-                <p className="mt-2 text-5xl font-black text-[#4B2CF5]">₹{REGISTRATION_AMOUNT_INR}</p>
-                <p className="mt-1 text-xs font-semibold text-[#5b5678]">ONE TIME PAYMENT</p>
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] text-[#5d5980]">
+                <p className="mt-2 text-5xl font-black text-[#0066ff]">₹{REGISTRATION_AMOUNT_INR}</p>
+                <p className="mt-1 text-xs font-semibold text-[#627898]">ONE TIME PAYMENT</p>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] text-[#627898]">
                   <div className="rounded-xl bg-white p-2">
                     <p className="text-lg">🔒</p>
                     <p>Secure</p>
@@ -625,7 +565,7 @@ export function MobileAuthDrawerPage() {
                 type="button"
                 disabled={isLoading}
                 onClick={() => void handleRegistrationPayment()}
-                className="h-12 w-full rounded-xl bg-[#4B2CF5] text-sm font-semibold text-white hover:bg-[#3C20D9] disabled:opacity-70"
+                className="h-12 w-full rounded-xl bg-[#0066ff] text-sm font-semibold text-white hover:bg-[#0050cb] disabled:opacity-70"
               >
                 {isLoading ? 'Processing...' : `Pay ₹${REGISTRATION_AMOUNT_INR} from wallet`}
               </button>
@@ -642,8 +582,6 @@ export function MobileAuthDrawerPage() {
                 referrerPolicy="no-referrer"
               />
             </div>
-          ) : null}
-            </>
           ) : null}
       </div>
     </div>

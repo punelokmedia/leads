@@ -36,9 +36,9 @@ export function AccountDeletionPage() {
       setPending(false)
     }
   }
-  const fieldClass = 'mt-2 w-full rounded-lg border border-stone-300 px-3 py-3 text-stone-900 outline-none focus:border-[#F8B020] focus:ring-1 focus:ring-[#F8B020]'
+  const fieldClass = 'mt-2 w-full rounded-lg border border-stone-300 px-3 py-3 text-stone-900 outline-none focus:border-[#0066ff] focus:ring-1 focus:ring-[#0066ff]'
   return (
-    <main className="bg-[#efefef] px-4 py-14 sm:px-6">
+    <main className="bg-[#f8fafc] px-4 py-14 sm:px-6">
       <section className="mx-auto max-w-2xl rounded-2xl border border-stone-300 bg-white p-6 shadow-sm sm:p-10">
         <h1 className="text-3xl font-black text-stone-900">Request account deletion</h1>
         <p className="mt-4 text-stone-600">To request deletion of your NextLeads account and associated personal information, enter the email and phone number associated with your account. You do not need to sign in.</p>
@@ -55,7 +55,7 @@ export function AccountDeletionPage() {
               <label className="block text-sm font-semibold text-stone-700">Why are you leaving? (optional)
                 <textarea name="reason" rows={5} maxLength={2000} placeholder="Tell us your reason for leaving NextLeads" className={fieldClass} />
               </label>
-              <button type="submit" className="rounded-xl bg-[#F8B020] px-5 py-3 font-semibold text-stone-900 hover:bg-[#E2A11D]">{pending ? 'Submitting…' : 'Submit deletion request'}</button>
+              <button type="submit" className="rounded-xl bg-[#0066ff] px-5 py-3 font-semibold text-white hover:bg-[#0050cb]">{pending ? 'Submitting…' : 'Submit deletion request'}</button>
             </fieldset>
             {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
           </form>

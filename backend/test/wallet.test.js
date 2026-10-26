@@ -78,6 +78,16 @@ test('Add money API verifies payment then exposes updated balance and complete p
     assert.equal((await call('/verify', buyer, body)).status, 200);
     const wallet = (await call('')).data;
     assert.equal(wallet.balancePaise, 50000);
+    const paidTopup = await WalletTopup.findOne({ gatewayOrderId: 'order_history' });
+    const receipt = await call('/topups/' + paidTopup.id);
+    assert.equal(receipt.status, 200);
+    assert.equal(receipt.data.topup.status, 'PAID');
+    assert.equal(receipt.data.topup.amountPaise, 50000);
+    assert.equal(receipt.data.topup.paymentId, 'pay_history');
+    assert.equal(receipt.data.balancePaise, 50000);
+    assert.ok(receipt.data.topup.paidAt);
+    assert.equal((await call('/topups/' + paidTopup.id, outsider)).status, 404);
+    assert.equal((await call('/topups/invalid')).status, 404);
     assert.equal(wallet.entries.length, 1);
     assert.equal(wallet.entries[0].kind, 'TOPUP');
     assert.equal(wallet.entries[0].amountPaise, 50000);
@@ -244,9 +254,13 @@ test('membership cannot overdraw and concurrent activation charges once', async 
   const buyer = await user('membership');
   await assert.rejects(purchaseMembership(buyer.id));
   await User.updateOne({ _id: buyer.id }, { $set: { walletBalancePaise: 100 } });
+  await assert.rejects(purchaseMembership(buyer.id));
+  assert.equal(await balance(buyer.id), 100);
+  await User.updateOne({ _id: buyer.id }, { $set: { walletBalancePaise: 49900 } });
   await Promise.all(Array.from({ length: 4 }, () => purchaseMembership(buyer.id)));
   assert.equal(await balance(buyer.id), 0);
   assert.equal(await WalletEntry.countDocuments({ user: buyer.id, kind: 'MEMBERSHIP' }), 1);
+  assert.equal((await WalletEntry.findOne({ user: buyer.id, kind: 'MEMBERSHIP' })).amountPaise, -49900);
 });
 
 test('referral rewards roll back, credit once, and cannot exceed the lifetime ₹100 cap', async () => {

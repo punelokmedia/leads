@@ -1,124 +1,116 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { apiFetch } from '@/features/auth/session'
+import { useUserToken } from '@/features/auth/useUserToken'
+import { API_BASE_URL } from '@/config/api'
+import './membership.css'
+import { PaymentReview } from '@/components/PaymentReview'
 
-const stats = [
-  { label: 'Verified leads delivered', value: '25,000+' },
-  { label: 'Cities covered', value: '30+' },
-  { label: 'Design partners', value: '1,200+' },
-  { label: 'Avg. response time', value: '< 15 min' },
+const benefits = [
+  ['◎', 'Discover Business Leads', 'Find relevant leads and grow your business category.'],
+  ['♛', 'Lifetime Membership Access', 'Pay once and access your membership without recurring membership fees.'],
+  ['♧', 'Find Opportunities by Location', 'Explore leads relevant to your preferred city and service area.'],
+  ['↗', 'Grow Your Business', 'Discover new projects and expand your network by connecting with potential customers.'],
 ]
-
-const values = [
-  {
-    title: 'Human-verified quality',
-    description:
-      'Every enquiry is manually checked before it reaches your dashboard so you focus only on high-intent projects.',
-  },
-  {
-    title: 'Transparent lead matching',
-    description:
-      'We match leads by budget, location, and project stage to reduce wasted follow-ups and improve conversions.',
-  },
-  {
-    title: 'Growth-focused support',
-    description:
-      'From onboarding to optimization, our team helps you improve closure rate and customer experience.',
-  },
-]
-
-const processSteps = [
-  'Tell us your preferred city, project type, and budget band.',
-  'Get curated leads that match your ideal customer profile.',
-  'Track conversions, refill credits, and scale confidently.',
-]
-
+let scriptPromise: Promise<void> | undefined
+async function loadCheckout() {
+  if (window.Razorpay) return
+  scriptPromise ??= new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = () => resolve()
+    script.onerror = () => { scriptPromise = undefined; script.remove(); reject(new Error('Unable to load Razorpay. Please retry.')) }
+    document.head.appendChild(script)
+  })
+  await scriptPromise
+}
 export function PricingPage() {
-  return (
-    <div className="bg-[#efefef]">
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
-        <p className="inline-flex rounded-full bg-[#F8B020] px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">
-          About Interiorwala
-        </p>
-        <h1 className="mt-3 max-w-4xl text-4xl font-black leading-tight text-stone-900 sm:text-6xl">
-          Built to help interior designers grow with reliable, ready-to-convert
-          leads.
-        </h1>
-        <p className="mt-5 max-w-3xl text-base leading-relaxed text-stone-600">
-          Interiorwala is a lead platform focused on quality over volume. We
-          verify enquiries, qualify intent, and connect design professionals with
-          serious buyers.
-        </p>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <article
-              key={stat.label}
-              className="rounded-2xl border border-stone-300 bg-white p-5 shadow-sm"
-            >
-              <p className="text-3xl font-black text-stone-900">{stat.value}</p>
-              <p className="mt-1 text-sm text-stone-600">{stat.label}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <h2 className="text-3xl font-black text-stone-900">Why teams choose us</h2>
-        <div className="mt-6 grid gap-5 lg:grid-cols-3">
-          {values.map((value) => (
-            <article
-              key={value.title}
-              className="rounded-2xl border border-stone-300 bg-white p-6 shadow-sm"
-            >
-              <h3 className="text-xl font-bold text-stone-900">{value.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-stone-600">
-                {value.description}
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="rounded-3xl border border-stone-300 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-3xl font-black text-stone-900">How it works</h2>
-          <ol className="mt-6 space-y-4">
-            {processSteps.map((step, index) => (
-              <li key={step} className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F8B020] text-xs font-bold text-white">
-                  {index + 1}
-                </span>
-                <p className="text-sm text-stone-700">{step}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6">
-        <div className="rounded-3xl border border-stone-300 bg-stone-900 p-7 text-white shadow-sm sm:p-10">
-          <h2 className="text-3xl font-black">Ready to scale your design business?</h2>
-          <p className="mt-3 max-w-2xl text-sm text-stone-200 sm:text-base">
-            Talk to our team and get a lead plan designed for your city,
-            category, and growth goals.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              to="/contact"
-              className="rounded-xl bg-[#F8B020] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#E2A11D]"
-            >
-              Talk to Sales
-            </Link>
-            <Link
-              to="/"
-              className="rounded-xl border border-stone-400 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-800"
-            >
-              Explore Leads
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
-  )
+  const [params] = useSearchParams()
+  const token = useUserToken()
+  const navigate = useNavigate()
+  const [choosing, setChoosing] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [active, setActive] = useState(false)
+  const [checking, setChecking] = useState(Boolean(token))
+  const [balance, setBalance] = useState<number | null>(null)
+  const [frozen, setFrozen] = useState(false)
+  const [error, setError] = useState('')
+  const lock = useRef(false)
+  const mounted = useRef(true)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
+  async function request(path: string, body?: object) {
+    const response = await apiFetch(`${API_BASE_URL}/api/v1${path}`, {
+      method: body ? 'POST' : 'GET', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    })
+    const payload = await response.json()
+    if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to complete your request.')
+    return payload.data
+  }
+  useEffect(() => {
+    let cancelled = false
+    setActive(false); setBalance(null); setError(''); setChoosing(params.has('checkout'))
+    if (!token) { setChecking(false); return }
+    setChecking(true)
+    const read = async (path: string) => {
+      const response = await apiFetch(`${API_BASE_URL}/api/v1${path}`, { headers: { Authorization: `Bearer ${token}` } })
+      const payload = await response.json()
+      if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to load account.')
+      return payload.data
+    }
+    void Promise.all([read('/auth/profile'), read('/wallet').catch(() => null)]).then(([profile, wallet]) => {
+      if (!cancelled) { setActive(Boolean(profile.registrationFeePaid)); setBalance(wallet?.balancePaise ?? null); setFrozen(Boolean(wallet?.frozen)) }
+    }).catch(failure => { if (!cancelled) setError(failure instanceof Error ? failure.message : 'Unable to load membership.') })
+      .finally(() => { if (!cancelled) setChecking(false) })
+    return () => { cancelled = true }
+  }, [token, params])
+  const release = () => { lock.current = false; if (mounted.current) setBusy(false) }
+  const activate = async () => {
+    const profile = await request('/auth/profile')
+    if (!profile.registrationFeePaid) throw new Error('Membership confirmation is pending. Refresh before paying again.')
+    localStorage.setItem('user_profile', JSON.stringify(profile))
+    if (mounted.current) navigate('/membership/success', { replace: true, state: { verifiedMembership: profile } })
+  }
+  async function pay(method: 'razorpay' | 'wallet') {
+    if (lock.current || active) return
+    if (!token) { navigate('/login'); return }
+    lock.current = true; setBusy(true); setError('')
+    try {
+      if (method === 'wallet') { await request('/wallet/membership', {}); await activate(); release(); return }
+      await loadCheckout()
+      const order = await request('/auth/mobile/create-registration-order', {})
+      if (!mounted.current) { release(); return }
+      if (!window.Razorpay || !order.keyId || order.amount !== 49900 || order.currency !== 'INR') throw new Error('Membership checkout is unavailable. Please retry.')
+      const checkout = new window.Razorpay({
+        key: order.keyId, order_id: order.orderId, amount: order.amount, currency: order.currency,
+        name: 'NextLead', description: 'Lifetime Membership', theme: { color: '#0066ff' },
+        modal: { ondismiss: release },
+        handler: async (payment: { razorpay_payment_id: string; razorpay_signature: string }) => {
+          try {
+            await request('/auth/mobile/verify-registration-payment', { razorpayOrderId: order.orderId, razorpayPaymentId: payment.razorpay_payment_id, razorpaySignature: payment.razorpay_signature })
+            await activate()
+          } catch (failure) {
+            if (mounted.current) setError(`${failure instanceof Error ? failure.message : 'Payment confirmation is pending.'} If charged, refresh before paying again or contact support.`)
+          } finally { release() }
+        },
+      })
+      checkout.on('payment.failed', () => { if (mounted.current) setError('Payment failed. You can retry or choose your wallet.') })
+      checkout.open()
+    } catch (failure) { if (mounted.current) setError(failure instanceof Error ? failure.message : 'Unable to start payment.'); release() }
+  }
+  if (choosing && !active) return <PaymentReview kind="membership" amountPaise={49900} balance={balance} frozen={frozen} busy={busy || checking} error={error} onBack={() => { setChoosing(false); navigate('/pricing', { replace: true }) }} onPay={method => void pay(method)} onAddMoney={() => navigate(`/wallet?amount=${Math.max(1, (49900 - (balance ?? 0)) / 100)}&return=membership`)} />
+  return <div className="membership-page">
+    <img className="membership-ribbon ribbon-left" src="/NextLead Arrow only.png" alt="" aria-hidden="true" />
+    <img className="membership-ribbon ribbon-right" src="/NextLead Arrow only.png" alt="" aria-hidden="true" />
+    <section className="membership-card" aria-labelledby="membership-title">
+      <div className="membership-heading"><p>Only <strong>₹499<span aria-hidden="true">♛</span></strong></p><h1 id="membership-title">Lifetime <b>Membership Plan</b></h1><p className="membership-description">One-time payment. Lifetime membership. A smarter way to discover business opportunities.</p></div>
+      <div className="membership-benefits">{benefits.map(([icon, title, copy], index) => <article key={title}><span className="membership-benefit-icon" aria-hidden="true">{icon}</span><small>0{index + 1}</small><h2>{title}</h2><p>{copy}</p></article>)}</div>
+      {error && <p className="membership-error" role="alert">{error}</p>}
+      {active ? <div className="membership-success" role="status"><h2>Your lifetime membership is active</h2><Link to="/?browse=1">Explore leads →</Link></div> : <>
+        <button className="membership-pay" disabled={checking || busy} onClick={() => { if (!token) navigate('/login'); else setChoosing(true) }}>{checking ? 'Checking membership…' : 'Get Lifetime Membership →'}</button>
+        <p className="membership-note">Join service professionals who are growing with NextLead.</p>
+        <p className="membership-fine-print">Membership is a one-time purchase. Leads are purchased separately.</p>
+      </>}
+    </section>
+  </div>
 }

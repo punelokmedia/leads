@@ -1,4 +1,5 @@
 import { notifyUser } from './notification.service.js';
+import { MEMBERSHIP_PRICE_INR, MEMBERSHIP_PRICE_PAISE } from '../Config/membership.js';
 import mongoose from 'mongoose';
 import { User } from '../Models/user.model.js';
 import { WalletEntry, WalletTopup } from '../Models/wallet.model.js';
@@ -37,11 +38,11 @@ export async function purchaseMembership(userId) {
     if (!current) throw new CheckoutError('USER_NOT_FOUND', 'Account unavailable.', 403);
     if (current.walletFrozen) throw new CheckoutError('WALLET_FROZEN', 'Wallet is under security review. Contact support.', 403);
     if (current.registrationFeePaid) return { status: 'PAID' };
-    const user = await User.findOneAndUpdate({ _id: userId, registrationFeePaid: false, walletBalancePaise: { $gte: 100 }, isBlocked: { $ne: true } }, {
-      $inc: { walletBalancePaise: -100 }, $set: { registrationFeePaid: true, registrationFeePaidAt: new Date(), registrationPayment: { amount: 1, currency: 'INR' } },
+    const user = await User.findOneAndUpdate({ _id: userId, registrationFeePaid: false, walletBalancePaise: { $gte: MEMBERSHIP_PRICE_PAISE }, isBlocked: { $ne: true } }, {
+      $inc: { walletBalancePaise: -MEMBERSHIP_PRICE_PAISE }, $set: { registrationFeePaid: true, registrationFeePaidAt: new Date(), registrationPayment: { amount: MEMBERSHIP_PRICE_INR, currency: 'INR' } },
     }, { session });
     if (!user) throw new CheckoutError('INSUFFICIENT_BALANCE', 'Add money to your wallet first.', 409);
-    await WalletEntry.create([{ user: userId, key: `membership:${userId}`, kind: 'MEMBERSHIP', amountPaise: -100 }], { session });
+    await WalletEntry.create([{ user: userId, key: `membership:${userId}`, kind: 'MEMBERSHIP', amountPaise: -MEMBERSHIP_PRICE_PAISE }], { session });
     await notifyUser({ user: userId, eventKey: `membership:${userId}`, type: 'MEMBERSHIP_ACTIVATED', title: 'Membership activated', message: 'Your lifetime membership is now active.' }, session);
     return { status: 'PAID' };
   });

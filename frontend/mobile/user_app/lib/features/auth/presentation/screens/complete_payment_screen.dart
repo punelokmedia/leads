@@ -99,7 +99,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                   children: [
                     const WalletCard(),
                     const Text(
-                      'Pay ₹1 once before your first lead purchase. Lifetime access with no recurring subscription. Lead prices are separate.',
+                      'Pay ₹499 once before your first lead purchase. Lifetime access with no recurring subscription. Lead prices are separate.',
                     ),
                     SizedBox(height: 16.h),
                     const PricingCardWidget(),
@@ -149,7 +149,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                               ),
                             )
                           : Text(
-                              'Pay ₹1 from wallet',
+                              'Pay ₹499 from wallet',
                               style: AppTextStyles.poppins(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,

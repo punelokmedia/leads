@@ -68,7 +68,7 @@ after(async () => { if (server) await new Promise(resolve => server.close(resolv
 test('VER-01 wallet rejects invalid topups and ignores foreign user/balance input', async () => {
   const a = await vendor('walletA'), b = await vendor('walletB');
   await fund(a, 50000, 'ver_balance');
-  for (const amountPaise of [-100, 0, 1.5, '100', null, 1000001]) assert.equal((await call('/wallet/topup', a, { amountPaise })).status, 400);
+  for (const amountPaise of [-100, 0, 1.5, '100', null, 10000001]) assert.equal((await call('/wallet/topup', a, { amountPaise })).status, 400);
   const res = await call('/wallet?userId=' + b.id, a);
   assert.equal(res.body.data.balancePaise, 50000);
   assert.equal((await call('/wallet', b)).body.data.balancePaise, 0);

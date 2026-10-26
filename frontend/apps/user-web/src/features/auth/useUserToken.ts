@@ -1,7 +1,14 @@
 import { useSyncExternalStore } from 'react'
 
-export const notifyUserSessionChanged = () => window.dispatchEvent(new Event('user-session-changed'))
+const rememberSignIn = () => {
+  if (localStorage.getItem('user_token')) localStorage.setItem('has_signed_in', '1')
+}
+export const notifyUserSessionChanged = () => {
+  rememberSignIn()
+  window.dispatchEvent(new Event('user-session-changed'))
+}
 const subscribe = (listener: () => void) => {
+  rememberSignIn()
   window.addEventListener('storage', listener)
   window.addEventListener('user-session-changed', listener)
   return () => {

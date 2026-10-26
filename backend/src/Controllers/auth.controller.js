@@ -1,4 +1,5 @@
 import { OAuthHandoff } from '../Models/oauth-handoff.model.js';
+import { MEMBERSHIP_PRICE_INR } from '../Config/membership.js';
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { User } from "../Models/user.model.js";
@@ -21,7 +22,7 @@ const buildMobilePlaceholderEmail = (phoneNumber) =>
   `${phoneNumber}.${Date.now()}@mobile.nextleads.local`;
 const MOBILE_OTP_TTL_MS = 30 * 60 * 1000;
 const MOBILE_OTP_RESEND_COOLDOWN_MS = 30 * 1000;
-const REGISTRATION_FEE_AMOUNT_INR = 1;
+const REGISTRATION_FEE_AMOUNT_INR = MEMBERSHIP_PRICE_INR;
 const RAZORPAY_PUBLIC_KEY =
   process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || "";
 const RAZORPAY_SECRET_KEY =
@@ -1001,7 +1002,8 @@ const verifyMobileRegistrationPayment = async (req, res) => {
       if (String(order.notes?.userId) !== String(req.user.id) || order.notes?.purpose !== 'signup_registration_fee' ||
           order.amount !== REGISTRATION_FEE_AMOUNT_INR * 100 || order.currency !== 'INR' ||
           payment.order_id !== razorpayOrderId || payment.status !== 'captured' ||
-          payment.amount !== REGISTRATION_FEE_AMOUNT_INR * 100 || payment.currency !== 'INR') {
+          payment.amount !== REGISTRATION_FEE_AMOUNT_INR * 100 || payment.currency !== 'INR' ||
+          (payment.amount_refunded || 0) > 0) {
         return res.status(400).json({ success: false, message: 'Membership payment is not captured or does not match this account.' });
       }
       const user = await User.findOneAndUpdate({ _id: req.user.id, registrationFeePaid: { $ne: true } }, {

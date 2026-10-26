@@ -1,24 +1,24 @@
 const supportChannels = [
   {
     title: 'WhatsApp Support',
-    value: '+91 62058 78945',
+    value: '+91 9067777034',
     actionLabel: 'Chat now',
     actionHref:
-      'https://wa.me/916205878945?text=Hi%2C%20I%20need%20support%20for%20my%20Interiorwala%20account.',
+      'https://wa.me/919067777034?text=Hi%2C%20I%20need%20support%20for%20my%20NextLead%20account.',
   },
   {
     title: 'Email Support',
-    value: 'support@interiorwala.com',
+    value: 'info@trynextleads.com',
     actionLabel: 'Write email',
-    actionHref: 'mailto:support@interiorwala.com',
+    actionHref: 'mailto:info@trynextleads.com',
   },
 ]
 
 export function ContactSupportPage() {
   return (
-    <div className="bg-[#efefef]">
+    <div className="bg-[#f8fafc]">
       <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-16">
-        <p className="inline-flex rounded-full bg-[#F8B020] px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">
+        <p className="inline-flex rounded-full bg-[#0066ff] px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">
           Help Center
         </p>
         <h1 className="mt-3 text-4xl font-black text-stone-900 sm:text-5xl">
@@ -42,7 +42,7 @@ export function ContactSupportPage() {
                 href={channel.actionHref}
                 target={channel.actionHref.startsWith('http') ? '_blank' : undefined}
                 rel={channel.actionHref.startsWith('http') ? 'noreferrer' : undefined}
-                className="mt-4 inline-flex rounded-xl bg-[#F8B020] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#E2A11D]"
+                className="mt-4 inline-flex rounded-xl bg-[#0066ff] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0050cb]"
               >
                 {channel.actionLabel}
               </a>

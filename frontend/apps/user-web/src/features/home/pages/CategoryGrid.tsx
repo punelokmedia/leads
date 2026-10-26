@@ -1,38 +1,30 @@
-﻿import { Link } from 'react-router-dom'
+import { categories } from './category-catalog'
+import './category-cards.css'
+import { CategoryLink } from './CategoryLink'
 
-const categories = [
-  { name: 'POP & False Ceiling Work', image: 'POP.jfif' },
-  { name: 'Interior Design', image: 'Interior Design.jpg' },
-  { name: 'Painting', image: 'Painting.png' },
-  { name: 'Plumbing', image: 'Plumbing.jfif' },
-  { name: 'Electrical Work', image: 'Electrical Work.jpg' },
-  { name: 'AC Service & Repair', image: 'AC Service & Repair.jpg' },
-  { name: 'Water Proofing', image: 'waterproofing-services.png' },
-  { name: 'Civil Work', image: 'Civil Work.jpg' },
-  { name: 'Aluminium & Windows', image: 'Aluminium & Windows.jfif' },
-  { name: 'CCTV Installation', image: 'CCTV Installation.jpg' },
-]
-
-export function CategoryGrid() {
+export function CategoryGrid({ showAll = false }: { showAll?: boolean }) {
+  const items = showAll
+    ? [...categories, { name: 'Real Estate', image: '/lead-room-1.jpg' }]
+    : categories
   return (
     <div className="category-grid">
-      {categories.map(({ name, image }) => (
-        <Link
+      {items.map(({ name, image }) => (
+        <CategoryLink
           key={name}
-          to={`/?browse=1&search=${encodeURIComponent(name)}`}
+          name={name}
           className="category-tile"
         >
           <img
             className="category-image"
-            src={encodeURI(`/categories Images/${image}`)}
+            src={encodeURI(image.startsWith('/') ? image : `/categories Images/${image}`)}
             alt={name}
             width={80}
             height={72}
           />
-          <span className="category-arrow" aria-hidden="true">&rsaquo;</span>
+<div className="category-card-label">
           <h3>{name}</h3>
-          <small>Explore leads</small>
-        </Link>
+          <small>Explore leads</small></div>
+        </CategoryLink>
       ))}
     </div>
   )

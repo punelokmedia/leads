@@ -1,17 +1,15 @@
+import { LeadFilters } from './LeadFilters'
+import './leads-marketplace.css'
+import { LeadCategoryBanner } from './LeadCategoryBanner'
 import { useUserToken } from '@/features/auth/useUserToken'
 import { apiFetch } from '@/features/auth/session'
 import { API_BASE_URL } from '@/config/api'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 
 const PAGE_LIMIT = 10
 const API_BASE_URL_CANDIDATES = [API_BASE_URL]
-type CityOption = {
-  _id: string
-  name: string
-}
-
 type LeadsApiItem = {
   _id: string
   leadDisplayId?: string
@@ -55,39 +53,6 @@ type HomeLead = {
   createdAt: string
   isSoldOut: boolean
   unavailableLabel: string
-}
-
-type LeadDetails = {
-  _id: string
-  leadDisplayId?: string
-  title: string
-  city?: string
-  state?: string
-  description?: string
-  clientType?: string
-  propertyType?: string
-  areaSize?: string
-  budgetRange?: string
-  timeline?: string
-  requirement?: string
-  buyersCount?: number
-  maxBuyers?: number
-  price?: number
-}
-
-const formatBudgetValue = (value?: string) => {
-  const raw = String(value ?? '').trim()
-  if (!raw) return 'N/A'
-  const digitsOnly = raw.replace(/[^\d]/g, '')
-  if (!digitsOnly) return raw
-  return `₹${Number(digitsOnly).toLocaleString('en-IN')}`
-}
-
-const formatAreaValue = (value?: string) => {
-  const raw = String(value ?? '').trim()
-  if (!raw) return '-'
-  if (/sq\.?\s*ft|square\s*feet|sqft/i.test(raw)) return raw
-  return `${raw} Sq. Ft.`
 }
 
 type LeadsPagination = {
@@ -139,9 +104,9 @@ const trustPoints = [
   },
 ]
 
-const WHATSAPP_NUMBER = '916205878945'
+const WHATSAPP_NUMBER = '919067777034'
 const WHATSAPP_MESSAGE = encodeURIComponent(
-  'Hi, I want to know more about your interior design leads.',
+  'Hi, I want to know more about leads for my service category.',
 )
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -149,17 +114,15 @@ const fadeUp = {
 }
 
 export function LeadsMarketplacePage() {
+  const requestVersion = useRef(0)
   const navigate = useNavigate()
   const [buyingLeadId, setBuyingLeadId] = useState<string | null>(null)
-  const [cityLinks, setCityLinks] = useState<string[]>([])
-  const firstRowCategories = cityLinks.slice(0, 6)
-  const secondRowCategories = cityLinks.slice(6)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
+  const filterKeys = ['nearby', 'radiusKm', 'priceMin', 'priceMax', 'projectTypes', 'propertyTypes', 'postedFrom', 'postedTo']
+  const filterQuery = new URLSearchParams(filterKeys.flatMap(key => searchParams.has(key) ? [[key, searchParams.get(key)!]] : [])).toString()
   const categoryIdParam = searchParams.get('category')
   const cityParam = searchParams.get('city')
-  const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '')
-  const [appliedSearch, setAppliedSearch] = useState(searchParams.get('search') ?? '')
+  const appliedSearch = searchParams.get('search') ?? ''
   const [selectedSort, setSelectedSort] = useState<'latest' | 'cheapest' | 'expensive'>('latest')
   const [allLeads, setAllLeads] = useState<HomeLead[]>([])
   const [isLeadsLoading, setIsLeadsLoading] = useState(false)
@@ -167,45 +130,15 @@ export function LeadsMarketplacePage() {
   const [activeCartLeadId, setActiveCartLeadId] = useState<string | null>(null)
   const [cartFeedback, setCartFeedback] = useState('')
   const [leadsError, setLeadsError] = useState('')
-  const [selectedLeadDetails, setSelectedLeadDetails] = useState<LeadDetails | null>(null)
-  const [isLeadDetailsLoading, setIsLeadDetailsLoading] = useState(false)
   const [pagination, setPagination] = useState<LeadsPagination>({ page: 1, totalPages: 1 })
-  const selectedCity = cityParam ? cityParam.trim() : selectedCategory ? selectedCategory : ''
+  const selectedCity = cityParam?.trim() ?? ''
   const hasMoreLeads = pagination.page < pagination.totalPages
   const userToken = useUserToken()
 
-  useEffect(() => {
-    const fetchCities = async () => {
-      let networkError: Error | null = null
-      for (const baseUrl of API_BASE_URL_CANDIDATES) {
-        try {
-          const response = await apiFetch(`${baseUrl}/api/v1/cities/get-all-cities`, { method: 'GET' })
-          const payload = await response.json()
-          if (!response.ok || !payload?.success) {
-            throw new Error(payload?.message ?? 'Unable to fetch cities right now.')
-          }
-          const cityNames = Array.isArray(payload?.data)
-            ? (payload.data as CityOption[]).map((item) =>
-                item.name
-                  .split(' ')
-                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                  .join(' '),
-              )
-            : []
-          setCityLinks(cityNames)
-          return
-        } catch (error) {
-          networkError = error instanceof Error ? error : new Error('Unable to fetch cities right now.')
-        }
-      }
-      console.error(networkError?.message ?? 'Unable to fetch cities right now.')
-      setCityLinks([])
-    }
 
-    void fetchCities()
-  }, [])
 
   useEffect(() => {
+    const version = ++requestVersion.current
     const fetchLeads = async (page: number, append: boolean) => {
       if (append) {
         setIsLoadingMore(true)
@@ -227,16 +160,19 @@ export function LeadsMarketplacePage() {
           if (appliedSearch.trim()) params.set('search', appliedSearch.trim())
           if (selectedCity) params.set('city', selectedCity)
           if (categoryIdParam) params.set('category', categoryIdParam)
+          new URLSearchParams(filterQuery).forEach((value, key) => params.set(key, value))
 
           const response = await apiFetch(
             `${baseUrl}/api/v1/leads/get-all-leads?${params.toString()}`,
             {
             method: 'GET',
+            headers: userToken ? { Authorization: 'Bearer ' + userToken } : {},
             signal: controller.signal,
             },
           )
           const payload = await response.json()
           window.clearTimeout(timeoutId)
+          if (version !== requestVersion.current) return
 
           if (!response.ok || !payload?.success) {
             throw new Error(payload?.message ?? 'Unable to fetch leads right now.')
@@ -256,6 +192,7 @@ export function LeadsMarketplacePage() {
           return
         } catch (error) {
           window.clearTimeout(timeoutId)
+          if (version !== requestVersion.current) return
           networkError =
             error instanceof Error ? error : new Error('Unable to fetch leads right now.')
         }
@@ -270,11 +207,13 @@ export function LeadsMarketplacePage() {
     }
 
     void fetchLeads(1, false)
-  }, [appliedSearch, selectedCity, selectedSort, categoryIdParam])
+    return () => { requestVersion.current = version + 1 }
+  }, [appliedSearch, selectedCity, selectedSort, categoryIdParam, filterQuery, userToken])
 
   const handleLoadMore = () => {
     if (isLeadsLoading || isLoadingMore || !hasMoreLeads) return
 
+    const version = requestVersion.current
     const nextPage = pagination.page + 1
     setIsLoadingMore(true)
     setLeadsError('')
@@ -293,16 +232,19 @@ export function LeadsMarketplacePage() {
           if (appliedSearch.trim()) params.set('search', appliedSearch.trim())
           if (selectedCity) params.set('city', selectedCity)
           if (categoryIdParam) params.set('category', categoryIdParam)
+          new URLSearchParams(filterQuery).forEach((value, key) => params.set(key, value))
 
           const response = await apiFetch(
             `${baseUrl}/api/v1/leads/get-all-leads?${params.toString()}`,
             {
             method: 'GET',
+            headers: userToken ? { Authorization: 'Bearer ' + userToken } : {},
             signal: controller.signal,
             },
           )
           const payload = await response.json()
           window.clearTimeout(timeoutId)
+          if (version !== requestVersion.current) return
 
           if (!response.ok || !payload?.success) {
             throw new Error(payload?.message ?? 'Unable to fetch leads right now.')
@@ -317,6 +259,7 @@ export function LeadsMarketplacePage() {
           return
         } catch (error) {
           window.clearTimeout(timeoutId)
+          if (version !== requestVersion.current) return
           networkError =
             error instanceof Error ? error : new Error('Unable to fetch leads right now.')
         }
@@ -389,165 +332,18 @@ export function LeadsMarketplacePage() {
       if (payload.code === 'INSUFFICIENT_BALANCE') { navigate('/wallet'); return }
       if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to purchase this lead.')
       window.dispatchEvent(new Event('cart:updated'))
-      navigate('/history')
+      navigate('/my-leads')
     } catch (error) { setCartFeedback(error instanceof Error ? error.message : 'Purchase failed. Check history before retrying.') }
     finally { setBuyingLeadId(null) }
   }
 
-  const handleViewDetails = async (leadId: string) => {
-    if (!userToken) return
-    setIsLeadDetailsLoading(true)
-    setLeadsError('')
-    let networkError: Error | null = null
-
-    for (const baseUrl of API_BASE_URL_CANDIDATES) {
-      try {
-        const response = await apiFetch(`${baseUrl}/api/v1/leads/get-lead/${leadId}`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${userToken}`,
-          },
-        })
-        const payload = await response.json()
-        if (!response.ok || !payload?.success) {
-          throw new Error(payload?.message ?? 'Unable to fetch lead details.')
-        }
-        setSelectedLeadDetails((payload?.data as LeadDetails) ?? null)
-        setIsLeadDetailsLoading(false)
-        return
-      } catch (error) {
-        networkError = error instanceof Error ? error : new Error('Unable to fetch lead details.')
-      }
-    }
-
-    setLeadsError(networkError?.message ?? 'Unable to fetch lead details.')
-    setIsLeadDetailsLoading(false)
-  }
+  const handleViewDetails = (leadId: string) => navigate(/leads/ + leadId)
 
   return (
-    <div className="bg-[#efefef]">
-      <motion.section
-        className="border-b border-stone-200"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={fadeUp}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-      >
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
-          <motion.p
-            className="inline-flex rounded-full bg-[#F8B020] px-4 py-1 text-xs font-bold uppercase tracking-wide text-white"
-            variants={fadeUp}
-            transition={{ duration: 0.35, delay: 0.05 }}
-          >
-            New Leads Available
-          </motion.p>
+    <div className="leads-marketplace bg-[#f8fafc]">
+      <div className="lead-browse-layout">
+        <LeadFilters key={searchParams.toString()} />
 
-          <motion.h1
-            className="mt-3 max-w-4xl text-4xl font-black leading-[1.1] tracking-tight text-stone-900 sm:text-6xl"
-            variants={fadeUp}
-            transition={{ duration: 0.45, delay: 0.1 }}
-          >
-            Premium Interior Design
-            <br />
-            Leads, <span className="italic text-red-500">Verified</span> & Ready.
-          </motion.h1>
-
-          <motion.p
-            className="mt-4 max-w-3xl text-sm font-medium text-stone-600 sm:text-lg"
-            variants={fadeUp}
-            transition={{ duration: 0.45, delay: 0.15 }}
-          >
-            Access high-conversion interior design opportunities curated by experts.
-            Stop chasing cold prospects and start building beautiful spaces today.
-          </motion.p>
-
-          <motion.div
-            className="mt-8 flex max-w-3xl flex-col gap-3 rounded-2xl border border-stone-300 bg-white p-2.5 shadow-sm sm:flex-row sm:items-center sm:gap-4"
-            variants={fadeUp}
-            transition={{ duration: 0.45, delay: 0.2 }}
-          >
-            <div className="ml-2 hidden text-stone-400 sm:block">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="M20 20l-3.5-3.5" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search by BHK, Location, or project type..."
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  setAppliedSearch(searchInput)
-                }
-              }}
-              className="h-11 w-full min-w-0 flex-1 border-none bg-transparent px-2 text-sm text-stone-700 outline-none placeholder:text-stone-400 sm:px-0"
-            />
-            <button
-              type="button"
-              onClick={() => setAppliedSearch(searchInput)}
-              className="h-11 w-full shrink-0 rounded-xl bg-[#F8B020] px-7 text-sm font-bold text-white transition hover:bg-[#E2A11D] sm:w-auto"
-            >
-              Find Leads
-            </button>
-          </motion.div>
-          <motion.div
-            className="mt-9 space-y-3.5"
-            variants={fadeUp}
-            transition={{ duration: 0.45, delay: 0.25 }}
-          >
-            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
-              {firstRowCategories.map((item) => (
-                <motion.button
-                  key={item}
-                  type="button"
-                  onClick={() => setSelectedCategory((prev) => (prev === item ? null : item))}
-                  aria-pressed={selectedCategory === item}
-                  whileHover={{ y: -2, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                  className={`rounded-xl border px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm ${
-                    item === selectedCategory
-                      ? 'border-[#F8B020] bg-[#F8B020] text-white'
-                      : 'border-[#F8B020] bg-white text-stone-500 hover:bg-[#FFF7E8]'
-                  }`}
-                >
-                  {item}
-                </motion.button>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
-              {secondRowCategories.map((item) => (
-                <motion.button
-                  key={item}
-                  type="button"
-                  onClick={() => setSelectedCategory((prev) => (prev === item ? null : item))}
-                  aria-pressed={selectedCategory === item}
-                  whileHover={{ y: -2, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 24 }}
-                  className={`rounded-xl border px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm ${
-                    item === selectedCategory
-                      ? 'border-[#F8B020] bg-[#F8B020] text-white'
-                      : 'border-[#F8B020] bg-white text-stone-500 hover:bg-[#FFF7E8]'
-                  }`}
-                >
-                  {item}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </motion.section>
 
       <motion.section
         className="mx-auto max-w-7xl px-4 py-12 sm:px-6"
@@ -557,6 +353,7 @@ export function LeadsMarketplacePage() {
         variants={fadeUp}
         transition={{ duration: 0.45, ease: 'easeOut' }}
       >
+        <LeadCategoryBanner count={allLeads.length} loading={isLeadsLoading} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-3xl font-black text-stone-900">Available Leads</h2>
@@ -590,97 +387,34 @@ export function LeadsMarketplacePage() {
             No leads available right now.
           </p>
         ) : (
-          <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="lead-results-grid">
             <AnimatePresence mode="popLayout">
               {allLeads.map((lead, index) => (
                 <motion.article
                   key={lead.id}
                   layout
-                  initial={{ opacity: 0, y: 24 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 12 }}
-                  transition={{ duration: 0.35, delay: index * 0.03 }}
-                  whileHover={{ y: -6, boxShadow: '0 14px 26px rgba(0,0,0,0.10)' }}
-                  className={`relative overflow-hidden rounded-2xl border border-stone-300 shadow-sm ${
-                    lead.isSoldOut ? 'bg-stone-200' : 'bg-[#efefef]'
-                  }`}
+                  transition={{ duration: 0.2, delay: Math.min(index, 5) * 0.025 }}
+                  className={`market-lead-card${lead.isSoldOut ? ' market-lead-unavailable' : ''}`}
                 >
-                  <div className="relative">
-                    <img
-                      src={lead.image}
-                      alt={lead.title}
-                      className={`h-44 w-full rounded-t-2xl object-cover ${
-                        lead.isSoldOut ? 'grayscale-[35%] brightness-90' : ''
-                      }`}
-                    />
-                    {lead.isSoldOut ? (
-                      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-                        <img
-                          src="/sold-out-stamp.png"
-                          alt="Sold Out"
-                          className="h-20 w-20 object-contain sm:h-24 sm:w-24"
-                        />
-                      </div>
-                    ) : null}
+                  <div className="market-lead-image">
+                    <img src={lead.image} alt={lead.title} loading="lazy" />
+                    {lead.isSoldOut && <span className="market-lead-status">{lead.unavailableLabel}</span>}
                   </div>
-                  <div className="space-y-2.5 p-3">
-                    <h3 className="text-[22px] leading-tight font-extrabold text-stone-900">
-                      {lead.title}
-                    </h3>
-                    <p className="text-[11px] font-semibold tracking-wide text-stone-500">
-                      Lead ID: {lead.leadDisplayId || '-'}
-                    </p>
-                    <p className="text-xs font-semibold text-indigo-700">
-                      Budget Range: {lead.budgetRange || 'N/A'}
-                    </p>
-                    <p className="text-xs leading-relaxed text-stone-600">
-                      {lead.location}
-                      <br />
-                      {lead.sharing}
-                    </p>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-sm font-bold text-green-600">
-                        {lead.oldPrice > lead.price ? (
-                          <span className="mr-1 text-red-500 line-through">₹{lead.oldPrice.toFixed(2)}</span>
-                        ) : null}
-                        ₹{lead.price}/-
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <motion.button
-                          type="button"
-                          onClick={() => {
-                            void handleAddToCart(lead.id)
-                          }}
-                          whileHover={{ scale: 1.04 }}
-                          whileTap={{ scale: 0.97 }}
-                          className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition ${
-                            lead.isSoldOut
-                              ? 'cursor-not-allowed bg-stone-400'
-                              : 'bg-green-500 hover:bg-green-600'
-                          }`}
-                          disabled={lead.isSoldOut || activeCartLeadId !== null || buyingLeadId !== null}
-                        >
-                          {lead.isSoldOut
-                            ? lead.unavailableLabel
-                            : activeCartLeadId === lead.id
-                              ? 'Adding...'
-                              : 'Add'}
-                        </motion.button>
-                        <button type="button" onClick={() => void handleBuyNow(lead.id)} disabled={lead.isSoldOut || buyingLeadId !== null || activeCartLeadId !== null} aria-busy={buyingLeadId === lead.id} className={`rounded-lg bg-[#F8B020] px-3 py-1.5 text-xs font-semibold text-stone-900 enabled:hover:bg-[#E2A11D] ${lead.isSoldOut ? 'cursor-not-allowed opacity-50' : buyingLeadId === lead.id ? 'cursor-wait opacity-70' : ''}`}>
-                          {buyingLeadId === lead.id ? 'Buying…' : 'Buy now'}
-                        </button>
-                        {userToken ? (
-                          <button
-                            type="button"
-                            onClick={() => void handleViewDetails(lead.id)}
-                            className="rounded-lg border border-[#4B2CF5] bg-white px-3 py-1.5 text-xs font-semibold text-[#4B2CF5] transition hover:bg-[#F3EEFF]"
-                          >
-                            View Details
-                          </button>
-                        ) : null}
-                      </div>
+                  <div className="market-lead-body">
+                    <h3><button type="button" onClick={() => void handleViewDetails(lead.id)}>{lead.title}</button></h3>
+                    <p className="market-lead-id">Lead ID: {lead.leadDisplayId || '—'}</p>
+                    <p className="market-lead-budget">Customer Budget: {lead.budgetRange || 'Not specified'}</p>
+                    <p className="market-lead-location"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>{lead.location}</p>
+                    <p className="market-lead-type">{[lead.propertyType, lead.requirement].filter(Boolean).join(' | ') || lead.clientType || 'Project enquiry'}</p>
+                    <time className="market-lead-date" dateTime={lead.createdAt}>{new Date(lead.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</time>
+                    <div className="market-lead-actions">
+                      <span className="market-lead-price" aria-label={`Lead price ${lead.price} rupees`}>₹{lead.price.toLocaleString('en-IN')}</span>
+                      <button type="button" className="market-lead-cart" onClick={() => void handleAddToCart(lead.id)} disabled={lead.isSoldOut || activeCartLeadId !== null || buyingLeadId !== null}>{activeCartLeadId === lead.id ? 'Adding…' : 'Add to cart'}</button>
+                      <button type="button" className="market-lead-buy" onClick={() => void handleBuyNow(lead.id)} disabled={lead.isSoldOut || buyingLeadId !== null || activeCartLeadId !== null} aria-busy={buyingLeadId === lead.id}>{buyingLeadId === lead.id ? 'Buying…' : 'Buy Now'}</button>
                     </div>
-                    <p className="text-xs text-stone-400">{new Date(lead.createdAt).toLocaleDateString()}</p>
                   </div>
                 </motion.article>
               ))}
@@ -689,7 +423,7 @@ export function LeadsMarketplacePage() {
         )}
         {cartFeedback ? (
           <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] flex justify-center px-4">
-            <div role="status" aria-live="polite" className="pointer-events-auto flex w-full max-w-lg items-center justify-between gap-4 rounded-xl border border-[#F8B020]/40 bg-[#FFF7E8] px-4 py-3 text-sm font-medium text-stone-700 shadow-lg">
+            <div role="status" aria-live="polite" className="pointer-events-auto flex w-full max-w-lg items-center justify-between gap-4 rounded-xl border border-[#0066ff]/40 bg-[#edf5ff] px-4 py-3 text-sm font-medium text-stone-700 shadow-lg">
               <p>{cartFeedback}</p>
               <button type="button" onClick={() => setCartFeedback('')} aria-label="Dismiss notification" className="shrink-0 rounded-lg px-2 py-1 font-semibold hover:bg-amber-100">Dismiss</button>
             </div>
@@ -704,100 +438,14 @@ export function LeadsMarketplacePage() {
               disabled={isLoadingMore}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              className="rounded-xl bg-[#F8B020] px-8 py-3 text-lg font-bold text-white transition hover:bg-[#E2A11D] disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-xl bg-[#0066ff] px-8 py-3 text-lg font-bold text-white transition hover:bg-[#0050cb] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isLoadingMore ? 'Loading...' : 'Load More Leads'}
             </motion.button>
           </div>
         ) : null}
       </motion.section>
-
-      {userToken && (selectedLeadDetails || isLeadDetailsLoading) ? (
-        <div
-          className="fixed inset-0 z-40 bg-black/45 p-4"
-          onClick={() => setSelectedLeadDetails(null)}
-        >
-          <div
-            className="mx-auto mt-5 w-full max-w-md overflow-hidden rounded-2xl border border-indigo-200 bg-white shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {isLeadDetailsLoading ? (
-              <div className="p-6 text-sm font-semibold text-stone-600">Loading details...</div>
-            ) : selectedLeadDetails ? (
-              <>
-                <div className="bg-gradient-to-r from-indigo-800 to-violet-700 px-4 py-3 text-white">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-bold">{selectedLeadDetails.title}</p>
-                      <p className="mt-0.5 text-[11px] opacity-90">
-                        {selectedLeadDetails.city || '-'}
-                        {selectedLeadDetails.state ? `, ${selectedLeadDetails.state}` : ''}
-                      </p>
-                    </div>
-                    <span className="rounded-md border border-white/40 bg-white/15 px-2 py-1 text-[10px] font-semibold">
-                      {selectedLeadDetails.buyersCount ?? 0}/{selectedLeadDetails.maxBuyers ?? 0} Vendors
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-3 p-4">
-                  <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2">
-                    <p className="text-[11px] font-semibold text-indigo-700">Project Budget</p>
-                    <p className="text-xl font-black text-indigo-900">
-                      {formatBudgetValue(selectedLeadDetails.budgetRange)}
-                    </p>
-                    <p className="text-[11px] text-indigo-600">
-                      Lead ID:{' '}
-                      {selectedLeadDetails.leadDisplayId ||
-                        `NL${String(selectedLeadDetails._id || '')
-                          .slice(-8)
-                          .toUpperCase()}`}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-stone-200 bg-white text-[12px] text-stone-700">
-                    <div className="flex items-center justify-between border-b border-stone-100 px-3 py-2">
-                      <span>Client Type</span>
-                      <span className="font-semibold">{selectedLeadDetails.clientType || '-'}</span>
-                    </div>
-                    <div className="flex items-center justify-between border-b border-stone-100 px-3 py-2">
-                      <span>Property Type</span>
-                      <span className="font-semibold">{selectedLeadDetails.propertyType || '-'}</span>
-                    </div>
-                    <div className="flex items-center justify-between border-b border-stone-100 px-3 py-2">
-                      <span>Area (Sq. Ft.)</span>
-                      <span className="font-semibold">{formatAreaValue(selectedLeadDetails.areaSize)}</span>
-                    </div>
-                    <div className="flex items-center justify-between border-b border-stone-100 px-3 py-2">
-                      <span>Project Timeline</span>
-                      <span className="font-semibold">{selectedLeadDetails.timeline || '-'}</span>
-                    </div>
-                    <div className="flex items-center justify-between px-3 py-2">
-                      <span>Budget Range</span>
-                      <span className="font-semibold">{formatBudgetValue(selectedLeadDetails.budgetRange)}</span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2">
-                    <p className="text-[11px] font-semibold text-stone-600">Project Requirements</p>
-                    <p className="mt-1 text-xs text-stone-700">
-                      {selectedLeadDetails.requirement || selectedLeadDetails.description || '-'}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedLeadDetails(null)}
-                    className="w-full rounded-xl bg-indigo-700 py-2.5 text-sm font-bold text-white hover:bg-indigo-800"
-                  >
-                    Close Details
-                  </button>
-                </div>
-              </>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      </div>
 
       <motion.section
         className="mx-auto max-w-7xl px-4 pb-14 sm:px-6"
@@ -808,14 +456,14 @@ export function LeadsMarketplacePage() {
         transition={{ duration: 0.45, ease: 'easeOut' }}
       >
         <motion.div
-          className="rounded-2xl border border-stone-300 bg-[#efefef] p-5 shadow-md sm:p-8"
+          className="rounded-2xl border border-stone-300 bg-[#f8fafc] p-5 shadow-md sm:p-8"
           whileHover={{ y: -3 }}
           transition={{ duration: 0.2 }}
         >
           <div className="grid items-center gap-8 lg:grid-cols-2">
             <div>
               <h2 className="max-w-md text-4xl font-black leading-tight text-stone-900">
-                Why Interior Designers Trust Our Network
+                Why Service Professionals Trust Our Network
               </h2>
 
               <div className="mt-6 space-y-4">
@@ -851,7 +499,7 @@ export function LeadsMarketplacePage() {
             <div className="overflow-hidden rounded-3xl">
               <img
                 src="/trust-team.jpg"
-                alt="Interior designers discussing project"
+                alt="Service professionals discussing a project"
                 className="h-72 w-full object-cover"
               />
             </div>

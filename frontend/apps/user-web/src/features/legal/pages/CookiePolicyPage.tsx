@@ -19,16 +19,16 @@ const cookieTypes = [
 
 export function CookiePolicyPage() {
   return (
-    <div className="bg-[#efefef]">
+    <div className="bg-[#f8fafc]">
       <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-16">
-        <p className="inline-flex rounded-full bg-[#F8B020] px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">
+        <p className="inline-flex rounded-full bg-[#0066ff] px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">
           Legal
         </p>
         <h1 className="mt-3 text-4xl font-black text-stone-900 sm:text-5xl">
           Cookie Policy
         </h1>
         <p className="mt-3 text-sm text-stone-600">
-          This page explains what cookies we use and how they help operate Interiorwala.
+          This page explains what cookies we use and how they help operate NextLead.
         </p>
       </section>
 

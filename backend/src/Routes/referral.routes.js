@@ -43,6 +43,10 @@ referralRouter.get('/history', async (req, res) => {
     const page = Math.min(1000, Math.max(1, Number.parseInt(req.query.page, 10) || 1));
     const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
     const query = { referrer: req.user.id };
+    if (req.query.status !== undefined) {
+      if (!['QUALIFIED', 'PENDING'].includes(req.query.status)) return res.status(400).json({ success: false, message: 'Invalid referral status filter.' });
+      query.status = req.query.status === 'PENDING' ? { $in: ['PENDING', 'REVIEW'] } : 'QUALIFIED';
+    }
     const [data, total] = await Promise.all([
       Referral.find(query).select('_id status createdAt qualifiedAt').sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit).lean(),
       Referral.countDocuments(query),

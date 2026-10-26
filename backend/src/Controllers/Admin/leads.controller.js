@@ -1,4 +1,5 @@
 import { notifyNewLead } from '../../Services/notification.service.js';
+import { applyLeadFilters } from '../../Utils/lead-filters.js';
 import { readLeadSpreadsheet } from '../../Services/excel-import.js';
 import ExcelJS from "exceljs";
 import mongoose from "mongoose";
@@ -32,6 +33,8 @@ const getAllLeads = async (req, res) => {
     const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
 
     const query = {};
+    try { applyLeadFilters(query, req.query); }
+    catch (error) { return res.status(400).json({ success: false, message: error.message }); }
 
     if (req.query.nearby === 'true') {
       if (!userId) return res.status(401).json({ success: false, message: 'Login to find leads near your saved location.' });
@@ -152,6 +155,7 @@ const getLeadDetailsById = async (req, res) => {
 
     const responseLead = lead.toObject();
     delete responseLead.reservations;
+    delete responseLead.buyers;
     const resolvedLeadDisplayId = buildLeadDisplayId(responseLead._id);
 
     if (lead.leadDisplayId !== resolvedLeadDisplayId) {
@@ -167,6 +171,7 @@ const getLeadDetailsById = async (req, res) => {
       responseLead.email = null;
       responseLead.address = null;
       responseLead.customerName = null;
+      responseLead.areaLocality = null;
     }
 
     return res.status(200).json({

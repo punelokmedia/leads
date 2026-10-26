@@ -1,4 +1,5 @@
 import { walletLimit } from '../Middlewares/security-limits.js';
+import { CheckoutError } from '../Services/lead-inventory.js';
 import express from 'express';
 import mongoose from 'mongoose';
 import { auth, checkAccountType } from '../Middlewares/auth.middleware.js';
@@ -50,6 +51,13 @@ router.post('/topup', handle(async req => {
   topup.gatewayOrderId = order.id;
   await topup.save();
   return { keyId: process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY, razorpayOrderId: order.id, amountPaise: amount };
+}));
+router.get('/topups/:id', handle(async req => {
+  if (!/^[a-f\d]{24}$/i.test(req.params.id)) throw new CheckoutError('TOPUP_NOT_FOUND', 'Top-up not found.', 404);
+  const topup = await WalletTopup.findOne({ _id: req.params.id, user: req.user.id }).lean();
+  if (!topup) throw new CheckoutError('TOPUP_NOT_FOUND', 'Top-up not found.', 404);
+  const user = await User.findById(req.user.id).select('+walletBalancePaise');
+  return { topup: { _id: topup._id, status: topup.status, amountPaise: topup.amountPaise, paymentId: topup.paymentId, paidAt: topup.updatedAt, reversedPaise: topup.reversedPaise, disputed: topup.disputed }, balancePaise: user.walletBalancePaise };
 }));
 router.post('/verify', handle(async req => {
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body ?? {};

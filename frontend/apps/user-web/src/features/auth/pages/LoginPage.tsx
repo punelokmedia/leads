@@ -1,10 +1,15 @@
-﻿import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { API_BASE_URL } from '@/config/api'
 import { startGoogleLogin } from '../googleHandoff'
 import './login.css'
 
 export function LoginPage() {
+  const [params] = useSearchParams()
+  const expired = sessionStorage.getItem('session_expired') === '1'
+  const returning = expired || localStorage.getItem('has_signed_in') === '1' || Boolean(localStorage.getItem('user_token'))
+  const phoneParams = new URLSearchParams(params)
+  phoneParams.set('method', 'phone')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -25,7 +30,7 @@ export function LoginPage() {
       <div className="login-card">
         <aside className="login-brand-panel">
           <Link to="/" className="login-brand" aria-label="NextLead home">
-            <img src="/New nextlead logo/NextLead Ribbon Growth Logo.png" alt="NextLead" />
+            <img src="/New nextlead logo/NextLead Ribbon Arrow Logo.png" alt="NextLead" />
           </Link>
           <h1>Your next big project<br />starts here.</h1>
           <img className="login-brand-arrow" src="/NextLead Arrow only.png" alt="" aria-hidden="true" />
@@ -35,8 +40,9 @@ export function LoginPage() {
         <section className="login-content" aria-labelledby="login-title">
           <Link to="/" className="login-close">Close</Link>
           <div className="login-form-content">
-            <h2 id="login-title">Welcome back!</h2>
-            <p className="login-subtitle">Login to continue.</p>
+            <h2 id="login-title">{returning ? 'Welcome back!' : 'Welcome to NextLead!'}</h2>
+            <p className="login-subtitle">{returning ? 'Login to continue.' : 'Sign in or create your account to get started.'}</p>
+            {expired && <p className="login-session-notice" role="status">Your session has expired. Welcome back — please sign in again to continue.</p>}
             <div className="login-options">
               <button className="login-google" type="button" disabled={isLoading} onClick={() => void continueWithGoogle()}>
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
@@ -48,14 +54,14 @@ export function LoginPage() {
                 {isLoading ? 'Connecting...' : 'Continue With Google'}
               </button>
               <span className="login-or">OR</span>
-              <Link className="login-phone" to="/auth/mobile?method=phone">
+              <Link className="login-phone" to={`/auth/mobile?${phoneParams}`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2" /><path d="M10 5h4M11 19h2" /></svg>
                 Continue With Phone
               </Link>
             </div>
             <p className="login-security">Secure access to your vendor account.</p>
             {error && <p className="login-error" role="alert">{error}</p>}
-            <div className="login-legal"><Link to="/terms-service">Terms of Service.</Link> <Link to="/privacy-policy">Privacy Policy</Link></div>
+            <div className="login-legal"><Link to="/terms-service">Terms & Conditions.</Link> <Link to="/privacy-policy">Privacy Policy</Link></div>
           </div>
         </section>
       </div>

@@ -6,14 +6,14 @@ Authenticated USER endpoints under `/api/v1/wallet`:
 
 - GET `/`: balance, lifetime referral credit and the latest 50 ledger entries.
 - GET `/history?cursor=<nextCursor>`: older private ledger entries, 50 per page. The wallet screen shows transaction type, date, and signed amount below the balance, with a button to load older transactions.
-- POST `/topup`: `{ "amountPaise": 50000 }`, between ₹1 and ₹10,000. Returns the Razorpay public key, order ID and amount in paise.
+- POST `/topup`: `{ "amountPaise": 50000 }`, between ₹1 and ₹1,00,000. Returns the Razorpay public key, order ID and amount in paise.
 - POST `/verify`: Razorpay order ID, payment ID and signature. Fetches the payment from Razorpay; checks ownership, capture, amount and currency before crediting once.
-- POST `/membership`: charges the server's ₹1 lifetime membership price once.
+- POST `/membership`: charges the server's ₹499 lifetime membership price once.
 - POST `/purchase`: `{ "leadIds": [...] }`. Uses current server lead prices and inventory reservations; wallet debit, ledger, paid order, contact access and referral qualification commit in one MongoDB transaction.
 
 The mobile cart and membership screens use the wallet. Existing direct Razorpay endpoints remain for compatibility with other clients and outstanding orders.
 
-The user web app has a `/wallet` page linked from the header, with authenticated balance, Razorpay top-ups, referral-credit totals, and paginated wallet history. Web lead checkout and lifetime membership activation now debit the wallet; Razorpay checkout opens only for wallet top-ups in the current web UI.
+The user web app has a `/wallet` page linked from the header, with authenticated balance, Razorpay top-ups, referral-credit totals, and paginated wallet history. Web lead checkout debits the wallet. The /pricing membership page offers direct Razorpay checkout or a ₹499 wallet debit. The shared server price is defined in src/Config/membership.js; paid members are not charged again. Razorpay membership orders and captured payments are verified server-side for price, currency, purpose, account ownership, signature and refunds.
 
 Deployment requires MongoDB transactions (replica set/Atlas) and the unique indexes on WalletEntry.key and WalletTopup.gatewayOrderId/paymentId. Verify indexes before accepting payments if automatic index creation is disabled. Keep Razorpay private keys and the webhook secret exclusively on the backend; never bundle them in mobile assets.
 

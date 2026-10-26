@@ -12,7 +12,7 @@ function fixture(overrides = {}) {
   const fields = { _id: id, leadDisplayId: 'NL99439011', title: 'Project',
     buyersCount: 3, maxBuyers: 3, expiresAt: new Date('2099-01-01'),
     primaryPhone: '9876543210', email: 'client@example.com', customerName: 'Client',
-    address: 'Private address', price: 275, ...overrides };
+    address: 'Private address', areaLocality: 'Private locality', buyers: ['another-vendor'], price: 275, ...overrides };
   return { ...fields, toObject: () => ({ ...fields }) };
 }
 function response() {
@@ -30,6 +30,8 @@ test('guest details hide contacts and calculate capacity from buyersCount', asyn
   assert.equal(res.body.data.isPurchased, false);
   assert.equal(res.body.data.primaryPhone, null);
   assert.equal(res.body.data.address, null);
+  assert.equal(res.body.data.areaLocality, null);
+  assert.equal(res.body.data.buyers, undefined);
   assert.equal(res.body.data.status, 'SOLD_OUT');
 });
 
@@ -45,6 +47,8 @@ test('only a recorded purchase belonging to the current user unlocks contacts', 
   await getLeadDetailsById(req, res);
   assert.equal(res.body.data.isPurchased, true);
   assert.equal(res.body.data.primaryPhone, '9876543210');
+  assert.equal(res.body.data.areaLocality, 'Private locality');
+  assert.equal(res.body.data.buyers, undefined);
   owned = false;
   res = response();
   await getLeadDetailsById(req, res);
@@ -78,4 +82,16 @@ test('optional authentication allows guests and rejects invalid supplied tokens'
   await optionalAuth({ header: () => 'Bearer invalid' }, res, () => { called = true; });
   assert.equal(res.statusCode, 401);
   assert.equal(called, false);
+});
+
+test('category ID filtering includes assigned leads even when the title lacks the category name', async () => {
+  const categoryId = '507f1f77bcf86cd799439012';
+  const item = fixture({ title: 'Apartment repaint enquiry' });
+  mock.method(Lead, 'countDocuments', async query => { assert.equal(query.category, categoryId); assert.equal(query.$or, undefined); return 1; });
+  const chain = { populate() { return this; }, sort() { return this; }, limit() { return this; }, skip: async () => [item] };
+  mock.method(Lead, 'find', query => { assert.equal(query.category, categoryId); return chain; });
+  const res = response();
+  await getAllLeads({ query: { category: categoryId } }, res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.data[0].title, 'Apartment repaint enquiry');
 });
