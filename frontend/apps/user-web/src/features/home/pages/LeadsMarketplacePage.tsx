@@ -1,11 +1,13 @@
 import { LeadFilters } from './LeadFilters'
+import { CardSkeletons } from '@/components/loading/Skeleton'
+import { LoadingImage } from '@/components/loading/LoadingImage'
 import './leads-marketplace.css'
 import { LeadCategoryBanner } from './LeadCategoryBanner'
 import { useUserToken } from '@/features/auth/useUserToken'
 import { apiFetch } from '@/features/auth/session'
 import { API_BASE_URL } from '@/config/api'
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 
 const PAGE_LIMIT = 10
@@ -114,6 +116,7 @@ const fadeUp = {
 }
 
 export function LeadsMarketplacePage() {
+  const reducedMotion = useReducedMotion()
   const requestVersion = useRef(0)
   const navigate = useNavigate()
   const [buyingLeadId, setBuyingLeadId] = useState<string | null>(null)
@@ -125,7 +128,8 @@ export function LeadsMarketplacePage() {
   const appliedSearch = searchParams.get('search') ?? ''
   const [selectedSort, setSelectedSort] = useState<'latest' | 'cheapest' | 'expensive'>('latest')
   const [allLeads, setAllLeads] = useState<HomeLead[]>([])
-  const [isLeadsLoading, setIsLeadsLoading] = useState(false)
+  const [isLeadsLoading, setIsLeadsLoading] = useState(true)
+  const [reload, setReload] = useState(0)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [activeCartLeadId, setActiveCartLeadId] = useState<string | null>(null)
   const [cartFeedback, setCartFeedback] = useState('')
@@ -208,7 +212,7 @@ export function LeadsMarketplacePage() {
 
     void fetchLeads(1, false)
     return () => { requestVersion.current = version + 1 }
-  }, [appliedSearch, selectedCity, selectedSort, categoryIdParam, filterQuery, userToken])
+  }, [appliedSearch, selectedCity, selectedSort, categoryIdParam, filterQuery, userToken, reload])
 
   const handleLoadMore = () => {
     if (isLeadsLoading || isLoadingMore || !hasMoreLeads) return
@@ -347,8 +351,8 @@ export function LeadsMarketplacePage() {
 
       <motion.section
         className="mx-auto max-w-7xl px-4 py-12 sm:px-6"
-        initial="hidden"
-        whileInView="visible"
+        initial={false}
+        animate="visible"
         viewport={{ once: true, amount: 0.2 }}
         variants={fadeUp}
         transition={{ duration: 0.45, ease: 'easeOut' }}
@@ -376,31 +380,31 @@ export function LeadsMarketplacePage() {
             </select>
           </label>
         </div>
-        {isLeadsLoading ? (
-          <p className="mt-7 text-sm font-semibold text-stone-600">Loading leads...</p>
+        {isLeadsLoading && !allLeads.length ? (
+          <CardSkeletons />
         ) : leadsError ? (
           <p className="mt-7 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {leadsError}
+            {leadsError} <button type="button" onClick={() => setReload(value => value + 1)}>Retry</button>
           </p>
         ) : allLeads.length === 0 ? (
           <p className="mt-7 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600">
             No leads available right now.
           </p>
         ) : (
-          <div className="lead-results-grid">
+          <div className="lead-results-grid content-reveal" aria-busy={isLeadsLoading}>
             <AnimatePresence mode="popLayout">
               {allLeads.map((lead, index) => (
                 <motion.article
                   key={lead.id}
                   layout
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={reducedMotion ? false : { opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 12 }}
-                  transition={{ duration: 0.2, delay: Math.min(index, 5) * 0.025 }}
+                  exit={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
+                  transition={{ duration: reducedMotion ? 0 : 0.2, delay: reducedMotion ? 0 : Math.min(index, 5) * 0.025 }}
                   className={`market-lead-card${lead.isSoldOut ? ' market-lead-unavailable' : ''}`}
                 >
                   <div className="market-lead-image">
-                    <img src={lead.image} alt={lead.title} loading="lazy" />
+                    <LoadingImage src={lead.image} alt={lead.title} loading="lazy" />
                     {lead.isSoldOut && <span className="market-lead-status">{lead.unavailableLabel}</span>}
                   </div>
                   <div className="market-lead-body">

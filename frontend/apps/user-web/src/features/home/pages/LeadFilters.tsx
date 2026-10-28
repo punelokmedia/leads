@@ -4,6 +4,7 @@ import { API_BASE_URL } from '@/config/api'
 import { apiFetch } from '@/features/auth/session'
 import { useUserToken } from '@/features/auth/useUserToken'
 import './lead-filters.css'
+import { RowsSkeleton } from '@/components/loading/Skeleton'
 
 
 
@@ -31,7 +32,7 @@ export function LeadFilters() {
   const [busy, setBusy] = useState(false)
   useEffect(() => {
     let cancelled = false
-    void apiFetch(`${API_BASE_URL}/api/v1/cities/get-all-cities`).then(async response => {
+    void apiFetch(`${API_BASE_URL}/api/v1/cities/get-all-cities`, { signal: AbortSignal.timeout(12000) }).then(async response => {
       const payload = await response.json()
       if (!cancelled && response.ok && payload.success && Array.isArray(payload.data)) setCities(payload.data.map((item: { name: string }) => item.name))
     }).catch(() => { /* The city text input remains available. */ })
@@ -43,7 +44,7 @@ export function LeadFilters() {
     const query = new URLSearchParams()
     if (categoryKey) query.set('category', categoryKey)
     if (searchKey) query.set('search', searchKey)
-    void apiFetch(`${API_BASE_URL}/api/v1/leads/filter-options?${query}`).then(async response => {
+    void apiFetch(`${API_BASE_URL}/api/v1/leads/filter-options?${query}`, { signal: AbortSignal.timeout(12000) }).then(async response => {
       const payload = await response.json()
       if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to load filters.')
       if (!cancelled) { setProjects(payload.data.projectTypes); setProperties(payload.data.propertyTypes) }
@@ -93,7 +94,7 @@ export function LeadFilters() {
     <label className="lead-filter-label" htmlFor="lead-city">Location</label><input id="lead-city" list="lead-cities" placeholder="All locations" value={city} onChange={event => setCity(event.target.value)} /><datalist id="lead-cities">{cities.map(name => <option value={name} key={name}/>)}</datalist>
     <label className="lead-filter-label" htmlFor="lead-radius">Radius</label><select id="lead-radius" value={radius} onChange={event => setRadius(event.target.value)}><option value="">Any distance</option>{[5,10,25,50,100,200].map(value => <option key={value} value={value}>Within {value} km</option>)}</select>{radius && <p className="lead-filter-hint">From your current location. Location permission required.</p>}
     <div className="lead-filter-group"><h3>Lead Price</h3><p className="lead-filter-hint">Amount paid to purchase a lead. Customer project budgets are shown on each card.</p><label className="lead-filter-option"><input type="checkbox" checked={budgetEnabled} onChange={event => setBudgetEnabled(event.target.checked)} />Set lead price range</label><div className="lead-budget-values"><label><span>Minimum ₹</span><input type="number" max="5000" min="0" step="1" value={minimum} disabled={!budgetEnabled} onChange={event => setMinimum(event.target.value)} /></label><label><span>Maximum ₹</span><input type="number" max="5000" min={minimum} step="1" value={maximum} disabled={!budgetEnabled} onChange={event => setMaximum(event.target.value)} /></label></div><input aria-label="Maximum lead price" type="range" min="0" max="5000" step="1" value={maximum} disabled={!budgetEnabled} onChange={event => setMaximum(event.target.value)} /></div>
-    <div className="lead-filter-group"><h3>Project Type</h3>{optionsLoading ? <p className="lead-filter-hint">Loading category options…</p> : optionsError ? <p role="alert" className="lead-filter-error">{optionsError}</p> : !projects.length && <p className="lead-filter-hint">No project types listed for these leads.</p>}{projects.map(value => <label className="lead-filter-option" key={value}><input type="checkbox" checked={project.includes(value)} onChange={() => setProject(toggle(project, value))} />{value}</label>)}</div>
+    <div className="lead-filter-group"><h3>Project Type</h3>{optionsLoading ? <RowsSkeleton count={2} /> : optionsError ? <p role="alert" className="lead-filter-error">{optionsError}</p> : !projects.length && <p className="lead-filter-hint">No project types listed for these leads.</p>}{projects.map(value => <label className="lead-filter-option" key={value}><input type="checkbox" checked={project.includes(value)} onChange={() => setProject(toggle(project, value))} />{value}</label>)}</div>
     <div className="lead-filter-group"><h3>Property Type</h3>{!optionsLoading && !properties.length && <p className="lead-filter-hint">No property types listed for these leads.</p>}{properties.map(value => <label className="lead-filter-option" key={value}><input type="checkbox" checked={property.includes(value)} onChange={() => setProperty(toggle(property, value))} />{value}</label>)}</div>
     <div className="lead-filter-group"><h3>Posted Date</h3>{[['any','Any time'],['7','Last 7 days'],['30','Last 30 days'],['custom','Custom range']].map(([value,label]) => <label className="lead-filter-option" key={value}><input type="radio" name="posted-date" value={value} checked={period===value} onChange={() => setPeriod(value)} />{label}</label>)}{period === 'custom' && <div className="lead-custom-dates"><label>From<input type="date" value={from} onChange={event => setFrom(event.target.value)} /></label><label>To<input type="date" min={from} value={to} onChange={event => setTo(event.target.value)} /></label></div>}</div>
     {error && <p className="lead-filter-error" role="alert">{error} {!token && radius && <Link to="/login">Sign in</Link>}</p>}<button className="lead-filter-apply" type="submit">{busy ? 'Getting location…' : 'Apply Filters'}</button>

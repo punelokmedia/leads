@@ -120,7 +120,7 @@ export function VendorSection() {
             >
               <div className="featured-vendor-header">
                 <div className="featured-vendor-avatar">
-                  <img src={encodeURI(`/categories Images/${vendor.image}`)} alt={vendor.name} width={58} height={58} loading="lazy" />
+                  <img src={encodeURI(`/optimized/categories/${vendor.image.replace(/\.[^.]+$/, '.jpg')}`)} alt={vendor.name} width={58} height={58} loading="lazy" decoding="async" />
                   <span className="featured-vendor-avatar-check"><img src="/Icons/Right check.svg" alt="Verified" /></span>
                 </div>
                 <div className="featured-vendor-identity">

@@ -1,5 +1,6 @@
 import { useUserToken } from '@/features/auth/useUserToken'
 import { apiFetch } from '@/features/auth/session'
+import { RowsSkeleton } from '@/components/loading/Skeleton'
 import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '@/config/api'
@@ -10,7 +11,7 @@ export function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [authError, setAuthError] = useState('')
   const [authSuccess, setAuthSuccess] = useState('')
-  const [isProfileLoading, setIsProfileLoading] = useState(false)
+  const [isProfileLoading, setIsProfileLoading] = useState(true)
   const [accountForm, setAccountForm] = useState({
     firstname: '',
     lastname: '',
@@ -89,6 +90,7 @@ export function ProfilePage() {
       resetAuthMessages()
       const response = await requestAuth('/profile', {
         method: 'GET',
+        signal: AbortSignal.timeout(15000),
         headers: {
           Authorization: `Bearer ${userToken}`,
         },
@@ -283,7 +285,7 @@ export function ProfilePage() {
                   onSubmit={handleProfileUpdate}
                 >
                   {isProfileLoading ? (
-                    <p className="text-center text-sm font-medium text-stone-600">Loading profile...</p>
+                    <RowsSkeleton count={6} />
                   ) : (
                     <>
                       {isAddressFormOpen ? (

@@ -30,7 +30,7 @@ export function LoginPage() {
       <div className="login-card">
         <aside className="login-brand-panel">
           <Link to="/" className="login-brand" aria-label="NextLead home">
-            <img src="/New nextlead logo/NextLead Ribbon Arrow Logo.png" alt="NextLead" />
+            <img src="/optimized/home/logo.webp" alt="NextLead" />
           </Link>
           <h1>Your next big project<br />starts here.</h1>
           <img className="login-brand-arrow" src="/NextLead Arrow only.png" alt="" aria-hidden="true" />

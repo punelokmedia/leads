@@ -8,6 +8,7 @@ import { API_BASE_URL } from '@/config/api'
 import { notifyUserSessionChanged, useUserToken } from '@/features/auth/useUserToken'
 import './my-leads.css'
 import { MarketplaceHeader } from './MarketplaceHeader'
+import { RowsSkeleton } from '@/components/loading/Skeleton'
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 
@@ -161,7 +162,7 @@ export function PublicHeader() {
 
     for (const baseUrl of API_BASE_URL_CANDIDATES) {
       try {
-        return await apiFetch(buildApiUrl(baseUrl, path), init)
+        return await apiFetch(buildApiUrl(baseUrl, path), { ...init, signal: init?.signal ?? ((init?.method ?? 'GET') === 'GET' ? AbortSignal.timeout(15000) : undefined) })
       } catch (error) {
         lastNetworkError =
           error instanceof Error ? error : new Error('Unable to connect to auth server.')
@@ -1144,7 +1145,7 @@ export function PublicHeader() {
                   Continue to Login
                 </button>
               ) : isHistoryLoading ? (
-                <p className="text-center text-sm font-medium text-stone-600">Loading your leads…</p>
+                <RowsSkeleton count={5} />
               ) : historyLeads.length === 0 ? (
                 <p className="text-center text-sm text-stone-600">No purchased leads yet. Explore available leads to get started.</p>
               ) : (
@@ -1178,7 +1179,7 @@ export function PublicHeader() {
                   Continue to Login
                 </button>
               ) : isCartLoading ? (
-                <p className="text-center text-sm font-medium text-stone-600">Loading cart...</p>
+                <RowsSkeleton count={3} />
               ) : cartLeads.length === 0 ? (
                 <div className="rounded-2xl border border-stone-200 bg-white px-6 py-12 text-center">
                   <p className="text-lg font-semibold text-stone-800">Your cart is empty.</p>

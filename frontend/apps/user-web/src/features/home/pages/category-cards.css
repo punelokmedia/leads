@@ -2,6 +2,7 @@
 .next-home .category-grid>.category-tile:hover{transform:translateY(-4px);box-shadow:0 8px 16px #13233d22}
 .next-home .category-grid>.category-tile>.category-image{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;margin:0;border-radius:0;object-fit:cover;object-position:center;z-index:-1}
 .category-card-label{margin:14px 12px 0;padding:8px 9px;border-radius:9px;background:#e2ecffed;color:#13233d;box-shadow:0 2px 5px #13233d08}
+.next-home .category-grid>.category-tile{min-width:0;width:100%;max-width:100%;box-sizing:border-box}
 .next-home .category-tile .category-card-label h3{margin:0;color:#13233d;font-size:13px;font-weight:700;line-height:1.35}
 .next-home .category-tile .category-card-label small{display:block;margin-top:2px;color:#475569;font-size:11px;line-height:1.3}
 @media(max-width:700px){.next-home .category-grid>.category-tile{min-height:125px;border-radius:14px}.category-card-label{margin:12px 9px 0;padding:7px}.next-home .category-tile .category-card-label h3{font-size:11px}.next-home .category-tile .category-card-label small{font-size:10px}}

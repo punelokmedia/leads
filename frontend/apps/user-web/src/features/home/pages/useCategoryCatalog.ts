@@ -4,7 +4,7 @@ import { apiFetch } from '@/features/auth/session'
 import type { ApiCategory } from './category-resolution'
 let pending: Promise<ApiCategory[]> | undefined
 function load() {
-  pending ??= apiFetch(`${API_BASE_URL}/api/v1/categories/get-all-categories`).then(async response => {
+  pending ??= apiFetch(`${API_BASE_URL}/api/v1/categories/get-all-categories`, { signal: AbortSignal.timeout(12000) }).then(async response => {
     const payload = await response.json()
     if (!response.ok || !payload.success || !Array.isArray(payload.data)) throw new Error('Unable to load categories.')
     return payload.data as ApiCategory[]

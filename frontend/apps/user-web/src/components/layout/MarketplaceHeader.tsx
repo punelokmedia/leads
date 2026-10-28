@@ -15,7 +15,7 @@ export function MarketplaceHeader({ loggedIn, cartCount, onLogout }: {
   const navigate = useNavigate()
   return <div className="marketplace-header-inner">
     <Link to="/" className="marketplace-logo" aria-label="NextLead home">
-      <img src="/New nextlead logo/NextLead Ribbon Arrow Logo.png" alt="NextLead" />
+      <img src="/optimized/home/logo.webp" alt="NextLead" width={2170} height={725} />
     </Link>
     <form className="marketplace-search" role="search" onSubmit={event => {
       event.preventDefault()

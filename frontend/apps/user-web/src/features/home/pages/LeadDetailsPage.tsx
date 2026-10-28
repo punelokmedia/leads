@@ -4,6 +4,7 @@ import { apiFetch } from '@/features/auth/session'
 import { useUserToken } from '@/features/auth/useUserToken'
 import { API_BASE_URL } from '@/config/api'
 import './lead-details.css'
+import { PageSkeleton } from '@/components/loading/Skeleton'
 
 type Lead = { _id: string; title: string; leadDisplayId: string; description?: string; category?: { name?: string }; createdAt: string; city: string; state: string; isPurchased: boolean; status: string; price: number; customerName?: string; primaryPhone?: string; phone?: string; alternatePhone?: string; email?: string; address?: string; areaLocality?: string; requirement?: string; propertyType?: string; areaSize?: string; budgetRange?: string; timeline?: string; clientType?: string }
 export function LeadDetailsPage() {
@@ -46,7 +47,8 @@ export function LeadDetailsPage() {
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Purchase confirmation pending. Check history before retrying.') }
     finally { setBusy(false) }
   }
-  if (loading || !lead) return <section className="lead-detail-state"><h1>{loading ? 'Loading lead…' : 'Unable to load lead'}</h1>{error && <p role="alert">{error}</p>}<Link to="/?browse=1">Back to leads</Link>{!loading && <button onClick={() => setReload(value => value + 1)}>Retry</button>}</section>
+  if (loading) return <PageSkeleton />
+  if (!lead) return <section className="lead-detail-state"><h1>Unable to load lead</h1>{error && <p role="alert">{error}</p>}<Link to="/?browse=1">Back to leads</Link><button onClick={() => setReload(value => value + 1)}>Retry</button></section>
   const unlocked = lead.isPurchased
   const phone = lead.primaryPhone || lead.phone
   const safePhone = (value?: string) => value?.replace(/[^+\d]/g, '') || ''

@@ -10,7 +10,9 @@
 @media(max-width:950px){.home-header-inner{width:calc(100% - 36px);flex-wrap:wrap;justify-content:space-between;gap:0;padding-block:17px;min-height:74px}.home-menu-toggle{display:inline-flex;align-items:center;justify-content:center;border:1px solid #dce3f1;background:#dce9ff;color:#0066ff;border-radius:10px;width:40px;height:40px;cursor:pointer}.home-header-navigation{display:none;flex-basis:100%;margin:18px 0 0;padding:20px 0 5px;border-top:1px solid #dce3f1}.home-header-navigation.is-open{display:flex;align-items:stretch;flex-direction:column;gap:24px}.home-header-links{align-items:stretch;flex-direction:column;gap:16px}.home-header-links a{font-size:14px}.home-header-actions{flex-wrap:wrap;gap:15px}.home-header-actions a{font-size:13px}}
 
 /* Soft navy shadow follows the vendor artwork against the hero background. */
-.home-hero .hero-art{filter:drop-shadow(18px 10px 30px rgba(2,12,35,.65)) drop-shadow(-10px 0 20px rgba(3,18,44,.35))}
+.home-hero .hero-art{position:absolute;height:auto;filter:drop-shadow(18px 10px 30px rgba(2,12,35,.65)) drop-shadow(-10px 0 20px rgba(3,18,44,.35))}
+.next-home[hidden]{display:none}
+.hero-image-retry{position:absolute;right:24px;bottom:24px;z-index:3;background:transparent;border:1px solid #9daccc;border-radius:8px;padding:10px 14px;color:white;font:inherit;font-size:12px;cursor:pointer}
 
 /* Supplied ribbon artwork creates the oversized background brand marks. */
 .home-ribbon,.steps-ribbon{background:url('/NextLead Arrow only.png') center/contain no-repeat;font-size:0;line-height:normal;aspect-ratio:1;pointer-events:none}

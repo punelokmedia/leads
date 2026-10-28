@@ -1,6 +1,7 @@
 import { categories } from './category-catalog'
 import './category-cards.css'
 import { CategoryLink } from './CategoryLink'
+import { LoadingImage } from '@/components/loading/LoadingImage'
 
 export function CategoryGrid({ showAll = false }: { showAll?: boolean }) {
   const items = showAll
@@ -14,12 +15,14 @@ export function CategoryGrid({ showAll = false }: { showAll?: boolean }) {
           name={name}
           className="category-tile"
         >
-          <img
+          <LoadingImage
             className="category-image"
             src={encodeURI(image.startsWith('/') ? image : `/categories Images/${image}`)}
             alt={name}
             width={80}
             height={72}
+            loading="lazy"
+            decoding="async"
           />
 <div className="category-card-label">
           <h3>{name}</h3>

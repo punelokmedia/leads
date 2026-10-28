@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 export function HomeHeader() {
@@ -9,7 +9,7 @@ export function HomeHeader() {
     <header className="home-site-header">
       <div className="home-header-inner">
         <Link to="/" className="home-header-logo" aria-label="NextLead home" onClick={closeMenu}>
-          <img className="home-header-logo-image" src="/New nextlead logo/NextLead Ribbon Arrow Logo.png" alt="NextLead" />
+          <img className="home-header-logo-image" src="/optimized/home/logo.webp" alt="NextLead" width={2170} height={725} />
         </Link>
         <button type="button" className="home-menu-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} aria-controls="home-header-navigation" onClick={() => setMenuOpen(!menuOpen)}>
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d={menuOpen ? 'M6 6l12 12M6 18L18 6' : 'M3 6h18M3 12h18M3 18h18'} /></svg>

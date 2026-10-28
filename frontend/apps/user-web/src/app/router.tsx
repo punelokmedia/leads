@@ -1,11 +1,35 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/PublicLayout'
+import { InitialLoading } from '@/components/loading/Skeleton'
+import { RouteError, RouteLoadFailure } from '@/components/loading/RouteError'
+import { loadWithTimeout } from '@/components/loading/loadWithTimeout'
 
-export const router = createBrowserRouter([
-  { path: '/login', lazy: async () => ({ Component: (await import('@/features/auth/pages/LoginPage')).LoginPage }) },
+// Keep the layout mounted even if a route chunk is unavailable or stalls.
+function loadingBoundaries(routes: RouteObject[]): RouteObject[] {
+  return routes.map(route => {
+    const result: RouteObject = { ...route, ErrorBoundary: RouteError }
+    if (route.children) result.children = loadingBoundaries(route.children)
+    if (typeof route.lazy === 'function') {
+      const load = route.lazy
+      result.lazy = async () => {
+        try {
+          return await loadWithTimeout(load)
+        } catch {
+          return { Component: RouteLoadFailure }
+        }
+      }
+    }
+    return result
+  })
+}
+
+export const router = createBrowserRouter(loadingBoundaries([
+  { path: '/login', HydrateFallback: InitialLoading, ErrorBoundary: RouteError, lazy: async () => ({ Component: (await import('@/features/auth/pages/LoginPage')).LoginPage }) },
   {
     path: '/',
     element: <PublicLayout />,
+    HydrateFallback: InitialLoading,
+    ErrorBoundary: RouteError,
     children: [
       { index: true, lazy: async () => ({ Component: (await import('@/features/home/pages/HomePage')).HomePage }) },
       { path: 'categories', lazy: async () => ({ Component: (await import('@/features/home/pages/CategoriesPage')).CategoriesPage }) },
@@ -28,5 +52,5 @@ export const router = createBrowserRouter([
       { path: 'auth/mobile', lazy: async () => ({ Component: (await import('@/features/auth/pages/AuthEntryPage')).AuthEntryPage }) },
     ],
   },
-  { path: '*', lazy: async () => ({ Component: (await import('@/pages/NotFoundPage')).NotFoundPage }) },
-])
+  { path: '*', HydrateFallback: InitialLoading, ErrorBoundary: RouteError, lazy: async () => ({ Component: (await import('@/pages/NotFoundPage')).NotFoundPage }) },
+]))

@@ -3,7 +3,7 @@ import './motion.css'
 import { LoginRequired } from '@/features/auth/LoginRequired'
 import { requiresLogin, safeReturnPath } from '@/features/auth/access-policy'
 import '@/features/home/pages/home.css'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate, useNavigation } from 'react-router-dom'
 import { PublicFooter } from '@/components/layout/PublicFooter'
 import { PublicHeader } from '@/components/layout/PublicHeader'
 import { HomeHeader } from '@/components/layout/HomeHeader'
@@ -13,6 +13,7 @@ import { useUserToken } from '@/features/auth/useUserToken'
 export function PublicLayout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const navigation = useNavigation()
   const userToken = useUserToken()
   const content = useRef<HTMLElement>(null)
   useEffect(() => {
@@ -33,6 +34,7 @@ export function PublicLayout() {
   const showHomeHeader = !userToken
   return (
     <div className={`flex min-h-dvh flex-col ${showHomeHeader ? 'homepage-layout' : ''}`}>
+      {navigation.state !== 'idle' && <div className="navigation-progress" role="status" aria-label="Loading page" />}
       {showHomeHeader && <HomeHeader />}
       <PublicHeader />
       <SessionNotice />
