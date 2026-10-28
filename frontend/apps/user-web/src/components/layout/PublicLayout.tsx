@@ -33,7 +33,7 @@ export function PublicLayout() {
   }, [userToken, location.pathname, location.search, navigate])
   const showHomeHeader = !userToken
   return (
-    <div className={`flex min-h-dvh flex-col ${showHomeHeader ? 'homepage-layout' : ''}`}>
+    <div className={`site-shell flex min-h-dvh flex-col ${showHomeHeader ? 'homepage-layout' : ''}`}>
       {navigation.state !== 'idle' && <div className="navigation-progress" role="status" aria-label="Loading page" />}
       {showHomeHeader && <HomeHeader />}
       <PublicHeader />

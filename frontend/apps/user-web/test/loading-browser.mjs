@@ -56,7 +56,7 @@ on('Fetch.requestPaused', async ({ requestId, request }) => {
     if ((holdEntry && /\/assets\/index-.*\.js/.test(request.url)) || (holdRoute && /\/assets\/CategoriesPage-.*\.js/.test(request.url))) await pause(1800)
     if ((failImages && /optimized\/home\/hero|NextLead%20Vendor%20App%20Promotion|optimized\/categories/.test(request.url)) || (failLeads && request.url.includes('/leads/get-all-leads')) || (failRoute && /\/assets\/ContactPage-.*\.js/.test(request.url)) || (failEntry && /\/assets\/index-.*\.js/.test(request.url))) {
       await send('Fetch.failRequest', { requestId, errorReason: 'Failed' })
-    } else if (authenticatedFixtures && request.url.includes('/api/v1/') && !/\/categories\/|\/cities\//.test(request.url)) {
+    } else if (request.url.includes('/api/v1/') && (authenticatedFixtures || /\/categories\/|\/cities\//.test(request.url))) {
       const path = new URL(request.url).pathname
       if (request.method === 'GET') apiCounts.set(path, (apiCounts.get(path) || 0) + 1)
       if (request.method === 'GET' && /\/referrals\/|\/wallet$|\/auth\/profile/.test(path)) await pause(path.endsWith('/history') ? 1800 : 900)
@@ -68,6 +68,8 @@ on('Fetch.requestPaused', async ({ requestId, request }) => {
       if (path.endsWith('/referrals/history')) payload = { success: true, data: [], pagination: { total: 0 } }
       if (path.endsWith('/auth/profile')) payload = { success: true, data: { firstname: 'Test', lastname: 'User', phoneNumber: '', email: '', address: {} } }
       if (path.endsWith('/leads/filter-options')) payload = { success: true, data: { projectTypes: [], propertyTypes: [] } }
+      if (path.endsWith('/categories/get-all-categories')) payload = { success: true, data: ['POP & False Ceiling Work','Interior Design','Painting','Plumbing','AC Service & Repair','Water Proofing','Civil Work','Aluminium & Windows','Electrical Work','CCTV Installation'].map((name, index) => ({ _id: String(index + 1).padStart(24, '0'), name })) }
+      if (path.endsWith('/cities/get-all-cities')) payload = { success: true, data: [{ _id: '1', name: 'Pune' }] }
       await send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }, { name: 'Access-Control-Allow-Origin', value: base }, { name: 'Access-Control-Allow-Headers', value: 'authorization,x-web-session,content-type' }, { name: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS' }], body: Buffer.from(JSON.stringify(payload)).toString('base64') })
     } else await send('Fetch.continueRequest', { requestId })
   } catch { /* Target may close with noncritical requests in flight. */ }
@@ -92,7 +94,7 @@ try {
   const imageState = await evaluate(`document.querySelector('.hero-art').dataset.state`)
   assert.equal(imageState, 'ready', 'Hero image should decode on the selected connection')
   assert(await evaluate(`!document.querySelector('.next-home').hidden && !document.querySelector('.hero-art.loading-image') && !document.querySelector('.page-skeleton-home')`), 'Homepage must reveal with a decoded hero and no image cover')
-  assert(await evaluate(`getComputedStyle(document.querySelector('.hero-art')).position === 'absolute' && Math.abs(document.querySelector('.hero-art').getBoundingClientRect().bottom - document.querySelector('.hero-inner').getBoundingClientRect().bottom) < 1`), 'Hero artwork must stay anchored to the bottom of the banner')
+  assert(await evaluate(`Math.abs(document.querySelector('.hero-art').getBoundingClientRect().bottom - document.querySelector('.hero-inner').getBoundingClientRect().bottom) < 1`), 'Hero artwork must stay anchored to the bottom of the banner')
   assert(await evaluate(`document.documentElement.scrollWidth <= innerWidth + 1`), 'No horizontal overflow')
   assert(await evaluate(`Array.from(document.querySelectorAll('.category-grid > .category-tile')).every(tile => tile.getBoundingClientRect().right <= tile.parentElement.getBoundingClientRect().right + 1)`), 'Cards must fit within their grid, including on tablets')
   assert.equal(await evaluate(`!!document.querySelector('.boot-shell')`), false)

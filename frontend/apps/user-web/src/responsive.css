@@ -1,0 +1,102 @@
+/* Shared small-screen rules are scoped so lazy route styles cannot undo them.
+   Desktop layouts above 1024px retain their existing design. */
+@media (max-width: 1024px) {
+  .site-shell .home-container { width: calc(100% - 40px); }
+  .site-shell .home-hero .hero-inner { min-height: 490px; }
+  .site-shell .hero-copy { max-width: 55%; }
+  .site-shell .hero-copy h1 { font-size: clamp(32px, 4.5vw, 46px); }
+  .site-shell .hero-badges { left: 60%; top: 40px; gap: 8px; }
+  .site-shell .steps-inner { min-height: 0; padding-top: 40px; display: grid; grid-template-columns: 1fr; }
+  .site-shell .steps-copy { width: 100%; }
+  .site-shell .steps-grid { gap: 24px; margin: 28px 0; }
+  .site-shell .step h3 { font-size: 15px; max-width: none; line-height: 1.5; }
+  .site-shell .next-home .step p { font-size: 14px; line-height: 1.7; }
+  .site-shell .step > span { flex-shrink: 0; align-self: flex-start; }
+  .site-shell .steps-art { position: relative; height: auto; width: 260px; max-width: 60%; justify-self: end; margin-top: 24px; }
+  .site-shell .steps-copy > p { font-size: 14px; line-height: 1.7; }
+  .site-shell :is(.home-button, .home-text-link, .watch-link) { min-height: 44px; }
+  .site-shell :is(.review-controls button, .review-card > button, .featured-vendor-arrow, .featured-vendor-dots button) { min-width: 44px; min-height: 44px; }
+  .site-shell :is(.referral-page, .account-profile-page, .wallet-page, .payment-review, .lead-detail-page, .lead-filter-sidebar) :is(input:not([type=checkbox]):not([type=radio]), select, textarea) { font-size: 16px; min-width: 0; }
+  .site-shell :is(.referral-page, .account-profile-page, .wallet-page, .payment-review, .next-cart-page, .lead-detail-page) button { min-height: 44px; }
+  .site-shell .account-avatar-choices { flex-wrap: wrap; }
+  .site-shell .account-avatar-choices button { width: 44px; }
+  .site-shell .lead-filter-option { min-height: 44px; }
+  .site-shell .lead-specifications dd { overflow-wrap: anywhere; }
+  .site-shell .referral-social-row :is(a,button) { width: 44px; height: 44px; }
+  .site-shell .payment-columns > *, .site-shell .payment-methods > * { min-width: 0; }
+  .site-shell .payment-method-list { flex-wrap: wrap; }
+  .site-shell .payment-method-list button { flex: 1 1 100px; width: auto; }
+  .site-shell .payment-details dd { overflow-wrap: anywhere; }
+  .site-shell .payment-method-tags { flex-wrap: wrap; }
+  .site-shell .next-footer a { display: flex; align-items: center; min-height: 44px; font-size: 13px; }
+  .site-shell .next-footer .footer-category-link { display: flex; margin-bottom: 0; font-size: 13px; }
+  .site-shell .next-footer p { overflow-wrap: anywhere; }
+  .site-shell .next-footer .footer-grid { gap: 24px; }
+  .site-shell .home-steps, .site-shell .home-trust { scroll-margin-top: 88px; }
+}
+
+@media (max-width: 700px) {
+  .site-shell .home-container { width: calc(100% - 32px); }
+  /* Same reserved geometry as the initial HTML and React loading shells. */
+  :root { --mobile-hero-height: calc(390px + min(460px, 100vw - 32px) * 1082 / 1454); }
+  .site-shell .home-hero .hero-inner { display: flex; flex-direction: column; align-items: stretch; min-height: var(--mobile-hero-height); }
+  .site-shell .hero-copy { max-width: none; padding: 32px 0 0; }
+  .site-shell .hero-copy h1 { font-size: clamp(29px, 8vw, 38px); line-height: 1.12; }
+  .site-shell .hero-copy > p { font-size: 14px; line-height: 1.6; margin-top: 18px; }
+  .site-shell .hero-actions { margin-top: 24px; gap: 16px; flex-wrap: wrap; }
+  .site-shell .hero-actions .home-button { padding: 12px 18px; font-size: 12px; }
+  .site-shell .watch-link { gap: 10px; }
+  .site-shell .watch-link img { width: 44px; height: 44px; }
+  .site-shell .watch-link strong { font-size: 13px; }
+  .site-shell .watch-link small { font-size: 11px; }
+  .site-shell .hero-badges { position: static; order: 1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .site-shell .hero-badges > span { width: auto; min-height: 36px; padding: 8px 10px; gap: 6px; }
+  .site-shell .hero-badges b { font-size: 10px; }
+  .site-shell .hero-badges img { width: 18px; height: 18px; }
+  .site-shell .home-hero .hero-art { position: relative; order: 2; bottom: auto; right: auto; align-self: center; width: 100%; max-width: 460px; height: auto; aspect-ratio: 1454 / 1082; margin-top: auto; }
+  .site-shell .hero-badges { margin-bottom: 16px; }
+  .site-shell .hero-image-retry { z-index: 3; bottom: 16px; left: 16px; right: 16px; }
+  .site-shell .home-ribbon { max-width: 100%; }
+  .site-shell .section-heading { align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .site-shell .section-heading h2, .site-shell .steps-copy h2 { font-size: clamp(24px, 6vw, 30px); line-height: 1.25; }
+  .site-shell .section-heading p:not(.home-eyebrow) { font-size: 14px; line-height: 1.6; }
+  .site-shell .next-home .category-grid { gap: 16px 12px; }
+  .site-shell .next-home .category-tile h3 { font-size: 13px; }
+  .site-shell .steps-grid { grid-template-columns: 1fr; gap: 24px; }
+  .site-shell .step { gap: 16px; align-items: flex-start; }
+  .site-shell .step > span { display: grid; place-items: center; width: 44px; height: 52px; padding: 0; font-size: 28px; }
+  .site-shell .step h3 { font-size: 16px; margin-bottom: 6px; }
+  .site-shell .step p { margin: 0; }
+  .site-shell .home-vendors .home-container { width: calc(100% - 32px); max-width: none; }
+  .site-shell .featured-vendor-grid { height: 370px; }
+  .site-shell .featured-vendor-grid > .featured-vendor { width: min(420px, 100%); padding: 16px; }
+  .site-shell .featured-vendor-identity :is(h3,p) { white-space: normal; overflow-wrap: anywhere; }
+  .site-shell .featured-vendor-identity p { font-size: 11px; }
+  .site-shell .featured-vendor-tags { flex-wrap: wrap; }
+  .site-shell .featured-vendor-tags > span { font-size: 10px; }
+  .site-shell .featured-vendor-metrics small { font-size: 11px; }
+  .site-shell .featured-vendor-arrow { top: auto; bottom: -48px; transform: none; }
+  .site-shell .featured-vendor-arrow-left { left: 0; }
+  .site-shell .featured-vendor-arrow-right { right: 0; }
+  .site-shell .featured-vendor-dots { padding-inline: 44px; }
+  .site-shell .review-card { min-width: 0; flex-wrap: wrap; }
+  .site-shell .review-card blockquote { font-size: 14px; line-height: 1.7; }
+  .site-shell .trust-stats { flex-wrap: wrap; gap: 20px; }
+  .site-shell .download-banner { display: flex; flex-direction: column; padding: 28px 20px 0; min-height: 0; }
+  .site-shell .download-banner > div { width: 100%; padding: 0; }
+  .site-shell .download-banner p { font-size: 14px; line-height: 1.6; }
+  .site-shell .download-banner > img { position: relative; width: 100%; height: auto; max-width: 380px; right: auto; bottom: auto; top: auto; margin: 24px auto 0; }
+  .site-shell .next-cart-item { flex-wrap: wrap; }
+  .site-shell .next-cart-item-content { flex: 1 1 140px; }
+  .site-shell .next-cart-item h3 { padding-right: 0; font-size: 15px; }
+  .site-shell .next-cart-delete { position: static; margin-left: auto; }
+  .site-shell .next-cart-quantity { height: 44px; }
+  .site-shell .next-cart-quantity button { width: 44px; height: 44px; }
+  .site-shell .referral-code-row > div { flex-wrap: wrap; gap: 8px; }
+  .site-shell .referral-code-row input { flex: 1 1 100px; }
+  .site-shell .referral-social-row > div { flex-wrap: wrap; }
+  .site-shell .referral-pagination { flex-wrap: wrap; gap: 12px; }
+}
+@media (max-width: 350px) {
+  :root { --mobile-hero-height: calc(450px + (100vw - 32px) * 1082 / 1454); }
+}

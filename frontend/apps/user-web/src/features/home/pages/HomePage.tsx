@@ -83,9 +83,9 @@ function HomeLandingPage() {
       ['Apply & Get Onboarded', 'Create your business profile and complete our quick verification process.'],
       ['Receive Match Alerts', 'Get instant notifications of verified leads matching your services and location.'],
       ['Quote & Grow', 'Connect with clients, win more projects, and grow your business.'],
-    ].map(([title, copy], index) => <div className="step" key={title}><span>{index + 1}</span><div><h3>{title}</h3><p>{copy}</p></div></div>)}</div><Link to="/signup" className="home-button">Get Started &rarr;</Link></div><img className="steps-art" src="/optimized/home/steps.webp" alt="Business professional explaining the three simple steps" loading="lazy" /></div></section>
+    ].map(([title, copy], index) => <div className="step" key={title}><span>{index + 1}</span><div><h3>{title}</h3><p>{copy}</p></div></div>)}</div><Link to="/signup" className="home-button">Get Started &rarr;</Link></div><img className="steps-art" width={683} height={1025} src="/optimized/home/steps.webp" alt="Business professional explaining the three simple steps" loading="lazy" /></div></section>
     <VendorSection />
     <TestimonialsSection />
-    <section className="home-download home-container"><div className="download-banner"><div><h2>Ready to Grow Your Business?</h2><p>Join thousands of businesses already using NextLead to find verified vendors and get real leads.</p><Link to="/download" className="home-button">Download App</Link></div><img src="/optimized/home/dashboard.webp" alt="NextLead app and business growth dashboard" loading="lazy" /></div></section>
+    <section className="home-download home-container"><div className="download-banner"><div><h2>Ready to Grow Your Business?</h2><p>Join thousands of businesses already using NextLead to find verified vendors and get real leads.</p><Link to="/download" className="home-button">Download App</Link></div><img width={512} height={768} src="/optimized/home/dashboard.webp" alt="NextLead app and business growth dashboard" loading="lazy" /></div></section>
   </div></>
 }
