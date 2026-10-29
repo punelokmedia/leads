@@ -94,7 +94,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 // ── Logo ──
                 Center(
                   child: Image.asset(
-                    'assets/Icons/appIcon/nextLeads_logo.png',
+                    'assets/branding/nextlead_wordmark.webp',
                     width: 236.w,
                     fit: BoxFit.contain,
                     filterQuality: FilterQuality.high,

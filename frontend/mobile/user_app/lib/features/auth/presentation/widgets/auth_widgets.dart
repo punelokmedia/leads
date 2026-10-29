@@ -21,7 +21,7 @@
 //           height: 99.h,
 //           decoration: const BoxDecoration(
 //             image: DecorationImage(
-//               image: AssetImage('assets/Images/home/logo_leads.png'),
+//               image: AssetImage('assets/branding/nextlead_wordmark.webp'),
 //               fit: BoxFit.contain,
 //             ),
 //           ),

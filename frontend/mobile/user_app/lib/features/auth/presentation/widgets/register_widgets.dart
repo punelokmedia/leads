@@ -45,7 +45,7 @@ class RegisterHeader extends StatelessWidget {
       children: [
         Center(
           child: Image.asset(
-            'assets/Images/home/logo_leads.png',
+            'assets/branding/nextlead_wordmark.webp',
             width: 169.w,
             height: 56.h,
             fit: BoxFit.contain,

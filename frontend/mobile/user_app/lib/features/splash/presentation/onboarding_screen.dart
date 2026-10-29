@@ -39,7 +39,7 @@ class OnboardingScreen extends StatelessWidget {
 
               // ── Illustration ──
               Image.asset(
-                'assets/Images/login/onboard_illustration.png',
+                'assets/branding/hero.webp',
                 height: 163.h,
                 fit: BoxFit.contain,
                 errorBuilder: (_, _, _) => Icon(

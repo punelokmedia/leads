@@ -253,7 +253,7 @@ class _PreviewHomeState extends State<PreviewHome> {
           centerTitle: false,
           title: page == 0
               ? Image.asset(
-                  'assets/Icons/appIcon/nextLeads_logo.png',
+                  'assets/branding/nextlead_arrow.png',
                   width: 40,
                   height: 30,
                   fit: BoxFit.contain,

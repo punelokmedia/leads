@@ -39,8 +39,8 @@ class _LogoTitle extends StatelessWidget {
       height: 46.h,
       width: 139.w,
       child: Image.asset(
-        "assets/Images/home/logo_leads.png",
-        fit: BoxFit.cover,
+        "assets/branding/nextlead_wordmark.webp",
+        fit: BoxFit.contain,
         errorBuilder: (_, _, _) => Text(
           'Next Leads',
           style: AppTextStyles.poppins(

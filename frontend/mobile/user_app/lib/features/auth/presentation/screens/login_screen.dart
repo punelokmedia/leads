@@ -77,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // ── Logo ──
                 Image.asset(
-                  'assets/Images/login/lead_logo.png',
+                  'assets/branding/nextlead_wordmark.webp',
                   width: 150.w,
                   errorBuilder: (_, _, _) => Icon(
                     Icons.storefront_rounded,

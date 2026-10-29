@@ -80,6 +80,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/branding/
     - .env.local
     - assets/Images/home/
     - assets/Icons/svg/
@@ -96,5 +97,6 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/Icons/appIcon/nextLeads_logo.png"
+  image_path: "assets/branding/nextlead_arrow.png"
   remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"

@@ -13,7 +13,7 @@ class AuthLogo extends StatelessWidget {
     height: 99.h,
     alignment: Alignment.center,
     child: Image.asset(
-      'assets/Images/home/logo_leads.png',
+      'assets/branding/nextlead_wordmark.webp',
       fit: BoxFit.contain,
       errorBuilder: (_, _, _) => Text(
         'Next Leads',

@@ -11,9 +11,14 @@ class HomeBannerCarousel extends StatefulWidget {
 
 class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   static const _images = [
-    'assets/Images/home/Banner_1.png',
-    'assets/Images/home/Banner_2.png',
-    'assets/Images/home/Banner_3.png',
+    'assets/branding/hero.webp',
+    'assets/branding/steps.webp',
+    'assets/branding/dashboard.webp',
+  ];
+  static const _titles = [
+    'Find the leads.\nBuild real business.',
+    'Find your next\nproject with NextLead.',
+    'Ready to grow\nyour business?',
   ];
   final _pageController = PageController();
   Timer? _timer;
@@ -60,11 +65,34 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                 controller: _pageController,
                 itemCount: _images.length,
                 onPageChanged: (page) => setState(() => _currentPage = page),
-                itemBuilder: (context, index) => Image.asset(
-                  _images[index],
-                  fit: BoxFit.contain,
-                  semanticLabel:
-                      'Home banner ${index + 1} of ${_images.length}',
+                itemBuilder: (context, index) => ColoredBox(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            _titles[index],
+                            style: TextStyle(
+                              fontSize: 18.0,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Image.asset(
+                          _images[index],
+                          fit: BoxFit.contain,
+                          excludeFromSemantics: true,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
