@@ -1,14 +1,12 @@
-// ignore_for_file: use_build_context_synchronously
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:user_app/app/app_router.dart';
 import 'package:user_app/features/auth/shared/auth_providers.dart';
-
-// Ensure your secure storage provider is imported (adjust path if needed)
+import 'package:video_player/video_player.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -17,127 +15,87 @@ class SplashScreen extends ConsumerStatefulWidget {
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _progressController;
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  late final VideoPlayerController _video;
+  Timer? _startupTimeout;
+  bool _leaving = false;
 
   @override
   void initState() {
     super.initState();
-
-    _progressController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    );
-
-    _progressController.forward();
-    _initializeApp();
+    _video = VideoPlayerController.asset('assets/videos/nextlead_intro.mp4');
+    _video.addListener(_onVideoChanged);
+    // Continue if the device cannot load or play the intro.
+    _startupTimeout = Timer(const Duration(seconds: 15), _continueIntoApp);
+    unawaited(_playIntro());
   }
 
-  @override
-  void dispose() {
-    _progressController.dispose();
-    super.dispose();
+  Future<void> _playIntro() async {
+    try {
+      await _video.initialize();
+      if (!mounted || _leaving) return;
+      await _video.setLooping(false);
+      await _video.setVolume(0);
+      if (!mounted || _leaving) return;
+      setState(() {});
+      await _video.play();
+    } catch (_) {
+      await _continueIntoApp();
+    }
   }
 
-  Future<void> _initializeApp() async {
-    // Wait for the animation duration
-    await Future.delayed(const Duration(seconds: 3));
+  void _onVideoChanged() {
+    final value = _video.value;
+    if (value.hasError || value.isCompleted) {
+      unawaited(_continueIntoApp());
+    }
+  }
 
-    if (!mounted) return;
-
-    // 1. Check Secure Storage for the Token
+  Future<void> _continueIntoApp() async {
+    if (!mounted || _leaving) return;
+    _leaving = true;
+    _startupTimeout?.cancel();
     final secureStorage = ref.read(secureStorageProvider);
     final token = await secureStorage.read(key: 'auth_token');
-
-    // 2. If token exists, route to Home
+    if (!mounted) return;
     if (token != null && token.isNotEmpty) {
       context.go(AppRouter.homePath);
       return;
     }
-
-    // 3. Normal Flow (No token found)
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+    context.go(hasSeenOnboarding ? AppRouter.login : AppRouter.onboardingPath);
+  }
 
-    if (!hasSeenOnboarding) {
-      context.go(AppRouter.onboardingPath);
-    } else {
-      context.go(AppRouter.login);
-    }
+  @override
+  void dispose() {
+    _startupTimeout?.cancel();
+    _video.removeListener(_onVideoChanged);
+    unawaited(_video.dispose());
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Stack(
-        children: [
-          Positioned(
-            bottom: 60.h,
-            left: 0,
-            right: 0,
-            child: Image.asset(
-              'assets/Images/login/city_splash.png',
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
-            ),
-          ),
-
-          // ── 2. Content & Loading Bar (Top Layer) ──
-          SafeArea(
-            child: Column(
-              children: [
-                const Spacer(flex: 2),
-
-                // ── Logo ──
-                Center(
-                  child: Image.asset(
-                    'assets/branding/nextlead_wordmark.webp',
-                    width: 236.w,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.high,
-                    errorBuilder: (_, _, _) => Icon(
-                      Icons.storefront_rounded,
-                      size: 80.r,
-                      color: const Color(0xFF38159E),
-                    ),
-                  ),
+      backgroundColor: Colors.white,
+      body: SizedBox.expand(
+        child: _video.value.isInitialized
+            ? FittedBox(
+                fit: BoxFit.contain,
+                child: SizedBox(
+                  width: _video.value.size.width,
+                  height: _video.value.size.height,
+                  child: VideoPlayer(_video),
                 ),
-
-                const Spacer(flex: 4),
-
-                AnimatedBuilder(
-                  animation: _progressController,
-                  builder: (context, child) {
-                    return Container(
-                      width: 180.w,
-                      height: 6.h,
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor: _progressController.value,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF38159E),
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+              )
+            : Center(
+                child: Image.asset(
+                  'assets/branding/nextlead_wordmark.webp',
+                  width: 236,
                 ),
-                SizedBox(height: 15.h),
-              ],
-            ),
-          ),
-        ],
+              ),
       ),
     );
   }

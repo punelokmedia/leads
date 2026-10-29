@@ -53,6 +53,7 @@ dependencies:
   geolocator: ^14.0.2
   geocoding: ^4.0.0
   package_info_plus: ^9.0.1
+  video_player: ^2.14.1
   
 
 dev_dependencies:
@@ -80,6 +81,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/videos/nextlead_intro.mp4
     - assets/branding/
     - .env.local
     - assets/Images/home/
@@ -97,6 +99,9 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/branding/nextlead_arrow.png"
+  image_path: "assets/branding/nextlead_app_icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/branding/nextlead_app_icon_foreground.png"
+  adaptive_icon_foreground_inset: 0
   remove_alpha_ios: true
   background_color_ios: "#FFFFFF"
