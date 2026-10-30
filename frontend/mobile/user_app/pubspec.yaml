@@ -83,6 +83,7 @@ flutter:
   assets:
     - assets/videos/nextlead_intro.mp4
     - assets/branding/
+    - assets/Nextlead Mobile  App Asetes/
     - .env.local
     - assets/Images/home/
     - assets/Icons/svg/

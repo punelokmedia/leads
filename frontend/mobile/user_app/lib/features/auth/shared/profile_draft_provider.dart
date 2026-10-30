@@ -8,6 +8,7 @@ class ProfileDraft {
   final String city;
   final String cityId;
   final String address;
+  final String referralCode;
   final String workType;
   final List<String> categories;
 
@@ -19,6 +20,7 @@ class ProfileDraft {
     this.cityId = '',
     this.workType = '',
     this.address = '',
+    this.referralCode = '',
     this.categories = const [],
   });
 
@@ -27,8 +29,9 @@ class ProfileDraft {
     String? email,
     String? businessName,
     String? city,
-    String? cityId, 
+    String? cityId,
     String? address,
+    String? referralCode,
     String? workType,
     List<String>? categories,
   }) {
@@ -37,10 +40,11 @@ class ProfileDraft {
       email: email ?? this.email,
       businessName: businessName ?? this.businessName,
       city: city ?? this.city,
-      cityId: cityId ?? this.cityId, 
+      cityId: cityId ?? this.cityId,
       workType: workType ?? this.workType,
       categories: categories ?? this.categories,
       address: address ?? this.address,
+      referralCode: referralCode ?? this.referralCode,
     );
   }
 }
@@ -53,9 +57,10 @@ class ProfileDraftNotifier extends StateNotifier<ProfileDraft> {
     required String email,
     required String businessName,
     required String city,
-    String cityId = '', 
+    String cityId = '',
     required String workType,
     required String address,
+    String referralCode = '',
   }) {
     state = state.copyWith(
       fullName: fullName,
@@ -65,6 +70,7 @@ class ProfileDraftNotifier extends StateNotifier<ProfileDraft> {
       cityId: cityId.isNotEmpty ? cityId : state.cityId,
       workType: workType,
       address: address,
+      referralCode: referralCode,
     );
   }
 
@@ -80,5 +86,5 @@ class ProfileDraftNotifier extends StateNotifier<ProfileDraft> {
 
 final profileDraftProvider =
     StateNotifierProvider<ProfileDraftNotifier, ProfileDraft>((ref) {
-  return ProfileDraftNotifier();
-});
+      return ProfileDraftNotifier();
+    });

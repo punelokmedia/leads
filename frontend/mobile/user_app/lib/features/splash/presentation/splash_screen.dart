@@ -80,8 +80,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SizedBox.expand(
-        child: _video.value.isInitialized
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          _video.value.isInitialized
             ? FittedBox(
                 fit: BoxFit.contain,
                 child: SizedBox(
@@ -96,6 +98,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   width: 236,
                 ),
               ),
+          Positioned(
+            left: 32,
+            right: 32,
+            bottom: MediaQuery.sizeOf(context).height * 0.09,
+            child: SafeArea(
+              top: false,
+              child: Text(
+                'Discover real business opportunities\nand connect with genuine customers.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF9299AA),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  height: 1.45,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

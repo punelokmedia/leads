@@ -1,6 +1,13 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import 'support_chat_view.dart';
+
+import '../../../payments/presentation/widgets/wallet_card.dart';
+import 'support_tickets_screen.dart';
 
 class LiveSupportScreen extends StatefulWidget {
   final Dio dio;
@@ -32,16 +39,6 @@ class _LiveSupportScreenState extends State<LiveSupportScreen>
   String? ticketStatus;
   bool humanRequested = false, humanActive = false;
   String helpIssue = 'PAYMENT';
-  static const helpOptions = [
-    'PAYMENT',
-    'WALLET',
-    'LEAD_QUALITY',
-    'DOWNLOAD',
-    'MEMBERSHIP',
-    'REFERRAL',
-    'ACCOUNT',
-    'OTHER',
-  ];
 
   @override
   void initState() {
@@ -215,213 +212,78 @@ class _LiveSupportScreenState extends State<LiveSupportScreen>
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(
-        widget.ticket == null
-            ? 'Chat with Support'
-            : '${widget.ticket!['ticketId']}',
+  Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
+    value: SystemUiOverlayStyle.dark,
+    child: SupportChatView(
+      messages: messages,
+      input: input,
+      loading: loading,
+      sending: sending,
+      signedIn: widget.signedIn,
+      hasOlder: hasOlder,
+      error: error,
+      showTopics:
+          widget.ticket == null ||
+          (!humanRequested && !humanActive && ticketStatus != 'COMPLETED'),
+      status: humanActive
+          ? 'A representative has replied'
+          : humanRequested
+          ? 'Waiting for a representative'
+          : 'NextLead Support',
+      send: send,
+      refresh: () => load(),
+      older: () => load(older: true),
+      signIn: widget.signIn,
+      tickets: () => Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => SupportTicketsScreen(
+            dio: widget.dio,
+            signedIn: widget.signedIn,
+            signIn: widget.signIn,
+          ),
+        ),
       ),
-      actions: [
-        if (widget.signedIn)
-          IconButton(
-            onPressed: () => load(),
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh messages',
-          ),
-      ],
+      topic: (choice, label) {
+        if (widget.ticket != null) {
+          automatedHelp(choice);
+        } else {
+          input.text = label;
+        }
+      },
+      wallet: !widget.signedIn
+          ? const SizedBox.shrink()
+          : Consumer(
+              builder: (context, ref, _) {
+                final wallet = ref.watch(walletProvider);
+                return OutlinedButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => Scaffold(
+                        appBar: AppBar(title: const Text('Wallet')),
+                        body: const SingleChildScrollView(
+                          padding: EdgeInsets.all(16),
+                          child: WalletCard(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 18,
+                  ),
+                  label: Text(
+                    wallet.when(
+                      data: (data) =>
+                          '\u20b9${((data['balancePaise'] as num? ?? 0) / 100).toStringAsFixed(0)}',
+                      loading: () => '...',
+                      error: (_, _) => 'Wallet',
+                    ),
+                  ),
+                );
+              },
+            ),
     ),
-    body: !widget.signedIn
-        ? Center(
-            child: FilledButton(
-              onPressed: widget.signIn,
-              child: const Text('Sign in to contact support'),
-            ),
-          )
-        : SafeArea(
-            child: Column(
-              children: [
-                if (widget.ticket != null)
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      '${(ticketStatus ?? '${widget.ticket!['status']}').toLowerCase().replaceAll('_', ' ')}\n${widget.ticket!['description']}',
-                    ),
-                  ),
-                const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text(
-                    'Send requests 24/7. Our support team will reply here.',
-                  ),
-                ),
-                if (widget.ticket != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      humanActive
-                          ? 'A human representative has replied in this conversation.'
-                          : humanRequested
-                          ? 'Transferred to human support. A representative will reply here when available.'
-                          : 'Automated support: choose an issue for guidance.',
-                    ),
-                  ),
-                  if (!humanRequested &&
-                      !humanActive &&
-                      ticketStatus != 'COMPLETED')
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButton<String>(
-                              isExpanded: true,
-                              value: helpIssue,
-                              items: helpOptions
-                                  .map(
-                                    (value) => DropdownMenuItem(
-                                      value: value,
-                                      child: Text(
-                                        value.toLowerCase().replaceAll(
-                                          '_',
-                                          ' ',
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: sending
-                                  ? null
-                                  : (value) =>
-                                        setState(() => helpIssue = value!),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: sending
-                                ? null
-                                : () => automatedHelp(helpIssue),
-                            child: const Text('Get help'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (!humanRequested &&
-                      !humanActive &&
-                      ticketStatus != 'COMPLETED')
-                    TextButton(
-                      onPressed: sending ? null : () => automatedHelp('HUMAN'),
-                      child: const Text('Still need help - talk to a human'),
-                    ),
-                ],
-                if (widget.ticket == null)
-                  Wrap(
-                    spacing: 8,
-                    children: ['Payment help', 'Lead quality', 'Account help']
-                        .map(
-                          (topic) => ActionChip(
-                            label: Text(topic),
-                            onPressed: sending
-                                ? null
-                                : () {
-                                    input.text = topic;
-                                  },
-                          ),
-                        )
-                        .toList(),
-                  ),
-                if (error != null)
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ),
-                if (hasOlder)
-                  TextButton(
-                    onPressed: () => load(older: true),
-                    child: const Text('Load earlier messages'),
-                  ),
-                Expanded(
-                  child: loading
-                      ? const Center(child: CircularProgressIndicator())
-                      : messages.isEmpty
-                      ? const Center(child: Text('How can we help you?'))
-                      : ListView(
-                          reverse: true,
-                          padding: const EdgeInsets.all(16),
-                          children: messages.reversed
-                              .map(
-                                (m) => Align(
-                                  alignment: m['sender'] == 'user'
-                                      ? Alignment.centerRight
-                                      : Alignment.centerLeft,
-                                  child: Card(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(14),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            m['sender'] == 'user'
-                                                ? 'You'
-                                                : '${m['authorName'] ?? 'Support representative'}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          Text('${m['text']}'),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '${DateTime.tryParse('${m['createdAt']}')?.toLocal() ?? ''}${m['sender'] == 'user' ? (m['readAt'] != null ? ' · Read by support' : ' · Sent') : ''}',
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodySmall,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: input,
-                          enabled: !sending,
-                          maxLength: 2000,
-                          onSubmitted: (_) => send(),
-                          decoration: const InputDecoration(
-                            hintText: 'Type your message',
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: sending ? null : send,
-                        tooltip: 'Send message',
-                        icon: sending
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.send),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
   );
 }

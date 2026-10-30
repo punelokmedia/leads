@@ -1,4 +1,13 @@
-import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
+import 'home_dashboard.dart';
+import 'category_leads_page.dart';
+import 'all_categories_page.dart';
+import 'lead_details_page.dart';
+import 'profile_dashboard.dart';
+import 'business_details_page.dart';
+import '../auth/shared/auth_providers.dart';
+import 'saved_leads_screen.dart';
+import 'package:go_router/go_router.dart';
+import '../../app/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:user_app/features/payments/presentation/widgets/wallet_card.dart';
@@ -17,7 +26,7 @@ const _gradient = LinearGradient(
   end: Alignment.topRight,
 );
 String money(num amount) =>
-    '₹${NumberFormat.decimalPattern('en_IN').format(amount)}';
+    'â‚¹${NumberFormat.decimalPattern('en_IN').format(amount)}';
 
 class PreviewApp extends StatefulWidget {
   const PreviewApp({super.key});
@@ -35,7 +44,7 @@ class _PreviewAppState extends State<PreviewApp> {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'NextLeads • Test mode',
+    title: 'NextLeads â€¢ Test mode',
     debugShowCheckedModeBanner: false,
     theme: AppTheme.light,
     darkTheme: AppTheme.dark,
@@ -51,7 +60,7 @@ class _PreviewAppState extends State<PreviewApp> {
               child: Padding(
                 padding: const EdgeInsets.all(6),
                 child: Text(
-                  'TEST MODE • Sample data • No real charges',
+                  'TEST MODE â€¢ Sample data â€¢ No real charges',
                   textAlign: TextAlign.center,
                   style: Theme.of(
                     context,
@@ -81,7 +90,8 @@ class _PreviewHomeState extends State<PreviewHome> {
   String city = 'All Cities', query = '', tab = 'All';
   int? category;
   bool savedOnly = false;
-  bool showFeaturePrompt = true;
+  final Set<String> _savedCategories = {};
+  bool showFeaturePrompt = false;
   PreviewStore get store => widget.store;
   List<PreviewLead> get filtered => store.leads
       .where(
@@ -145,6 +155,8 @@ class _PreviewHomeState extends State<PreviewHome> {
             category = index;
             page = 1;
             tab = 'All';
+            savedOnly = false;
+            query = '';
           });
         },
       ),
@@ -244,39 +256,87 @@ class _PreviewHomeState extends State<PreviewHome> {
       builder: (context, _) => Scaffold(
         // The preview banner already handles the top system inset.
         primary: store.isLive,
-        appBar: AppBar(
-          primary: store.isLive,
-          toolbarHeight: 40,
-          leading: page == 0
-              ? null
-              : BackButton(onPressed: () => setState(() => page = 0)),
-          centerTitle: false,
-          title: page == 0
-              ? Image.asset(
-                  'assets/branding/nextlead_arrow.png',
-                  width: 40,
-                  height: 30,
-                  fit: BoxFit.contain,
-                  semanticLabel: 'NextLeads',
-                )
-              : Text(
-                  ['Home', 'All Leads', 'Payments', 'Profile', 'More'][page],
-                ),
-          actions: [
-            if (page == 0)
-              IconButton(
-                tooltip: 'My profile',
-                icon: const Icon(Icons.account_circle_outlined),
-                onPressed: () => setState(() => page = 3),
+        backgroundColor: const Color(0xFFF7FAFF),
+        appBar: page == 0 || page == 5 || page == 3 || page == 1
+            ? null
+            : AppBar(
+                primary: store.isLive,
+                toolbarHeight: 40,
+                leading: page == 0
+                    ? null
+                    : BackButton(onPressed: () => setState(() => page = 0)),
+                centerTitle: false,
+                title: page == 0
+                    ? Image.asset(
+                        'assets/branding/nextlead_arrow.png',
+                        width: 40,
+                        height: 30,
+                        fit: BoxFit.contain,
+                        semanticLabel: 'NextLeads',
+                      )
+                    : Text(
+                        [
+                          'Home',
+                          'All Leads',
+                          'Payments',
+                          'Profile',
+                          'More',
+                          'Saved',
+                        ][page],
+                      ),
+                actions: [
+                  if (page == 3)
+                    IconButton(
+                      tooltip: 'More options',
+                      onPressed: () => setState(() => page = 4),
+                      icon: const Icon(Icons.more_horiz),
+                    ),
+                  if (page == 0)
+                    IconButton(
+                      tooltip: 'My profile',
+                      icon: const Icon(Icons.account_circle_outlined),
+                      onPressed: () => setState(() => page = 3),
+                    ),
+                  if (page == 0)
+                    IconButton(
+                      tooltip: 'Notifications',
+                      icon: Badge(
+                        isLabelVisible: store.unread,
+                        child: const Icon(Icons.notifications_outlined),
+                      ),
+                      onPressed: () {
+                        store.markRead();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => NotificationsPreview(store: store),
+                          ),
+                        );
+                      },
+                    ),
+                  if (page == 1)
+                    IconButton(
+                      tooltip: 'Filter leads',
+                      onPressed: filters,
+                      icon: const Icon(Icons.filter_alt_outlined),
+                    ),
+                ],
               ),
-            if (page == 0)
-              IconButton(
-                tooltip: 'Notifications',
-                icon: Badge(
-                  isLabelVisible: store.unread,
-                  child: const Icon(Icons.notifications_outlined),
-                ),
-                onPressed: () {
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: switch (page) {
+              0 => home(),
+              1 => leads(),
+              2 => payments(),
+              3 => profile(),
+              5 => SavedLeadsScreen(
+                store: store,
+                savedCategories: _savedCategories,
+                onCategoriesChanged: () => setState(() {}),
+                onBack: () => setState(() => page = 3),
+                onWallet: () => setState(() => page = 2),
+                onNotifications: () {
                   store.markRead();
                   Navigator.push(
                     context,
@@ -285,127 +345,119 @@ class _PreviewHomeState extends State<PreviewHome> {
                     ),
                   );
                 },
+                onLead: (lead) => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        LeadDetailsPreview(lead: lead, store: store),
+                  ),
+                ),
+                onCategory: (name) => setState(() {
+                  category = store.categories.indexWhere(
+                    (item) => item.name == name,
+                  );
+                  page = 1;
+                  tab = 'All';
+                  savedOnly = false;
+                  city = 'All Cities';
+                  query = '';
+                }),
               ),
-            if (page == 1)
-              IconButton(
-                tooltip: 'Filter leads',
-                onPressed: filters,
-                icon: const Icon(Icons.filter_alt_outlined),
-              ),
-          ],
-        ),
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: switch (page) {
-              0 => Stack(
-                children: [
-                  Positioned.fill(child: home()),
-                  if (showFeaturePrompt && store.leads.isNotEmpty)
-                    Positioned(
-                      top: 8,
-                      left: 16,
-                      right: 16,
-                      child: Dismissible(
-                        key: const ValueKey('feature-prompt'),
-                        direction: DismissDirection.horizontal,
-                        onDismissed: (_) =>
-                            setState(() => showFeaturePrompt = false),
-                        child: Card(
-                          elevation: 6,
-                          color: Theme.of(context).colorScheme.surface,
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute<void>(
-                                builder: (_) => LeadDetailsPreview(
-                                  lead: store.leads.first,
-                                  store: store,
-                                ),
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 8, 8, 16),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.tips_and_updates_outlined,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          'Explore your first lead',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          'Tap to see project details. Swipe left or right to dismiss.',
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Dismiss feature prompt',
-                                    onPressed: () => setState(
-                                      () => showFeaturePrompt = false,
-                                    ),
-                                    icon: const Icon(Icons.close, size: 20),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              1 => leads(),
-              2 => payments(),
-              3 => profile(),
               _ => more(),
             },
           ),
         ),
-        bottomNavigationBar: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            NavigationBar(
-              selectedIndex: page,
-              onDestinationSelected: (i) => setState(() => page = i),
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  label: 'Home',
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Row(
+              children: [
+                _homeNav(
+                  Icons.home_rounded,
+                  'Home',
+                  page == 0,
+                  () => setState(() {
+                    page = 0;
+                    savedOnly = false;
+                    tab = 'All';
+                  }),
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.description_outlined),
-                  label: 'Leads',
+                _homeNav(
+                  Icons.description_outlined,
+                  'My Leads',
+                  page == 1,
+                  () => setState(() {
+                    page = 1;
+                    savedOnly = false;
+                    tab = 'Joined';
+                  }),
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.credit_card),
-                  label: 'Payments',
+                _homeNav(
+                  page == 5
+                      ? Icons.shopping_cart_outlined
+                      : Icons.favorite_border_rounded,
+                  (page == 5 || page == 3) ? 'Cart' : 'Saved',
+                  false,
+                  () {
+                    if (page == 5 || page == 3) {
+                      context.push(AppRouter.cartPath);
+                      return;
+                    }
+                    setState(() {
+                      page = 5;
+                      savedOnly = true;
+                      tab = 'All';
+                    });
+                  },
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  label: 'Profile',
+                _homeNav(
+                  Icons.receipt_long_outlined,
+                  'Membership',
+                  false,
+                  () => context.push(AppRouter.completePaymentPath),
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.more_horiz),
-                  label: 'More',
+                _homeNav(
+                  Icons.person_outline_rounded,
+                  'Profile',
+                  page == 3 || page == 5,
+                  () => setState(() {
+                    page = 3;
+                    savedOnly = false;
+                  }),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Widget _homeNav(
+    IconData icon,
+    String label,
+    bool selected,
+    VoidCallback action,
+  ) => Expanded(
+    child: InkWell(
+      onTap: action,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 26, color: selected ? homeBlue : homeMuted),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: selected ? homeBlue : homeMuted,
+              ),
             ),
           ],
         ),
@@ -413,85 +465,42 @@ class _PreviewHomeState extends State<PreviewHome> {
     ),
   );
 
-  Widget home() => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      const HomeBannerCarousel(),
-      const SizedBox(height: 12),
-      FilledButton.icon(
-        onPressed: () => setState(() {
-          page = 1;
-          tab = 'New';
-        }),
-        icon: const Icon(Icons.bolt),
-        label: const Text('Get Premium Leads'),
-      ),
-      const SizedBox(height: 8),
-      Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: filters,
-              icon: const Icon(Icons.location_on_outlined),
-              label: Text(city),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: categories,
-              icon: const Icon(Icons.grid_view),
-              label: const Text('All Categories'),
-            ),
-          ),
-        ],
-      ),
-      section('Top Categories', categories),
-      LayoutBuilder(
-        builder: (context, size) => GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: store.categories.length.clamp(0, 12),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: size.maxWidth < 350 ? 3 : 4,
-            mainAxisExtent: 108,
-          ),
-          itemBuilder: (_, i) => InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => setState(() {
-              category = i;
-              tab = 'All';
-              page = 1;
-            }),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CategoryIcon(index: i, store: store),
-                const SizedBox(height: 6),
-                Text(
-                  store.categories[i].name,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  style: const TextStyle(fontSize: 11),
-                ),
-              ],
-            ),
-          ),
+  Widget home() => NextLeadDashboard(
+    store: store,
+    leads: filtered,
+    city: city,
+    category: category,
+    onSearch: (value) => setState(() => query = value),
+    onCategory: (value) => setState(() {
+      category = value;
+      page = 1;
+      tab = 'All';
+      savedOnly = false;
+      query = '';
+    }),
+    onFilters: filters,
+    onCategories: categories,
+    onNotifications: () {
+      store.markRead();
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => NotificationsPreview(store: store),
         ),
+      );
+    },
+    onExplore: () => setState(() {
+      page = 1;
+      tab = 'All';
+      savedOnly = false;
+    }),
+    onLead: (lead) => Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => LeadDetailsPreview(lead: lead, store: store),
       ),
-      section(
-        "Today’s Top Leads",
-        () => setState(() {
-          page = 1;
-          tab = 'All';
-        }),
-      ),
-      if (filtered.isEmpty) const EmptyLeads(),
-      ...filtered.take(3).map((l) => LeadPreviewCard(lead: l, store: store)),
-      TrustStrip(store: store),
-    ],
+    ),
   );
-
   Widget section(String title, VoidCallback action) => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
@@ -505,75 +514,38 @@ class _PreviewHomeState extends State<PreviewHome> {
     ],
   );
 
-  Widget leads() => Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.all(12),
-        child: TextField(
-          onChanged: (v) => setState(() => query = v),
-          decoration: const InputDecoration(
-            hintText: 'Search project, city or lead ID',
-            prefixIcon: Icon(Icons.search),
-            border: OutlineInputBorder(),
-          ),
+  Widget leads() => CategoryLeadsPage(
+    key: ValueKey('category-$category'),
+    store: store,
+    leads: filtered,
+    category: category,
+    city: city,
+    query: query,
+    tab: tab,
+    onBack: () => setState(() {
+      page = 0;
+      savedOnly = false;
+    }),
+    onSaved: () => setState(() => page = 5),
+    onNotifications: () {
+      store.markRead();
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => NotificationsPreview(store: store),
         ),
+      );
+    },
+    onFilters: filters,
+    onSearch: (value) => setState(() => query = value),
+    onTab: (value) => setState(() => tab = value),
+    onLead: (lead) => Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => LeadDetailsPreview(lead: lead, store: store),
       ),
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: ['All', 'New', 'Joined', 'Closed']
-              .map(
-                (t) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: ChoiceChip(
-                    label: Text(t),
-                    selected: tab == t,
-                    onSelected: (_) => setState(() => tab = t),
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-      ),
-      if (city != 'All Cities' || category != null || savedOnly)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  [
-                    city,
-                    if (category != null) store.categories[category!].name,
-                    if (savedOnly) 'Saved only',
-                  ].join(' • '),
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-              TextButton(
-                onPressed: () => setState(() {
-                  city = 'All Cities';
-                  category = null;
-                  savedOnly = false;
-                }),
-                child: const Text('Clear'),
-              ),
-            ],
-          ),
-        ),
-      Expanded(
-        child: filtered.isEmpty
-            ? const EmptyLeads()
-            : ListView(
-                padding: const EdgeInsets.all(12),
-                children: filtered
-                    .map((l) => LeadPreviewCard(lead: l, store: store))
-                    .toList(),
-              ),
-      ),
-    ],
+    ),
   );
-
   Widget payments() => ListView(
     padding: const EdgeInsets.all(16),
     children: [
@@ -595,7 +567,7 @@ class _PreviewHomeState extends State<PreviewHome> {
             ),
             title: Text(r.title),
             subtitle: Text(
-              '${r.leadId} • ${store.isLive ? r.status : 'Test payment successful'}',
+              '${r.leadId} â€¢ ${store.isLive ? r.status : 'Test payment successful'}',
             ),
             trailing: Text(money(r.fee)),
             onTap: () => showDialog<void>(
@@ -619,123 +591,127 @@ class _PreviewHomeState extends State<PreviewHome> {
     ],
   );
 
-  Widget profile() => ListView(
-    padding: const EdgeInsets.all(20),
-    children: [
-      const CircleAvatar(radius: 36, child: Icon(Icons.person, size: 40)),
-      const SizedBox(height: 12),
-      Text(
-        store.profile['Full name']!,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-      ),
-      Text(
-        '${store.profile['Email']}\n${store.profile['City']}, ${store.profile['State']}',
-        textAlign: TextAlign.center,
-      ),
-      const SizedBox(height: 12),
-      FilledButton.icon(
-        onPressed: () {
-          if (store.isLive && store.profile['Full name']!.isEmpty) {
-            store.account?.call(context);
-            return;
-          }
-          Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) => EditProfilePreview(store: store),
-            ),
-          );
-        },
-        icon: const Icon(Icons.edit_outlined),
-        label: const Text('Edit personal details'),
-      ),
-      ListTile(
-        leading: const Icon(Icons.business_outlined),
-        title: Text(store.profile['Business name']!),
-        subtitle: Text(store.profile['Service category']!),
-      ),
-      ListTile(
-        leading: const Icon(Icons.phone_outlined),
-        title: Text(store.profile['Phone']!),
-      ),
-      const SizedBox(height: 20),
-      Card(
-        child: ListTile(
-          title: const Text('Joined leads'),
-          trailing: Text('${store.leads.where((l) => l.joined).length}'),
-          onTap: () => setState(() {
-            page = 1;
-            tab = 'Joined';
-            city = 'All Cities';
-            category = null;
-            savedOnly = false;
-          }),
-        ),
-      ),
-      Card(
-        child: ListTile(
-          title: const Text('Saved leads'),
-          trailing: Text('${store.leads.where((l) => l.saved).length}'),
-          onTap: () => setState(() {
-            page = 1;
-            tab = 'All';
-            savedOnly = true;
-            city = 'All Cities';
-            category = null;
-          }),
-        ),
-      ),
-      const SizedBox(height: 16),
-      if (store is LiveStore)
-        LiveReferralSection(dio: (store as LiveStore).dio)
-      else
-        const ReferralSection(),
-      const SizedBox(height: 16),
-      if (!store.isLive)
-        const Text(
-          'This sample profile is for reviewing the mockup. Your real account is not used.',
-        ),
-      if (store.isLive) const Text('Saved leads are kept for this session.'),
-    ],
-  );
+  void _editAccount() {
+    if (store.isLive && (store.profile['Full name'] ?? '').isEmpty) {
+      store.account?.call(context);
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => EditProfilePreview(store: store)),
+    );
+  }
 
+  Widget profile() => Consumer(
+    builder: (context, ref, _) => NextLeadProfile(
+      store: store,
+      onEdit: _editAccount,
+      onWallet: () => setState(() => page = 2),
+      onNotifications: () {
+        store.markRead();
+        Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => NotificationsPreview(store: store),
+          ),
+        );
+      },
+      onMembership: () => context.push(AppRouter.completePaymentPath),
+      onSaved: () => setState(() {
+        page = 5;
+      }),
+      onLeads: () => setState(() {
+        page = 1;
+        tab = 'Joined';
+        city = 'All Cities';
+        category = null;
+        savedOnly = false;
+        query = '';
+      }),
+      onSupport: () => openSupport(context, store),
+      onPassword: () => context.push(AppRouter.changePasswordPath),
+      onPreferences: () => context.push(AppRouter.settingPath),
+      onTerms: () => showModalBottomSheet<void>(
+        context: context,
+        builder: (sheetContext) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Terms & Conditions'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.push(AppRouter.termsPath);
+                },
+              ),
+              ListTile(
+                title: const Text('Privacy Policy'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.push(AppRouter.privacyPath);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      onLogout: () async {
+        await ref.read(authControllerProvider.notifier).logout();
+        if (context.mounted) context.go(AppRouter.login);
+      },
+      onMore: () => setState(() => page = 4),
+    ),
+  );
   Widget more() => ListView(
     padding: const EdgeInsets.all(16),
     children: [
       ListTile(
         leading: const Icon(Icons.account_balance_wallet_outlined),
         title: const Text('Wallet'),
-        subtitle: Text(store.isLive ? 'Available balance' : 'Sample balance · Frontend preview'),
+        subtitle: Text(
+          store.isLive
+              ? 'Available balance'
+              : 'Sample balance Â· Frontend preview',
+        ),
         trailing: store.isLive
             ? Consumer(
-                builder: (context, ref, _) => ref.watch(walletProvider).when(
-                  loading: () => const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  error: (_, _) => TextButton(
-                    onPressed: () => ref.invalidate(walletProvider),
-                    child: const Text('Retry'),
-                  ),
-                  data: (data) => Text(
-                    '₹${((data['balancePaise'] as num) / 100).toStringAsFixed(2)}',
-                  ),
-                ),
+                builder: (context, ref, _) => ref
+                    .watch(walletProvider)
+                    .when(
+                      loading: () => const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      error: (_, _) => TextButton(
+                        onPressed: () => ref.invalidate(walletProvider),
+                        child: const Text('Retry'),
+                      ),
+                      data: (data) => Text(
+                        'â‚¹${((data['balancePaise'] as num) / 100).toStringAsFixed(2)}',
+                      ),
+                    ),
               )
-            : const Text('₹0'),
+            : const Text('â‚¹0'),
         onTap: () => setState(() => page = 2),
       ),
       ListTile(
         leading: const Icon(Icons.card_giftcard_outlined),
         title: const Text('Refer & Earn'),
-        subtitle: Text(store.isLive ? 'Your invitation code and referral activity' : 'Sample referral rewards: ₹100'),
+        subtitle: Text(
+          store.isLive
+              ? 'Your invitation code and referral activity'
+              : 'Sample referral rewards: â‚¹100',
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute<void>(
             builder: (_) => Scaffold(
-              appBar: AppBar(title: const Text('Refer & Earn')),
+              backgroundColor: const Color(0xFFF7FAFF),
+              appBar: page == 0
+                  ? null
+                  : AppBar(title: const Text('Refer & Earn')),
               body: SingleChildScrollView(
                 padding: EdgeInsets.all(16),
                 child: store is LiveStore
@@ -775,7 +751,7 @@ class _PreviewHomeState extends State<PreviewHome> {
           child: Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Preview checklist\n\n• Filter by city and category\n• Browse All / New / Joined / Closed\n• Save a lead and copy its summary\n• Try successful, failed and cancelled payments\n• Check unlocked sample contact and receipt\n• Send a simulated support message\n• Reset to repeat the test',
+              'Preview checklist\n\nâ€¢ Filter by city and category\nâ€¢ Browse All / New / Joined / Closed\nâ€¢ Save a lead and copy its summary\nâ€¢ Try successful, failed and cancelled payments\nâ€¢ Check unlocked sample contact and receipt\nâ€¢ Send a simulated support message\nâ€¢ Reset to repeat the test',
             ),
           ),
         ),
@@ -816,15 +792,16 @@ class _PreviewHomeState extends State<PreviewHome> {
   );
 }
 
-class EditProfilePreview extends StatefulWidget {
+class LegacyEditProfilePreview extends StatefulWidget {
   final PreviewStore store;
-  const EditProfilePreview({super.key, required this.store});
+  const LegacyEditProfilePreview({super.key, required this.store});
 
   @override
-  State<EditProfilePreview> createState() => _EditProfilePreviewState();
+  State<LegacyEditProfilePreview> createState() =>
+      _LegacyEditProfilePreviewState();
 }
 
-class _EditProfilePreviewState extends State<EditProfilePreview> {
+class _LegacyEditProfilePreviewState extends State<LegacyEditProfilePreview> {
   bool saving = false;
   final formKey = GlobalKey<FormState>();
   late final controllers = {
@@ -1102,28 +1079,28 @@ class TrustStrip extends StatelessWidget {
               const Text('Support inbox available 24/7'),
             ]
           : const [
-              Text('✦ Verified & quality leads'),
-              Text('⌖ Pan India • 1000+ cities'),
-              Text('✓ Secure platform'),
+              Text('âœ¦ Verified & quality leads'),
+              Text('âŒ– Pan India â€¢ 1000+ cities'),
+              Text('âœ“ Secure platform'),
               Text('Trusted by professionals'),
             ],
     ),
   );
 }
 
-class CategoryPreview extends StatefulWidget {
+class LegacyCategoryPreview extends StatefulWidget {
   final PreviewStore store;
   final ValueChanged<int> onSelect;
-  const CategoryPreview({
+  const LegacyCategoryPreview({
     super.key,
     required this.store,
     required this.onSelect,
   });
   @override
-  State<CategoryPreview> createState() => _CategoryPreviewState();
+  State<LegacyCategoryPreview> createState() => _LegacyCategoryPreviewState();
 }
 
-class _CategoryPreviewState extends State<CategoryPreview> {
+class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
   PreviewStore get store => widget.store;
   bool pricing = true;
   @override
@@ -1318,10 +1295,10 @@ class _CategoryPreviewState extends State<CategoryPreview> {
   );
 }
 
-class LeadDetailsPreview extends StatelessWidget {
+class LegacyLeadDetailsPreview extends StatelessWidget {
   final PreviewLead lead;
   final PreviewStore store;
-  const LeadDetailsPreview({
+  const LegacyLeadDetailsPreview({
     super.key,
     required this.lead,
     required this.store,
@@ -1403,7 +1380,7 @@ class LeadDetailsPreview extends StatelessWidget {
               builder: (dialogContext) => AlertDialog(
                 title: Text(store.isLive ? 'Share lead' : 'Share test lead'),
                 content: SelectableText(
-                  '${lead.title}\n${lead.city}, ${lead.state}\nBudget: ${(lead.budgetLabel ?? money(lead.budget))}\n${lead.id}\n${store.isLive ? 'NextLeads' : 'NextLeads preview — sample data'}',
+                  '${lead.title}\n${lead.city}, ${lead.state}\nBudget: ${(lead.budgetLabel ?? money(lead.budget))}\n${lead.id}\n${store.isLive ? 'NextLeads' : 'NextLeads preview â€” sample data'}',
                 ),
                 actions: [
                   TextButton(
@@ -1415,7 +1392,7 @@ class LeadDetailsPreview extends StatelessWidget {
                       await Clipboard.setData(
                         ClipboardData(
                           text:
-                              '${lead.title} • ${lead.city} • ${(lead.budgetLabel ?? money(lead.budget))} • ${lead.id}${store.isLive ? '' : ' • TEST DATA'}',
+                              '${lead.title} â€¢ ${lead.city} â€¢ ${(lead.budgetLabel ?? money(lead.budget))} â€¢ ${lead.id}${store.isLive ? '' : ' â€¢ TEST DATA'}',
                         ),
                       );
                       if (dialogContext.mounted) Navigator.pop(dialogContext);
@@ -1468,7 +1445,7 @@ class LeadDetailsPreview extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '⌖ ${lead.city}, ${lead.state}   •   ${lead.buyers}/${lead.maxBuyers} vendors',
+                      'âŒ– ${lead.city}, ${lead.state}   â€¢   ${lead.buyers}/${lead.maxBuyers} vendors',
                       style: const TextStyle(color: Colors.white),
                     ),
                     const SizedBox(height: 18),
@@ -1561,7 +1538,7 @@ class LeadDetailsPreview extends StatelessWidget {
               ),
               panel(
                 context,
-                'Vendors Joined • ${lead.buyers}/${lead.maxBuyers}',
+                'Vendors Joined â€¢ ${lead.buyers}/${lead.maxBuyers}',
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1588,7 +1565,7 @@ class LeadDetailsPreview extends StatelessWidget {
                   context,
                   store.isLive
                       ? 'Client Contact'
-                      : 'Sample Client Contact • Unlocked',
+                      : 'Sample Client Contact â€¢ Unlocked',
                   SelectableText(
                     store.isLive
                         ? lead.contact
@@ -1779,7 +1756,7 @@ class _SupportPreviewState extends State<SupportPreview> {
           const Padding(
             padding: EdgeInsets.all(12),
             child: Text(
-              '24/7 Support • Simulated replies; messages are not sent.',
+              '24/7 Support â€¢ Simulated replies; messages are not sent.',
             ),
           ),
           Wrap(

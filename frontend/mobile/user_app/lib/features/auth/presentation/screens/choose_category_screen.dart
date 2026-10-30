@@ -34,6 +34,12 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
   bool _applyingReferral = false;
 
   @override
+  void initState() {
+    super.initState();
+    _referralCode.text = ref.read(profileDraftProvider).referralCode;
+  }
+
+  @override
   void dispose() {
     _referralCode.dispose();
     super.dispose();
@@ -67,15 +73,19 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
     if (code.isNotEmpty) {
       setState(() => _applyingReferral = true);
       try {
-        final response = await ref.read(dioProvider).post(
-          'api/v1/referrals/apply',
-          data: {'referralCode': code},
-        );
+        final response = await ref
+            .read(dioProvider)
+            .post('api/v1/referrals/apply', data: {'referralCode': code});
         if (response.data['success'] != true) {
-          throw AppException(response.data['message']?.toString() ?? 'Unable to apply referral code.');
+          throw AppException(
+            response.data['message']?.toString() ??
+                'Unable to apply referral code.',
+          );
         }
       } catch (error) {
-        if (mounted) SnackbarHelper.showError(context, ErrorHandler.handle(error).message);
+        if (mounted) {
+          SnackbarHelper.showError(context, ErrorHandler.handle(error).message);
+        }
         return;
       } finally {
         if (mounted) setState(() => _applyingReferral = false);
@@ -102,18 +112,20 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
           onSuccess: () {
             if (!mounted) return;
             ref.read(authControllerProvider.notifier).clearError();
-            // Keep the draft until Razorpay verification finishes.
-            context.go(AppRouter.homePath);
+            context.go(AppRouter.accountCreatedPath);
           },
         );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authControllerProvider).isLoading || _applyingReferral;
+    final isLoading =
+        ref.watch(authControllerProvider).isLoading || _applyingReferral;
     final categoriesAsync = ref.watch(categoriesProvider);
     ref.listen(authErrorProvider, (previous, next) {
-      if (next != null && next != previous) SnackbarHelper.showError(context, next);
+      if (next != null && next != previous) {
+        SnackbarHelper.showError(context, next);
+      }
     });
 
     if (categoriesAsync.hasValue && !_hasPreselected) {
@@ -182,7 +194,8 @@ class _ChooseCategoryScreenState extends ConsumerState<ChooseCategoryScreen> {
                         enableSuggestions: false,
                         decoration: const InputDecoration(
                           labelText: 'Referral code (optional)',
-                          helperText: 'Have an invite code? Enter it before continuing.',
+                          helperText:
+                              'Have an invite code? Enter it before continuing.',
                           border: OutlineInputBorder(),
                         ),
                       ),

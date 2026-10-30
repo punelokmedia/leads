@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:user_app/features/auth/presentation/screens/account_created_screen.dart';
 import 'package:user_app/features/address/presentation/screens/add_address_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/complete_payment_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/login_screen.dart';
@@ -29,6 +30,7 @@ abstract final class AppRouter {
   static const String splashPath = '/';
   static const String onboardingPath = '/onboarding';
   static const login = '/login';
+  static const String accountCreatedPath = '/account-created';
   static const String verifyNumberPath = '/verify-number';
   static const register = '/register';
   static const String tellUsAboutYourselfPath = '/tell-us-about-yourself';
@@ -74,6 +76,10 @@ abstract final class AppRouter {
       ),
 
       GoRoute(path: login, builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: accountCreatedPath,
+        builder: (context, state) => const AccountCreatedScreen(),
+      ),
       GoRoute(path: register, builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: verifyNumberPath,
