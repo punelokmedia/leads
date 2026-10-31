@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'preview_data.dart';
 
-const homeBlue = Color(0xFF0066FF);
-const homeNavy = Color(0xFF07143D);
-const homeMuted = Color(0xFF7886A5);
+// ── Brand color tokens (new scheme) ──────────────────────────────────────────
+const homeBlue  = Color(0xFF0047FF);   // was 0xFF0066FF  →  Primary Blue
+const homeNavy  = Color(0xFF0A2342);   // was 0xFF07143D  →  Primary Navy
+const homeMuted = Color(0xFF475569);   // was 0xFF7886A5  →  Secondary Slate
 
 class NextLeadDashboard extends StatelessWidget {
   final PreviewStore store;
@@ -120,7 +121,7 @@ class NextLeadDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 83,
+            height: 90,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
@@ -147,7 +148,7 @@ class NextLeadDashboard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(15),
             child: Container(
-              color: const Color(0xFFDCEEFF),
+              color: const Color(0xFFDCE6F7),   // was 0xFFDCEEFF → surfaceLight
               child: LayoutBuilder(
                 builder: (context, size) => Stack(
                   children: [
@@ -271,16 +272,17 @@ class NextLeadDashboard extends StatelessWidget {
         onTap: action,
         borderRadius: BorderRadius.circular(10),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              height: 51,
-              width: 57,
+              height: 50,
+              width: 56,
               decoration: BoxDecoration(
-                color: selected ? const Color(0xFFE0EEFF) : Colors.white,
+                color: selected ? const Color(0xFFDCE6F7) : Colors.white,  // was 0xFFE0EEFF → surfaceLight
                 borderRadius: BorderRadius.circular(11),
                 border: Border.all(
                   color: selected
-                      ? const Color(0xFFBFDAFF)
+                      ? const Color(0xFFB3CCEF)   // was 0xFFBFDAFF
                       : const Color(0xFFEDF1F7),
                 ),
               ),
@@ -290,7 +292,7 @@ class NextLeadDashboard extends StatelessWidget {
                 size: 28,
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             Text(
               label,
               maxLines: 2,
@@ -298,6 +300,7 @@ class NextLeadDashboard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 10,
+                height: 1.2,
                 color: selected ? homeBlue : homeMuted,
               ),
             ),
@@ -332,7 +335,7 @@ class NextLeadDashboard extends StatelessWidget {
             width: 72,
             height: 92,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF2FC),
+              color: const Color(0xFFDCE6F7),   // was 0xFFEAF2FC → surfaceLight
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 36, color: homeBlue),

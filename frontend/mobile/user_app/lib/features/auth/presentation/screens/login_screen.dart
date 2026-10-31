@@ -21,7 +21,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   static const _assets = 'assets/Nextlead Mobile  App Asetes';
   static const _navy = Color(0xFF061139);
   static const _muted = Color(0xFF8291AF);
-  static const _blue = Color(0xFF0066FF);
+  static const _blue = Color(0xFF0047FF);
 
   @override
   void initState() {

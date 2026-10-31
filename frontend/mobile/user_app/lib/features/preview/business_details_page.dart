@@ -11,9 +11,9 @@ class EditProfilePreview extends StatefulWidget {
 }
 
 class _EditProfilePreviewState extends State<EditProfilePreview> {
-  static const _blue = Color(0xFF0066FF);
-  static const _navy = Color(0xFF081744);
-  static const _muted = Color(0xFF7484A7);
+  static const _blue = Color(0xFF0047FF);
+  static const _navy = Color(0xFF0A2342);
+  static const _muted = Color(0xFF475569);
   final formKey = GlobalKey<FormState>();
   late final business = TextEditingController(
     text: widget.store.profile['Business name'],

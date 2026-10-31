@@ -1,4 +1,5 @@
 import 'home_dashboard.dart';
+import 'membership_dashboard.dart' hide homeBlue, homeNavy, homeMuted;
 import 'category_leads_page.dart';
 import 'all_categories_page.dart';
 import 'lead_details_page.dart';
@@ -19,9 +20,9 @@ import 'live_store.dart';
 import '../profile/presentation/widgets/live_referral_section.dart';
 import '../../core/theme/app_theme.dart';
 
-const _purple = Color(0xFF5722CE);
+const _purple = Color(0xFF0062CB);
 const _gradient = LinearGradient(
-  colors: [Color(0xFF110747), Color(0xFF6021BA)],
+  colors: [Color(0xFF0A2342), Color(0xFF0062CB)],
   begin: Alignment.bottomLeft,
   end: Alignment.topRight,
 );
@@ -256,8 +257,8 @@ class _PreviewHomeState extends State<PreviewHome> {
       builder: (context, _) => Scaffold(
         // The preview banner already handles the top system inset.
         primary: store.isLive,
-        backgroundColor: const Color(0xFFF7FAFF),
-        appBar: page == 0 || page == 5 || page == 3 || page == 1
+        backgroundColor: const Color(0xFFF8F8F7),
+        appBar: page == 0 || page == 5 || page == 3 || page == 1 || page == 4
             ? null
             : AppBar(
                 primary: store.isLive,
@@ -330,6 +331,7 @@ class _PreviewHomeState extends State<PreviewHome> {
               1 => leads(),
               2 => payments(),
               3 => profile(),
+              4 => membership(),
               5 => SavedLeadsScreen(
                 store: store,
                 savedCategories: _savedCategories,
@@ -401,7 +403,7 @@ class _PreviewHomeState extends State<PreviewHome> {
                       ? Icons.shopping_cart_outlined
                       : Icons.favorite_border_rounded,
                   (page == 5 || page == 3) ? 'Cart' : 'Saved',
-                  false,
+                  page == 5,
                   () {
                     if (page == 5 || page == 3) {
                       context.push(AppRouter.cartPath);
@@ -415,15 +417,18 @@ class _PreviewHomeState extends State<PreviewHome> {
                   },
                 ),
                 _homeNav(
-                  Icons.receipt_long_outlined,
+                  Icons.workspace_premium_rounded,
                   'Membership',
-                  false,
-                  () => context.push(AppRouter.completePaymentPath),
+                  page == 4,
+                  () => setState(() {
+                    page = 4;
+                    savedOnly = false;
+                  }),
                 ),
                 _homeNav(
                   Icons.person_outline_rounded,
                   'Profile',
-                  page == 3 || page == 5,
+                  page == 3,
                   () => setState(() {
                     page = 3;
                     savedOnly = false;
@@ -445,21 +450,30 @@ class _PreviewHomeState extends State<PreviewHome> {
   ) => Expanded(
     child: InkWell(
       onTap: action,
+      borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 26, color: selected ? homeBlue : homeMuted),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: selected ? homeBlue : homeMuted,
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        child: Container(
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFDCE6F7) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 24, color: selected ? homeBlue : homeMuted),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? homeBlue : homeMuted,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),
@@ -500,6 +514,21 @@ class _PreviewHomeState extends State<PreviewHome> {
         builder: (_) => LeadDetailsPreview(lead: lead, store: store),
       ),
     ),
+  );
+
+  Widget membership() => NextLeadMembership(
+    store: store,
+    onWallet: () => setState(() => page = 2),
+    onNotifications: () {
+      store.markRead();
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => NotificationsPreview(store: store),
+        ),
+      );
+    },
+    onSignIn: () => store.account?.call(context),
   );
   Widget section(String title, VoidCallback action) => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -616,7 +645,7 @@ class _PreviewHomeState extends State<PreviewHome> {
           ),
         );
       },
-      onMembership: () => context.push(AppRouter.completePaymentPath),
+      onMembership: () => setState(() => page = 4),
       onSaved: () => setState(() {
         page = 5;
       }),
@@ -708,7 +737,7 @@ class _PreviewHomeState extends State<PreviewHome> {
           context,
           MaterialPageRoute<void>(
             builder: (_) => Scaffold(
-              backgroundColor: const Color(0xFFF7FAFF),
+              backgroundColor: const Color(0xFFF8F8F7),
               appBar: page == 0
                   ? null
                   : AppBar(title: const Text('Refer & Earn')),

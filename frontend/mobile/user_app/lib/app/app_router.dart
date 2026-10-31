@@ -42,6 +42,7 @@ abstract final class AppRouter {
   static const String chooseWorkCityPath = '/choose-work-city';
   static const String chooseCategoryPath = '/choose-category';
   static const String profilePath = '/profile';
+  static const String membershipPath = '/membership';
   static const String paymentsPath = '/payments';
   static const String leadDetailsPath = '/lead-details';
 
@@ -147,7 +148,11 @@ abstract final class AppRouter {
       ),
       GoRoute(
         path: completePaymentPath,
-        builder: (context, state) => const CompletePaymentScreen(),
+        builder: (context, state) => const LiveHome(initialPage: 4),
+      ),
+      GoRoute(
+        path: membershipPath,
+        builder: (context, state) => const LiveHome(initialPage: 4),
       ),
 
       GoRoute(

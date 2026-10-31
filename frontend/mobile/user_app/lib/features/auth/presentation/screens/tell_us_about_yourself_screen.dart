@@ -113,7 +113,7 @@ class _TellUsAboutYourselfScreenState
 
   static const _navy = Color(0xFF061139);
   static const _muted = Color(0xFF53678F);
-  static const _blue = Color(0xFF0066FF);
+  static const _blue = Color(0xFF0047FF);
 
   @override
   Widget build(BuildContext context) {

@@ -230,9 +230,15 @@ class PreviewStore extends ChangeNotifier {
     unread = false;
   }
   late Map<String, String> profile;
+  bool isProMember = false;
 
   void updateProfile(Map<String, String> details) {
     profile = Map.of(details);
+    notifyListeners();
+  }
+
+  void activateMembership() {
+    isProMember = true;
     notifyListeners();
   }
 

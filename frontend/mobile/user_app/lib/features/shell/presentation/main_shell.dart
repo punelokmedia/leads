@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
 
 class _C {
-  static const purpleLight = Color(0xFF5B34C9);
+  static const purpleLight = Color(0xFF0047FF);
   static const inactiveColor = Color(0xFF9E9E9E);
 }
 

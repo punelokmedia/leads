@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'app_colors.dart';
 
 abstract final class AppTheme {
   static const mode = ThemeMode.system;
@@ -9,7 +10,7 @@ abstract final class AppTheme {
   static ThemeData _theme(Brightness brightness) {
     final dark = brightness == Brightness.dark;
     final colors = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF5722CE),
+      seedColor: AppColors.primaryBlue,   // was 0xFF5722CE (purple)
       brightness: brightness,
     );
     return ThemeData(
@@ -17,8 +18,8 @@ abstract final class AppTheme {
       brightness: brightness,
       colorScheme: colors,
       scaffoldBackgroundColor: dark
-          ? const Color(0xFF121016)
-          : const Color(0xFFFAF9FD),
+          ? const Color(0xFF0E1822)          // dark navy bg
+          : AppColors.backgroundBase,        // was 0xFFFAF9FD
       appBarTheme: AppBarTheme(
         centerTitle: false,
         scrolledUnderElevation: 0,
@@ -52,8 +53,8 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: colors.primary,
-          foregroundColor: colors.onPrimary,
+          backgroundColor: AppColors.primaryBlue,
+          foregroundColor: Colors.white,
         ),
       ),
     );

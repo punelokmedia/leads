@@ -13,9 +13,9 @@ class LeadDetailsPreview extends StatelessWidget {
     required this.store,
   });
 
-  static const _blue = Color(0xFF0066FF);
-  static const _navy = Color(0xFF081744);
-  static const _muted = Color(0xFF7484A7);
+  static const _blue = Color(0xFF0047FF);
+  static const _navy = Color(0xFF0A2342);
+  static const _muted = Color(0xFF475569);
 
   String get _category =>
       lead.category >= 0 && lead.category < store.categories.length
@@ -346,7 +346,7 @@ class LeadDetailsPreview extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAFF),
+                  color: const Color(0xFFF8F8F7),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE1EBFA)),
                 ),
@@ -449,7 +449,7 @@ class LeadDetailsPreview extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 25,
-          backgroundColor: Color(0xFFDCEEFF),
+          backgroundColor: Color(0xFFDCE6F7),
           child: Icon(Icons.lock_outline, color: _blue),
         ),
         SizedBox(width: 13),

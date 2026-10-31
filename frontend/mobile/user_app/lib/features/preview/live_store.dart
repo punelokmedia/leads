@@ -188,6 +188,7 @@ class LiveStore extends PreviewStore {
   }
 
   void _setProfile(Map<String, dynamic> user) {
+    isProMember = user['registrationFeePaid'] == true;
     profile = {
       'Full name': '${user['firstname'] ?? ''} ${user['lastname'] ?? ''}'
           .trim(),

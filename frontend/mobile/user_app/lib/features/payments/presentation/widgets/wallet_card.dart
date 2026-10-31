@@ -130,7 +130,7 @@ class _WalletCardState extends ConsumerState<WalletCard> {
     }
   }
 
-  static const blue = Color(0xFF0066FF);
+  static const blue = Color(0xFF0047FF);
   static const navy = Color(0xFF08133E);
   static const muted = Color(0xFF7888AE);
   String _money(num paise) =>

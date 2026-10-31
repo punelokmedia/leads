@@ -150,7 +150,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   Widget build(BuildContext context) {
     const navy = Color(0xFF061139);
     const muted = Color(0xFF929DB6);
-    const blue = Color(0xFF0066FF);
+    const blue = Color(0xFF0047FF);
     final isLoading = ref.watch(authIsLoadingProvider);
     final error = ref.watch(authErrorProvider);
 

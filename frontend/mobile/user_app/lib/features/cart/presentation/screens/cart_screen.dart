@@ -17,9 +17,9 @@ class CartScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<CartScreen> {
-  static const blue = Color(0xFF0066FF);
-  static const navy = Color(0xFF081744);
-  static const muted = Color(0xFF7484A7);
+  static const blue = Color(0xFF0047FF);
+  static const navy = Color(0xFF0A2342);
+  static const muted = Color(0xFF475569);
   bool purchasing = false, clearing = false;
 
   @override

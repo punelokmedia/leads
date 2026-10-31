@@ -267,7 +267,7 @@ class SupportChatView extends StatelessWidget {
   Widget _topics() => Container(
     padding: const EdgeInsets.all(8),
     decoration: BoxDecoration(
-      color: const Color(0xFFF7FAFF),
+      color: const Color(0xFFF8F8F7),
       border: Border.all(color: const Color(0xFFD9E7FF)),
       borderRadius: BorderRadius.circular(12),
     ),
