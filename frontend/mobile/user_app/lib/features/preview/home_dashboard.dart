@@ -330,8 +330,8 @@ class NextLeadDashboard extends ConsumerWidget {
   Widget _leadCard(PreviewLead lead) {
     final categoryName =
         lead.category >= 0 && lead.category < store.categories.length
-        ? store.categories[lead.category].name
-        : '';
+            ? store.categories[lead.category].name
+            : '';
     final leadImage = CategoryMedia.getLeadImage(categoryName, leadId: lead.id);
     final icon = lead.category >= 0 && lead.category < store.categories.length
         ? store.categories[lead.category].icon
