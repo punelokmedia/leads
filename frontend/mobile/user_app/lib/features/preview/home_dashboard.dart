@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import '../payments/presentation/widgets/wallet_card.dart';
 import 'preview_data.dart';
+import 'category_media.dart';
 
 // ── Brand color tokens (new scheme) ──────────────────────────────────────────
-const homeBlue  = Color(0xFF0047FF);   // was 0xFF0066FF  →  Primary Blue
-const homeNavy  = Color(0xFF0A2342);   // was 0xFF07143D  →  Primary Navy
-const homeMuted = Color(0xFF475569);   // was 0xFF7886A5  →  Secondary Slate
+const homeBlue = Color(0xFF0047FF); // was 0xFF0066FF  →  Primary Blue
+const homeNavy = Color(0xFF0A2342); // was 0xFF07143D  →  Primary Navy
+const homeMuted = Color(0xFF475569); // was 0xFF7886A5  →  Secondary Slate
 
-class NextLeadDashboard extends StatelessWidget {
+class NextLeadDashboard extends ConsumerWidget {
   final PreviewStore store;
   final List<PreviewLead> leads;
   final String city;
   final int? category;
   final ValueChanged<String> onSearch;
   final ValueChanged<int?> onCategory;
-  final VoidCallback onFilters, onCategories, onNotifications, onExplore;
+  final VoidCallback onFilters,
+      onCategories,
+      onNotifications,
+      onExplore,
+      onWallet,
+      onSaved;
   final ValueChanged<PreviewLead> onLead;
   const NextLeadDashboard({
     super.key,
@@ -28,16 +36,19 @@ class NextLeadDashboard extends StatelessWidget {
     required this.onNotifications,
     required this.onExplore,
     required this.onLead,
+    required this.onWallet,
+    required this.onSaved,
   });
 
   @override
-  Widget build(BuildContext context) => SafeArea(
+  Widget build(BuildContext context, WidgetRef ref) => SafeArea(
     bottom: false,
     child: RefreshIndicator(
       onRefresh: store.refresh,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
         children: [
+          // ── Row 1: Logo | Wallet | Bell ──────────────────────────────
           Row(
             children: [
               Image.asset(
@@ -46,40 +57,107 @@ class NextLeadDashboard extends StatelessWidget {
                 height: 47,
               ),
               const Spacer(),
-              Flexible(
-                child: TextButton.icon(
-                  onPressed: onFilters,
-                  icon: const Icon(Icons.location_on, size: 19),
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          city,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: homeNavy,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+              // Wallet balance chip
+              Consumer(
+                builder: (context, ref, _) {
+                  final wallet = ref.watch(walletProvider);
+                  final balanceText = wallet.when(
+                    data: (data) {
+                      final paise = data['balancePaise'] as num? ?? 0;
+                      final rupees = (paise / 100).toStringAsFixed(0);
+                      return '₹ $rupees';
+                    },
+                    loading: () => '...',
+                    error: (_, _) => 'Wallet',
+                  );
+                  return OutlinedButton.icon(
+                    onPressed: onWallet,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
                       ),
-                      const Icon(Icons.keyboard_arrow_down, size: 19),
-                    ],
-                  ),
+                      visualDensity: VisualDensity.compact,
+                      side: const BorderSide(color: homeBlue),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.account_balance_wallet_outlined,
+                      size: 16,
+                      color: homeBlue,
+                    ),
+                    label: Text(
+                      balanceText,
+                      style: const TextStyle(
+                        color: homeNavy,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 2),
+              // Saved button beside wallet
+              IconButton(
+                tooltip: 'Saved leads',
+                onPressed: onSaved,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(
+                  Icons.favorite_border_rounded,
+                  color: homeNavy,
+                  size: 22,
                 ),
               ),
               IconButton(
                 tooltip: 'Notifications',
                 onPressed: onNotifications,
+                visualDensity: VisualDensity.compact,
                 icon: Badge(
                   isLabelVisible: store.unread,
                   child: const Icon(
                     Icons.notifications_outlined,
                     color: homeNavy,
+                    size: 22,
                   ),
                 ),
               ),
             ],
+          ),
+          // ── Row 2: Location (aligned to far left) ──────────────────────
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: onFilters,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: const Icon(Icons.location_on, size: 16, color: homeBlue),
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    city,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: homeNavy,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 16,
+                    color: homeNavy,
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -145,78 +223,15 @@ class NextLeadDashboard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          // ── Home banner: new full-width image ──────────────────────────
           ClipRRect(
             borderRadius: BorderRadius.circular(15),
-            child: Container(
-              color: const Color(0xFFDCE6F7),   // was 0xFFDCEEFF → surfaceLight
-              child: LayoutBuilder(
-                builder: (context, size) => Stack(
-                  children: [
-                    Positioned(
-                      right: -24,
-                      top: 12,
-                      bottom: 0,
-                      width: size.maxWidth * 0.49,
-                      child: Image.asset(
-                        'assets/branding/hero.webp',
-                        fit: BoxFit.contain,
-                        alignment: Alignment.bottomRight,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: SizedBox(
-                        width: size.maxWidth * 0.67,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Get verified project',
-                              style: TextStyle(
-                                color: homeNavy,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const Text(
-                              'leads near you',
-                              style: TextStyle(
-                                color: homeBlue,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Connect with genuine customers\nand grow your business.',
-                              style: TextStyle(
-                                color: Color(0xFF607394),
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            FilledButton(
-                              onPressed: onExplore,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: homeBlue,
-                                foregroundColor: Colors.white,
-                                shape: const StadiumBorder(),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('Explore Leads'),
-                                  SizedBox(width: 8),
-                                  Icon(Icons.arrow_forward, size: 18),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            child: AspectRatio(
+              aspectRatio: 2027 / 776, // matches the image's native ratio
+              child: Image.asset(
+                'assets/branding/home_banner.jpg',
+                fit: BoxFit.cover,
+                width: double.infinity,
               ),
             ),
           ),
@@ -278,11 +293,13 @@ class NextLeadDashboard extends StatelessWidget {
               height: 50,
               width: 56,
               decoration: BoxDecoration(
-                color: selected ? const Color(0xFFDCE6F7) : Colors.white,  // was 0xFFE0EEFF → surfaceLight
+                color: selected
+                    ? const Color(0xFFDCE6F7)
+                    : Colors.white, // was 0xFFE0EEFF → surfaceLight
                 borderRadius: BorderRadius.circular(11),
                 border: Border.all(
                   color: selected
-                      ? const Color(0xFFB3CCEF)   // was 0xFFBFDAFF
+                      ? const Color(0xFFB3CCEF) // was 0xFFBFDAFF
                       : const Color(0xFFEDF1F7),
                 ),
               ),
@@ -311,6 +328,11 @@ class NextLeadDashboard extends StatelessWidget {
   );
 
   Widget _leadCard(PreviewLead lead) {
+    final categoryName =
+        lead.category >= 0 && lead.category < store.categories.length
+        ? store.categories[lead.category].name
+        : '';
+    final leadImage = CategoryMedia.getLeadImage(categoryName, leadId: lead.id);
     final icon = lead.category >= 0 && lead.category < store.categories.length
         ? store.categories[lead.category].icon
         : Icons.home_work_outlined;
@@ -331,14 +353,19 @@ class NextLeadDashboard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 72,
-            height: 92,
-            decoration: BoxDecoration(
-              color: const Color(0xFFDCE6F7),   // was 0xFFEAF2FC → surfaceLight
-              borderRadius: BorderRadius.circular(10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 72,
+              height: 92,
+              color: const Color(0xFFDCE6F7),
+              child: Image.asset(
+                leadImage,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    Icon(icon, size: 36, color: homeBlue),
+              ),
             ),
-            child: Icon(icon, size: 36, color: homeBlue),
           ),
           const SizedBox(width: 10),
           Expanded(

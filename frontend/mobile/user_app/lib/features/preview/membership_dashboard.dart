@@ -50,14 +50,16 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     try {
-      await ref.read(dioProvider).post(
-        'api/v1/wallet/verify',
-        data: {
-          'razorpayOrderId': response.orderId,
-          'razorpayPaymentId': response.paymentId,
-          'razorpaySignature': response.signature,
-        },
-      );
+      await ref
+          .read(dioProvider)
+          .post(
+            'api/v1/wallet/verify',
+            data: {
+              'razorpayOrderId': response.orderId,
+              'razorpayPaymentId': response.paymentId,
+              'razorpaySignature': response.signature,
+            },
+          );
       // Once wallet is credited with ₹499, auto-activate membership
       await _activateMembershipViaWallet();
     } catch (_) {
@@ -112,7 +114,8 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
     if (_upgrading) return;
 
     // Check if user is signed in
-    if (widget.store.isLive && (widget.store.profile['Full name'] ?? '').isEmpty) {
+    if (widget.store.isLive &&
+        (widget.store.profile['Full name'] ?? '').isEmpty) {
       if (widget.onSignIn != null) {
         widget.onSignIn!();
       } else {
@@ -214,7 +217,11 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.info_outline, color: Color(0xFFB78103), size: 20),
+                    Icon(
+                      Icons.info_outline,
+                      color: Color(0xFFB78103),
+                      size: 20,
+                    ),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -252,7 +259,9 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                     Text(
                       '₹ ${balanceRupees.toStringAsFixed(0)}',
                       style: TextStyle(
-                        color: hasEnough ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                        color: hasEnough
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFDC2626),
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
@@ -295,13 +304,19 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                       ),
                       child: const Text(
                         'Add ₹499 & Activate',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () => Navigator.pop(sheetContext),
-                      child: const Text('Cancel', style: TextStyle(color: homeMuted)),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: homeMuted),
+                      ),
                     ),
                   ],
                 ),
@@ -315,10 +330,9 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
   Future<void> _topupAndActivate(int amountPaise) async {
     setState(() => _upgrading = true);
     try {
-      final response = await ref.read(dioProvider).post(
-        'api/v1/wallet/topup',
-        data: {'amountPaise': amountPaise},
-      );
+      final response = await ref
+          .read(dioProvider)
+          .post('api/v1/wallet/topup', data: {'amountPaise': amountPaise});
       final data = response.data['data'];
       _razorpay.open({
         'key': data['keyId'],
@@ -331,7 +345,10 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
     } catch (_) {
       if (mounted) {
         setState(() => _upgrading = false);
-        SnackbarHelper.showError(context, 'Unable to initiate payment. Please retry.');
+        SnackbarHelper.showError(
+          context,
+          'Unable to initiate payment. Please retry.',
+        );
       }
     }
   }
@@ -347,18 +364,29 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
             SizedBox(width: 8),
             Text(
               'Membership Details',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: homeNavy),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: homeNavy,
+              ),
             ),
           ],
         ),
         content: const Text(
           '₹499/month is strictly the platform membership fee for app access, advanced search filters, priority customer support, and verified project access.\n\nLeads are purchased individually per project requirement.',
-          style: TextStyle(color: Color(0xFF4A5568), fontSize: 13, height: 1.45),
+          style: TextStyle(
+            color: Color(0xFF4A5568),
+            fontSize: 13,
+            height: 1.45,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Got it', style: TextStyle(color: homeBlue, fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Got it',
+              style: TextStyle(color: homeBlue, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -407,11 +435,19 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
               const SizedBox(height: 16),
               _planRow('App Access', 'Limited Preview', 'Full App Access'),
               const Divider(height: 16),
-              _planRow('Lead Visibility', 'Masked Contact', 'Verified & Full Details'),
+              _planRow(
+                'Lead Visibility',
+                'Masked Contact',
+                'Verified & Full Details',
+              ),
               const Divider(height: 16),
               _planRow('Filters', 'Basic Cities', 'Advanced Filter Engine'),
               const Divider(height: 16),
-              _planRow('Customer Support', 'Standard Ticket', 'Priority Support'),
+              _planRow(
+                'Customer Support',
+                'Standard Ticket',
+                'Priority Support',
+              ),
               const Divider(height: 16),
               _planRow('Lead Purchases', 'Separately', 'Separately'),
               const SizedBox(height: 20),
@@ -528,7 +564,10 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
               ),
               const SizedBox(height: 18),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8F8F7),
                   borderRadius: BorderRadius.circular(14),
@@ -559,7 +598,10 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                     FilledButton.tonal(
                       onPressed: () {
                         Navigator.pop(ctx);
-                        SnackbarHelper.showSuccess(context, 'Referral code copied to clipboard!');
+                        SnackbarHelper.showSuccess(
+                          context,
+                          'Referral code copied to clipboard!',
+                        );
                       },
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFFE0EDFF),
@@ -579,7 +621,10 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                   shape: const StadiumBorder(),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text('Done', style: TextStyle(fontWeight: FontWeight.w700)),
+                child: const Text(
+                  'Done',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -618,12 +663,14 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                   ),
                   label: Text(
                     widget.store.isLive
-                        ? ref.watch(walletProvider).when(
-                            data: (data) =>
-                                '₹ ${((data['balancePaise'] as num? ?? 0) / 100).toStringAsFixed(0)}',
-                            loading: () => '...',
-                            error: (_, _) => 'Wallet',
-                          )
+                        ? ref
+                              .watch(walletProvider)
+                              .when(
+                                data: (data) =>
+                                    '₹ ${((data['balancePaise'] as num? ?? 0) / 100).toStringAsFixed(0)}',
+                                loading: () => '...',
+                                error: (_, _) => 'Wallet',
+                              )
                         : 'Wallet',
                     style: const TextStyle(
                       color: homeNavy,
@@ -633,7 +680,10 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFFDCE6F8)),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(11),
                     ),
@@ -696,10 +746,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
-                  flex: 2,
-                  child: _HeroPhoneMockup(),
-                ),
+                const Expanded(flex: 2, child: _HeroPhoneMockup()),
               ],
             ),
             const SizedBox(height: 20),
@@ -740,7 +787,9 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                   Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -783,7 +832,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                               Text(
                                 'Full app access for growing businesses.',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 12,
                                 ),
                               ),
@@ -810,7 +859,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                 Text(
                                   ' /month',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -833,10 +882,10 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.18),
+                                color: Colors.white.withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.35),
+                                  color: Colors.white.withValues(alpha: 0.35),
                                 ),
                               ),
                               child: const Text(
@@ -897,7 +946,9 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFE8F7ED),
                               borderRadius: BorderRadius.circular(25),
-                              border: Border.all(color: const Color(0xFF48BB78)),
+                              border: Border.all(
+                                color: const Color(0xFF48BB78),
+                              ),
                             ),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -928,7 +979,9 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                 backgroundColor: homeBlue,
                                 foregroundColor: Colors.white,
                                 shape: const StadiumBorder(),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 elevation: 2,
                               ),
                               child: _upgrading
@@ -941,7 +994,8 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                       ),
                                     )
                                   : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           'Upgrade to Pro',
@@ -951,7 +1005,10 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                           ),
                                         ),
                                         SizedBox(width: 8),
-                                        Icon(Icons.arrow_forward_rounded, size: 18),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          size: 18,
+                                        ),
                                       ],
                                     ),
                             ),
@@ -982,10 +1039,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                     SizedBox(height: 2),
                     Text(
                       'Choose the plan that fits your needs.',
-                      style: TextStyle(
-                        color: homeMuted,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: homeMuted, fontSize: 12),
                     ),
                   ],
                 ),
@@ -1067,10 +1121,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                           SizedBox(height: 2),
                           Text(
                             'Invite your friends and earn free app access benefits.',
-                            style: TextStyle(
-                              color: homeMuted,
-                              fontSize: 11,
-                            ),
+                            style: TextStyle(color: homeMuted, fontSize: 11),
                           ),
                         ],
                       ),
@@ -1147,10 +1198,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
               const SizedBox(height: 1),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  color: homeMuted,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: homeMuted, fontSize: 11),
               ),
             ],
           ),
@@ -1179,7 +1227,7 @@ class _HeroPhoneMockup extends StatelessWidget {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFDCE6F7).withOpacity(0.5),
+                color: const Color(0xFFDCE6F7).withValues(alpha: 0.5),
               ),
             ),
           ),
@@ -1296,4 +1344,3 @@ class _HeroPhoneMockup extends StatelessWidget {
     );
   }
 }
-

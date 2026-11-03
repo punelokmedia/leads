@@ -163,14 +163,17 @@ class _WalletCardState extends ConsumerState<WalletCard> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header: logo left, wallet button, and save icon right
             Row(
               children: [
                 Image.asset(
                   'assets/branding/nextlead_wordmark.webp',
                   width: 145,
                   height: 48,
+                  fit: BoxFit.contain,
                 ),
                 const Spacer(),
+                // Wallet balance button
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _refresh,
                   icon: const Icon(
@@ -182,6 +185,14 @@ class _WalletCardState extends ConsumerState<WalletCard> {
                     _money(data['balancePaise'] as num),
                     style: const TextStyle(color: navy),
                   ),
+                ),
+                // Save button beside wallet button
+                IconButton(
+                  onPressed: () {
+                    // TODO: implement save functionality if needed
+                  },
+                  icon: const Icon(Icons.save, color: blue),
+                  tooltip: 'Save',
                 ),
               ],
             ),
@@ -472,9 +483,27 @@ class _WalletCardState extends ConsumerState<WalletCard> {
                 ),
               ),
             Center(
-              child: TextButton(
-                onPressed: _loadingHistory ? null : _refresh,
-                child: const Text('Refresh balance'),
+              child: Column(
+                children: [
+                  TextButton(
+                    onPressed: _loadingHistory ? null : _refresh,
+                    child: const Text('Refresh balance'),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      // TODO: navigate to cart screen
+                    },
+                    icon: const Icon(
+                      Icons.shopping_cart_outlined,
+                      color: blue,
+                    ),
+                    label: const Text(
+                      'Cart',
+                      style: TextStyle(color: navy),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

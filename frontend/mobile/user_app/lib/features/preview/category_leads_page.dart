@@ -5,17 +5,20 @@ import 'home_dashboard.dart';
 String? categoryArtwork(String name) {
   final value = name.toLowerCase();
   if (value.contains('paint')) return 'Painting.png';
-  if (value.contains('civil') || value.contains('construction'))
+  if (value.contains('civil') || value.contains('construction')) {
     return 'Civil Work.png';
+  }
   if (value.contains('interior')) return 'interior-design.png';
   if (value.contains('plumb')) return 'Plumbing.png';
   if (value.contains('electric')) return 'Electrical Work.png';
   if (value.contains('cctv')) return 'CCTV Installation.png';
   if (value.contains('waterproof')) return 'Water Proofing.png';
-  if (value.contains('aluminium') || value.contains('window'))
+  if (value.contains('aluminium') || value.contains('window')) {
     return 'Aluminium & Windows.png';
-  if (value.contains('ac service') || value.contains('air condition'))
+  }
+  if (value.contains('ac service') || value.contains('air condition')) {
     return 'AC Service & Repair.png';
+  }
   if (value.contains('real estate')) return 'Real State.png';
   if (value.contains('ceiling') || value == 'pop') return 'POP.jpg';
   return null;
@@ -90,8 +93,9 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
         ),
       ),
     );
-    if (selected != null && mounted)
+    if (selected != null && mounted) {
       setState(() => apply(selected.isEmpty ? null : selected));
+    }
   }
 
   @override
@@ -104,12 +108,13 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
               (timeline == null || lead.timeline == timeline),
         )
         .toList();
-    if (sort != 'Default order')
+    if (sort != 'Default order') {
       leads.sort(
         (a, b) => sort == 'Budget: Low to High'
             ? a.budget.compareTo(b.budget)
             : b.budget.compareTo(a.budget),
       );
+    }
     final count = widget.store.leads
         .where(
           (lead) => widget.category == null || lead.category == widget.category,

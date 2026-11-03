@@ -88,6 +88,7 @@ class PreviewHome extends StatefulWidget {
 
 class _PreviewHomeState extends State<PreviewHome> {
   late int page = widget.initialPage;
+  int _returnPage = 0;
   String city = 'All Cities', query = '', tab = 'All';
   int? category;
   bool savedOnly = false;
@@ -115,6 +116,10 @@ class _PreviewHomeState extends State<PreviewHome> {
 
   Future<void> _handleBack() async {
     if (page != 0) {
+      if (page == 5) {
+        setState(() => page = _returnPage);
+        return;
+      }
       setState(() => page = 0);
       return;
     }
@@ -336,7 +341,7 @@ class _PreviewHomeState extends State<PreviewHome> {
                 store: store,
                 savedCategories: _savedCategories,
                 onCategoriesChanged: () => setState(() {}),
-                onBack: () => setState(() => page = 3),
+                onBack: () => setState(() => page = _returnPage),
                 onWallet: () => setState(() => page = 2),
                 onNotifications: () {
                   store.markRead();
@@ -399,22 +404,10 @@ class _PreviewHomeState extends State<PreviewHome> {
                   }),
                 ),
                 _homeNav(
-                  page == 5
-                      ? Icons.shopping_cart_outlined
-                      : Icons.favorite_border_rounded,
-                  (page == 5 || page == 3) ? 'Cart' : 'Saved',
-                  page == 5,
-                  () {
-                    if (page == 5 || page == 3) {
-                      context.push(AppRouter.cartPath);
-                      return;
-                    }
-                    setState(() {
-                      page = 5;
-                      savedOnly = true;
-                      tab = 'All';
-                    });
-                  },
+                  Icons.shopping_cart_outlined,
+                  'Cart',
+                  false,
+                  () => context.push(AppRouter.cartPath),
                 ),
                 _homeNav(
                   Icons.workspace_premium_rounded,
@@ -514,6 +507,11 @@ class _PreviewHomeState extends State<PreviewHome> {
         builder: (_) => LeadDetailsPreview(lead: lead, store: store),
       ),
     ),
+    onWallet: () => setState(() => page = 2),
+    onSaved: () => setState(() {
+      _returnPage = 0;
+      page = 5;
+    }),
   );
 
   Widget membership() => NextLeadMembership(
@@ -555,7 +553,10 @@ class _PreviewHomeState extends State<PreviewHome> {
       page = 0;
       savedOnly = false;
     }),
-    onSaved: () => setState(() => page = 5),
+    onSaved: () => setState(() {
+      _returnPage = 1;
+      page = 5;
+    }),
     onNotifications: () {
       store.markRead();
       Navigator.push(
@@ -647,6 +648,7 @@ class _PreviewHomeState extends State<PreviewHome> {
       },
       onMembership: () => setState(() => page = 4),
       onSaved: () => setState(() {
+        _returnPage = 3;
         page = 5;
       }),
       onLeads: () => setState(() {

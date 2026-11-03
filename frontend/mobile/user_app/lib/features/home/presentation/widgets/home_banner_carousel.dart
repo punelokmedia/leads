@@ -10,13 +10,14 @@ class HomeBannerCarousel extends StatefulWidget {
 }
 
 class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
+  // First slide uses the new full-banner image; remaining slides keep their layout
   static const _images = [
-    'assets/branding/hero.webp',
+    'assets/branding/home_banner.jpg',
     'assets/branding/steps.webp',
     'assets/branding/dashboard.webp',
   ];
   static const _titles = [
-    'Find the leads.\nBuild real business.',
+    '', // full-image slide — no text overlay
     'Find your next\nproject with NextLead.',
     'Ready to grow\nyour business?',
   ];
@@ -65,35 +66,49 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                 controller: _pageController,
                 itemCount: _images.length,
                 onPageChanged: (page) => setState(() => _currentPage = page),
-                itemBuilder: (context, index) => ColoredBox(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text(
-                            _titles[index],
-                            style: TextStyle(
-                              fontSize: 18.0,
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).colorScheme.onSurface,
+                itemBuilder: (context, index) {
+                  // First slide: full-bleed new banner image
+                  if (index == 0) {
+                    return Image.asset(
+                      _images[index],
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      excludeFromSemantics: true,
+                    );
+                  }
+                  // Other slides: text + image side-by-side layout
+                  return ColoredBox(
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              _titles[index],
+                              style: TextStyle(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    Theme.of(context).colorScheme.onSurface,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Image.asset(
-                          _images[index],
-                          fit: BoxFit.contain,
-                          excludeFromSemantics: true,
+                        Expanded(
+                          flex: 2,
+                          child: Image.asset(
+                            _images[index],
+                            fit: BoxFit.contain,
+                            excludeFromSemantics: true,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ),
