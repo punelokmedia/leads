@@ -1,6 +1,7 @@
 // features/auth/presentation/widgets/city_list_item_widget.dart
 
 import 'package:flutter/material.dart';
+import 'package:user_app/core/utils/city_name.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:user_app/core/theme/app_colors.dart';
 import 'package:user_app/core/theme/app_text_styles.dart';
@@ -48,7 +49,7 @@ class CityListItemWidget extends StatelessWidget {
           // ── City Name ──
           Expanded(
             child: Text(
-              cityName,
+              formatCityName(cityName),
               style: AppTextStyles.poppins(
                 fontSize: 15.sp,
                 color: Theme.of(context).colorScheme.onSurface,

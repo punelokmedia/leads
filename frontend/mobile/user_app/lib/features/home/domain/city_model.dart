@@ -1,11 +1,12 @@
+import 'package:user_app/core/utils/city_name.dart';
+
 class CityModel {
   final String id;
   final String name;
 
   const CityModel({required this.id, required this.name});
 
-  String get displayName =>
-      name.isEmpty ? name : name[0].toUpperCase() + name.substring(1);
+  String get displayName => formatCityName(name);
 
   factory CityModel.fromJson(Map<String, dynamic> json) {
     return CityModel(id: json['_id'] as String, name: json['name'] as String);

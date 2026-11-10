@@ -12,6 +12,7 @@ import 'package:user_app/core/theme/app_text_styles.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/auth/infra/category_repository.dart';
 import 'package:user_app/features/auth/infra/city_repository.dart';
+import 'package:user_app/core/utils/city_name.dart';
 import '../../shared/profile_draft_provider.dart';
 
 class TellUsAboutYourselfScreen extends ConsumerStatefulWidget {
@@ -467,7 +468,10 @@ class _TellUsAboutYourselfScreenState
           .map(
             (item) => DropdownMenuItem(
               value: item,
-              child: Text(item, overflow: TextOverflow.ellipsis),
+              child: Text(
+                hint.toLowerCase().contains('city') ? formatCityName(item) : item,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           )
           .toList(),
