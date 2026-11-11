@@ -1,0 +1,69 @@
+/* Shared action palette, including buttons in dialogs and lazy-loaded routes. */
+:root {
+  --action-blue: #0066ff;
+  --action-blue-hover: #0050cb;
+  --action-blue-pressed: #003d9e;
+}
+
+#root :is(
+  button,
+  input[type=submit],
+  input[type=button],
+  a[role=button],
+  a.home-button,
+  a.header-download,
+  a.header-login,
+  a.login-phone,
+  a.app-download-button,
+  a.wallet-membership-link,
+  a.referral-whatsapp,
+  a.referral-email,
+  a[class*="bg-"],
+  .directory-explore,
+  .directory-business > a,
+  .success-actions > a,
+  .wallet-success-actions > a,
+  .wallet-success-status > a,
+  .membership-status > a,
+  .membership-success > a,
+  .referral-signin > a,
+  .loading-error > a
+) {
+  background: var(--action-blue) !important;
+  color: #fff !important;
+  border-color: var(--action-blue) !important;
+
+  &:hover:not(:disabled):not([aria-disabled=true]) {
+    background: var(--action-blue-hover) !important;
+    border-color: var(--action-blue-hover) !important;
+  }
+
+  &:active:not(:disabled):not([aria-disabled=true]) {
+    background: var(--action-blue-pressed) !important;
+    border-color: var(--action-blue-pressed) !important;
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--action-blue-pressed);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 3px #fff;
+  }
+
+  &:disabled, &[aria-disabled=true] {
+    background: #dbeafe !important;
+    color: #334155 !important;
+    border-color: #93b4e8 !important;
+    opacity: 1 !important;
+    cursor: not-allowed;
+  }
+}
+
+/* Keep selected amounts, tabs and choices visible within the shared palette. */
+#root button:is([aria-pressed=true], [aria-selected=true], .is-active, .active) {
+  background: var(--action-blue-pressed) !important;
+  box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--action-blue-pressed);
+}
+
+#root :is(button, a[role=button]) svg { color: inherit; }
+#root .directory-explore .directory-arrow,
+#root .directory-business > a .directory-arrow { filter: brightness(0) invert(1); }

@@ -69,9 +69,9 @@ function HomeLandingPage() {
         <img key={attempt} ref={hero} className="hero-art" src={heroSource} width={1454} height={1082} alt="A vendor discovering business opportunities on the NextLead app" fetchPriority="high" decoding="async" data-state={heroState} style={heroState === 'error' ? { visibility: 'hidden' } : undefined} />
         {heroState === 'error' && <button className="hero-image-retry" onClick={() => { setHeroState('loading'); setHeroSource(HERO_IMAGE); setAttempt(value => value + 1) }}>Image unavailable. Retry image</button>}
         <div className="hero-badges">
-          <span><img src="/Icons/Background.svg" alt="" width={25} height={25} /><b>More Leads</b></span>
-          <span><img src="/Icons/Background (1).svg" alt="" width={25} height={25} /><b>Verified Vendors</b></span>
-          <span><img src="/Icons/Background (2).svg" alt="" width={25} height={25} /><b>Real Connections</b></span>
+          <span><img src="/Icons/hero-target.svg" alt="" width={25} height={25} /><b>More Leads</b></span>
+          <span><img src="/Icons/hero-verified.svg" alt="" width={25} height={25} /><b>Verified Vendors</b></span>
+          <span><img src="/Icons/hero-connections.svg" alt="" width={25} height={25} /><b>Real Connections</b></span>
         </div>
       </div>
     </section>

@@ -1,4 +1,5 @@
 import { notifyNewLead } from '../../Services/notification.service.js';
+import { leadListOrder } from '../../Utils/lead-list-order.js';
 import { applyLeadFilters } from '../../Utils/lead-filters.js';
 import { readLeadSpreadsheet } from '../../Services/excel-import.js';
 import ExcelJS from "exceljs";
@@ -60,18 +61,22 @@ const getAllLeads = async (req, res) => {
       ];
     }
 
-    let sortOption = { createdAt: -1 };
-    if (sort === "cheapest") sortOption = { price: 1 };
-    if (sort === "expensive") sortOption = { price: -1 };
-
     const skip = (normalizedPage - 1) * normalizedLimit;
     const total = await Lead.countDocuments(query);
 
-    const leads = await Lead.find(query)
-      .populate("category", "name")
-      .sort(sortOption)
-      .limit(normalizedLimit)
-      .skip(skip);
+    // Mongoose does not cast aggregation matches; cast category IDs and filters first.
+    const match = Lead.find(query).cast(Lead);
+    const orderedIds = await Lead.aggregate([
+      { $match: match },
+      ...leadListOrder(sort),
+      { $skip: skip },
+      { $limit: normalizedLimit },
+      { $project: { _id: 1 } },
+    ]);
+    const documents = await Lead.find({ _id: { $in: orderedIds.map(row => row._id) } })
+      .populate("category", "name");
+    const byId = new Map(documents.map(lead => [String(lead._id), lead]));
+    const leads = orderedIds.map(row => byId.get(String(row._id))).filter(Boolean);
 
     const purchases = userId ? await LeadPurchase.find({
       user: userId, lead: { $in: leads.map((lead) => lead._id) },

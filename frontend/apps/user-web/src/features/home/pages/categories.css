@@ -9,3 +9,7 @@
 @media(prefers-reduced-motion:reduce){.directory-card{transition:none}.directory-card:hover{transform:none}}
 .directory-arrow{width:20px;height:20px;object-fit:contain;flex-shrink:0;filter:invert(25%) sepia(99%) saturate(2900%) hue-rotate(215deg) brightness(95%) contrast(105%)}
 
+.directory-explore{background:#0066ff;border-color:#0066ff;color:#fff;transition:background .2s,border-color .2s}
+.directory-explore .directory-arrow{filter:brightness(0) invert(1)}
+.directory-card:hover .directory-explore{background:#0050cb;border-color:#0050cb}
+

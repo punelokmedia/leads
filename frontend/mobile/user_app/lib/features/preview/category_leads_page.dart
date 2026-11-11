@@ -108,13 +108,18 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
               (timeline == null || lead.timeline == timeline),
         )
         .toList();
-    if (sort != 'Default order') {
-      leads.sort(
-        (a, b) => sort == 'Budget: Low to High'
-            ? a.budget.compareTo(b.budget)
-            : b.budget.compareTo(a.budget),
-      );
-    }
+    final originalOrder = {for (var i = 0; i < leads.length; i++) leads[i]: i};
+    leads.sort((a, b) {
+      if (a.closed != b.closed) return a.closed ? 1 : -1;
+      final budgetOrder = sort == 'Default order'
+          ? 0
+          : sort == 'Budget: Low to High'
+          ? a.budget.compareTo(b.budget)
+          : b.budget.compareTo(a.budget);
+      return budgetOrder != 0
+          ? budgetOrder
+          : originalOrder[a]!.compareTo(originalOrder[b]!);
+    });
     final count = widget.store.leads
         .where(
           (lead) => widget.category == null || lead.category == widget.category,

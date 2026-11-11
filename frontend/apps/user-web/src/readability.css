@@ -1,0 +1,197 @@
+/* Keep supporting copy legible even when route styles load after this file. */
+.site-shell :is(.market-lead-id, .market-lead-location, .market-lead-type,
+  .market-lead-date, .category-card-label small, .hero-badges b,
+  .vendor-profile p, .verified-badge small, .vendor-facts small,
+  .featured-vendor-identity p, .featured-vendor-metrics small,
+  .featured-vendor-tags > span, .featured-vendor-rating,
+  .review-card p, .review-card p span,
+  .trust-stats small) {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.site-shell .featured-vendor-header {
+  grid-template-columns: 58px minmax(0, 1fr);
+}
+
+.site-shell .featured-vendor-reputation {
+  grid-column: 2;
+  justify-self: start;
+  text-align: left;
+}
+
+.site-shell .featured-vendor-identity :is(h3, p) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.site-shell .featured-vendor-tags {
+  flex-wrap: wrap;
+}
+
+.site-shell .featured-vendor-verified {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.site-shell :is(.next-home > section:not(.home-hero):not(.home-download) p,
+  .step p, .review-card blockquote) {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.site-shell .marketplace-search input::placeholder {
+  color: #475569;
+  opacity: 1;
+  font-weight: 500;
+}
+
+.site-shell :is(.hero-copy > p, .watch-link small, .download-banner p) {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.site-shell .next-footer :is(p, a, .footer-category-link) {
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.site-shell .next-footer .footer-copyright {
+  color: #cbd5e1 !important;
+  font-size: 12px !important;
+}
+
+.site-shell .next-footer h3 {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.site-shell .next-footer .footer-brand > img {
+  display: block;
+  width: 190px;
+  max-width: 100%;
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  object-fit: contain;
+}
+
+.site-shell :is(.market-lead-actions button, .market-lead-price,
+  .market-lead-budget, .watch-link small, .hero-badges b) {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.site-shell .lead-filter-sidebar {
+  background: #c5dcff;
+  border-color: #7598c8;
+  color: #172f50;
+  box-shadow: 0 4px 10px #0a1c421a;
+}
+
+.site-shell .lead-filter-sidebar header { border-bottom-color: #7598c8; }
+.site-shell .lead-filter-sidebar h2 { color: #081b3b; font-weight: 800; }
+.site-shell .lead-filter-sidebar header button { color: #0046b8; font-size: 12px; font-weight: 700; }
+.site-shell :is(.lead-filter-label, .lead-filter-group h3) { color: #081b3b; font-size: 13px; font-weight: 700; }
+.site-shell .lead-filter-option { color: #172f50; font-weight: 600; }
+.site-shell .lead-filter-hint { color: #334155; font-size: 12px; font-weight: 500; line-height: 1.6; }
+.site-shell :is(.lead-budget-values span, .lead-custom-dates label) { color: #172f50; font-size: 12px; font-weight: 600; }
+
+.site-shell .lead-filter-sidebar :is(input[list], select, input[type=number], input[type=date]) {
+  color: #172f50;
+  border-color: #7598c8;
+  background: #fff;
+  font-weight: 600;
+}
+
+.site-shell .lead-filter-sidebar input::placeholder { color: #475569; opacity: 1; }
+.site-shell .lead-filter-sidebar input:disabled {
+  opacity: 1;
+  color: #475569;
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  cursor: not-allowed;
+}
+.site-shell .lead-filter-sidebar :is(input[type=checkbox], input[type=radio], input[type=range]) { accent-color: #0050cb; }
+.site-shell .lead-filter-apply { background: #0050cb; font-size: 14px; font-weight: 700; }
+.site-shell .lead-filter-apply:hover:not(:disabled) { background: #003d9e; }
+
+/* Opaque hero pills with the stronger contrast of the supplied reference. */
+.site-shell .market-lead-card {
+  background: #c5dcff;
+  border: 1px solid #7598c8;
+  box-shadow: 0 4px 10px #0a1c4226;
+}
+
+.site-shell .market-lead-card:hover {
+  box-shadow: 0 8px 20px #0a1c4233;
+}
+
+.site-shell .market-lead-body h3 {
+  color: #081b3b;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.site-shell :is(.market-lead-id, .market-lead-location, .market-lead-type, .market-lead-date) {
+  color: #172f50;
+  font-weight: 600;
+}
+
+.site-shell .market-lead-budget {
+  color: #0046b8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.site-shell .market-lead-price {
+  color: #081b3b;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.site-shell .market-lead-actions { border-top-color: #7598c8; }
+.site-shell .market-lead-cart { color: #0046b8; border-color: #0050cb; background: #fff; }
+.site-shell .market-lead-buy { background: #0050cb; border-color: #0050cb; }
+.site-shell .market-lead-buy:hover:not(:disabled) { background: #003d9e; }
+.site-shell .market-lead-cart:hover:not(:disabled) { background: #e8f0ff; }
+.site-shell .market-lead-actions button { font-weight: 700; }
+.site-shell .market-lead-actions button:disabled {
+  opacity: 1;
+  background: #e2e8f0;
+  border-color: #64748b;
+  color: #475569;
+}
+.site-shell .market-lead-unavailable .market-lead-image > img { filter: none; }
+.site-shell .market-lead-status { background: #0a1c42; font-weight: 700; }
+
+.site-shell .home-hero .hero-badges > span:nth-child(2) {
+  transform: translateX(12px);
+}
+
+.site-shell .home-hero .hero-badges > span:nth-child(3) {
+  transform: translateX(24px);
+}
+
+.site-shell .home-hero .hero-badges > span {
+  background: #fff;
+  box-shadow: 0 8px 16px #00000026;
+}
+
+.site-shell .home-hero .hero-badges b {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .site-shell .home-hero .hero-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-inline: 18px;
+  }
+}
