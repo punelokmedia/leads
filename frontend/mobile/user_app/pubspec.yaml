@@ -82,7 +82,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/videos/nextlead_intro.mp4
+    - assets/videos/nextlead_intro.MP4
     - assets/branding/
     - assets/Nextlead Mobile  App Asetes/
     - .env.local
@@ -94,8 +94,6 @@ flutter:
     - assets/Images/profile/
     - assets/Images/login/
     - assets/Images/cart/
-    - assets/Icons/appIcon/
-    - assets/Icons/svg/onboard/
     - assets/(POP) False Ceiling Work/
     - assets/AC Service & Repair/
     - assets/Aluminium & Windows/
@@ -104,7 +102,6 @@ flutter:
     - assets/Construction Enquiry/
     - assets/Electrical Work/
     - assets/Interior Design/
-    - assets/lead images/
     - assets/Painting/
     - assets/Plumbing/
     - assets/Real State/

@@ -3,17 +3,25 @@ import 'package:flutter/material.dart';
 class AppColors {
   // ── Brand Palette (New Color Scheme) ─────────────────────────────────────
   /// Primary Navy – on-surface, headers, high-emphasis text  (#0A2342)
-  static const primaryNavy    = Color(0xFF0A2342);
+  static const primaryNavy = Color(0xFF0A2342);
+
   /// Primary Blue – CTAs, interactive highlights, brand accent  (#0047FF)
-  static const primaryBlue    = Color(0xFF0047FF);
+  static const primaryBlue = Color(0xFF0047FF);
+
   /// Core Brand Blue – hover states, key structure accents  (#0062CB)
-  static const coreBrandBlue  = Color(0xFF0062CB);
+  static const coreBrandBlue = Color(0xFF0062CB);
+
   /// Secondary Slate – metadata text, tag fills, subtle UI  (#475569)
   static const secondarySlate = Color(0xFF475569);
+
   /// Surface Light – badge backdrops, soft wells, verification fills  (#DCE6F7)
-  static const surfaceLight   = Color(0xFFDCE6F7);
+  static const surfaceLight = Color(0xFFE5EFFF);
+
   /// Background Base – canvas/root, modular cards, page gutters  (#F8F8F7)
-  static const backgroundBase = Color(0xFFF8F8F7);
+  static const backgroundBase = Color(0xFFF4F8FF);
+
+  static const accentTeal = Color(0xFF007F78);
+  static const accentAmber = Color(0xFFFFB627);
 
   // ── Utility / Legacy ─────────────────────────────────────────────────────
   static const lemon = Color.fromRGBO(192, 215, 47, 1);
@@ -30,10 +38,18 @@ class AppColors {
   static final blue36 = Color.fromRGBO(36, 24, 78, 1);
 
   // purple → remapped to new brand blues
-  static final purple72 = const Color(0xFF0047FF);  // was 72,33,202 → primaryBlue
-  static final purple73 = const Color(0xFF0047FF);  // was 73,33,208 → primaryBlue
-  static final purple75 = const Color(0xFF0062CB);  // was 75,33,205 → coreBrandBlue
-  static final purple86 = const Color(0xFF0062CB);  // was 86,53,198 → coreBrandBlue
+  static final purple72 = const Color(
+    0xFF0047FF,
+  ); // was 72,33,202 → primaryBlue
+  static final purple73 = const Color(
+    0xFF0047FF,
+  ); // was 73,33,208 → primaryBlue
+  static final purple75 = const Color(
+    0xFF0062CB,
+  ); // was 75,33,205 → coreBrandBlue
+  static final purple86 = const Color(
+    0xFF0062CB,
+  ); // was 86,53,198 → coreBrandBlue
 
   static const inputBg = Color.fromRGBO(247, 247, 247, 1);
   static const googleBlue = Color.fromRGBO(66, 133, 244, 1);

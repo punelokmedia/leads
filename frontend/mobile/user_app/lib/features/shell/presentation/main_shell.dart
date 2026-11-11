@@ -6,7 +6,7 @@ import 'package:user_app/core/theme/app_text_styles.dart';
 
 class _C {
   static const purpleLight = Color(0xFF0047FF);
-  static const inactiveColor = Color(0xFF9E9E9E);
+  static const inactiveColor = Color(0xFF536785);
 }
 
 class MainShell extends StatelessWidget {
@@ -32,9 +32,9 @@ class MainShell extends StatelessWidget {
       bottomNavigationBar: Padding(
         padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, (12.h + bottomInset)),
         child: Container(
-          height: 64.h,
+          height: 76.h,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24.r),
             boxShadow: [
               BoxShadow(
@@ -114,7 +114,7 @@ class _NavButton extends StatelessWidget {
                       )
                     : Icon(
                         item.iconData,
-                        size: 22.r,
+                        size: 26.r,
                         color: isSelected ? _C.purpleLight : _C.inactiveColor,
                       ),
               ),
@@ -122,7 +122,7 @@ class _NavButton extends StatelessWidget {
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 220),
                 style: AppTextStyles.poppins(
-                  fontSize: 10.sp,
+                  fontSize: 12.sp,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                   color: isSelected ? _C.purpleLight : _C.inactiveColor,
                 ),

@@ -73,18 +73,18 @@ class _CategoryPreviewState extends State<CategoryPreview> {
                   'Find leads from various service categories\nand grow your business.',
                   style: TextStyle(
                     color: homeMuted,
-                    fontSize: 14,
+                    fontSize: 16,
                     height: 1.45,
                   ),
                 ),
                 const SizedBox(height: 18),
                 TextField(
                   onChanged: (value) => setState(() => query = value),
-                  style: const TextStyle(color: homeNavy, fontSize: 14),
+                  style: const TextStyle(color: homeNavy, fontSize: 16),
                   decoration: InputDecoration(
                     hintText:
                         'Search categories (e.g. painting, interior, plumbing...)',
-                    hintStyle: const TextStyle(color: homeMuted, fontSize: 12),
+                    hintStyle: const TextStyle(color: homeMuted, fontSize: 14),
                     prefixIcon: const Icon(Icons.search, color: homeNavy),
                     filled: true,
                     fillColor: Colors.white,
@@ -206,7 +206,7 @@ class _CategoryPreviewState extends State<CategoryPreview> {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: homeNavy,
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -216,7 +216,7 @@ class _CategoryPreviewState extends State<CategoryPreview> {
               Expanded(
                 child: Text(
                   '$count Leads',
-                  style: const TextStyle(color: homeMuted, fontSize: 11),
+                  style: const TextStyle(color: homeMuted, fontSize: 13),
                 ),
               ),
               const Icon(Icons.chevron_right, color: homeNavy, size: 19),

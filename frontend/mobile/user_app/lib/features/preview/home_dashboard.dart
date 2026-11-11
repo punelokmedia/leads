@@ -92,7 +92,7 @@ class NextLeadDashboard extends ConsumerWidget {
                       balanceText,
                       style: const TextStyle(
                         color: homeNavy,
-                        fontSize: 13,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -146,7 +146,7 @@ class NextLeadDashboard extends ConsumerWidget {
                     style: const TextStyle(
                       color: homeNavy,
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                   const SizedBox(width: 2),
@@ -165,10 +165,10 @@ class NextLeadDashboard extends ConsumerWidget {
               Expanded(
                 child: TextField(
                   onChanged: onSearch,
-                  style: const TextStyle(color: homeNavy, fontSize: 13),
+                  style: const TextStyle(color: homeNavy, fontSize: 15),
                   decoration: InputDecoration(
                     hintText: 'Search leads by service, location or keyword...',
-                    hintStyle: const TextStyle(color: homeMuted, fontSize: 12),
+                    hintStyle: const TextStyle(color: homeMuted, fontSize: 14),
                     prefixIcon: const Icon(Icons.search, color: homeMuted),
                     filled: true,
                     fillColor: Colors.white,
@@ -199,7 +199,7 @@ class NextLeadDashboard extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 90,
+            height: 104,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
@@ -242,7 +242,7 @@ class NextLeadDashboard extends ConsumerWidget {
                 child: Text(
                   'Latest Leads',
                   style: TextStyle(
-                    fontSize: 21,
+                    fontSize: 24,
                     color: homeNavy,
                     fontWeight: FontWeight.w800,
                   ),
@@ -294,13 +294,13 @@ class NextLeadDashboard extends ConsumerWidget {
               width: 56,
               decoration: BoxDecoration(
                 color: selected
-                    ? const Color(0xFFDCE6F7)
+                    ? const Color(0xFFE5EFFF)
                     : Colors.white, // was 0xFFE0EEFF → surfaceLight
                 borderRadius: BorderRadius.circular(11),
                 border: Border.all(
                   color: selected
                       ? const Color(0xFFB3CCEF) // was 0xFFBFDAFF
-                      : const Color(0xFFEDF1F7),
+                      : const Color(0xFFF0F6FF),
                 ),
               ),
               child: Icon(
@@ -316,7 +316,7 @@ class NextLeadDashboard extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 12,
                 height: 1.2,
                 color: selected ? homeBlue : homeMuted,
               ),
@@ -330,8 +330,8 @@ class NextLeadDashboard extends ConsumerWidget {
   Widget _leadCard(PreviewLead lead) {
     final categoryName =
         lead.category >= 0 && lead.category < store.categories.length
-            ? store.categories[lead.category].name
-            : '';
+        ? store.categories[lead.category].name
+        : '';
     final leadImage = CategoryMedia.getLeadImage(categoryName, leadId: lead.id);
     final icon = lead.category >= 0 && lead.category < store.categories.length
         ? store.categories[lead.category].icon
@@ -358,7 +358,7 @@ class NextLeadDashboard extends ConsumerWidget {
             child: Container(
               width: 72,
               height: 92,
-              color: const Color(0xFFDCE6F7),
+              color: const Color(0xFFE5EFFF),
               child: Image.asset(
                 leadImage,
                 fit: BoxFit.cover,
@@ -376,7 +376,7 @@ class NextLeadDashboard extends ConsumerWidget {
                   lead.title,
                   style: const TextStyle(
                     color: homeNavy,
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -392,7 +392,7 @@ class NextLeadDashboard extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         lead.city,
-                        style: const TextStyle(color: homeMuted, fontSize: 12),
+                        style: const TextStyle(color: homeMuted, fontSize: 14),
                       ),
                     ),
                   ],
@@ -404,12 +404,12 @@ class NextLeadDashboard extends ConsumerWidget {
                     if (lead.propertyType.isNotEmpty)
                       Text(
                         lead.propertyType,
-                        style: const TextStyle(color: homeMuted, fontSize: 10),
+                        style: const TextStyle(color: homeMuted, fontSize: 12),
                       ),
                     if (lead.area.isNotEmpty)
                       Text(
                         lead.area,
-                        style: const TextStyle(color: homeMuted, fontSize: 10),
+                        style: const TextStyle(color: homeMuted, fontSize: 12),
                       ),
                   ],
                 ),
@@ -420,7 +420,7 @@ class NextLeadDashboard extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF536079),
-                    fontSize: 11,
+                    fontSize: 13,
                   ),
                 ),
                 Align(
@@ -436,7 +436,7 @@ class NextLeadDashboard extends ConsumerWidget {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('View Lead', style: TextStyle(fontSize: 11)),
+                        Text('View Lead', style: TextStyle(fontSize: 13)),
                         SizedBox(width: 7),
                         Icon(Icons.arrow_forward, size: 16),
                       ],

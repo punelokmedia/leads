@@ -23,7 +23,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _video = VideoPlayerController.asset('assets/videos/nextlead_intro.mp4');
+    _video = VideoPlayerController.asset('assets/videos/nextlead_intro.MP4');
     _video.addListener(_onVideoChanged);
     // Continue if the device cannot load or play the intro.
     _startupTimeout = Timer(const Duration(seconds: 15), _continueIntoApp);

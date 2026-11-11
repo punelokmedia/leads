@@ -5,6 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTextStyles {
+  // Improve readability across legacy screens without changing device text scaling.
+  static double? _readableSize(double? size) {
+    if (size == null || size <= 0) return null;
+    return size < 18 ? size + 2 : size + 1;
+  }
+
   /// 🔹 Montserrat – PRIMARY brand font (new design system)
   static TextStyle montserrat({
     double? fontSize,
@@ -17,10 +23,10 @@ class AppTextStyles {
     TextDecorationStyle? decorationStyle,
     FontStyle? fontStyle,
   }) {
-    final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
+    final safeFontSize = _readableSize(fontSize);
     return GoogleFonts.montserrat(
       fontSize: safeFontSize,
-      fontWeight: fontWeight,
+      fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
       height: height,
       fontStyle: fontStyle,
@@ -39,10 +45,10 @@ class AppTextStyles {
     double? height,
     double? letterSpacing,
   }) {
-    final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
+    final safeFontSize = _readableSize(fontSize);
     return GoogleFonts.instrumentSans(
       fontSize: safeFontSize,
-      fontWeight: fontWeight,
+      fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
       height: height,
       letterSpacing: letterSpacing,
@@ -57,10 +63,10 @@ class AppTextStyles {
     double? height,
     double? letterSpacing,
   }) {
-    final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
+    final safeFontSize = _readableSize(fontSize);
     return GoogleFonts.inter(
       fontSize: safeFontSize,
-      fontWeight: fontWeight,
+      fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
       height: height,
       letterSpacing: letterSpacing,
@@ -79,10 +85,11 @@ class AppTextStyles {
     TextDecorationStyle? decorationStyle,
     FontStyle? fontStyle,
   }) {
-    final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
-    return GoogleFonts.montserrat(    // ← Switched to Montserrat brand font
+    final safeFontSize = _readableSize(fontSize);
+    return GoogleFonts.montserrat(
+      // ← Switched to Montserrat brand font
       fontSize: safeFontSize,
-      fontWeight: fontWeight,
+      fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
       height: height,
       fontStyle: fontStyle,
@@ -104,10 +111,10 @@ class AppTextStyles {
     Color? decorationColor,
     TextDecorationStyle? decorationStyle,
   }) {
-    final safeFontSize = (fontSize != null && fontSize > 0) ? fontSize : null;
+    final safeFontSize = _readableSize(fontSize);
     return GoogleFonts.roboto(
       fontSize: safeFontSize,
-      fontWeight: fontWeight,
+      fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
       height: height,
       letterSpacing: letterSpacing,

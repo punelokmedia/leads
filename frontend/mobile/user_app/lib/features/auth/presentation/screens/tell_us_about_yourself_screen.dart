@@ -369,12 +369,14 @@ class _TellUsAboutYourselfScreenState
       padding: EdgeInsets.only(bottom: 5.h),
       child: Row(
         children: [
-          Text(
-            text,
-            style: AppTextStyles.inter(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              color: _navy,
+          Flexible(
+            child: Text(
+              text,
+              style: AppTextStyles.inter(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: _navy,
+              ),
             ),
           ),
           if (!optional)

@@ -218,7 +218,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
           const SizedBox(height: 3),
           const Text(
             'Your saved leads and categories, all in one place.',
-            style: TextStyle(fontSize: 14, color: homeMuted),
+            style: TextStyle(fontSize: 16, color: homeMuted),
           ),
           const SizedBox(height: 18),
           Container(
@@ -253,7 +253,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
                     hintText: categoryTab
                         ? 'Search saved categories'
                         : 'Search saved leads',
-                    hintStyle: const TextStyle(fontSize: 14, color: homeMuted),
+                    hintStyle: const TextStyle(fontSize: 16, color: homeMuted),
                     prefixIcon: const Icon(Icons.search, color: homeMuted),
                     filled: true,
                     fillColor: Colors.white,
@@ -351,7 +351,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
                             child: Text(
                               'Saved categories',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 18,
                                 color: homeNavy,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -365,7 +365,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
                       ),
                       const Text(
                         'Quick access to your saved service categories.',
-                        style: TextStyle(fontSize: 12, color: homeMuted),
+                        style: TextStyle(fontSize: 14, color: homeMuted),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -375,7 +375,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
                               (name) => InputChip(
                                 label: Text(
                                   name,
-                                  style: const TextStyle(fontSize: 11),
+                                  style: const TextStyle(fontSize: 13),
                                 ),
                                 backgroundColor: const Color(0xFFE0EDFF),
                                 onPressed: () => widget.onCategory(name),
@@ -417,7 +417,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
           style: TextStyle(
             color: active ? Colors.white : const Color(0xFF485D87),
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: 16,
           ),
         ),
       ),
@@ -464,7 +464,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
                         lead.title,
                         style: const TextStyle(
                           color: homeNavy,
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -484,7 +484,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
                 const SizedBox(height: 5),
                 Text(
                   '$name · ${lead.city}',
-                  style: const TextStyle(color: homeMuted, fontSize: 12),
+                  style: const TextStyle(color: homeMuted, fontSize: 14),
                 ),
                 const SizedBox(height: 12),
                 LayoutBuilder(
@@ -500,7 +500,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
                         children: [
                           const Text(
                             'Budget',
-                            style: TextStyle(color: homeMuted, fontSize: 11),
+                            style: TextStyle(color: homeMuted, fontSize: 13),
                           ),
                           Text(
                             lead.budgetLabel ??
@@ -509,7 +509,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
                                     : 'Not specified'),
                             style: const TextStyle(
                               color: homeNavy,
-                              fontSize: 14,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -527,7 +527,7 @@ class _SavedLeadsScreenState extends ConsumerState<SavedLeadsScreen> {
                       ),
                       child: const Text(
                         'View Lead',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: 14),
                       ),
                     );
                     return size.maxWidth < 250

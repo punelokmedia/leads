@@ -167,7 +167,7 @@ class LeadDetailsPreview extends StatelessWidget {
                                 lead.city,
                                 style: const TextStyle(
                                   color: _muted,
-                                  fontSize: 14,
+                                  fontSize: 16,
                                 ),
                               ),
                             ),
@@ -217,7 +217,7 @@ class LeadDetailsPreview extends StatelessWidget {
                                 item.trim(),
                                 style: const TextStyle(
                                   color: _muted,
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   height: 1.4,
                                 ),
                               ),
@@ -291,7 +291,7 @@ class LeadDetailsPreview extends StatelessWidget {
                           ? lead.availabilityLabel
                           : 'Unlock Lead  •  ₹ ${lead.fee}',
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: 19,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -300,7 +300,7 @@ class LeadDetailsPreview extends StatelessWidget {
                 const SizedBox(height: 6),
                 const Text(
                   'One time payment • Phone number remains private',
-                  style: TextStyle(color: _muted, fontSize: 11),
+                  style: TextStyle(color: _muted, fontSize: 13),
                 ),
               ],
             ),
@@ -320,7 +320,7 @@ class LeadDetailsPreview extends StatelessWidget {
       value,
       style: const TextStyle(
         color: _blue,
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
       ),
     ),
@@ -357,7 +357,7 @@ class LeadDetailsPreview extends StatelessWidget {
                     const SizedBox(height: 5),
                     Text(
                       item.$2,
-                      style: const TextStyle(color: _muted, fontSize: 10),
+                      style: const TextStyle(color: _muted, fontSize: 12),
                     ),
                     const SizedBox(height: 5),
                     Text(
@@ -366,7 +366,7 @@ class LeadDetailsPreview extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: _navy,
-                        fontSize: 13,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -405,7 +405,7 @@ class LeadDetailsPreview extends StatelessWidget {
                   SizedBox(height: 3),
                   Text(
                     'Contact information is not shown in this app.',
-                    style: TextStyle(color: _muted, fontSize: 12),
+                    style: TextStyle(color: _muted, fontSize: 14),
                   ),
                 ],
               ),
@@ -449,7 +449,7 @@ class LeadDetailsPreview extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 25,
-          backgroundColor: Color(0xFFDCE6F7),
+          backgroundColor: Color(0xFFE5EFFF),
           child: Icon(Icons.lock_outline, color: _blue),
         ),
         SizedBox(width: 13),
@@ -461,14 +461,14 @@ class LeadDetailsPreview extends StatelessWidget {
                 'Unlock Complete Lead Details',
                 style: TextStyle(
                   color: _navy,
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               SizedBox(height: 5),
               Text(
                 'Get full project requirements and additional images.',
-                style: TextStyle(color: _muted, fontSize: 13),
+                style: TextStyle(color: _muted, fontSize: 15),
               ),
             ],
           ),

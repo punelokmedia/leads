@@ -43,8 +43,12 @@ class CategoryMedia {
     return null;
   }
 
-  /// Returns a specific project image (01.png, 02.png, or 03.png) mapped to a lead.
-  static String getLeadImage(String? categoryName, {String? leadId, int index = 0}) {
+  /// Returns a mobile-sized project photo mapped to a lead.
+  static String getLeadImage(
+    String? categoryName, {
+    String? leadId,
+    int index = 0,
+  }) {
     final folder = getCategoryFolder(categoryName);
     if (folder == null) {
       return 'assets/branding/hero.webp';
@@ -52,7 +56,7 @@ class CategoryMedia {
     final variant = (leadId != null && leadId.isNotEmpty)
         ? (leadId.hashCode.abs() % 3) + 1
         : (index.abs() % 3) + 1;
-    return 'assets/$folder/0$variant.png';
+    return 'assets/$folder/0$variant.jpg';
   }
 
   /// Returns the main category cover image (e.g. Painting.jpg).
@@ -62,18 +66,17 @@ class CategoryMedia {
     return 'assets/$folder/$folder.jpg';
   }
 
-  /// Returns all project images (01.png, 02.png, 03.png, and the cover .jpg) for a category.
+  /// Returns the three project photos and cover for a category.
   static List<String> getProjectImages(String? categoryName) {
     final folder = getCategoryFolder(categoryName);
     if (folder == null) {
       return const ['assets/branding/hero.webp'];
     }
     return [
-      'assets/$folder/01.png',
-      'assets/$folder/02.png',
-      'assets/$folder/03.png',
+      'assets/$folder/01.jpg',
+      'assets/$folder/02.jpg',
+      'assets/$folder/03.jpg',
       'assets/$folder/$folder.jpg',
     ];
   }
 }
-

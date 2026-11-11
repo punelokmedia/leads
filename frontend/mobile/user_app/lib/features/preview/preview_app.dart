@@ -22,7 +22,7 @@ import '../../core/theme/app_theme.dart';
 
 const _purple = Color(0xFF0062CB);
 const _gradient = LinearGradient(
-  colors: [Color(0xFF0A2342), Color(0xFF0062CB)],
+  colors: [Color(0xFF0047FF), Color(0xFF008FCE)],
   begin: Alignment.bottomLeft,
   end: Alignment.topRight,
 );
@@ -448,7 +448,7 @@ class _PreviewHomeState extends State<PreviewHome> {
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
         child: Container(
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFDCE6F7) : Colors.transparent,
+            color: selected ? const Color(0xFFE5EFFF) : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
           ),
           padding: const EdgeInsets.symmetric(vertical: 6),
@@ -460,7 +460,7 @@ class _PreviewHomeState extends State<PreviewHome> {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   color: selected ? homeBlue : homeMuted,
                 ),
@@ -534,7 +534,7 @@ class _PreviewHomeState extends State<PreviewHome> {
       Expanded(
         child: Text(
           title,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
         ),
       ),
       TextButton(onPressed: action, child: const Text('View All')),
@@ -999,14 +999,14 @@ class LeadPreviewCard extends StatelessWidget {
                   lead.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 18,
                   ),
                 ),
                 Text(
                   '${lead.city}, ${lead.state}',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 12,
+                    fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1034,7 +1034,7 @@ class LeadPreviewCard extends StatelessWidget {
                             ? Theme.of(context).colorScheme.onSurfaceVariant
                             : Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                        fontSize: 13,
                       ),
                     ),
                     if (lead.saved)
@@ -1177,7 +1177,7 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
                           store.isLive
                               ? 'Select a category to see current availability'
                               : 'Coverage claims shown as mock copy',
-                          style: TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 12),
                         ),
                       ],
                     ),
@@ -1255,7 +1255,7 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
                                   Expanded(
                                     child: Text(
                                       c.name,
-                                      style: const TextStyle(fontSize: 12),
+                                      style: const TextStyle(fontSize: 14),
                                     ),
                                   ),
                                 ],
@@ -1265,14 +1265,14 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
                               flex: 3,
                               child: Text(
                                 c.budget,
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ),
                             Expanded(
                               flex: 3,
                               child: Text(
                                 c.fee,
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ),
                           ],
@@ -1289,7 +1289,7 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
                                   Text(
                                     '${widget.store.leads.where((l) => l.category == i && !l.closed).length} available ${store.isLive ? '' : 'test '}leads',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.onSurfaceVariant,
@@ -1315,7 +1315,7 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
-                fontSize: 12,
+                fontSize: 14,
               ),
             ),
             TrustStrip(store: store),
@@ -1658,7 +1658,7 @@ class LegacyLeadDetailsPreview extends StatelessWidget {
             ),
             Text(
               'Up to ${lead.maxBuyers} vendors can access client details',
-              style: TextStyle(fontSize: 11),
+              style: TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 8),
           ],
@@ -1677,7 +1677,7 @@ class LegacyLeadDetailsPreview extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 12),
           child,
@@ -1738,7 +1738,7 @@ class SupportBar extends StatelessWidget {
               icon: const Icon(Icons.headset_mic, color: Colors.white),
               label: const Text(
                 '24/7 Support',
-                style: TextStyle(color: Colors.white, fontSize: 12),
+                style: TextStyle(color: Colors.white, fontSize: 14),
               ),
             ),
           ),
@@ -1748,7 +1748,7 @@ class SupportBar extends StatelessWidget {
               icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
               label: const Text(
                 'Chat with Support',
-                style: TextStyle(color: Colors.white, fontSize: 12),
+                style: TextStyle(color: Colors.white, fontSize: 14),
               ),
             ),
           ),

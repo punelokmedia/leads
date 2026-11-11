@@ -110,7 +110,7 @@ class NextLeadProfile extends ConsumerWidget {
           const SizedBox(height: 5),
           const Text(
             'Manage your account, business details and preferences.',
-            style: TextStyle(fontSize: 12, color: homeMuted),
+            style: TextStyle(fontSize: 14, color: homeMuted),
           ),
           const SizedBox(height: 16),
           _panel(
@@ -155,7 +155,7 @@ class NextLeadProfile extends ConsumerWidget {
                               profile['Service category'] ?? '',
                               style: const TextStyle(
                                 color: homeMuted,
-                                fontSize: 13,
+                                fontSize: 15,
                               ),
                             ),
                             if ((profile['Business name'] ?? '').isNotEmpty)
@@ -165,7 +165,7 @@ class NextLeadProfile extends ConsumerWidget {
                                   profile['Business name']!,
                                   style: const TextStyle(
                                     color: homeMuted,
-                                    fontSize: 12,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ),
@@ -184,7 +184,7 @@ class NextLeadProfile extends ConsumerWidget {
                         ),
                         child: const Text(
                           'Edit Profile',
-                          style: TextStyle(fontSize: 11),
+                          style: TextStyle(fontSize: 13),
                         ),
                       ),
                     ],
@@ -229,7 +229,7 @@ class NextLeadProfile extends ConsumerWidget {
                                             ? 'Not provided'
                                             : item.$2,
                                         style: const TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 14,
                                           color: homeNavy,
                                         ),
                                       ),
@@ -263,13 +263,13 @@ class NextLeadProfile extends ConsumerWidget {
               ),
               subtitle: const Text(
                 'View your membership options',
-                style: TextStyle(color: homeMuted, fontSize: 12),
+                style: TextStyle(color: homeMuted, fontSize: 14),
               ),
               trailing: OutlinedButton(
                 onPressed: onMembership,
                 child: const Text(
                   'Manage Plan',
-                  style: TextStyle(fontSize: 11),
+                  style: TextStyle(fontSize: 13),
                 ),
               ),
             ),
@@ -420,7 +420,7 @@ class NextLeadProfile extends ConsumerWidget {
               const Text(
                 'You’ll need to sign in again to access your vendor account.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: homeMuted, fontSize: 15, height: 1.4),
+                style: TextStyle(color: homeMuted, fontSize: 17, height: 1.4),
               ),
               const SizedBox(height: 22),
               Container(
@@ -442,7 +442,7 @@ class NextLeadProfile extends ConsumerWidget {
                         'Your account data and saved leads will remain saved.',
                         style: TextStyle(
                           color: homeNavy,
-                          fontSize: 13,
+                          fontSize: 15,
                           height: 1.35,
                         ),
                       ),
@@ -465,7 +465,7 @@ class NextLeadProfile extends ConsumerWidget {
                   ),
                   child: const Text(
                     'Log Out',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -475,7 +475,7 @@ class NextLeadProfile extends ConsumerWidget {
                   'Cancel',
                   style: TextStyle(
                     color: homeBlue,
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -530,7 +530,7 @@ class NextLeadProfile extends ConsumerWidget {
                 ),
                 Text(
                   label,
-                  style: const TextStyle(fontSize: 10, color: homeMuted),
+                  style: const TextStyle(fontSize: 12, color: homeMuted),
                 ),
               ],
             ),
@@ -562,13 +562,13 @@ class NextLeadProfile extends ConsumerWidget {
           title,
           style: const TextStyle(
             color: homeNavy,
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(color: homeMuted, fontSize: 11),
+          style: const TextStyle(color: homeMuted, fontSize: 13),
         ),
         trailing: const Icon(Icons.chevron_right, color: homeMuted, size: 20),
       ),

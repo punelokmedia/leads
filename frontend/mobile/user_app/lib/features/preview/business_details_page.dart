@@ -115,7 +115,7 @@ class _EditProfilePreviewState extends State<EditProfilePreview> {
                 const SizedBox(height: 4),
                 const Text(
                   'Manage your company information.',
-                  style: TextStyle(color: _muted, fontSize: 14),
+                  style: TextStyle(color: _muted, fontSize: 16),
                 ),
                 const SizedBox(height: 20),
                 _infoBanner(),
@@ -145,7 +145,7 @@ class _EditProfilePreviewState extends State<EditProfilePreview> {
                   padding: EdgeInsets.only(top: 5, bottom: 18),
                   child: Text(
                     'ⓘ  Optional — add if applicable.',
-                    style: TextStyle(color: _muted, fontSize: 12),
+                    style: TextStyle(color: _muted, fontSize: 14),
                   ),
                 ),
                 _label('Business Address'),
@@ -220,7 +220,7 @@ class _EditProfilePreviewState extends State<EditProfilePreview> {
                               : const Text(
                                   'Save Changes',
                                   style: TextStyle(
-                                    fontSize: 17,
+                                    fontSize: 19,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -264,14 +264,14 @@ class _EditProfilePreviewState extends State<EditProfilePreview> {
                 'Keep your business details updated',
                 style: TextStyle(
                   color: _navy,
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               SizedBox(height: 3),
               Text(
                 'to build trust with customers.',
-                style: TextStyle(color: _muted, fontSize: 13),
+                style: TextStyle(color: _muted, fontSize: 15),
               ),
             ],
           ),
@@ -286,7 +286,7 @@ class _EditProfilePreviewState extends State<EditProfilePreview> {
       text: TextSpan(
         style: const TextStyle(
           color: _navy,
-          fontSize: 15,
+          fontSize: 17,
           fontWeight: FontWeight.w700,
         ),
         children: [
@@ -305,7 +305,7 @@ class _EditProfilePreviewState extends State<EditProfilePreview> {
 
   InputDecoration _decoration(String hint, IconData icon) => InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: _muted, fontSize: 14),
+    hintStyle: const TextStyle(color: _muted, fontSize: 16),
     prefixIcon: Icon(icon, color: _muted),
     filled: true,
     fillColor: Colors.white,
@@ -333,7 +333,7 @@ class _EditProfilePreviewState extends State<EditProfilePreview> {
   }) => TextFormField(
     controller: controller,
     keyboardType: keyboardType,
-    style: const TextStyle(color: _navy, fontSize: 14),
+    style: const TextStyle(color: _navy, fontSize: 16),
     decoration: _decoration(hint, icon),
     validator: required
         ? (value) => value == null || value.trim().isEmpty
@@ -355,8 +355,8 @@ class _EditProfilePreviewState extends State<EditProfilePreview> {
     decoration: _decoration(hint ?? '', icon),
     hint: hint == null
         ? null
-        : Text(hint, style: const TextStyle(color: _muted, fontSize: 14)),
-    style: const TextStyle(color: _navy, fontSize: 14),
+        : Text(hint, style: const TextStyle(color: _muted, fontSize: 16)),
+    style: const TextStyle(color: _navy, fontSize: 16),
     items: items
         .map((item) => DropdownMenuItem(value: item, child: Text(item)))
         .toList(),

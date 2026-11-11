@@ -171,7 +171,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDCE6F7),
+                      color: const Color(0xFFE5EFFF),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -198,7 +198,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                           '₹499/month • Full App Access',
                           style: TextStyle(
                             color: homeBlue,
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -228,7 +228,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                         'Note: This is strictly the fee for app access. Leads are purchased separately.',
                         style: TextStyle(
                           color: Color(0xFF7C5600),
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                           height: 1.3,
                         ),
@@ -252,7 +252,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                       'Wallet Balance',
                       style: TextStyle(
                         color: homeNavy,
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -262,7 +262,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                         color: hasEnough
                             ? const Color(0xFF16A34A)
                             : const Color(0xFFDC2626),
-                        fontSize: 15,
+                        fontSize: 17,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -284,7 +284,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                   ),
                   child: const Text(
                     'Pay ₹499 & Activate Pro',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                   ),
                 )
               else
@@ -305,7 +305,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                       child: const Text(
                         'Add ₹499 & Activate',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -376,7 +376,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
           '₹499/month is strictly the platform membership fee for app access, advanced search filters, priority customer support, and verified project access.\n\nLeads are purchased individually per project requirement.',
           style: TextStyle(
             color: Color(0xFF4A5568),
-            fontSize: 13,
+            fontSize: 15,
             height: 1.45,
           ),
         ),
@@ -430,7 +430,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
               const SizedBox(height: 4),
               const Text(
                 'Compare features between Free Guest and Pro Membership.',
-                style: TextStyle(color: homeMuted, fontSize: 12),
+                style: TextStyle(color: homeMuted, fontSize: 14),
               ),
               const SizedBox(height: 16),
               _planRow('App Access', 'Limited Preview', 'Full App Access'),
@@ -478,7 +478,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
               style: const TextStyle(
                 color: homeNavy,
                 fontWeight: FontWeight.w600,
-                fontSize: 13,
+                fontSize: 15,
               ),
             ),
           ),
@@ -486,7 +486,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
             flex: 3,
             child: Text(
               freeVal,
-              style: const TextStyle(color: homeMuted, fontSize: 12),
+              style: const TextStyle(color: homeMuted, fontSize: 14),
             ),
           ),
           Expanded(
@@ -496,7 +496,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
               style: const TextStyle(
                 color: homeBlue,
                 fontWeight: FontWeight.w700,
-                fontSize: 12,
+                fontSize: 14,
               ),
             ),
           ),
@@ -560,7 +560,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
               const SizedBox(height: 6),
               const Text(
                 'Invite other contractors and professionals to NextLead. When they join and purchase verified leads, you earn wallet credits.',
-                style: TextStyle(color: homeMuted, fontSize: 13, height: 1.4),
+                style: TextStyle(color: homeMuted, fontSize: 15, height: 1.4),
               ),
               const SizedBox(height: 18),
               Container(
@@ -581,14 +581,14 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                       children: [
                         const Text(
                           'Your Referral Code',
-                          style: TextStyle(color: homeMuted, fontSize: 11),
+                          style: TextStyle(color: homeMuted, fontSize: 13),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           refCode,
                           style: const TextStyle(
                             color: homeNavy,
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.1,
                           ),
@@ -675,7 +675,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                     style: const TextStyle(
                       color: homeNavy,
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -718,7 +718,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                         'MEMBERSHIP',
                         style: TextStyle(
                           color: homeBlue,
-                          fontSize: 11,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.2,
                         ),
@@ -738,7 +738,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                         'Get complete access to the NextLead app and explore verified leads, advanced filters and more.',
                         style: TextStyle(
                           color: homeMuted,
-                          fontSize: 12,
+                          fontSize: 14,
                           height: 1.4,
                         ),
                       ),
@@ -812,7 +812,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                       'Most Popular',
                                       style: TextStyle(
                                         color: homeBlue,
-                                        fontSize: 11,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
@@ -833,7 +833,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                 'Full app access for growing businesses.',
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.9),
-                                  fontSize: 12,
+                                  fontSize: 14,
                                 ),
                               ),
                             ],
@@ -860,7 +860,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                   ' /month',
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.9),
-                                    fontSize: 12,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -963,7 +963,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                   'Pro Membership Active',
                                   style: TextStyle(
                                     color: Color(0xFF2F855A),
-                                    fontSize: 14,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -1000,7 +1000,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                                         Text(
                                           'Upgrade to Pro',
                                           style: TextStyle(
-                                            fontSize: 15,
+                                            fontSize: 17,
                                             fontWeight: FontWeight.w700,
                                           ),
                                         ),
@@ -1032,14 +1032,14 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                       'Compare Plans',
                       style: TextStyle(
                         color: homeNavy,
-                        fontSize: 17,
+                        fontSize: 19,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     SizedBox(height: 2),
                     Text(
                       'Choose the plan that fits your needs.',
-                      style: TextStyle(color: homeMuted, fontSize: 12),
+                      style: TextStyle(color: homeMuted, fontSize: 14),
                     ),
                   ],
                 ),
@@ -1060,7 +1060,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                           'View all',
                           style: TextStyle(
                             color: homeBlue,
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1114,14 +1114,14 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                             'Refer & Earn',
                             style: TextStyle(
                               color: homeNavy,
-                              fontSize: 14,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           SizedBox(height: 2),
                           Text(
                             'Invite your friends and earn free app access benefits.',
-                            style: TextStyle(color: homeMuted, fontSize: 11),
+                            style: TextStyle(color: homeMuted, fontSize: 13),
                           ),
                         ],
                       ),
@@ -1145,7 +1145,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                     'More Leads. More Opportunities.',
                     style: TextStyle(
                       color: homeNavy,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1177,7 +1177,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: const Color(0xFFDCE6F7),
+            color: const Color(0xFFE5EFFF),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: homeBlue, size: 20),
@@ -1191,14 +1191,14 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                 title,
                 style: const TextStyle(
                   color: homeNavy,
-                  fontSize: 13,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 1),
               Text(
                 subtitle,
-                style: const TextStyle(color: homeMuted, fontSize: 11),
+                style: const TextStyle(color: homeMuted, fontSize: 13),
               ),
             ],
           ),
@@ -1227,7 +1227,7 @@ class _HeroPhoneMockup extends StatelessWidget {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFDCE6F7).withValues(alpha: 0.5),
+                color: const Color(0xFFE5EFFF).withValues(alpha: 0.5),
               ),
             ),
           ),
@@ -1329,7 +1329,7 @@ class _HeroPhoneMockup extends StatelessWidget {
       width: 26,
       height: 26,
       decoration: BoxDecoration(
-        color: const Color(0xFFDCE6F7),
+        color: const Color(0xFFE5EFFF),
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 1.5),
         boxShadow: const [

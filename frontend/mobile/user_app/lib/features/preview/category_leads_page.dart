@@ -197,7 +197,7 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
                       ),
                       Text(
                         '$count Leads Available',
-                        style: const TextStyle(fontSize: 14, color: homeMuted),
+                        style: const TextStyle(fontSize: 16, color: homeMuted),
                       ),
                     ],
                   ),
@@ -214,11 +214,11 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
                   child: TextFormField(
                     initialValue: widget.query,
                     onChanged: widget.onSearch,
-                    style: const TextStyle(fontSize: 13, color: homeNavy),
+                    style: const TextStyle(fontSize: 15, color: homeNavy),
                     decoration: InputDecoration(
                       hintText: 'Search in $name leads...',
                       hintStyle: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         color: homeMuted,
                       ),
                       prefixIcon: const Icon(Icons.search, color: homeNavy),
@@ -309,7 +309,7 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
                 Expanded(
                   child: Text(
                     '${leads.length} Leads Found',
-                    style: const TextStyle(color: homeMuted, fontSize: 12),
+                    style: const TextStyle(color: homeMuted, fontSize: 14),
                   ),
                 ),
                 PopupMenuButton<String>(
@@ -333,7 +333,7 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
                         const Icon(Icons.swap_vert, size: 19, color: homeNavy),
                         Text(
                           sort,
-                          style: const TextStyle(color: homeNavy, fontSize: 12),
+                          style: const TextStyle(color: homeNavy, fontSize: 14),
                         ),
                       ],
                     ),
@@ -366,7 +366,7 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
     child: OutlinedButton.icon(
       onPressed: action,
       icon: Icon(icon, size: 17),
-      label: Text(text, style: const TextStyle(fontSize: 11)),
+      label: Text(text, style: const TextStyle(fontSize: 13)),
       style: OutlinedButton.styleFrom(
         foregroundColor: active ? homeBlue : homeNavy,
         backgroundColor: active ? const Color(0xFFE6F1FF) : Colors.white,
@@ -421,7 +421,7 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
                       Expanded(
                         child: Text(
                           lead.propertyType,
-                          style: const TextStyle(fontSize: 11, color: homeBlue),
+                          style: const TextStyle(fontSize: 13, color: homeBlue),
                         ),
                       ),
                     IconButton(
@@ -440,7 +440,7 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
                 Text(
                   lead.title,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 17,
                     color: homeNavy,
                     fontWeight: FontWeight.w700,
                   ),
@@ -456,7 +456,7 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
                     Expanded(
                       child: Text(
                         lead.city,
-                        style: const TextStyle(fontSize: 11, color: homeMuted),
+                        style: const TextStyle(fontSize: 13, color: homeMuted),
                       ),
                     ),
                   ],
@@ -468,17 +468,17 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
                   children: [
                     Text(
                       _budget(lead),
-                      style: const TextStyle(color: homeNavy, fontSize: 11),
+                      style: const TextStyle(color: homeNavy, fontSize: 13),
                     ),
                     if (lead.area.isNotEmpty)
                       Text(
                         lead.area,
-                        style: const TextStyle(color: homeMuted, fontSize: 11),
+                        style: const TextStyle(color: homeMuted, fontSize: 13),
                       ),
                     if (lead.timeline.isNotEmpty)
                       Text(
                         lead.timeline,
-                        style: const TextStyle(color: homeMuted, fontSize: 11),
+                        style: const TextStyle(color: homeMuted, fontSize: 13),
                       ),
                   ],
                 ),
@@ -493,7 +493,7 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
                     ),
                     child: const Text(
                       'View Lead',
-                      style: TextStyle(fontSize: 11),
+                      style: TextStyle(fontSize: 13),
                     ),
                   ),
                 ),

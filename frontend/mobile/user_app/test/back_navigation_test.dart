@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:user_app/features/preview/preview_app.dart';
+import 'package:user_app/features/preview/lead_details_page.dart';
 
 void main() {
   testWidgets('Back returns from details and tabs before confirming exit', (
