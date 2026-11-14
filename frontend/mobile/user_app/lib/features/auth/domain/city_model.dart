@@ -5,9 +5,6 @@ class City {
   City({required this.id, required this.name});
 
   factory City.fromJson(Map<String, dynamic> json) {
-    return City(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-    );
+    return City(id: json['_id'] ?? '', name: json['name'] ?? '');
   }
 }

@@ -1,486 +1,515 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:hooks_riverpod/legacy.dart';
+import 'package:intl/intl.dart';
+import '../../../../app/app_router.dart';
+import '../../../../core/network/dio_provider.dart';
+import '../../../auth/shared/auth_providers.dart';
+import '../../../payments/presentation/widgets/wallet_card.dart';
+import '../../../preview/figma_widgets.dart';
 
-// ─────────────────────────────────────────
-// Models
-// ─────────────────────────────────────────
-
-enum NotificationType { newLead, leadAccepted, payment }
-
-class NotificationItem {
-  final String id;
-  final NotificationType type;
-  final String title;
-  final String subtitle;
-  final String time;
-  final bool isRead;
-
-  const NotificationItem({
-    required this.id,
-    required this.type,
-    required this.title,
-    required this.subtitle,
-    required this.time,
-    this.isRead = false,
-  });
-
-  NotificationItem copyWith({bool? isRead}) {
-    return NotificationItem(
-      id: id,
-      type: type,
-      title: title,
-      subtitle: subtitle,
-      time: time,
-      isRead: isRead ?? this.isRead,
-    );
-  }
-}
-
-// ─────────────────────────────────────────
-// State & Provider
-// ─────────────────────────────────────────
-
-class NotificationNotifier extends StateNotifier<List<NotificationItem>> {
-  NotificationNotifier()
-    : super([
-        const NotificationItem(
-          id: '1',
-          type: NotificationType.newLead,
-          title: 'New Lead Available',
-          subtitle: 'Interior Design Project at Mumbai',
-          time: '10:30 AM',
-        ),
-        const NotificationItem(
-          id: '2',
-          type: NotificationType.leadAccepted,
-          title: 'Lead Accepted',
-          subtitle: 'You have accepted a new lead',
-          time: 'Wednesday',
-          isRead: true,
-        ),
-        const NotificationItem(
-          id: '3',
-          type: NotificationType.payment,
-          title: 'Payment Successful',
-          subtitle: '₹400 payment successful',
-          time: '20 May',
-          isRead: true,
-        ),
-      ]);
-
-  void markAsRead(String id) {
-    state = state
-        .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
-        .toList();
-  }
-
-  void markAllRead() {
-    state = state.map((n) => n.copyWith(isRead: true)).toList();
-  }
-
-  void deleteNotification(String id) {
-    state = state.where((n) => n.id != id).toList();
-  }
-}
-
-final notificationProvider =
-    StateNotifierProvider<NotificationNotifier, List<NotificationItem>>(
-      (ref) => NotificationNotifier(),
-    );
-
-// ─────────────────────────────────────────
-// Notification Screen
-// ─────────────────────────────────────────
-
-class NotificationScreen extends HookConsumerWidget {
+class NotificationScreen extends ConsumerStatefulWidget {
   const NotificationScreen({super.key});
-
-  static const Color _bg = Color(0xFFF4F3FB);
-  static const Color _purple = Color(0xFF6B5FE4);
-  static const Color _textDark = Color(0xFF1A1A2E);
-  static const Color _textSub = Color(0xFF9E9EB8);
-  static const Color _divider = Color(0xFFEAE8F5);
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notifications = ref.watch(notificationProvider);
-
-    // Stagger animation
-    final animController = useAnimationController(
-      duration: const Duration(milliseconds: 500),
-    );
-
-    useEffect(() {
-      animController.forward();
-      return null;
-    }, const []);
-
-    return Scaffold(
-      backgroundColor: _bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _AppBar(
-              purple: _purple,
-              textDark: _textDark,
-              onMarkAll: () =>
-                  ref.read(notificationProvider.notifier).markAllRead(),
-            ),
-            Expanded(
-              child: notifications.isEmpty
-                  ? _EmptyState(purple: _purple, textSub: _textSub)
-                  : ListView.separated(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 12.h,
-                      ),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: notifications.length,
-                      separatorBuilder: (_, _) =>
-                          Divider(color: _divider, height: 1, thickness: 1),
-                      itemBuilder: (context, index) {
-                        final item = notifications[index];
-                        final delay = index * 0.12;
-
-                        return AnimatedBuilder(
-                          animation: animController,
-                          builder: (context, child) {
-                            final progress =
-                                ((animController.value - delay).clamp(
-                                  0.0,
-                                  1.0,
-                                ) /
-                                (1.0 - delay).clamp(0.01, 1.0));
-                            final curve = Curves.easeOutCubic.transform(
-                              progress,
-                            );
-                            return Opacity(
-                              opacity: curve,
-                              child: Transform.translate(
-                                offset: Offset(0, (1 - curve) * 24),
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: _NotificationTile(
-                            item: item,
-                            purple: _purple,
-                            textDark: _textDark,
-                            textSub: _textSub,
-                            onTap: () => ref
-                                .read(notificationProvider.notifier)
-                                .markAsRead(item.id),
-                            onDismiss: () => ref
-                                .read(notificationProvider.notifier)
-                                .deleteNotification(item.id),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
 }
 
-// ─────────────────────────────────────────
-// App Bar
-// ─────────────────────────────────────────
-
-class _AppBar extends StatelessWidget {
-  final Color purple;
-  final Color textDark;
-  final VoidCallback onMarkAll;
-
-  const _AppBar({
-    required this.purple,
-    required this.textDark,
-    required this.onMarkAll,
-  });
+class _NotificationScreenState extends ConsumerState<NotificationScreen> {
+  final List<Map<String, dynamic>> _items = [];
+  String _filter = 'All';
+  String? _cursor, _error;
+  bool _loading = true, _saving = false;
+  static const _filters = [
+    'All',
+    'New Leads',
+    'Updates',
+    'Payments',
+    'Announcements',
+  ];
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-      child: Row(
-        children: [
-          // Back button
-          GestureDetector(
-            onTap: () {
-              if (context.canPop()) context.pop();
-            },
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 20.sp,
-              color: textDark,
-            ),
-          ),
+  void initState() {
+    super.initState();
+    Future.microtask(() => _load());
+  }
 
-          // Title
-          Expanded(
-            child: Center(
-              child: Text(
-                'Notification',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: textDark,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ),
-          ),
+  Future<void> _load({bool more = false}) async {
+    if (!mounted) return;
+    if (!ref.read(isLoggedInProvider)) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final response = await ref
+          .read(dioProvider)
+          .get(
+            'api/v1/notifications',
+            queryParameters: {if (more && _cursor != null) 'before': _cursor},
+          );
+      final payload = Map<String, dynamic>.from(response.data as Map);
+      if (payload['success'] != true) {
+        throw StateError('Unable to load notifications');
+      }
+      final rows = (payload['data'] as List)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        if (!more) _items.clear();
+        for (final row in rows) {
+          if (!_items.any((item) => item['_id'] == row['_id'])) _items.add(row);
+        }
+        _cursor = payload['nextCursor'] as String?;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'Unable to load notifications. Please retry.');
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
-          // Placeholder to balance title
-          SizedBox(width: 20.w),
+  String _category(Map<String, dynamic> item) => switch (item['type']) {
+    'NEW_LEAD' => 'New Leads',
+    'PAYMENT_SUCCESS' || 'WALLET_CREDIT' || 'REFUND_COMPLETED' => 'Payments',
+    'ANNOUNCEMENT' => 'Announcements',
+    _ => 'Updates',
+  };
+  String _label(Map<String, dynamic> item) => switch (item['type']) {
+    'NEW_LEAD' => 'New Lead',
+    'MEMBERSHIP_ACTIVATED' => 'Membership',
+    'ANNOUNCEMENT' => 'Announcement',
+    'PAYMENT_SUCCESS' || 'WALLET_CREDIT' || 'REFUND_COMPLETED' => 'Payment',
+    _ => 'Update',
+  };
+  DateTime? _date(Map<String, dynamic> item) =>
+      DateTime.tryParse('${item['createdAt']}')?.toLocal();
+  String _group(Map<String, dynamic> item) {
+    final date = _date(item);
+    if (date == null) return 'Earlier';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(date.year, date.month, date.day);
+    final days = today.difference(day).inDays;
+    if (days == 0) return 'Today';
+    if (days == 1) return 'Yesterday';
+    if (days < 7 && days > 0) return 'This Week';
+    return 'Earlier';
+  }
+
+  Future<void> _read({Map<String, dynamic>? item}) async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final response = await ref
+          .read(dioProvider)
+          .patch(
+            item == null
+                ? 'api/v1/notifications/read-all'
+                : "api/v1/notifications/${item['_id']}/read",
+          );
+      if (response.data['success'] != true) {
+        throw StateError('Read update failed');
+      }
+      if (!mounted) return;
+      setState(() {
+        for (final row in _items) {
+          if (item == null || row['_id'] == item['_id']) {
+            row['readAt'] ??= DateTime.now().toIso8601String();
+          }
+        }
+      });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to update read status. Please retry.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _open(Map<String, dynamic> item) {
+    if (item['readAt'] == null) _read(item: item);
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${item['title'] ?? ''}'),
+        content: Text('${item['message'] ?? ''}'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
         ],
       ),
     );
   }
-}
-
-// ─────────────────────────────────────────
-// Notification Tile
-// ─────────────────────────────────────────
-
-class _NotificationTile extends HookWidget {
-  final NotificationItem item;
-  final Color purple;
-  final Color textDark;
-  final Color textSub;
-  final VoidCallback onTap;
-  final VoidCallback onDismiss;
-
-  const _NotificationTile({
-    required this.item,
-    required this.purple,
-    required this.textDark,
-    required this.textSub,
-    required this.onTap,
-    required this.onDismiss,
-  });
 
   @override
   Widget build(BuildContext context) {
-    final isPressed = useState(false);
-
-    return Dismissible(
-      key: Key(item.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 20.w),
-        color: const Color(0xFFFF5C5C).withValues(alpha: 0.1),
-        child: Icon(
-          Icons.delete_outline_rounded,
-          color: const Color(0xFFFF5C5C),
-          size: 22.sp,
-        ),
-      ),
-      onDismissed: (_) => onDismiss(),
-      child: GestureDetector(
-        onTapDown: (_) => isPressed.value = true,
-        onTapUp: (_) {
-          isPressed.value = false;
-          onTap();
-        },
-        onTapCancel: () => isPressed.value = false,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          color: isPressed.value
-              ? purple.withValues(alpha: 0.04)
-              : Colors.transparent,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+    ref.listen<bool>(isLoggedInProvider, (previous, next) {
+      if (previous == next) return;
+      if (next) {
+        _load();
+      } else {
+        setState(() {
+          _items.clear();
+          _cursor = null;
+          _error = null;
+          _loading = false;
+        });
+      }
+    });
+    final signedIn = ref.watch(isLoggedInProvider);
+    final items = _items
+        .where((item) => _filter == 'All' || _category(item) == _filter)
+        .toList();
+    final groups = <String, List<Map<String, dynamic>>>{};
+    for (final item in items) {
+      groups.putIfAbsent(_group(item), () => []).add(item);
+    }
+    return Scaffold(
+      backgroundColor: figmaBackground,
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: () => _load(),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              // Icon
-              _NotificationIcon(type: item.type),
-              SizedBox(width: 14.w),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.title,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: item.isRead
-                                  ? FontWeight.w500
-                                  : FontWeight.w700,
-                              color: textDark,
-                              letterSpacing: -0.1,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+              FigmaHeader(
+                onWallet: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => Scaffold(
+                      backgroundColor: figmaBackground,
+                      body: SafeArea(
+                        child: ListView(
+                          padding: const EdgeInsets.all(20),
+                          children: [
+                            WalletCard(onBack: () => Navigator.pop(context)),
+                          ],
                         ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          item.time,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w400,
-                            color: textSub,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      item.subtitle,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w400,
-                        color: purple.withValues(alpha: 0.7),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                onNotifications: () => _load(),
+                unread: _items.any((item) => item['readAt'] == null),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  children: [
+                    const Text(
+                      'Notifications',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: figmaInk,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed:
+                          !signedIn ||
+                              _saving ||
+                              !_items.any((item) => item['readAt'] == null)
+                          ? null
+                          : () => _read(),
+                      child: const Text('Mark all as read \u2713'),
                     ),
                   ],
                 ),
               ),
-
-              // Unread dot
-              if (!item.isRead) ...[
-                SizedBox(width: 8.w),
-                Container(
-                  width: 8.w,
-                  height: 8.w,
-                  decoration: BoxDecoration(
-                    color: purple,
-                    shape: BoxShape.circle,
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Stay updated with new leads, updates and important alerts.',
+                  style: TextStyle(fontSize: 14, color: figmaMuted),
+                ),
+              ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 22,
+                ),
+                child: Row(
+                  children: _filters
+                      .map(
+                        (filter) => Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: ChoiceChip(
+                            label: Text(filter),
+                            selected: _filter == filter,
+                            showCheckmark: false,
+                            onSelected: (_) => setState(() => _filter = filter),
+                            backgroundColor: Colors.white,
+                            selectedColor: const Color(0xFFEAF3FF),
+                            labelStyle: TextStyle(
+                              color: _filter == filter ? figmaBlue : figmaInk,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            shape: StadiumBorder(
+                              side: BorderSide(
+                                color: _filter == filter
+                                    ? figmaBlue
+                                    : Colors.transparent,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+                decoration: const BoxDecoration(
+                  color: figmaNavy,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(26),
+                    bottom: Radius.circular(26),
                   ),
                 ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_loading)
+                      const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
+                      ),
+                    if (_error != null)
+                      _status(
+                        _error!,
+                        action: TextButton(
+                          onPressed: () => _load(),
+                          child: const Text('Retry'),
+                        ),
+                      ),
+                    if (!signedIn)
+                      _status(
+                        'Sign in to view your notifications.',
+                        action: TextButton(
+                          onPressed: () => context.push(AppRouter.login),
+                          child: const Text('Sign in'),
+                        ),
+                      ),
+                    if (signedIn &&
+                        !_loading &&
+                        _error == null &&
+                        items.isEmpty)
+                      _status(
+                        _filter == 'All'
+                            ? 'No notifications yet'
+                            : 'No notifications in this category',
+                        detail:
+                            'Your updates will appear here when they arrive.',
+                      ),
+                    for (final group in groups.entries) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12, top: 4),
+                        child: Text(
+                          group.key,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      ...group.value.map(_card),
+                    ],
+                    if (_cursor != null)
+                      TextButton(
+                        onPressed: _loading ? null : () => _load(more: true),
+                        child: const Text(
+                          'Load older notifications',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
       ),
+      bottomNavigationBar: FigmaBottomNav(
+        selected: -1,
+        onSelect: (index) {
+          final path = [
+            AppRouter.homePath,
+            AppRouter.leadsPath,
+            AppRouter.cartPath,
+            AppRouter.membershipPath,
+            AppRouter.profilePath,
+          ][index];
+          context.go(path);
+        },
+      ),
     );
   }
-}
 
-// ─────────────────────────────────────────
-// Notification Icon
-// ─────────────────────────────────────────
-
-class _NotificationIcon extends StatelessWidget {
-  final NotificationType type;
-
-  const _NotificationIcon({required this.type});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(width: 46.w, height: 46.w, child: _buildIcon());
-  }
-
-  Widget _buildIcon() {
-    switch (type) {
-      case NotificationType.newLead:
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFFFF3DC),
-            shape: BoxShape.circle,
+  Widget _status(String title, {String? detail, Widget? action}) => Container(
+    padding: const EdgeInsets.all(24),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Column(
+      children: [
+        const Icon(
+          Icons.notifications_none_rounded,
+          size: 40,
+          color: figmaBlue,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: figmaInk,
           ),
-          child: Center(
-            child: Icon(
-              Icons.notifications_rounded,
-              color: const Color(0xFFFFC107),
-              size: 22.sp,
+        ),
+        if (detail != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              detail,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: figmaMuted),
             ),
           ),
-        );
+        ?action,
+      ],
+    ),
+  );
 
-      case NotificationType.leadAccepted:
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFDCF5E8),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Icon(
-              Icons.group_rounded,
-              color: const Color(0xFF34A853),
-              size: 22.sp,
+  Widget _card(Map<String, dynamic> item) {
+    final label = _label(item);
+    final color = switch (label) {
+      'Membership' => const Color(0xFFE9AB00),
+      'Payment' => const Color(0xFF00AD80),
+      'Announcement' => const Color(0xFF8B3DFF),
+      'Update' => const Color(0xFFED4692),
+      _ => figmaBlue,
+    };
+    final icon = switch (label) {
+      'Membership' => Icons.star_rounded,
+      'Payment' => Icons.credit_card,
+      'Announcement' => Icons.campaign_outlined,
+      'Update' => Icons.notifications_outlined,
+      _ => Icons.assignment_outlined,
+    };
+    final date = _date(item);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: () => _open(item),
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 27,
+                  backgroundColor: color.withValues(alpha: .09),
+                  child: Icon(icon, color: color, size: 28),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEAF3FF),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            color: figmaBlue,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${item['title'] ?? ''}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: figmaInk,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${item['message'] ?? ''}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14, color: figmaMuted),
+                      ),
+                      if (date != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            DateFormat('dd MMM yyyy, h:mm a').format(date),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: figmaMuted,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Column(
+                  children: [
+                    if (item['readAt'] == null)
+                      const Icon(Icons.circle, size: 9, color: figmaBlue),
+                    const SizedBox(height: 12),
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 22,
+                      color: figmaMuted,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        );
-
-      case NotificationType.payment:
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFDCEBFF),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Icon(
-              Icons.credit_card_rounded,
-              color: const Color(0xFF4285F4),
-              size: 20.sp,
-            ),
-          ),
-        );
-    }
-  }
-}
-
-// ─────────────────────────────────────────
-// Empty State
-// ─────────────────────────────────────────
-
-class _EmptyState extends StatelessWidget {
-  final Color purple;
-  final Color textSub;
-
-  const _EmptyState({required this.purple, required this.textSub});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 72.w,
-            height: 72.w,
-            decoration: BoxDecoration(
-              color: purple.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.notifications_off_outlined,
-              color: purple.withValues(alpha: 0.4),
-              size: 32.sp,
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'No Notifications',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1A1A2E),
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            'You\'re all caught up!',
-            style: TextStyle(fontSize: 13.sp, color: textSub),
-          ),
-        ],
+        ),
       ),
     );
   }

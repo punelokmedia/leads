@@ -19,11 +19,11 @@ class UserApp extends ConsumerWidget {
       AppRouter.router.go(AppRouter.login);
     });
     return ScreenUtilPlusInit(
-      designSize: const Size(412, 917),
+      designSize: const Size(393, 852),
       minTextAdapt: true,
       splitScreenMode: true,
       child: MaterialApp.router(
-        title: 'Leads Sell',
+        title: 'NextLead',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

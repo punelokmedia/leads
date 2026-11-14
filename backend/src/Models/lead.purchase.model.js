@@ -3,6 +3,7 @@ import mongoose, { Schema } from "mongoose";
 const LeadPurchaseSchema = new Schema({
   order: { type: Schema.Types.ObjectId, ref: "Order" },
   fulfillmentVersion: Number,
+  contactedAt: { type: Date, default: null },
   lead: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Lead",

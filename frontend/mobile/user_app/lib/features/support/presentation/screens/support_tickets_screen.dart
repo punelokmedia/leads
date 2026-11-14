@@ -7,11 +7,14 @@ class SupportTicketsScreen extends StatefulWidget {
   final Dio dio;
   final bool signedIn;
   final VoidCallback signIn;
+  final String initialIssue, initialDescription;
   const SupportTicketsScreen({
     super.key,
     required this.dio,
     required this.signedIn,
     required this.signIn,
+    this.initialIssue = 'PAYMENT',
+    this.initialDescription = '',
   });
   @override
   State<SupportTicketsScreen> createState() => _SupportTicketsScreenState();
@@ -38,6 +41,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   @override
   void initState() {
     super.initState();
+    issue = issues.contains(widget.initialIssue)
+        ? widget.initialIssue
+        : 'OTHER';
+    description.text = widget.initialDescription;
     if (widget.signedIn) load();
   }
 

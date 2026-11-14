@@ -1,11 +1,9 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import 'package:user_app/core/network/dio_provider.dart';
 import '../domain/edit_profile_model.dart';
 import '../infra/edit_profile_repository.dart';
 import '../infra/edit_profile_controller.dart';
-
-
 
 final editProfileRepositoryProvider = Provider<IEditProfileRepository>((ref) {
   final dio = ref.read(dioProvider);

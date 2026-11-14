@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'api_config.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -40,13 +41,16 @@ final dioProvider = Provider<Dio>((ref) {
   dio.transformer = AppBackgroundTransformer();
 
   // 3. Optional: Add Logging (Very helpful for debugging headers)
-  dio.interceptors.add(
-    LogInterceptor(
-      requestHeader: false,
-      requestBody: false,
-      responseBody: false,
-    ),
-  );
+  if (kDebugMode) {
+    dio.interceptors.add(
+      LogInterceptor(
+        requestHeader: false,
+        requestBody: false,
+        responseBody: false,
+      ),
+    );
+  }
 
+  ref.onDispose(() => dio.close(force: true));
   return dio;
 });

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../payments/presentation/widgets/wallet_card.dart';
 import 'preview_data.dart';
-import 'category_media.dart';
+import 'figma_widgets.dart';
+import '../home/presentation/widgets/home_banner_carousel.dart';
 
-// ── Brand color tokens (new scheme) ──────────────────────────────────────────
-const homeBlue = Color(0xFF0047FF); // was 0xFF0066FF  →  Primary Blue
-const homeNavy = Color(0xFF0A2342); // was 0xFF07143D  →  Primary Navy
-const homeMuted = Color(0xFF475569); // was 0xFF7886A5  →  Secondary Slate
+const homeBlue = figmaBlue;
+const homeNavy = figmaInk;
+const homeMuted = figmaMuted;
 
 class NextLeadDashboard extends ConsumerWidget {
   final PreviewStore store;
@@ -23,6 +22,7 @@ class NextLeadDashboard extends ConsumerWidget {
       onWallet,
       onSaved;
   final ValueChanged<PreviewLead> onLead;
+  final VoidCallback? onMembership;
   const NextLeadDashboard({
     super.key,
     required this.store,
@@ -38,416 +38,237 @@ class NextLeadDashboard extends ConsumerWidget {
     required this.onLead,
     required this.onWallet,
     required this.onSaved,
+    this.onMembership,
   });
+
+  int? _categoryIndex(String keyword) {
+    final index = store.categories.indexWhere(
+      (c) => c.name.toLowerCase().contains(keyword),
+    );
+    return index < 0 ? null : index;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => SafeArea(
     bottom: false,
     child: RefreshIndicator(
-      onRefresh: store.refresh,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-        children: [
-          // ── Row 1: Logo | Wallet | Bell ──────────────────────────────
-          Row(
+      onRefresh: () async {
+        ref.invalidate(homeBannersProvider);
+        await store.refresh();
+      },
+      child: ListView.builder(
+        key: const ValueKey('home-leads-scroll'),
+        padding: const EdgeInsets.only(bottom: 16),
+        itemCount: leads.length + 1,
+        itemBuilder: (context, index) {
+          if (index > 0) {
+            final lead = leads[index - 1];
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: FigmaLeadCard(
+                lead: lead,
+                store: store,
+                onTap: () => onLead(lead),
+              ),
+            );
+          }
+          return Column(
             children: [
-              Image.asset(
-                'assets/branding/nextlead_wordmark.webp',
-                width: 133,
-                height: 47,
+              FigmaHeader(
+                onWallet: onWallet,
+                onNotifications: onNotifications,
+                unread: store.unread,
+                tagline: true,
+                live: store.isLive,
               ),
-              const Spacer(),
-              // Wallet balance chip
-              Consumer(
-                builder: (context, ref, _) {
-                  final wallet = ref.watch(walletProvider);
-                  final balanceText = wallet.when(
-                    data: (data) {
-                      final paise = data['balancePaise'] as num? ?? 0;
-                      final rupees = (paise / 100).toStringAsFixed(0);
-                      return '₹ $rupees';
-                    },
-                    loading: () => '...',
-                    error: (_, _) => 'Wallet',
-                  );
-                  return OutlinedButton.icon(
-                    onPressed: onWallet,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                      side: const BorderSide(color: homeBlue),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    icon: const Icon(
-                      Icons.account_balance_wallet_outlined,
-                      size: 16,
-                      color: homeBlue,
-                    ),
-                    label: Text(
-                      balanceText,
-                      style: const TextStyle(
-                        color: homeNavy,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(width: 2),
-              // Saved button beside wallet
-              IconButton(
-                tooltip: 'Saved leads',
-                onPressed: onSaved,
-                visualDensity: VisualDensity.compact,
-                icon: const Icon(
-                  Icons.favorite_border_rounded,
-                  color: homeNavy,
-                  size: 22,
-                ),
-              ),
-              IconButton(
-                tooltip: 'Notifications',
-                onPressed: onNotifications,
-                visualDensity: VisualDensity.compact,
-                icon: Badge(
-                  isLabelVisible: store.unread,
-                  child: const Icon(
-                    Icons.notifications_outlined,
-                    color: homeNavy,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          // ── Row 2: Location (aligned to far left) ──────────────────────
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onFilters,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              icon: const Icon(Icons.location_on, size: 16, color: homeBlue),
-              label: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    city,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: homeNavy,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  const Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 16,
-                    color: homeNavy,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  onChanged: onSearch,
-                  style: const TextStyle(color: homeNavy, fontSize: 15),
-                  decoration: InputDecoration(
-                    hintText: 'Search leads by service, location or keyword...',
-                    hintStyle: const TextStyle(color: homeMuted, fontSize: 14),
-                    prefixIcon: const Icon(Icons.search, color: homeMuted),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(9),
-                      borderSide: const BorderSide(color: Color(0xFFD7DEEC)),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: IconButton(
-                  tooltip: 'Filter leads',
-                  onPressed: onFilters,
-                  icon: const Icon(Icons.tune, color: homeBlue),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 104,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _category(
-                  'All Categories',
-                  Icons.home_rounded,
-                  category == null,
-                  () => onCategory(null),
-                ),
-                ...List.generate(
-                  store.categories.length,
-                  (i) => _category(
-                    store.categories[i].name,
-                    store.categories[i].icon,
-                    category == i,
-                    () => onCategory(i),
-                  ),
-                ),
-                _category('More', Icons.grid_view_rounded, false, onCategories),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // ── Home banner: new full-width image ──────────────────────────
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: AspectRatio(
-              aspectRatio: 2027 / 776, // matches the image's native ratio
-              child: Image.asset(
-                'assets/branding/home_banner.jpg',
-                fit: BoxFit.cover,
-                width: double.infinity,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Latest Leads',
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: homeNavy,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: onExplore,
-                child: const Row(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('View All', style: TextStyle(color: homeBlue)),
-                    Icon(Icons.chevron_right, color: homeBlue),
+                    TextButton.icon(
+                      onPressed: onFilters,
+                      style: TextButton.styleFrom(
+                        foregroundColor: homeNavy,
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 32),
+                      ),
+                      icon: figmaSvg('home-imgSvg', size: 16),
+                      label: Text(
+                        '$city ⌄',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            onChanged: onSearch,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: homeNavy,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Search services or location',
+                              hintStyle: const TextStyle(
+                                color: Color(0xFF52647C),
+                                fontSize: 14,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                size: 26,
+                                color: Color(0xFF52647C),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 18,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        IconButton(
+                          tooltip: 'Filter leads',
+                          onPressed: onFilters,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 52,
+                            height: 56,
+                          ),
+                          icon: figmaSvg('home-imgSvg1', size: 36),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _category(
+                          'AC Repair',
+                          'home-imgLayer1',
+                          _categoryIndex('ac service'),
+                        ),
+                        _category(
+                          'Interiors',
+                          'home-imgGroup15',
+                          _categoryIndex('interior'),
+                        ),
+                        _category(
+                          'Painting',
+                          'home-imgVector3',
+                          _categoryIndex('paint'),
+                        ),
+                        _category(
+                          'Plumbing',
+                          'home-imgVector5',
+                          _categoryIndex('plumb'),
+                        ),
+                        _category('More', 'home-imgVector4', null, more: true),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 24, color: Color(0xFFD2DEF2)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    HomeBannerCarousel(
+                      onTap: (target) => target == 'membership'
+                          ? onMembership?.call()
+                          : onExplore(),
+                    ),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Latest Leads',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: homeNavy,
+                              letterSpacing: -.5,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: onExplore,
+                          child: const Text(
+                            'View All →',
+                            style: TextStyle(color: homeBlue, fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (leads.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'No leads match your filters.',
+                          style: TextStyle(color: homeMuted),
+                        ),
+                      ),
                   ],
                 ),
               ),
             ],
-          ),
-          if (leads.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(32),
-              child: Text(
-                'No leads match your filters.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: homeMuted),
-              ),
-            ),
-          ...leads.take(10).map((lead) => _leadCard(lead)),
-        ],
+          );
+        },
       ),
     ),
   );
 
   Widget _category(
     String label,
-    IconData icon,
-    bool selected,
-    VoidCallback action,
-  ) => SizedBox(
-    width: 70,
-    child: Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: InkWell(
-        onTap: action,
-        borderRadius: BorderRadius.circular(10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              height: 50,
-              width: 56,
-              decoration: BoxDecoration(
-                color: selected
-                    ? const Color(0xFFE5EFFF)
-                    : Colors.white, // was 0xFFE0EEFF → surfaceLight
-                borderRadius: BorderRadius.circular(11),
-                border: Border.all(
-                  color: selected
-                      ? const Color(0xFFB3CCEF) // was 0xFFBFDAFF
-                      : const Color(0xFFF0F6FF),
-                ),
-              ),
-              child: Icon(
-                icon,
-                color: selected ? homeBlue : homeNavy,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.2,
-                color: selected ? homeBlue : homeMuted,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  Widget _leadCard(PreviewLead lead) {
-    final categoryName =
-        lead.category >= 0 && lead.category < store.categories.length
-        ? store.categories[lead.category].name
-        : '';
-    final leadImage = CategoryMedia.getLeadImage(categoryName, leadId: lead.id);
-    final icon = lead.category >= 0 && lead.category < store.categories.length
-        ? store.categories[lead.category].icon
-        : Icons.home_work_outlined;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x080A3A77),
-            blurRadius: 16,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    String asset,
+    int? index, {
+    bool more = false,
+  }) => Flexible(
+    child: InkWell(
+      onTap: more ? onCategories : () => onCategory(index),
+      borderRadius: BorderRadius.circular(11),
+      child: Column(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              width: 72,
-              height: 92,
-              color: const Color(0xFFE5EFFF),
-              child: Image.asset(
-                leadImage,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Icon(icon, size: 36, color: homeBlue),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  lead.title,
-                  style: const TextStyle(
-                    color: homeNavy,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 15,
-                      color: homeBlue,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        lead.city,
-                        style: const TextStyle(color: homeMuted, fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Wrap(
-                  spacing: 10,
-                  children: [
-                    if (lead.propertyType.isNotEmpty)
-                      Text(
-                        lead.propertyType,
-                        style: const TextStyle(color: homeMuted, fontSize: 12),
-                      ),
-                    if (lead.area.isNotEmpty)
-                      Text(
-                        lead.area,
-                        style: const TextStyle(color: homeMuted, fontSize: 12),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  lead.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF536079),
-                    fontSize: 13,
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton(
-                    onPressed: () => onLead(lead),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: homeBlue,
-                      foregroundColor: Colors.white,
-                      visualDensity: VisualDensity.compact,
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('View Lead', style: TextStyle(fontSize: 13)),
-                        SizedBox(width: 7),
-                        Icon(Icons.arrow_forward, size: 16),
-                      ],
-                    ),
-                  ),
+          Container(
+            width: 62,
+            height: 66,
+            decoration: BoxDecoration(
+              color: more ? const Color(0xFF0153FD) : Colors.white,
+              borderRadius: BorderRadius.circular(11),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x26000000),
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
                 ),
               ],
             ),
+            child: Center(
+              child: figmaSvg(asset, size: label == 'AC Repair' ? 43 : 30),
+            ),
           ),
+          const SizedBox(height: 7),
+          Text(label, style: const TextStyle(color: homeNavy, fontSize: 14)),
         ],
       ),
-    );
-  }
+    ),
+  );
 }

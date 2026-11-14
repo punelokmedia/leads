@@ -187,7 +187,7 @@ class _LeadTileState extends State<_LeadTile> {
               children: [
                 /// ✅ SHORT TITLE (2–3 WORDS ONLY)
                 Text(
-                  firstWords(widget.lead.title ?? "", 3),
+                  firstWords(widget.lead.title, 3),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.poppins(
@@ -200,7 +200,7 @@ class _LeadTileState extends State<_LeadTile> {
 
                 /// LOCATION
                 Text(
-                  widget.lead.address ?? "",
+                  widget.lead.address,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.poppins(
@@ -216,7 +216,7 @@ class _LeadTileState extends State<_LeadTile> {
                   children: [
                     /// Price text
                     Text(
-                      "₹ ${widget.lead.originalPrice ?? 0}",
+                      "₹ ${widget.lead.originalPrice}",
                       style: AppTextStyles.poppins(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w800,

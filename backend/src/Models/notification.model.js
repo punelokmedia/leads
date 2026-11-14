@@ -16,12 +16,18 @@ schema.index({ user: 1, readAt: 1 });
 schema.index({ type: 1, _id: -1 });
 export const Notification = mongoose.model('Notification', schema);
 
-export const defaultPreferences = Object.freeze({ newLeads: true, announcements: true, push: false });
+export const defaultPreferences = Object.freeze({ newLeads: true, announcements: true, push: false,
+  leadUpdates: true, payments: true, membership: true, referrals: true, whatsapp: false });
 export const NotificationPreference = mongoose.model('NotificationPreference', new Schema({
   user: { type: Schema.Types.ObjectId, required: true, unique: true },
   newLeads: { type: Boolean, default: true },
   announcements: { type: Boolean, default: true },
   push: { type: Boolean, default: false },
+  leadUpdates: { type: Boolean, default: true },
+  payments: { type: Boolean, default: true },
+  membership: { type: Boolean, default: true },
+  referrals: { type: Boolean, default: true },
+  whatsapp: { type: Boolean, default: false },
 }, { timestamps: true }));
 
 const deviceSchema = new Schema({

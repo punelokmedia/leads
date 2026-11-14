@@ -1,0 +1,2 @@
+.navbar-home-link { display: inline-flex; align-items: center; gap: 8px; }
+.navbar-home-icon { display: block; flex-shrink: 0; width: 32px; height: 32px; padding: 6px; box-sizing: border-box; border-radius: 8px; background: #0066ff; }

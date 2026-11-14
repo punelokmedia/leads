@@ -136,6 +136,7 @@ const previewCategories = [
 ];
 
 class PreviewLead {
+  final DateTime? postedAt;
   final String id, title, city, state, description;
   final int category, budget;
   final num fee;
@@ -147,6 +148,7 @@ class PreviewLead {
   final String backendId, contact, backendStatus;
   final String? budgetLabel;
   PreviewLead({
+    this.postedAt,
     required this.id,
     this.backendId = '',
     this.contact = '',
@@ -204,6 +206,26 @@ class PreviewReceipt {
 }
 
 class PreviewStore extends ChangeNotifier {
+  Map<String, bool>? notificationPreferences;
+  int serviceRadiusKm = 25;
+  List<String> additionalAreas = [];
+  Future<void> saveLocation(String city, int radius, List<String> areas) async {
+    profile = {
+      ...profile,
+      'City': city,
+      if (city != profile['City']) 'State': '',
+    };
+    serviceRadiusKm = radius;
+    additionalAreas = List.of(areas);
+    notifyListeners();
+  }
+
+  Set<String> serviceCategories = {};
+  Future<void> saveServiceCategories(Set<String> names) async {
+    serviceCategories = Set.of(names);
+    notifyListeners();
+  }
+
   bool get isLive => false;
   List<PreviewCategory> get categories => previewCategories;
   List<String> get cities => ['Mumbai', 'Pune', 'Bangalore', 'Hyderabad'];
@@ -252,6 +274,10 @@ class PreviewStore extends ChangeNotifier {
   }
 
   void reset() {
+    notificationPreferences = null;
+    serviceRadiusKm = 25;
+    additionalAreas = ['Baner', 'Wakad', 'Hinjawadi'];
+    serviceCategories = {'Interior Design', 'Painting'};
     profile = {
       'Full name': 'Demo Vendor',
       'Email': 'vendor@example.test',

@@ -1,3 +1,4 @@
+import 'package:user_app/features/preview/figma_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,19 +25,37 @@ void main() {
     );
     await tester.pumpWidget(const PreviewApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Explore your first lead'));
+    final firstLead = tester
+        .widget<PreviewHome>(find.byType(PreviewHome))
+        .store
+        .leads
+        .first;
+    await tester.scrollUntilVisible(
+      find.byWidgetPredicate(
+        (widget) => widget is FigmaLeadCard && widget.lead.id == firstLead.id,
+      ),
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('home-leads-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FigmaLeadCard).first);
     await tester.pumpAndSettle();
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.byType(LeadDetailsPreview), findsNothing);
     expect(find.text('Exit app?'), findsNothing);
 
-    await tester.tap(find.byTooltip('My profile'));
+    await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      tester.widget<FigmaBottomNav>(find.byType(FigmaBottomNav)).selected,
       0,
     );
     expect(find.text('Exit app?'), findsNothing);

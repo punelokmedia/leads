@@ -4,9 +4,9 @@ import 'package:user_app/core/errors/app_exception.dart';
 AppException googleSignInError(PlatformException error) {
   // R8 can rename ApiException in release builds. Match the numeric status,
   // without relying on the Java class name or exposing provider/account data.
-  final status = RegExp(r':\s*(\d+)\s*:')
-      .firstMatch(error.message ?? '')
-      ?.group(1);
+  final status = RegExp(
+    r':\s*(\d+)\s*:',
+  ).firstMatch(error.message ?? '')?.group(1);
   if (error.code == 'sign_in_canceled') {
     return const AppException('Google Sign-In canceled');
   }

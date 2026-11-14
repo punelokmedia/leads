@@ -24,18 +24,18 @@ class EditProfileRepository implements IEditProfileRepository {
 
   @override
   Future<void> updateProfile(EditProfileModel model) async {
-    await _dio.put(
-      ApiEndpoints.editProfile,
-      data: model.toJson(),
-    );
+    await _dio.put(ApiEndpoints.editProfile, data: model.toJson());
   }
 
   @override
-  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
     await _dio.post(
       ApiEndpoints.changePassword,
       data: {
-        'oldPassword': currentPassword, 
+        'oldPassword': currentPassword,
         'newPassword': newPassword,
         'confirmPassword': newPassword,
       },

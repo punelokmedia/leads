@@ -1,71 +1,107 @@
+import 'package:user_app/features/preview/figma_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:user_app/features/preview/preview_app.dart';
 import 'package:user_app/features/preview/lead_details_page.dart';
 import 'package:user_app/features/preview/preview_data.dart';
-import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 void main() {
-  testWidgets('Feature prompt opens details and swipes away over home', (
-    tester,
-  ) async {
+  testWidgets('Home cards open details and return to home', (tester) async {
     await tester.pumpWidget(const PreviewApp());
     await tester.pumpAndSettle();
-    expect(find.byType(HomeBannerCarousel), findsOneWidget);
-    await tester.tap(find.text('Explore your first lead'));
+    final firstLead = tester
+        .widget<PreviewHome>(find.byType(PreviewHome))
+        .store
+        .leads
+        .first;
+    await tester.scrollUntilVisible(
+      find.byWidgetPredicate(
+        (widget) => widget is FigmaLeadCard && widget.lead.id == firstLead.id,
+      ),
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('home-leads-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FigmaLeadCard).first);
     await tester.pumpAndSettle();
     expect(find.byType(LeadDetailsPreview), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
-    await tester.drag(
-      find.byKey(const ValueKey('feature-prompt')),
-      const Offset(-700, 0),
+    await tester.scrollUntilVisible(
+      find.text('Latest Leads'),
+      -300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('home-leads-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
     );
     await tester.pumpAndSettle();
-    expect(find.text('Explore your first lead'), findsNothing);
-    expect(find.byType(HomeBannerCarousel), findsOneWidget);
-    await tester.tap(find.byTooltip('My profile'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Home').last);
-    await tester.pumpAndSettle();
-    expect(find.text('Explore your first lead'), findsNothing);
+    expect(find.text('Latest Leads'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Profile edits save, cancel and reset correctly', (tester) async {
+  testWidgets('Business profile edits save, cancel and reset correctly', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final store = PreviewStore();
-    await tester.pumpWidget(MaterialApp(home: PreviewHome(store: store)));
-    await tester.tap(find.byTooltip('My profile'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Edit personal details'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).first, 'Priya Sharma');
-    await tester.scrollUntilVisible(
-      find.text('Save details'),
-      250,
-      scrollable: find
-          .descendant(
-            of: find.byType(ListView).last,
-            matching: find.byType(Scrollable),
-          )
-          .first,
+    final originalProfile = Map<String, String>.from(store.profile);
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(home: PreviewHome(store: store)),
+      ),
     );
-    await tester.tap(find.text('Save details'));
+    await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
-    expect(find.text('Priya Sharma'), findsOneWidget);
-    await tester.tap(find.text('Edit personal details'));
+    await tester.tap(find.text('Edit Profile'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).first, 'Unsaved name');
+    await tester.enterText(
+      find.byKey(const ValueKey('Business name')),
+      'Pune Interiors',
+    );
+    await tester.ensureVisible(find.byKey(const ValueKey('Business address')));
+    await tester.enterText(
+      find.byKey(const ValueKey('Business address')),
+      '42 Park Road',
+    );
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('Years in business')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('Years in business')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3–5 years').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Save Changes'));
+    await tester.tap(find.text('Save Changes'));
+    await tester.pumpAndSettle();
+    expect(store.profile['Business name'], 'Pune Interiors');
+    expect(store.profile['Full name'], originalProfile['Full name']);
+    await tester.tap(find.text('Edit Profile'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pune Interiors'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('Business name')),
+      'Unsaved business',
+    );
     await tester.pageBack();
     await tester.pumpAndSettle();
-    expect(find.text('Priya Sharma'), findsOneWidget);
+    expect(store.profile['Business name'], 'Pune Interiors');
     store.reset();
     await tester.pumpAndSettle();
     expect(find.text('Demo Vendor'), findsOneWidget);
+    expect(store.profile, originalProfile);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     store.dispose();
@@ -101,65 +137,46 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const PreviewApp());
     await tester.pumpAndSettle();
-    expect(
-      find.text('TEST MODE • Sample data • No real charges'),
-      findsOneWidget,
-    );
+    expect(find.text('Latest Leads'), findsOneWidget);
     expect(tester.takeException(), isNull);
-    await tester.tap(find.text('All Categories'));
+    await tester.tap(find.text('More').first);
     await tester.pumpAndSettle();
-    expect(find.text('Pan India Coverage'), findsOneWidget);
+    expect(find.text('All Categories'), findsOneWidget);
     expect(tester.takeException(), isNull);
-    await tester.tap(find.byType(Switch));
-    await tester.pumpAndSettle();
-    expect(find.text('1 available test leads'), findsWidgets);
     await tester.pageBack();
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Leads').last);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Filter leads'));
     await tester.pumpAndSettle();
-    expect(find.text('Apply filters'), findsOneWidget);
+    expect(find.text('Filters'), findsOneWidget);
+    expect(find.textContaining('Show Leads ('), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'Failure and cancellation preserve slots; success unlocks contact',
-    (tester) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      final store = PreviewStore();
-      final lead = store.leads.first;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: LeadDetailsPreview(lead: lead, store: store),
-        ),
-      );
-      await tester.tap(find.text('Accept Lead & View Contact'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Simulate failure'));
-      await tester.pumpAndSettle();
-      expect(lead.buyers, 1);
-      expect(lead.joined, isFalse);
-      await tester.tap(find.text('Accept Lead & View Contact'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(lead.buyers, 1);
-      await tester.tap(find.text('Accept Lead & View Contact'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Simulate success'));
-      await tester.pumpAndSettle();
-      expect(lead.buyers, 2);
-      expect(find.text('Contact Unlocked'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-      await tester.tap(find.byTooltip('Save lead'));
-      await tester.pumpAndSettle();
-      expect(lead.saved, isTrue);
-      await tester.pumpWidget(const SizedBox());
-      store.dispose();
-    },
-  );
+  testWidgets('Cancellation preserves slots; unlock purchases once', (
+    tester,
+  ) async {
+    final store = PreviewStore();
+    addTearDown(store.dispose);
+    final lead = store.leads.first;
+    final buyers = lead.buyers;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LeadDetailsPreview(lead: lead, store: store),
+      ),
+    );
+    await tester.tap(find.textContaining('Unlock Lead').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(lead.buyers, buyers);
+    expect(lead.joined, isFalse);
+    await tester.tap(find.textContaining('Unlock Lead').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Unlock'));
+    await tester.pumpAndSettle();
+    expect(lead.buyers, buyers + 1);
+    expect(lead.joined, isTrue);
+    expect(find.text('Lead Unlocked'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -611,7 +611,7 @@ class _LeadListItemState extends State<_LeadListItem> {
                     children: [
                       Expanded(
                         child: Text(
-                          widget.lead.title ?? "1/2",
+                          widget.lead.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.poppins(
@@ -657,7 +657,7 @@ class _LeadListItemState extends State<_LeadListItem> {
                     children: [
                       /// Price
                       Text(
-                        "₹ ${widget.lead.originalPrice ?? 0}",
+                        "₹ ${widget.lead.originalPrice}",
                         style: AppTextStyles.poppins(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w800,
@@ -804,64 +804,4 @@ String firstWords(String text, int count) {
   final words = text.trim().split(RegExp(r'\s+'));
   if (words.length <= count) return text;
   return '${words.take(count).join(' ')}...';
-}
-
-class _QtyControl extends StatelessWidget {
-  final int qty;
-  final VoidCallback onInc;
-  final VoidCallback onDec;
-  const _QtyControl({
-    required this.qty,
-    required this.onInc,
-    required this.onDec,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.purple72),
-        borderRadius: BorderRadius.circular(10.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _QtyBtn(icon: Icons.remove, onTap: onDec),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 6.w),
-            child: Text(
-              '$qty',
-              style: AppTextStyles.poppins(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-          _QtyBtn(icon: Icons.add, onTap: onInc),
-        ],
-      ),
-    );
-  }
-}
-
-class _QtyBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _QtyBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(4.r),
-        child: Icon(
-          icon,
-          size: 16.r,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    );
-  }
 }

@@ -1,7 +1,7 @@
 // features/auth/presentation/screens/choose_work_city_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:user_app/app/app_router.dart';
@@ -65,7 +65,6 @@ class _ChooseWorkCityScreenState extends ConsumerState<ChooseWorkCityScreen> {
 
   Future<void> _onContinue() async {
     if (_selectedCityName == null) return;
-    print("Selected City: $_selectedCityName, ID: $_selectedCityId");
 
     // ✅ Save both to the draft provider
     ref

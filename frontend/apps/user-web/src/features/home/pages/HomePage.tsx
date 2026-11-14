@@ -24,6 +24,20 @@ function HomeLandingPage() {
   const [heroSource, setHeroSource] = useState(loadedHeroSource || HERO_IMAGE)
   const [heroState, setHeroState] = useState<'loading' | 'ready' | 'error'>(loadedHeroSource ? 'ready' : 'loading')
   const [attempt, setAttempt] = useState(0)
+  const [activeSlide, setActiveSlide] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const carousel = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (paused || heroState === 'loading') return
+    const timer = window.setInterval(() => {
+      if (!motion.matches && !document.hidden && !carousel.current?.matches(':hover') && !carousel.current?.contains(document.activeElement)) {
+        setActiveSlide(slide => (slide + 1) % 2)
+      }
+    }, 6000)
+    return () => window.clearInterval(timer)
+  }, [paused, heroState, activeSlide])
 
   useEffect(() => {
     if (heroState !== 'loading') return
@@ -60,7 +74,15 @@ function HomeLandingPage() {
   return <>
     {heroState === 'loading' && <PageSkeleton home />}
     <div className="next-home content-reveal" hidden={heroState === 'loading'}>
-    <section className="home-hero">
+    <section ref={carousel} className="hero-carousel" aria-label="NextLead highlights" aria-roledescription="carousel">
+    <div className="hero-carousel-window" data-slide={activeSlide}>
+    <div className="hero-carousel-track" style={{ transform: `translateX(-${activeSlide * 100}%)` }}>
+      <div className="hero-membership-slide" role="group" aria-roledescription="slide" aria-label="1 of 2: Lifetime membership" inert={activeSlide !== 0}>
+        <Link to="/signup" aria-label="Get lifetime membership for ₹499">
+          <img src="/lifetime-membership-banner.png" width={1672} height={941} alt="Get lifetime membership at ₹499. Find genuine service leads from your location and grow your business." fetchPriority="high" />
+        </Link>
+      </div>
+    <div className="home-hero" role="group" aria-roledescription="slide" aria-label="2 of 2: Premium vendors network" inert={activeSlide !== 1}>
       <div className="home-ribbon" aria-hidden="true" />
       <div className="home-container hero-inner">
         <div className="hero-copy"><h1>Premium Vendors Network<br /><span>Get Real Leads.</span></h1><p>No spam, no cold outreach. Just qualified leads.</p>
@@ -74,6 +96,15 @@ function HomeLandingPage() {
           <span><img src="/Icons/hero-connections.svg" alt="" width={25} height={25} /><b>Real Connections</b></span>
         </div>
       </div>
+    </div>
+    </div>
+    </div>
+    <div className="hero-carousel-controls">
+      <button type="button" aria-label="Previous hero slide" onClick={() => setActiveSlide(slide => (slide + 1) % 2)}>‹</button>
+      {['Lifetime membership', 'Premium vendors network'].map((label, index) => <button key={label} type="button" className="hero-carousel-dot" aria-label={`Show ${label}`} aria-current={activeSlide === index ? 'true' : undefined} onClick={() => setActiveSlide(index)} />)}
+      <button type="button" aria-label={paused ? 'Start automatic slides' : 'Pause automatic slides'} onClick={() => setPaused(value => !value)}>{paused ? '▶' : 'Ⅱ'}</button>
+      <button type="button" aria-label="Next hero slide" onClick={() => setActiveSlide(slide => (slide + 1) % 2)}>›</button>
+    </div>
     </section>
     <section id="categories" className="home-categories home-container">
       <div className="section-heading"><div><p className="home-eyebrow">Browse Categories</p><h2>Explore Leads by Category</h2><p>Find the right leads for your business needs from multiple industries.</p></div><Link to="/categories" className="home-text-link">View All Categories &rarr;</Link></div>

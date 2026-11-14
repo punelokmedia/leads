@@ -1,3 +1,4 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,7 +43,8 @@ void main() {
         },
       ),
     );
-    await tester.pumpWidget(
+    await pumpScoped(
+      tester,
       MaterialApp(
         home: LiveSupportScreen(dio: dio, signedIn: true, signIn: () {}),
       ),
@@ -59,10 +61,18 @@ void main() {
     await tester.tap(find.byTooltip('Send message'));
     await tester.pumpAndSettle();
     expect(sent[0]['clientId'], sent[1]['clientId']);
-    expect(find.text('You'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      isEmpty,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Where is my receipt?'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Where is my receipt?'), findsOneWidget);
     expect(find.textContaining('simulation'), findsNothing);
-    await tester.pumpWidget(const SizedBox());
+    await pumpScoped(tester, const SizedBox());
     dio.close();
   });
 
@@ -71,7 +81,8 @@ void main() {
   ) async {
     var signedIn = false;
     final dio = Dio();
-    await tester.pumpWidget(
+    await pumpScoped(
+      tester,
       MaterialApp(
         home: LiveSupportScreen(
           dio: dio,
@@ -83,7 +94,10 @@ void main() {
     expect(find.byType(TextField), findsNothing);
     await tester.tap(find.text('Sign in to contact support'));
     expect(signedIn, isTrue);
-    await tester.pumpWidget(const SizedBox());
+    await pumpScoped(tester, const SizedBox());
     dio.close();
   });
 }
+
+Future<void> pumpScoped(WidgetTester tester, Widget child) =>
+    tester.pumpWidget(ProviderScope(child: child));

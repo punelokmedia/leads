@@ -7,10 +7,10 @@ class ProfileModel {
   final String businessName;
   final String workType;
   final String cityName;
-  
+
   // These aren't in the API response yet, using defaults for UI
-  final String gstNumber; 
-  final String address; 
+  final String gstNumber;
+  final String address;
 
   ProfileModel({
     required this.id,
@@ -21,8 +21,8 @@ class ProfileModel {
     required this.businessName,
     required this.workType,
     required this.cityName,
-    this.gstNumber = 'Not Available', 
-    this.address = 'Not Available',   
+    this.gstNumber = 'Not Available',
+    this.address = 'Not Available',
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -49,7 +49,10 @@ class ProfileModel {
     if (address is Map) {
       final street = address['street']?.toString() ?? '';
       final city = address['city']?.toString() ?? '';
-      final combined = [street, city].where((part) => part.isNotEmpty).join(', ');
+      final combined = [
+        street,
+        city,
+      ].where((part) => part.isNotEmpty).join(', ');
       return combined.isEmpty ? 'Not Available' : combined;
     }
     if (address is String && address.trim().isNotEmpty) return address;

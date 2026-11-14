@@ -470,9 +470,13 @@ const getUserProfile = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const fields = ["firstname", "lastname", "phoneNumber", "email", "businessName", "workType", "city", "state"];
+    const fields = ["firstname", "lastname", "phoneNumber", "email", "businessName", "workType", "city", "state",
+      "businessType", "gstNumber", "businessAddress", "serviceArea", "yearsInBusiness", "website"];
     const supplied = fields.filter((field) => Object.hasOwn(req.body, field));
-    if (!supplied.length || supplied.some((field) => typeof req.body[field] !== "string")) {
+    const hasCategories = Object.hasOwn(req.body, "categories");
+    const hasRadius = Object.hasOwn(req.body, "serviceRadiusKm");
+    const hasAreas = Object.hasOwn(req.body, "additionalAreas");
+    if ((!supplied.length && !hasCategories && !hasRadius && !hasAreas) || supplied.some((field) => typeof req.body[field] !== "string")) {
       return res.status(400).json({
         success: false,
         code: "VALIDATION_ERROR",
@@ -490,7 +494,40 @@ const updateUserProfile = async (req, res) => {
     }
 
     const updateData = {};
+    if (hasRadius) {
+      if (![10, 25, 50].includes(req.body.serviceRadiusKm)) {
+        return res.status(400).json({ success: false, message: "Select a valid service radius" });
+      }
+      updateData.serviceRadiusKm = req.body.serviceRadiusKm;
+    }
+    if (hasAreas) {
+      if (!Array.isArray(req.body.additionalAreas) || req.body.additionalAreas.length > 50 ||
+          req.body.additionalAreas.some((area) => typeof area !== 'string' || !area.trim() || area.trim().length > 100)) {
+        return res.status(400).json({ success: false, message: "Provide valid additional areas" });
+      }
+      updateData.additionalAreas = [...new Set(req.body.additionalAreas.map((area) => area.trim()))];
+    }
+    if (hasCategories) {
+      if (!Array.isArray(req.body.categories) || req.body.categories.length > 100 ||
+          req.body.categories.some((id) => typeof id !== 'string' || !/^[a-f0-9]{24}$/i.test(id))) {
+        return res.status(400).json({ success: false, message: "Please select valid categories" });
+      }
+      updateData.categories = [...new Set(req.body.categories.map((id) => id.toLowerCase()))];
+    }
     for (const field of supplied) updateData[field] = req.body[field].trim();
+    if (updateData.gstNumber) {
+      updateData.gstNumber = updateData.gstNumber.toUpperCase();
+      if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(updateData.gstNumber)) {
+        return res.status(400).json({ success: false, message: "Please enter a valid GSTIN" });
+      }
+    }
+    if (updateData.website) {
+      let website;
+      try { website = new URL(updateData.website); } catch { /* validated below */ }
+      if (!website || !["http:", "https:"].includes(website.protocol) || !website.hostname.includes(".")) {
+        return res.status(400).json({ success: false, message: "Please enter a valid http or https website address" });
+      }
+    }
     if (email !== undefined) {
       updateData.email = email.trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updateData.email)) {

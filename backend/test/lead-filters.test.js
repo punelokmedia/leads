@@ -55,3 +55,30 @@ test('lead purchase price is separate from customer budget and capped at 5000', 
   assert.equal(query.$expr, undefined);
   for (const filters of [{ priceMax: '5001' }, { priceMin: '-1' }, { priceMin: '2000', priceMax: '1000' }, { priceMax: { $gt: 0 } }]) assert.throws(() => applyLeadFilters({}, filters));
 });
+
+test('mobile timeline, area and exact posted-time filters validate and combine', () => {
+  const query = {};
+  applyLeadFilters(query, { timeline: 'Within 1 Month', areaMin: '500', areaMax: '2000', postedSince: '2026-11-12T05:10:00.000Z', budgetMin: '1000' });
+  assert.equal(query.timeline, 'Within 1 Month');
+  assert.equal(query.createdAt.$gte.toISOString(), '2026-11-12T05:10:00.000Z');
+  assert.equal(query.$and.length, 1);
+  assert.ok(query.$expr);
+  for (const filters of [{areaMin: '-1'}, {areaMax: 'invalid'}, {areaMin: '20', areaMax: '10'}, {timeline: {$ne: ''}}, {postedSince: 'bad'}]) assert.throws(() => applyLeadFilters({}, filters));
+});
+
+test('project area parses formatted sizes and excludes missing values in MongoDB', async () => {
+  const { MongoMemoryServer } = await import('mongodb-memory-server');
+  const { MongoClient } = await import('mongodb');
+  const mongo = await MongoMemoryServer.create({ binary: { version: '7.0.24' } });
+  const client = new MongoClient(mongo.getUri());
+  try {
+    await client.connect();
+    const leads = client.db().collection('areas');
+    await leads.insertMany([{ areaSize: '1,200 sq ft', timeline: 'Within 1 Month' }, { areaSize: '250 sq ft' }, { areaSize: '' }, {}]);
+    const query = {};
+    applyLeadFilters(query, {areaMin: '500', areaMax: '2000', timeline: 'Within 1 Month'});
+    const rows = await leads.find(query).toArray();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].areaSize, '1,200 sq ft');
+  } finally { await client.close(); await mongo.stop(); }
+});

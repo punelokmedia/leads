@@ -38,10 +38,7 @@ class MediaUrl {
 
     if (uri.host == 'localhost' || uri.host == '127.0.0.1') {
       return uri
-          .replace(
-            host: base.host,
-            port: base.hasPort ? base.port : uri.port,
-          )
+          .replace(host: base.host, port: base.hasPort ? base.port : uri.port)
           .toString();
     }
 

@@ -83,7 +83,11 @@ class AuthPrimaryButton extends StatelessWidget {
 class GoogleSignInButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool isLoading;
-  const GoogleSignInButton({super.key, required this.onTap, this.isLoading = false});
+  const GoogleSignInButton({
+    super.key,
+    required this.onTap,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) => GestureDetector(

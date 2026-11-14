@@ -1,3 +1,4 @@
+import '../../../preview/figma_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -17,7 +18,7 @@ class CartScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<CartScreen> {
-  static const blue = Color(0xFF0047FF);
+  static const blue = figmaBlue;
   static const navy = Color(0xFF0A2342);
   static const muted = Color(0xFF475569);
   bool purchasing = false, clearing = false;
@@ -88,7 +89,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         .where((item) => item.isSelected)
         .fold<num>(0, (sum, item) => sum + ((item.price ?? 0) * item.quantity));
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FBFF),
+      backgroundColor: figmaBackground,
       body: SafeArea(
         bottom: false,
         child: loading && items.isEmpty
@@ -147,9 +148,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 ],
               ),
       ),
-      bottomNavigationBar: items.isEmpty
-          ? null
-          : SafeArea(
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (items.isNotEmpty)
+            SafeArea(
               top: false,
               child: Container(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
@@ -173,11 +176,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         : const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                'Proceed to Checkout',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
+                              Flexible(
+                                child: Text(
+                                  'Proceed to Checkout',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                               SizedBox(width: 12),
@@ -188,47 +193,30 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 ),
               ),
             ),
+          FigmaBottomNav(
+            selected: 2,
+            onSelect: (i) {
+              if (i != 2) {
+                context.go(
+                  [
+                    AppRouter.homePath,
+                    AppRouter.leadsPath,
+                    AppRouter.cartPath,
+                    AppRouter.membershipPath,
+                    AppRouter.profilePath,
+                  ][i],
+                );
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _header() => Row(
-    children: [
-      Image.asset(
-        'assets/branding/nextlead_wordmark.webp',
-        width: 145,
-        height: 48,
-      ),
-      const Spacer(),
-      Consumer(
-        builder: (context, ref, _) => OutlinedButton.icon(
-          onPressed: () => ref.invalidate(walletProvider),
-          icon: const Icon(
-            Icons.account_balance_wallet_outlined,
-            color: blue,
-            size: 19,
-          ),
-          label: ref
-              .watch(walletProvider)
-              .when(
-                data: (data) => Text(
-                  money((data['balancePaise'] as num? ?? 0) / 100),
-                  style: const TextStyle(color: navy),
-                ),
-                loading: () => const Text('...', style: TextStyle(color: navy)),
-                error: (_, _) =>
-                    const Text('Wallet', style: TextStyle(color: navy)),
-              ),
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Color(0xFFDCE6F8)),
-          ),
-        ),
-      ),
-      IconButton(
-        tooltip: 'Notifications',
-        onPressed: () => context.push(AppRouter.notificationPath),
-        icon: const Icon(Icons.notifications_outlined, color: navy),
-      ),
-    ],
+  Widget _header() => FigmaHeader(
+    onWallet: () => context.go(AppRouter.paymentsPath),
+    onNotifications: () => context.push(AppRouter.notificationPath),
   );
 
   Widget _notice(List<String> values) => Container(

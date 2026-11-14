@@ -20,12 +20,11 @@ class HistoryState {
     List<HistoryModel>? items,
     bool? isLoading,
     String? errorMessage,
-  }) =>
-      HistoryState(
-        items: items ?? this.items,
-        isLoading: isLoading ?? this.isLoading,
-        errorMessage: errorMessage,
-      );
+  }) => HistoryState(
+    items: items ?? this.items,
+    isLoading: isLoading ?? this.isLoading,
+    errorMessage: errorMessage,
+  );
 }
 
 // ---------- Controller ----------

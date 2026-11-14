@@ -36,8 +36,13 @@ class AppNetworkImage extends StatelessWidget {
     if (url?.startsWith('data:image/') == true) {
       try {
         final data = UriData.parse(url!);
-        return Image.memory(data.contentAsBytes(), width: width, height: height,
-          fit: fit, errorBuilder: (_, _, _) => _fallback);
+        return Image.memory(
+          data.contentAsBytes(),
+          width: width,
+          height: height,
+          fit: fit,
+          errorBuilder: (_, _, _) => _fallback,
+        );
       } on FormatException {
         return _fallback;
       }

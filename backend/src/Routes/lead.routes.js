@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { Lead } from '../Models/leads.model.js';
 import {
   createLead,
+  markLeadContacted,
   updateLead,
   deleteLead,
   getLeadDetailsById,
@@ -36,6 +37,7 @@ router.get('/filter-options', async (req, res) => {
 
 router.get("/get-all-leads", optionalAuth, getAllLeads);
 router.get("/get-lead/:id", optionalAuth, getLeadDetailsById);
+router.patch('/:id/contacted', auth, markLeadContacted);
 router.get("/history", auth, getUserHistory );
 router.get("/download/:orderId", auth, downloadLeads);
 

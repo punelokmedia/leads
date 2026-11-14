@@ -80,8 +80,9 @@ const getAllLeads = async (req, res) => {
 
     const purchases = userId ? await LeadPurchase.find({
       user: userId, lead: { $in: leads.map((lead) => lead._id) },
-    }).select('lead').lean() : [];
+    }).select('lead contactedAt').lean() : [];
     const purchasedIds = new Set(purchases.map((purchase) => String(purchase.lead)));
+    const contactedDates = new Map(purchases.filter(purchase => purchase.contactedAt).map(purchase => [String(purchase.lead), purchase.contactedAt]));
     const modified = leads.map((lead) => {
       const isPurchased = purchasedIds.has(String(lead._id));
 
@@ -108,6 +109,7 @@ const getAllLeads = async (req, res) => {
         ...inventory(lead),
         leadDisplayId: resolvedLeadDisplayId,
         isPurchased,
+        contactedAt: contactedDates.get(String(lead._id)) ?? null,
         price: obj.price,
         originalPrice: obj.originalPrice || null,
       };
@@ -153,9 +155,10 @@ const getLeadDetailsById = async (req, res) => {
       });
     }
 
-    const isPurchased = userId ? Boolean(await LeadPurchase.exists({
+    const purchase = userId ? await LeadPurchase.findOne({
       user: userId, lead: lead._id,
-    })) : false;
+    }).sort({ _id: 1 }).select('contactedAt').lean() : null;
+    const isPurchased = Boolean(purchase);
     const status = resolveLeadStatus(lead);
 
     const responseLead = lead.toObject();
@@ -179,6 +182,7 @@ const getLeadDetailsById = async (req, res) => {
       responseLead.areaLocality = null;
     }
 
+    res.set('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
       message: "Lead details fetched successfully",
@@ -188,6 +192,7 @@ const getLeadDetailsById = async (req, res) => {
         leadDisplayId: resolvedLeadDisplayId,
 
         isPurchased,
+        contactedAt: purchase?.contactedAt ?? null,
         status,
 
         price: lead.price,
@@ -205,6 +210,27 @@ const getLeadDetailsById = async (req, res) => {
       success: false,
       message: "Failed to fetch lead details",
     });
+  }
+};
+
+const markLeadContacted = async (req, res) => {
+  if (!req.user?.id) return res.status(401).json({ success: false, message: 'Please sign in.' });
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ success: false, message: 'Invalid lead ID.' });
+  try {
+    const owner = { user: req.user.id, lead: req.params.id };
+    let purchase = await LeadPurchase.findOne(owner).sort({ _id: 1 }).select('_id contactedAt').lean();
+    if (purchase && !purchase.contactedAt) {
+      const record = { ...owner, _id: purchase._id };
+      purchase = await LeadPurchase.findOneAndUpdate(
+        { ...record, contactedAt: null },
+        { $set: { contactedAt: new Date() } },
+        { returnDocument: 'after', runValidators: true },
+      ).select('contactedAt').lean() ?? await LeadPurchase.findOne(record).select('contactedAt').lean();
+    }
+    if (!purchase) return res.status(403).json({ success: false, message: 'Purchase this lead before marking it contacted.' });
+    return res.json({ success: true, data: { leadId: req.params.id, contactedAt: purchase.contactedAt } });
+  } catch {
+    return res.status(503).json({ success: false, message: 'Could not save contact status. Please retry.' });
   }
 };
 
@@ -1279,6 +1305,7 @@ const downloadLeads = async (req, res) => {
 };
 
 export {
+  markLeadContacted,
   createLead,
   updateLead,
   deleteLead,

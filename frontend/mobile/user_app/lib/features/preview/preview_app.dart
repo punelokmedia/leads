@@ -1,5 +1,9 @@
+import '../support/presentation/screens/notifications_page.dart';
+import 'figma_widgets.dart';
+import 'lead_filters_sheet.dart';
+import 'my_leads_page.dart';
 import 'home_dashboard.dart';
-import 'membership_dashboard.dart' hide homeBlue, homeNavy, homeMuted;
+import 'membership_dashboard.dart';
 import 'category_leads_page.dart';
 import 'all_categories_page.dart';
 import 'lead_details_page.dart';
@@ -44,37 +48,39 @@ class _PreviewAppState extends State<PreviewApp> {
   }
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'NextLeads â€¢ Test mode',
-    debugShowCheckedModeBanner: false,
-    theme: AppTheme.light,
-    darkTheme: AppTheme.dark,
-    themeMode: AppTheme.mode,
-    builder: (context, child) => Column(
-      children: [
-        Material(
-          color: const Color(0xFFFFE6A7),
-          child: SafeArea(
-            bottom: false,
-            child: SizedBox(
-              width: double.infinity,
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: Text(
-                  'TEST MODE â€¢ Sample data â€¢ No real charges',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelSmall?.copyWith(color: Colors.black87),
+  Widget build(BuildContext context) => ProviderScope(
+    child: MaterialApp(
+      title: 'NextLeads â€¢ Test mode',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: AppTheme.mode,
+      builder: (context, child) => Column(
+        children: [
+          Material(
+            color: const Color(0xFFFFE6A7),
+            child: SafeArea(
+              bottom: false,
+              child: SizedBox(
+                width: double.infinity,
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Text(
+                    'TEST MODE â€¢ Sample data â€¢ No real charges',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: Colors.black87),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        Expanded(child: child!),
-      ],
+          Expanded(child: child!),
+        ],
+      ),
+      home: PreviewHome(store: store),
     ),
-    home: PreviewHome(store: store),
   );
 }
 
@@ -89,30 +95,55 @@ class PreviewHome extends StatefulWidget {
 class _PreviewHomeState extends State<PreviewHome> {
   late int page = widget.initialPage;
   int _returnPage = 0;
+  int _homeReset = 0;
   String city = 'All Cities', query = '', tab = 'All';
   int? category;
   bool savedOnly = false;
+  LeadFilters advancedFilters = const LeadFilters();
+  late bool purchasedOnly = widget.initialPage == 1;
   final Set<String> _savedCategories = {};
   bool showFeaturePrompt = false;
   PreviewStore get store => widget.store;
-  List<PreviewLead> get filtered => store.leads
-      .where(
-        (l) =>
-            (city == 'All Cities' ||
-                l.city.toLowerCase() == city.toLowerCase()) &&
-            (category == null || l.category == category) &&
-            (!savedOnly || l.saved) &&
-            '${l.title} ${l.city} ${l.id}'.toLowerCase().contains(
-              query.toLowerCase(),
-            ) &&
-            (tab == 'All' ||
-                tab == 'New' && !l.joined && !l.closed ||
-                tab == 'Joined' && l.joined ||
-                tab == 'Closed' && l.closed),
-      )
-      .toList();
+  List<PreviewLead> get filtered =>
+      (store is LiveStore
+              ? (store as LiveStore).filteredLeads ?? store.leads
+              : store.leads)
+          .where(
+            (l) =>
+                (store is LiveStore &&
+                        (store as LiveStore).filteredLeads != null ||
+                    advancedFilters.matches(l)) &&
+                (city == 'All Cities' ||
+                    l.city.toLowerCase() == city.toLowerCase()) &&
+                (category == null || l.category == category) &&
+                (!savedOnly || l.saved) &&
+                '${l.title} ${l.city} ${l.id}'.toLowerCase().contains(
+                  query.toLowerCase(),
+                ) &&
+                (tab == 'All' ||
+                    tab == 'New' && !l.joined && !l.closed ||
+                    tab == 'Joined' && l.joined ||
+                    tab == 'Closed' && l.closed),
+          )
+          .toList();
 
   bool _exitDialogOpen = false;
+
+  void _resetLeadFilters() {
+    _homeReset++;
+    if (store is LiveStore) (store as LiveStore).clearServerFilters();
+    city = 'All Cities';
+    category = null;
+    query = '';
+    advancedFilters = const LeadFilters();
+    purchasedOnly = savedOnly = false;
+    tab = 'All';
+  }
+
+  void _goHome() => setState(() {
+    _resetLeadFilters();
+    page = 0;
+  });
 
   Future<void> _handleBack() async {
     if (page != 0) {
@@ -120,7 +151,7 @@ class _PreviewHomeState extends State<PreviewHome> {
         setState(() => page = _returnPage);
         return;
       }
-      setState(() => page = 0);
+      _goHome();
       return;
     }
     if (_exitDialogOpen) return;
@@ -157,8 +188,10 @@ class _PreviewHomeState extends State<PreviewHome> {
       builder: (_) => CategoryPreview(
         store: store,
         onSelect: (index) {
+          if (store is LiveStore) (store as LiveStore).clearServerFilters();
           setState(() {
             category = index;
+            purchasedOnly = false;
             page = 1;
             tab = 'All';
             savedOnly = false;
@@ -170,83 +203,54 @@ class _PreviewHomeState extends State<PreviewHome> {
   );
 
   Future<void> filters() async {
-    var nextCity = city;
-    var nextCategory = category;
-    var nextSaved = savedOnly;
-    final applied = await showModalBottomSheet<bool>(
+    if (store is LiveStore && (store as LiveStore).filtering) return;
+    final applied = await showModalBottomSheet<LeadFilters>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, update) => SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Filter leads',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: nextCity,
-                  decoration: const InputDecoration(labelText: 'City'),
-                  items: ['All Cities', ...store.cities]
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (value) => update(() => nextCity = value!),
-                ),
-                DropdownButtonFormField<int>(
-                  initialValue: nextCategory ?? -1,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Category'),
-                  items: [
-                    const DropdownMenuItem(
-                      value: -1,
-                      child: Text('All Categories'),
-                    ),
-                    ...List.generate(
-                      store.categories.length,
-                      (i) => DropdownMenuItem(
-                        value: i,
-                        child: Text(store.categories[i].name),
-                      ),
-                    ),
-                  ],
-                  onChanged: (value) =>
-                      update(() => nextCategory = value == -1 ? null : value),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Saved leads only'),
-                  value: nextSaved,
-                  onChanged: (v) => update(() => nextSaved = v),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Apply filters'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    nextCity = 'All Cities';
-                    nextCategory = null;
-                    nextSaved = false;
-                    Navigator.pop(context, true);
-                  },
-                  child: const Text('Clear filters'),
-                ),
-              ],
-            ),
-          ),
+      backgroundColor: Colors.transparent,
+      builder: (_) => LeadFiltersSheet(
+        store: store,
+        initial: LeadFilters(
+          city: city,
+          category: category,
+          savedOnly: savedOnly,
+          minBudget: advancedFilters.minBudget,
+          maxBudget: advancedFilters.maxBudget,
+          minArea: advancedFilters.minArea,
+          maxArea: advancedFilters.maxArea,
+          timeline: advancedFilters.timeline,
+          postedDays: advancedFilters.postedDays,
         ),
       ),
     );
-    if (applied == true && mounted) {
+    if (applied != null && mounted) {
+      if (store is LiveStore) {
+        try {
+          await (store as LiveStore).applyFilters(applied);
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Unable to apply filters. Please retry.'),
+              ),
+            );
+          }
+          return;
+        }
+        if (!mounted) return;
+      }
       setState(() {
-        city = nextCity;
-        category = nextCategory;
-        savedOnly = nextSaved;
+        city = applied.city;
+        category = applied.category;
+        savedOnly = applied.savedOnly;
+        advancedFilters = LeadFilters(
+          minBudget: applied.minBudget,
+          maxBudget: applied.maxBudget,
+          minArea: applied.minArea,
+          maxArea: applied.maxArea,
+          timeline: applied.timeline,
+          postedDays: applied.postedDays,
+        );
       });
     }
   }
@@ -260,17 +264,24 @@ class _PreviewHomeState extends State<PreviewHome> {
     child: ListenableBuilder(
       listenable: store,
       builder: (context, _) => Scaffold(
+        bottomSheet: store is LiveStore && (store as LiveStore).filtering
+            ? const LinearProgressIndicator()
+            : null,
         // The preview banner already handles the top system inset.
         primary: store.isLive,
-        backgroundColor: const Color(0xFFF8F8F7),
-        appBar: page == 0 || page == 5 || page == 3 || page == 1 || page == 4
+        backgroundColor: figmaBackground,
+        appBar:
+            page == 0 ||
+                page == 5 ||
+                page == 3 ||
+                page == 1 ||
+                page == 4 ||
+                page == 2
             ? null
             : AppBar(
                 primary: store.isLive,
                 toolbarHeight: 40,
-                leading: page == 0
-                    ? null
-                    : BackButton(onPressed: () => setState(() => page = 0)),
+                leading: page == 0 ? null : BackButton(onPressed: _goHome),
                 centerTitle: false,
                 title: page == 0
                     ? Image.asset(
@@ -333,7 +344,7 @@ class _PreviewHomeState extends State<PreviewHome> {
             constraints: const BoxConstraints(maxWidth: 760),
             child: switch (page) {
               0 => home(),
-              1 => leads(),
+              1 => purchasedOnly ? myLeads() : leads(),
               2 => payments(),
               3 => profile(),
               4 => membership(),
@@ -360,6 +371,9 @@ class _PreviewHomeState extends State<PreviewHome> {
                   ),
                 ),
                 onCategory: (name) => setState(() {
+                  if (store is LiveStore) {
+                    (store as LiveStore).clearServerFilters();
+                  }
                   category = store.categories.indexWhere(
                     (item) => item.name == name,
                   );
@@ -374,112 +388,56 @@ class _PreviewHomeState extends State<PreviewHome> {
             },
           ),
         ),
-        bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Row(
-              children: [
-                _homeNav(
-                  Icons.home_rounded,
-                  'Home',
-                  page == 0,
-                  () => setState(() {
-                    page = 0;
-                    savedOnly = false;
-                    tab = 'All';
-                  }),
-                ),
-                _homeNav(
-                  Icons.description_outlined,
-                  'My Leads',
-                  page == 1,
-                  () => setState(() {
-                    page = 1;
-                    savedOnly = false;
-                    tab = 'Joined';
-                  }),
-                ),
-                _homeNav(
-                  Icons.shopping_cart_outlined,
-                  'Cart',
-                  false,
-                  () => context.push(AppRouter.cartPath),
-                ),
-                _homeNav(
-                  Icons.workspace_premium_rounded,
-                  'Membership',
-                  page == 4,
-                  () => setState(() {
-                    page = 4;
-                    savedOnly = false;
-                  }),
-                ),
-                _homeNav(
-                  Icons.person_outline_rounded,
-                  'Profile',
-                  page == 3,
-                  () => setState(() {
-                    page = 3;
-                    savedOnly = false;
-                  }),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  Widget _homeNav(
-    IconData icon,
-    String label,
-    bool selected,
-    VoidCallback action,
-  ) => Expanded(
-    child: InkWell(
-      onTap: action,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-        child: Container(
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFFE5EFFF) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 24, color: selected ? homeBlue : homeMuted),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? homeBlue : homeMuted,
-                ),
-              ),
-            ],
-          ),
+        bottomNavigationBar: FigmaBottomNav(
+          selected: switch (page) {
+            1 => 1,
+            4 => 3,
+            3 => 4,
+            _ => 0,
+          },
+          onSelect: (index) {
+            if (index == 2) {
+              if (store.isLive) {
+                context.push(AppRouter.cartPath);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Cart is available when signed in.'),
+                  ),
+                );
+              }
+              return;
+            }
+            setState(() {
+              page = switch (index) {
+                1 => 1,
+                3 => 4,
+                4 => 3,
+                _ => 0,
+              };
+              purchasedOnly = index == 1;
+              savedOnly = false;
+              tab = index == 1 ? 'Joined' : 'All';
+              if (index == 0) _resetLeadFilters();
+            });
+          },
         ),
       ),
     ),
   );
 
   Widget home() => NextLeadDashboard(
+    key: ValueKey(_homeReset),
     store: store,
+    onMembership: () => setState(() => page = 4),
     leads: filtered,
     city: city,
     category: category,
     onSearch: (value) => setState(() => query = value),
     onCategory: (value) => setState(() {
+      if (store is LiveStore) (store as LiveStore).clearServerFilters();
       category = value;
+      purchasedOnly = false;
       page = 1;
       tab = 'All';
       savedOnly = false;
@@ -497,6 +455,7 @@ class _PreviewHomeState extends State<PreviewHome> {
       );
     },
     onExplore: () => setState(() {
+      purchasedOnly = false;
       page = 1;
       tab = 'All';
       savedOnly = false;
@@ -514,8 +473,68 @@ class _PreviewHomeState extends State<PreviewHome> {
     }),
   );
 
+  void _openReferral() => Navigator.push(
+    context,
+    MaterialPageRoute<void>(
+      builder: (referralContext) => Scaffold(
+        backgroundColor: const Color(0xFFE3EDFF),
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Column(
+                children: [
+                  AccountPageHeader(store: store),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(19, 16, 19, 20),
+                      child: store is LiveStore
+                          ? LiveReferralSection(dio: (store as LiveStore).dio)
+                          : const ReferralSection(initiallyExpanded: true),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        bottomNavigationBar: FigmaBottomNav(
+          selected: -1,
+          onSelect: (index) {
+            Navigator.pop(referralContext);
+            if (index == 2) {
+              if (store.isLive) {
+                context.push(AppRouter.cartPath);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Cart is available when signed in.'),
+                  ),
+                );
+              }
+              return;
+            }
+            setState(() {
+              page = switch (index) {
+                1 => 1,
+                3 => 4,
+                4 => 3,
+                _ => 0,
+              };
+              purchasedOnly = index == 1;
+              savedOnly = false;
+              tab = index == 1 ? 'Joined' : 'All';
+              if (index == 0) _resetLeadFilters();
+            });
+          },
+        ),
+      ),
+    ),
+  );
+
   Widget membership() => NextLeadMembership(
     store: store,
+    onReferAndEarn: _openReferral,
     onWallet: () => setState(() => page = 2),
     onNotifications: () {
       store.markRead();
@@ -541,7 +560,28 @@ class _PreviewHomeState extends State<PreviewHome> {
     ],
   );
 
+  Widget myLeads() => MyLeadsPage(
+    store: store,
+    onWallet: () => setState(() => page = 2),
+    onNotifications: () {
+      store.markRead();
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => NotificationsPreview(store: store),
+        ),
+      );
+    },
+    onLead: (lead) => Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => LeadDetailsPreview(lead: lead, store: store),
+      ),
+    ),
+  );
+
   Widget leads() => CategoryLeadsPage(
+    onWallet: () => setState(() => page = 2),
     key: ValueKey('category-$category'),
     store: store,
     leads: filtered,
@@ -549,10 +589,7 @@ class _PreviewHomeState extends State<PreviewHome> {
     city: city,
     query: query,
     tab: tab,
-    onBack: () => setState(() {
-      page = 0;
-      savedOnly = false;
-    }),
+    onBack: _goHome,
     onSaved: () => setState(() {
       _returnPage = 1;
       page = 5;
@@ -576,49 +613,12 @@ class _PreviewHomeState extends State<PreviewHome> {
       ),
     ),
   );
-  Widget payments() => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      const WalletCard(),
-      const SizedBox(height: 24),
-      Text(
-        store.isLive ? 'Payment history' : 'Test payment history',
-        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-      ),
-      if (!store.isLive)
-        const Text('Simulated receipts only. No money has been charged.'),
-      if (store.receipts.isEmpty) const Text('No payments yet.'),
-      ...store.receipts.map(
-        (r) => Card(
-          child: ListTile(
-            leading: Icon(
-              r.status == 'Paid' ? Icons.check_circle : Icons.currency_exchange,
-              color: r.status == 'Paid' ? Colors.green : Colors.orange,
-            ),
-            title: Text(r.title),
-            subtitle: Text(
-              '${r.leadId} â€¢ ${store.isLive ? r.status : 'Test payment successful'}',
-            ),
-            trailing: Text(money(r.fee)),
-            onTap: () => showDialog<void>(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: Text(store.isLive ? 'Receipt' : 'Test receipt'),
-                content: Text(
-                  '${r.leadId}\n${r.title}\nAmount: ${money(r.fee)}\nStatus: ${store.isLive ? r.status : 'Simulated success\nNo real transaction was created.'}',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    ],
+  Widget payments() => SafeArea(
+    bottom: false,
+    child: ListView(
+      padding: const EdgeInsets.all(16),
+      children: [WalletCard(onBack: _goHome)],
+    ),
   );
 
   void _editAccount() {
@@ -735,23 +735,7 @@ class _PreviewHomeState extends State<PreviewHome> {
               : 'Sample referral rewards: â‚¹100',
         ),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute<void>(
-            builder: (_) => Scaffold(
-              backgroundColor: const Color(0xFFF8F8F7),
-              appBar: page == 0
-                  ? null
-                  : AppBar(title: const Text('Refer & Earn')),
-              body: SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: store is LiveStore
-                    ? LiveReferralSection(dio: (store as LiveStore).dio)
-                    : const ReferralSection(initiallyExpanded: true),
-              ),
-            ),
-          ),
-        ),
+        onTap: _openReferral,
       ),
       ListTile(
         leading: const Icon(Icons.grid_view),
@@ -1006,7 +990,7 @@ class LeadPreviewCard extends StatelessWidget {
                   '${lead.city}, ${lead.state}',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 14,
+                    fontSize: 16,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1034,7 +1018,7 @@ class LeadPreviewCard extends StatelessWidget {
                             ? Theme.of(context).colorScheme.onSurfaceVariant
                             : Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontSize: 14,
                       ),
                     ),
                     if (lead.saved)
@@ -1177,7 +1161,7 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
                           store.isLive
                               ? 'Select a category to see current availability'
                               : 'Coverage claims shown as mock copy',
-                          style: TextStyle(fontSize: 12),
+                          style: TextStyle(fontSize: 14),
                         ),
                       ],
                     ),
@@ -1255,7 +1239,7 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
                                   Expanded(
                                     child: Text(
                                       c.name,
-                                      style: const TextStyle(fontSize: 14),
+                                      style: const TextStyle(fontSize: 16),
                                     ),
                                   ),
                                 ],
@@ -1265,14 +1249,14 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
                               flex: 3,
                               child: Text(
                                 c.budget,
-                                style: const TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 16),
                               ),
                             ),
                             Expanded(
                               flex: 3,
                               child: Text(
                                 c.fee,
-                                style: const TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 16),
                               ),
                             ),
                           ],
@@ -1289,7 +1273,7 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
                                   Text(
                                     '${widget.store.leads.where((l) => l.category == i && !l.closed).length} available ${store.isLive ? '' : 'test '}leads',
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 16,
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.onSurfaceVariant,
@@ -1315,7 +1299,7 @@ class _LegacyCategoryPreviewState extends State<LegacyCategoryPreview> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
-                fontSize: 14,
+                fontSize: 16,
               ),
             ),
             TrustStrip(store: store),
@@ -1658,7 +1642,7 @@ class LegacyLeadDetailsPreview extends StatelessWidget {
             ),
             Text(
               'Up to ${lead.maxBuyers} vendors can access client details',
-              style: TextStyle(fontSize: 13),
+              style: TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 8),
           ],
@@ -1738,7 +1722,7 @@ class SupportBar extends StatelessWidget {
               icon: const Icon(Icons.headset_mic, color: Colors.white),
               label: const Text(
                 '24/7 Support',
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
           ),
@@ -1748,7 +1732,7 @@ class SupportBar extends StatelessWidget {
               icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
               label: const Text(
                 'Chat with Support',
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
           ),
@@ -1865,28 +1849,5 @@ class NotificationsPreview extends StatelessWidget {
   final PreviewStore store;
   const NotificationsPreview({super.key, required this.store});
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Notifications')),
-    body: ListenableBuilder(
-      listenable: store,
-      builder: (context, _) => ListView(
-        children: store.notifications.isEmpty
-            ? [const ListTile(title: Text('No notifications yet'))]
-            : store.notifications
-                  .map(
-                    (n) => ListTile(
-                      leading: Icon(
-                        Icons.notifications_active_outlined,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      title: Text(n),
-                      subtitle: Text(
-                        store.isLive ? 'Account update' : 'Test notification',
-                      ),
-                    ),
-                  )
-                  .toList(),
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => const NotificationScreen();
 }

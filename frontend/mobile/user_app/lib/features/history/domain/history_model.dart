@@ -39,21 +39,21 @@ class HistoryModel {
 
     return HistoryModel(
       // Item level fields
-      id: json['leadId']?.toString() ?? '', 
+      id: json['leadId']?.toString() ?? '',
       leadType: json['title'] ?? 'Lead',
       city: json['city'] ?? 'N/A',
       customerName: json['customerName'] ?? 'Customer',
       address: json['address'] ?? '',
       phone: json['phone']?.toString() ?? '',
       sharingCount: json['quantity'] ?? 1, // ✅ Mapped from 'quantity'
-      
       // Order level fields (merged from parent)
       orderId: json['orderId']?.toString() ?? '',
       time: formatIsoDate(json['paidAt'] ?? ''), // ✅ Mapped from 'paidAt'
       status: json['status'] ?? 'PAID',
       isDownloaded: json['isDownloaded'] ?? false,
-      
-      imageUrl: MediaUrl.resolve(json['image']?.toString()) ??
+
+      imageUrl:
+          MediaUrl.resolve(json['image']?.toString()) ??
           (fallbackImages.toList()..shuffle()).first,
     );
   }

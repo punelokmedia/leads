@@ -38,7 +38,7 @@ class CityRepository {
 // ✅ FIX: Added the missing Repository Provider!
 final cityRepositoryProvider = Provider<CityRepository>((ref) {
   // Watch your global dioProvider here
-  final dio = ref.watch(dioProvider); 
+  final dio = ref.watch(dioProvider);
   return CityRepository(dio);
 });
 
@@ -63,10 +63,11 @@ class CityController extends StateNotifier<AsyncValue<void>> {
   }
 }
 
-final cityControllerProvider = StateNotifierProvider<CityController, AsyncValue<void>>((ref) {
-  final repo = ref.watch(cityRepositoryProvider);
-  return CityController(repo);
-});
+final cityControllerProvider =
+    StateNotifierProvider<CityController, AsyncValue<void>>((ref) {
+      final repo = ref.watch(cityRepositoryProvider);
+      return CityController(repo);
+    });
 
 // ── 4. FutureProvider for Fetching Cities ──
 // This automatically handles Loading, Success, and Error states!

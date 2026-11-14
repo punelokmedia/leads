@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-
+import 'package:go_router/go_router.dart';
+import '../../app/app_router.dart';
 import 'category_leads_page.dart';
-import 'home_dashboard.dart';
+import 'figma_widgets.dart';
 import 'preview_data.dart';
 
 class CategoryPreview extends StatefulWidget {
@@ -12,218 +13,243 @@ class CategoryPreview extends StatefulWidget {
     required this.store,
     required this.onSelect,
   });
-
   @override
   State<CategoryPreview> createState() => _CategoryPreviewState();
 }
 
 class _CategoryPreviewState extends State<CategoryPreview> {
   String query = '';
-
-  List<int> get _shown =>
-      List<int>.generate(widget.store.categories.length, (index) => index)
-          .where(
-            (index) => widget.store.categories[index].name
-                .toLowerCase()
-                .contains(query.toLowerCase()),
-          )
-          .toList();
-
-  int _leadCount(int category) =>
-      widget.store.leads.where((lead) => lead.category == category).length;
+  String? _art(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('interior')) return '750-2861-imgGroup15';
+    if (n.contains('paint')) return '750-2861-imgVector2';
+    if (n.contains('plumb')) return '750-2861-imgVector3';
+    if (n.contains('ceiling') || n.contains('pop')) return '750-2861-imgLayer1';
+    if (n.contains('electric')) return '750-2861-imgLayer7';
+    if (n.contains('ac service')) return '750-2861-imgLayer6';
+    if (n.replaceAll(' ', '').contains('waterproof')) {
+      return '750-2861-imgLayer2';
+    }
+    if (n.contains('civil') || n.contains('construction')) {
+      return '750-2861-imgLayer3';
+    }
+    if (n.contains('aluminium') || n.contains('window')) {
+      return '750-2861-imgLayer4';
+    }
+    if (n.contains('cctv')) return '750-2861-imgLayer5';
+    return null;
+  }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFF9FBFF),
-    body: SafeArea(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 7, 14, 5),
-            child: Row(
+  Widget build(BuildContext context) {
+    final shown = List.generate(widget.store.categories.length, (i) => i)
+        .where(
+          (i) => widget.store.categories[i].name.toLowerCase().contains(
+            query.toLowerCase(),
+          ),
+        )
+        .toList();
+    // Match the category order in the design; retain extra backend categories below it.
+    const order = [
+      'interior',
+      'paint',
+      'plumb',
+      'ceiling',
+      'electric',
+      'ac service',
+      'waterproof',
+      'civil',
+      'aluminium',
+      'cctv',
+    ];
+    int rank(int i) {
+      final n = widget.store.categories[i].name.toLowerCase();
+      final r = order.indexWhere(n.contains);
+      return r < 0 ? order.length : r;
+    }
+
+    shown.sort((a, b) => rank(a).compareTo(rank(b)));
+    return Scaffold(
+      backgroundColor: figmaBackground,
+      bottomNavigationBar: FigmaBottomNav(
+        selected: -1,
+        onSelect: (i) {
+          final router = GoRouter.maybeOf(context);
+          if (router != null) {
+            Navigator.pop(context);
+            router.go(
+              [
+                AppRouter.homePath,
+                AppRouter.leadsPath,
+                AppRouter.cartPath,
+                AppRouter.membershipPath,
+                AppRouter.profilePath,
+              ][i],
+            );
+          } else {
+            Navigator.pop(context);
+            if (i == 1) widget.onSelect(null);
+          }
+        },
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
                 IconButton(
                   tooltip: 'Back',
-                  onPressed: () => Navigator.maybePop(context),
-                  icon: const Icon(Icons.arrow_back, color: homeNavy),
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back, color: figmaInk),
                 ),
                 Image.asset(
-                  'assets/branding/nextlead_wordmark.webp',
-                  width: 150,
-                  height: 49,
+                  'assets/figma/home-imgNextLeadRibbonArrowLogo3.png',
+                  width: 130,
+                  height: 43,
+                  fit: BoxFit.cover,
                 ),
               ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'All Categories',
-                  style: TextStyle(
-                    color: homeNavy,
-                    fontSize: 29,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Find leads from various service categories\nand grow your business.',
-                  style: TextStyle(
-                    color: homeMuted,
-                    fontSize: 16,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                TextField(
-                  onChanged: (value) => setState(() => query = value),
-                  style: const TextStyle(color: homeNavy, fontSize: 16),
-                  decoration: InputDecoration(
-                    hintText:
-                        'Search categories (e.g. painting, interior, plumbing...)',
-                    hintStyle: const TextStyle(color: homeMuted, fontSize: 14),
-                    prefixIcon: const Icon(Icons.search, color: homeNavy),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(color: Color(0xFFDCE6F6)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(color: Color(0xFFDCE6F6)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'All Categories',
+                    style: TextStyle(
+                      color: figmaInk,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 5),
+                  const Text(
+                    'Find leads from various service categories\nand grow your business.',
+                    style: TextStyle(
+                      color: figmaMuted,
+                      fontSize: 14,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextField(
+                    onChanged: (v) => setState(() => query = v),
+                    style: const TextStyle(fontSize: 14, color: figmaInk),
+                    decoration: InputDecoration(
+                      hintText:
+                          'Search leads by service, location or keyword...',
+                      hintStyle: const TextStyle(
+                        fontSize: 14,
+                        color: figmaMuted,
+                      ),
+                      prefixIcon: const Icon(Icons.search, size: 18),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        borderSide: const BorderSide(color: Color(0xFFD2DEF2)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: _shown.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No categories found.',
-                      style: TextStyle(color: homeMuted),
+            Expanded(
+              child: shown.isEmpty
+                  ? const Center(child: Text('No categories found.'))
+                  : GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(24, 4, 24, 20),
+                      itemCount: shown.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                            childAspectRatio: 1.05,
+                          ),
+                      itemBuilder: (context, index) {
+                        final i = shown[index];
+                        final cat = widget.store.categories[i];
+                        final art = _art(cat.name);
+                        final existing = categoryArtwork(cat.name);
+                        final count = widget.store.leads
+                            .where((l) => l.category == i)
+                            .length;
+                        return Material(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(9),
+                            side: const BorderSide(color: Color(0xFF0153FD)),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(9),
+                            onTap: () {
+                              widget.onSelect(i);
+                              Navigator.pop(context);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Align(
+                                    alignment: Alignment.topRight,
+                                    child: figmaSvg(
+                                      '750-2861-imgVector1',
+                                      size: 10,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Center(
+                                      child: art != null
+                                          ? figmaSvg(art, size: 48)
+                                          : existing != null
+                                          ? Image.asset(
+                                              'assets/Nextlead Mobile  App Asetes/$existing',
+                                              width: 48,
+                                              height: 48,
+                                            )
+                                          : Icon(
+                                              cat.icon,
+                                              size: 32,
+                                              color: figmaBlue,
+                                            ),
+                                    ),
+                                  ),
+                                  Text(
+                                    cat.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: figmaInk,
+                                      fontSize: 14,
+                                      height: 1.2,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    '$count Leads',
+                                    style: const TextStyle(
+                                      color: figmaMuted,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  )
-                : GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                    itemCount: _shown.length + (query.isEmpty ? 1 : 0),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                          childAspectRatio: .71,
-                        ),
-                    itemBuilder: (context, index) {
-                      if (query.isEmpty && index == 0) {
-                        return _allCard();
-                      }
-                      final itemIndex =
-                          _shown[query.isEmpty ? index - 1 : index];
-                      return _categoryCard(itemIndex);
-                    },
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-
-  Widget _allCard() => _card(
-    title: 'All Categories',
-    count: widget.store.leads.length,
-    icon: Icons.home_rounded,
-    tint: const Color(0xFFE3F0FF),
-    onTap: () {
-      widget.onSelect(null);
-      Navigator.pop(context);
-    },
-  );
-
-  Widget _categoryCard(int index) {
-    final category = widget.store.categories[index];
-    return _card(
-      title: category.name,
-      count: _leadCount(index),
-      icon: category.icon,
-      tint: Color.lerp(
-        const Color(0xFFE3F0FF),
-        const Color(0xFFFFEDE4),
-        (index % 5) / 4,
-      )!,
-      asset: categoryArtwork(category.name),
-      onTap: () {
-        widget.onSelect(index);
-        Navigator.pop(context);
-      },
     );
   }
-
-  Widget _card({
-    required String title,
-    required int count,
-    required IconData icon,
-    required Color tint,
-    required VoidCallback onTap,
-    String? asset,
-  }) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(15),
-    child: Container(
-      padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE7EDF8)),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 68,
-              height: 68,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
-              child: asset == null
-                  ? Icon(icon, color: homeNavy, size: 35)
-                  : Image.asset(
-                      'assets/Nextlead Mobile  App Asetes/$asset',
-                      fit: BoxFit.contain,
-                    ),
-            ),
-          ),
-          const Spacer(),
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: homeNavy,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '$count Leads',
-                  style: const TextStyle(color: homeMuted, fontSize: 13),
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: homeNavy, size: 19),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
 }

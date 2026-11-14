@@ -35,45 +35,45 @@ class LeadModel {
   });
 
   factory LeadModel.fromJson(Map<String, dynamic> json) {
-
-  final fallbackImages = [
+    final fallbackImages = [
       'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200&q=60',
       'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=200&q=60',
       'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=200&q=60',
     ];
 
-  return LeadModel(
-    id: json['_id'] ?? '',
-    title: json['title'] ?? '',
-    leadId: json['leadDisplayId']??'',
-    description: json['description'] ?? '',
-    address: "${json['city'] ?? ''}, ${json['state'] ?? ''}",
-    city: json['city'] ?? '',
-    pincode: '',
-    sharingCount: json['maxBuyers'] ?? 0,
-    originalPrice: (json['originalPrice']?? 0).toDouble(),
-    discountedPrice: (json['price'] ?? 0).toDouble(),
-    date: formatIsoDate(json['createdAt']?? ''),
-    imageUrl: MediaUrl.resolve(json['image']?.toString()) ??
+    return LeadModel(
+      id: json['_id'] ?? '',
+      title: json['title'] ?? '',
+      leadId: json['leadDisplayId'] ?? '',
+      description: json['description'] ?? '',
+      address: "${json['city'] ?? ''}, ${json['state'] ?? ''}",
+      city: json['city'] ?? '',
+      pincode: '',
+      sharingCount: json['maxBuyers'] ?? 0,
+      originalPrice: (json['originalPrice'] ?? 0).toDouble(),
+      discountedPrice: (json['price'] ?? 0).toDouble(),
+      date: formatIsoDate(json['createdAt'] ?? ''),
+      imageUrl:
+          MediaUrl.resolve(json['image']?.toString()) ??
           (fallbackImages.toList()..shuffle()).first,
-    isSharing: !(json['isPurchased'] ?? false),
-    status: json['status'] ?? 'AVAILABLE',
-  );
-}
+      isSharing: !(json['isPurchased'] ?? false),
+      status: json['status'] ?? 'AVAILABLE',
+    );
+  }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'description': description,
-        'address': address,
-        'city': city,
-        'pincode': pincode,
-        'sharing_count': sharingCount,
-        'original_price': originalPrice,
-        'discounted_price': discountedPrice,
-        'date': date,
-        'image_url': imageUrl,
-        'is_sharing': isSharing,
-        'status':status
-      };
+    'id': id,
+    'title': title,
+    'description': description,
+    'address': address,
+    'city': city,
+    'pincode': pincode,
+    'sharing_count': sharingCount,
+    'original_price': originalPrice,
+    'discounted_price': discountedPrice,
+    'date': date,
+    'image_url': imageUrl,
+    'is_sharing': isSharing,
+    'status': status,
+  };
 }

@@ -58,9 +58,6 @@ class SettingsPage extends HookConsumerWidget {
     final animController = useAnimationController(
       duration: const Duration(milliseconds: 600),
     );
-    final fadeAnim = useAnimation(
-      CurvedAnimation(parent: animController, curve: Curves.easeOut),
-    );
 
     useEffect(() {
       animController.forward();
@@ -120,7 +117,7 @@ class SettingsPage extends HookConsumerWidget {
                             onChanged: (val) => ref
                                 .read(settingsProvider.notifier)
                                 .toggleNotifications(val),
-                            activeColor: primaryColor,
+                            activeThumbColor: primaryColor,
                           ),
                           onTap: () {},
                         ),

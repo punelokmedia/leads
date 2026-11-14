@@ -164,10 +164,16 @@ class AuthController extends StateNotifier<AuthState> {
 
       await _ref.read(isLoggedInProvider.notifier).setLoggedIn(result.token);
       _ref.read(profileDraftProvider.notifier).clearDraft();
-      _ref.read(profileDraftProvider.notifier).updateBasicDetails(
-        fullName: result.user.fullName, email: result.user.email,
-        businessName: '', city: '', workType: '', address: '',
-      );
+      _ref
+          .read(profileDraftProvider.notifier)
+          .updateBasicDetails(
+            fullName: result.user.fullName,
+            email: result.user.email,
+            businessName: '',
+            city: '',
+            workType: '',
+            address: '',
+          );
       // A cart failure must not turn a successful sign-in into a login error.
       // The repository retains the local cart when synchronization fails.
       try {

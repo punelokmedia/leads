@@ -15,7 +15,12 @@ class HistoryState {
     this.selectedTabIndex = 0,
   });
 
-  HistoryState copyWith({bool? isLoading, List<HistoryModel>? items, String? error, int? selectedTabIndex}) {
+  HistoryState copyWith({
+    bool? isLoading,
+    List<HistoryModel>? items,
+    String? error,
+    int? selectedTabIndex,
+  }) {
     return HistoryState(
       isLoading: isLoading ?? this.isLoading,
       items: items ?? this.items,
@@ -33,8 +38,12 @@ class HistoryController extends StateNotifier<HistoryState> {
   }
 
   Future<void> fetchHistory(int tabIndex) async {
-    state = state.copyWith(isLoading: true, selectedTabIndex: tabIndex, error: null);
-    
+    state = state.copyWith(
+      isLoading: true,
+      selectedTabIndex: tabIndex,
+      error: null,
+    );
+
     // Map tab index to API parameter
     String typeParam = 'ALL';
     if (tabIndex == 1) typeParam = 'PAYMENT';
@@ -49,6 +58,7 @@ class HistoryController extends StateNotifier<HistoryState> {
   }
 }
 
-final historyControllerProvider = StateNotifierProvider<HistoryController, HistoryState>((ref) {
-  return HistoryController(ref.watch(historyRepositoryProvider));
-});
+final historyControllerProvider =
+    StateNotifierProvider<HistoryController, HistoryState>((ref) {
+      return HistoryController(ref.watch(historyRepositoryProvider));
+    });

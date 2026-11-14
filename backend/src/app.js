@@ -21,6 +21,7 @@ import city from "./Routes/city.routes.js";
 import { supportRouter } from "./Routes/support.routes.js";
 import { accountDeletionRouter } from "./Routes/accountDeletion.routes.js";
 import { referralRouter } from "./Routes/referral.routes.js";
+import homeBannerRouter from './Routes/home-banner.routes.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -104,6 +105,7 @@ app.use(`/api/${API_VERSION}/notifications`, notificationRouter);
 app.use(`/api/${API_VERSION}/account-deletion-requests`, accountDeletionRouter);
 app.use(`/api/${API_VERSION}/referrals`, referralRouter);
 app.use(`/api/${API_VERSION}/contact`, contactRouter);
+app.use(`/api/${API_VERSION}/banners`, homeBannerRouter);
 
 app.get("/", (req, res) => {
   return res.json({

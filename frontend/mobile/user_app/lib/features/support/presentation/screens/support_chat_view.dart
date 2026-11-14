@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../preview/business_details_page.dart' show accountText;
 
 class SupportChatView extends StatelessWidget {
   final List<Map<String, dynamic>> messages;
@@ -29,8 +30,8 @@ class SupportChatView extends StatelessWidget {
     required this.topic,
     required this.wallet,
   });
-  static const blue = Color(0xFF0070FF),
-      navy = Color(0xFF091B49),
+  static const blue = Color(0xFF0066FF),
+      navy = Color(0xFF072565),
       muted = Color(0xFF8190AF);
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -57,9 +58,16 @@ class SupportChatView extends StatelessWidget {
                 PopupMenuButton<String>(
                   tooltip: 'Support options',
                   icon: const Icon(Icons.more_vert, color: navy),
-                  onSelected: (value) =>
-                      value == 'refresh' ? refresh() : tickets(),
-                  itemBuilder: (_) => const [
+                  onSelected: (value) {
+                    if (value == 'refresh') {
+                      refresh();
+                    } else if (value == 'tickets') {
+                      tickets();
+                    } else if (!sending) {
+                      topic(value, _extraTopics[value]!);
+                    }
+                  },
+                  itemBuilder: (_) => [
                     PopupMenuItem(
                       value: 'refresh',
                       child: Text('Refresh messages'),
@@ -68,6 +76,13 @@ class SupportChatView extends StatelessWidget {
                       value: 'tickets',
                       child: Text('My support tickets'),
                     ),
+                    if (showTopics)
+                      for (final entry in _extraTopics.entries)
+                        PopupMenuItem(
+                          value: entry.key,
+                          enabled: !sending,
+                          child: Text(entry.value),
+                        ),
                   ],
                 ),
               ],
@@ -142,60 +157,81 @@ class SupportChatView extends StatelessWidget {
                 ),
               ),
             Expanded(
-              child: loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        if (hasOlder)
-                          TextButton(
-                            onPressed: older,
-                            child: const Text('Load earlier messages'),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    const ColoredBox(color: navy),
+                    Positioned.fill(
+                      child: FractionallySizedBox(
+                        alignment: Alignment.topCenter,
+                        heightFactor: .829787,
+                        child: Opacity(
+                          opacity: .07,
+                          child: Image.asset(
+                            'assets/figma/chat-wallpaper.png',
+                            fit: BoxFit.fill,
+                            excludeFromSemantics: true,
+                            cacheWidth: 780,
                           ),
-                        if (messages.isEmpty)
-                          _bubble(context, {
-                            'sender': 'support',
-                            'text':
-                                'Hi there! 👋\nWelcome to NextLead Support.\nHow can we help you today?',
-                          }),
-                        if (showTopics)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 44,
-                              top: 10,
-                              bottom: 16,
-                            ),
-                            child: _topics(),
-                          ),
-                        for (var i = 0; i < messages.length; i++) ...[
-                          if (i == 0 ||
-                              _day(messages[i]) != _day(messages[i - 1]))
-                            Center(
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 22,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEDF2FA),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  _day(messages[i]),
-                                  style: const TextStyle(
-                                    color: navy,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          _bubble(context, messages[i]),
-                        ],
-                      ],
+                        ),
+                      ),
                     ),
+                    if (loading)
+                      const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    else
+                      ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+                        itemCount: (messages.isEmpty ? 1 : messages.length) + 1,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return hasOlder
+                                ? TextButton(
+                                    onPressed: older,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Load earlier messages'),
+                                  )
+                                : const SizedBox.shrink();
+                          }
+                          final i = index - 1;
+                          final message = messages.isEmpty
+                              ? <String, dynamic>{
+                                  'sender': 'support',
+                                  'text':
+                                      'Hi there! 👋\nWelcome to NextLead Support. How can we help you today?',
+                                }
+                              : messages[i];
+                          final day = messages.isEmpty
+                              ? 'Today'
+                              : _day(message);
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (day.isNotEmpty &&
+                                  (i == 0 || day != _day(messages[i - 1])))
+                                _dateChip(day),
+                              _bubble(context, message),
+                              if (i == 0 && showTopics)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 40,
+                                    top: 4,
+                                    bottom: 20,
+                                  ),
+                                  child: _topics(),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
             ),
             Container(
               padding: const EdgeInsets.all(12),
@@ -264,55 +300,83 @@ class SupportChatView extends StatelessWidget {
     ),
   );
 
-  Widget _topics() => Container(
-    padding: const EdgeInsets.all(8),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF8F8F7),
-      border: Border.all(color: const Color(0xFFD9E7FF)),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: LayoutBuilder(
-      builder: (context, size) => Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final item in [
-            ('PAYMENT', 'Leads & purchases', Icons.work_outline),
-            ('WALLET', 'Wallet & payments', Icons.credit_card),
-            ('MEMBERSHIP', 'Membership', Icons.workspace_premium_outlined),
-            ('ACCOUNT', 'Account & profile', Icons.person_outline),
-            ('OTHER', 'Other issue', Icons.help_outline),
-            ('LEAD_QUALITY', 'Lead quality', Icons.fact_check_outlined),
-            ('DOWNLOAD', 'Downloads', Icons.download_outlined),
-            ('REFERRAL', 'Referrals', Icons.card_giftcard_outlined),
-            ('HUMAN', 'Talk to a human', Icons.support_agent),
-          ])
-            SizedBox(
-              width: size.maxWidth < 300
-                  ? size.maxWidth
-                  : (size.maxWidth - 8) / 2,
-              child: OutlinedButton.icon(
-                onPressed: sending ? null : () => topic(item.$1, item.$2),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: navy,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 12,
-                  ),
-                  side: const BorderSide(color: blue),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                icon: Icon(item.$3, color: blue, size: 21),
-                label: Text(item.$2, style: const TextStyle(fontSize: 11)),
-              ),
-            ),
-        ],
+  static const _extraTopics = {
+    'LEAD_QUALITY': 'Lead quality',
+    'DOWNLOAD': 'Downloads',
+    'REFERRAL': 'Referrals',
+    'HUMAN': 'Talk to a human',
+  };
+
+  Widget _dateChip(String day) => Center(
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(14),
       ),
+      child: Text(day, style: accountText(11, color: const Color(0xFF334155))),
     ),
   );
 
+  Widget _topics() => Container(
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: const Color(0x996D86AF),
+      border: Border.all(color: const Color(0xFFBFDBFE)),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: LayoutBuilder(
+      builder: (context, size) {
+        final columns =
+            size.maxWidth >= 250 &&
+                MediaQuery.textScalerOf(context).scale(12) <= 15
+            ? 2
+            : 1;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final item in const [
+              ('PAYMENT', 'Leads & purchases', Icons.work_outline),
+              ('WALLET', 'Wallet & payments', Icons.credit_card),
+              ('MEMBERSHIP', 'Membership', Icons.workspace_premium_outlined),
+              ('ACCOUNT', 'Account & profile', Icons.person_outline),
+              ('OTHER', 'Other issue', Icons.help_outline),
+            ])
+              SizedBox(
+                width: item.$1 == 'OTHER'
+                    ? size.maxWidth
+                    : (size.maxWidth - (columns - 1) * 8) / columns,
+                child: OutlinedButton.icon(
+                  onPressed: sending ? null : () => topic(item.$1, item.$2),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: blue,
+                    minimumSize: const Size(0, 34),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 8,
+                    ),
+                    side: const BorderSide(color: Color(0xFF93C5FD)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    textStyle: accountText(
+                      11,
+                      color: blue,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                  icon: Icon(item.$3, size: 15),
+                  label: Text(item.$2, textAlign: TextAlign.center),
+                ),
+              ),
+          ],
+        );
+      },
+    ),
+  );
   String _day(Map<String, dynamic> message) {
     final date = DateTime.tryParse('${message['createdAt']}')?.toLocal();
     if (date == null) return '';
@@ -328,7 +392,7 @@ class SupportChatView extends StatelessWidget {
     final mine = message['sender'] == 'user';
     final date = DateTime.tryParse('${message['createdAt']}')?.toLocal();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: mine
@@ -336,14 +400,12 @@ class SupportChatView extends StatelessWidget {
             : MainAxisAlignment.start,
         children: [
           if (!mine) ...[
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: blue,
-              child: Image.asset(
-                'assets/branding/nextlead_arrow.png',
-                width: 25,
-                height: 25,
-              ),
+            Image.asset(
+              'assets/figma/chat-avatar.png',
+              width: 32,
+              height: 32,
+              cacheWidth: 64,
+              excludeFromSemantics: true,
             ),
             const SizedBox(width: 10),
           ],
@@ -354,21 +416,29 @@ class SupportChatView extends StatelessWidget {
                   : CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 13,
+                  ),
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.sizeOf(context).width * 0.72,
                   ),
                   decoration: BoxDecoration(
-                    color: mine ? blue : const Color(0xFFF0F4FA),
-                    borderRadius: BorderRadius.circular(13),
+                    color: mine ? blue : Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(mine ? 16 : 0),
+                      topRight: Radius.circular(mine ? 0 : 16),
+                      bottomLeft: const Radius.circular(16),
+                      bottomRight: const Radius.circular(16),
+                    ),
                   ),
                   child: Text(
                     '${message['text']}',
-                    style: TextStyle(
-                      color: mine ? Colors.white : navy,
-                      fontSize: 15,
-                      height: 1.5,
-                    ),
+                    style: accountText(
+                      13,
+                      color: mine ? Colors.white : const Color(0xFF0F172A),
+                      weight: mine ? FontWeight.w500 : FontWeight.w400,
+                    ).copyWith(height: 1.7),
                   ),
                 ),
                 if (date != null)
@@ -379,7 +449,11 @@ class SupportChatView extends StatelessWidget {
                       children: [
                         Text(
                           DateFormat('h:mm a').format(date),
-                          style: const TextStyle(color: muted, fontSize: 11),
+                          style: accountText(
+                            10,
+                            color: const Color(0xFFA0B5D7),
+                            weight: FontWeight.w400,
+                          ),
                         ),
                         if (mine) ...[
                           const SizedBox(width: 5),
@@ -388,7 +462,7 @@ class SupportChatView extends StatelessWidget {
                                 ? Icons.done_all
                                 : Icons.done,
                             size: 16,
-                            color: muted,
+                            color: blue,
                           ),
                         ],
                       ],

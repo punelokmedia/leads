@@ -471,7 +471,9 @@ class _TellUsAboutYourselfScreenState
             (item) => DropdownMenuItem(
               value: item,
               child: Text(
-                hint.toLowerCase().contains('city') ? formatCityName(item) : item,
+                hint.toLowerCase().contains('city')
+                    ? formatCityName(item)
+                    : item,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

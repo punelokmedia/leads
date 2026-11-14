@@ -58,6 +58,33 @@ void main() {
                   },
                 ),
               );
+            } else if (options.path.endsWith('/referrals/me')) {
+              handler.resolve(
+                Response(
+                  requestOptions: options,
+                  data: {
+                    'success': true,
+                    'data': {
+                      'referralCode': 'EXISTING',
+                      'referralLink': 'https://example.com/ref',
+                      'invited': 0,
+                      'qualified': 0,
+                      'pending': 0,
+                    },
+                  },
+                ),
+              );
+            } else if (options.path.endsWith('/referrals/history')) {
+              handler.resolve(
+                Response(
+                  requestOptions: options,
+                  data: {
+                    'success': true,
+                    'data': <dynamic>[],
+                    'pagination': {'total': 0},
+                  },
+                ),
+              );
             } else {
               handler.resolve(
                 Response(

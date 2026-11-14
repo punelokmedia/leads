@@ -1,123 +1,99 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:user_app/app/app_router.dart';
-import 'package:user_app/features/auth/shared/auth_providers.dart';
-import 'package:video_player/video_player.dart';
 
-class SplashScreen extends ConsumerStatefulWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen> {
-  late final VideoPlayerController _video;
-  Timer? _startupTimeout;
-  bool _leaving = false;
-
+class _SplashScreenState extends State<SplashScreen> {
+  Timer? _timer;
   @override
   void initState() {
     super.initState();
-    _video = VideoPlayerController.asset('assets/videos/nextlead_intro.MP4');
-    _video.addListener(_onVideoChanged);
-    // Continue if the device cannot load or play the intro.
-    _startupTimeout = Timer(const Duration(seconds: 15), _continueIntoApp);
-    unawaited(_playIntro());
+    final destination = _destination();
+    _timer = Timer(const Duration(seconds: 2), () async {
+      final route = await destination;
+      if (mounted && ModalRoute.of(context)?.isCurrent == true) {
+        context.go(route);
+      }
+    });
   }
 
-  Future<void> _playIntro() async {
+  Future<String> _destination() async {
     try {
-      await _video.initialize();
-      if (!mounted || _leaving) return;
-      await _video.setLooping(false);
-      await _video.setVolume(0);
-      if (!mounted || _leaving) return;
-      setState(() {});
-      await _video.play();
+      final values = await Future.wait<Object?>([
+        const FlutterSecureStorage().read(key: 'auth_token'),
+        SharedPreferences.getInstance(),
+      ]);
+      if ((values[0] as String?)?.trim().isNotEmpty == true) {
+        return AppRouter.homePath;
+      }
+      return (values[1] as SharedPreferences).getBool('has_seen_onboarding') ==
+              true
+          ? AppRouter.login
+          : AppRouter.onboardingPath;
     } catch (_) {
-      await _continueIntoApp();
+      return AppRouter.onboardingPath;
     }
-  }
-
-  void _onVideoChanged() {
-    final value = _video.value;
-    if (value.hasError || value.isCompleted) {
-      unawaited(_continueIntoApp());
-    }
-  }
-
-  Future<void> _continueIntoApp() async {
-    if (!mounted || _leaving) return;
-    _leaving = true;
-    _startupTimeout?.cancel();
-    final secureStorage = ref.read(secureStorageProvider);
-    final token = await secureStorage.read(key: 'auth_token');
-    if (!mounted) return;
-    if (token != null && token.isNotEmpty) {
-      context.go(AppRouter.homePath);
-      return;
-    }
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-    context.go(hasSeenOnboarding ? AppRouter.login : AppRouter.onboardingPath);
   }
 
   @override
   void dispose() {
-    _startupTimeout?.cancel();
-    _video.removeListener(_onVideoChanged);
-    unawaited(_video.dispose());
+    _timer?.cancel();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          _video.value.isInitialized
-            ? FittedBox(
-                fit: BoxFit.contain,
-                child: SizedBox(
-                  width: _video.value.size.width,
-                  height: _video.value.size.height,
-                  child: VideoPlayer(_video),
-                ),
-              )
-            : Center(
-                child: Image.asset(
-                  'assets/branding/nextlead_wordmark.webp',
-                  width: 236,
-                ),
-              ),
-          Positioned(
-            left: 32,
-            right: 32,
-            bottom: MediaQuery.sizeOf(context).height * 0.09,
-            child: SafeArea(
-              top: false,
-              child: Text(
-                'Discover real business opportunities\nand connect with genuine customers.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF9299AA),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  height: 1.45,
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.white,
+    body: LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = (constraints.maxWidth / 393).clamp(.7, 1.4);
+        return Stack(
+          children: [
+            Center(
+              child: SizedBox(
+                width: 261 * scale,
+                height: 159 * scale,
+                child: ClipRect(
+                  child: OverflowBox(
+                    alignment: Alignment.bottomCenter,
+                    maxHeight: 181.15 * scale,
+                    child: Image.asset(
+                      'assets/figma/splash-imgRectangle.png',
+                      width: 261 * scale,
+                      height: 181.15 * scale,
+                      fit: BoxFit.fill,
+                      semanticLabel: 'NextLead',
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+            Positioned(
+              left: 17,
+              right: 17,
+              top: constraints.maxHeight * 727 / 852,
+              child: const Text(
+                'Discover real business opportunities\nand connect with genuine customers.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 16 / 14,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    ),
+  );
 }

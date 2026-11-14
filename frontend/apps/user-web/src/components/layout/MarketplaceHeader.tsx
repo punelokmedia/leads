@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import './marketplace-header.css'
 import { MobileNavigation } from './MobileNavigation'
+import './home-icon.css'
 
 function Icon({ children }: { children: ReactNode }) {
   return <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
@@ -16,6 +17,7 @@ export function MarketplaceHeader({ loggedIn, cartCount, onLogout }: {
   const navigate = useNavigate()
   const location = useLocation()
   const navigationItems = <>
+      <Link to="/" className="navbar-home-link" aria-current={location.pathname === '/' ? 'page' : undefined}><img className="navbar-home-icon" src="/home-icon.svg" width={20} height={20} alt="" /><span>Home</span></Link>
       <Link to="/pricing" className="membership"><Icon><path d="m3 6 5 4 4-6 4 6 5-4-2 13H5L3 6Z" /><path d="M5 16h14" /></Icon><span>Membership</span></Link>
       <Link to="/wallet" className="wallet"><Icon><rect x="3" y="5" width="18" height="15" rx="3" /><path d="M3 9h18m-6 5h3" /></Icon><span>Wallet</span></Link>
       <Link to="/referrals" className="referral"><Icon><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M5 12v9h14v-9M12 8v13M12 8H8a3 3 0 1 1 3-3l1 3Zm0 0h4a3 3 0 1 0-3-3l-1 3Z" /></Icon><span>Referral</span></Link>

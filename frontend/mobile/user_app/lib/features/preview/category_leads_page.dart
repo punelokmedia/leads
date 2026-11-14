@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'preview_data.dart';
 import 'home_dashboard.dart';
+import 'business_details_page.dart' show AccountPageHeader, accountText;
+import 'profile_design.dart' show profileBackground;
+import 'category_media.dart';
 
 String? categoryArtwork(String name) {
   final value = name.toLowerCase();
@@ -29,7 +32,7 @@ class CategoryLeadsPage extends StatefulWidget {
   final List<PreviewLead> leads;
   final int? category;
   final String city, query, tab;
-  final VoidCallback onBack, onSaved, onNotifications, onFilters;
+  final VoidCallback onBack, onSaved, onNotifications, onFilters, onWallet;
   final ValueChanged<String> onSearch, onTab;
   final ValueChanged<PreviewLead> onLead;
   const CategoryLeadsPage({
@@ -41,6 +44,7 @@ class CategoryLeadsPage extends StatefulWidget {
     required this.query,
     required this.tab,
     required this.onBack,
+    required this.onWallet,
     required this.onSaved,
     required this.onNotifications,
     required this.onFilters,
@@ -108,255 +112,269 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
               (timeline == null || lead.timeline == timeline),
         )
         .toList();
-    final originalOrder = {for (var i = 0; i < leads.length; i++) leads[i]: i};
+    final order = {
+      for (var i = 0; i < widget.leads.length; i++) widget.leads[i]: i,
+    };
+    final images = {
+      for (var i = 0; i < widget.store.leads.length; i++)
+        widget.store.leads[i].id: i % 5,
+    };
     leads.sort((a, b) {
       if (a.closed != b.closed) return a.closed ? 1 : -1;
-      final budgetOrder = sort == 'Default order'
+      final result = sort == 'Default order'
           ? 0
           : sort == 'Budget: Low to High'
           ? a.budget.compareTo(b.budget)
           : b.budget.compareTo(a.budget);
-      return budgetOrder != 0
-          ? budgetOrder
-          : originalOrder[a]!.compareTo(originalOrder[b]!);
+      return result != 0 ? result : order[a]!.compareTo(order[b]!);
     });
     final count = widget.store.leads
         .where(
           (lead) => widget.category == null || lead.category == widget.category,
         )
         .length;
-    final art = categoryArtwork(name);
-    return SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 6, 6, 8),
-            child: Row(
-              children: [
-                IconButton(
-                  tooltip: 'Back',
-                  onPressed: widget.onBack,
-                  icon: const Icon(Icons.chevron_left, color: homeNavy),
-                ),
-                Image.asset(
-                  'assets/branding/nextlead_wordmark.webp',
-                  width: 133,
-                  height: 46,
-                ),
-                const Spacer(),
-                IconButton(
-                  tooltip: 'Saved',
-                  onPressed: widget.onSaved,
-                  icon: const Icon(Icons.favorite_border, color: homeNavy),
-                ),
-                IconButton(
-                  tooltip: 'Notifications',
-                  onPressed: widget.onNotifications,
-                  icon: Badge(
-                    isLabelVisible: widget.store.unread,
-                    child: const Icon(
-                      Icons.notifications_outlined,
-                      color: homeNavy,
-                    ),
+    return ColoredBox(
+      color: profileBackground,
+      child: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AccountPageHeader(
+                    store: widget.store,
+                    showBack: false,
+                    onBack: widget.onBack,
+                    onWallet: widget.onWallet,
+                    onNotifications: widget.onNotifications,
                   ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Container(
-                  width: 67,
-                  height: 67,
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: art == null
-                      ? const Icon(
-                          Icons.home_work_outlined,
-                          color: homeBlue,
-                          size: 34,
-                        )
-                      : Image.asset(
-                          'assets/Nextlead Mobile  App Asetes/$art',
-                          fit: BoxFit.contain,
-                        ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.w800,
-                          color: homeNavy,
-                        ),
-                      ),
-                      Text(
-                        '$count Leads Available',
-                        style: const TextStyle(fontSize: 16, color: homeMuted),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    initialValue: widget.query,
-                    onChanged: widget.onSearch,
-                    style: const TextStyle(fontSize: 15, color: homeNavy),
-                    decoration: InputDecoration(
-                      hintText: 'Search in $name leads...',
-                      hintStyle: const TextStyle(
-                        fontSize: 14,
-                        color: homeMuted,
-                      ),
-                      prefixIcon: const Icon(Icons.search, color: homeNavy),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        borderSide: const BorderSide(color: Color(0xFFDCE3F2)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        borderSide: const BorderSide(color: Color(0xFFDCE3F2)),
-                      ),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Filter leads',
-                  onPressed: widget.onFilters,
-                  icon: Badge(
-                    isLabelVisible:
-                        budget != null ||
-                        area != null ||
-                        timeline != null ||
-                        widget.city != 'All Cities',
-                    child: const Icon(Icons.tune, color: homeBlue),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 42,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              children: [
-                _chip(
-                  widget.tab,
-                  Icons.filter_alt_outlined,
-                  () => _pick('statuses', [
-                    'All',
-                    'New',
-                    'Joined',
-                    'Closed',
-                  ], (value) => widget.onTab(value ?? 'All')),
-                  active: true,
-                ),
-                _chip(
-                  widget.city,
-                  Icons.location_on_outlined,
-                  widget.onFilters,
-                ),
-                _chip(
-                  budget ?? 'Budget',
-                  Icons.currency_rupee,
-                  () => _pick(
-                    'budgets',
-                    widget.leads.map(_budget).toList(),
-                    (value) => budget = value,
-                  ),
-                ),
-                _chip(
-                  area ?? 'Area (sq ft)',
-                  Icons.square_foot,
-                  () => _pick(
-                    'areas',
-                    widget.leads.map((lead) => lead.area).toList(),
-                    (value) => area = value,
-                  ),
-                ),
-                _chip(
-                  timeline ?? 'Timeline',
-                  Icons.calendar_month_outlined,
-                  () => _pick(
-                    'timelines',
-                    widget.leads.map((lead) => lead.timeline).toList(),
-                    (value) => timeline = value,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 8, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${leads.length} Leads Found',
-                    style: const TextStyle(color: homeMuted, fontSize: 14),
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  initialValue: sort,
-                  onSelected: (value) => setState(() => sort = value),
-                  itemBuilder: (_) =>
-                      [
-                            'Default order',
-                            'Budget: Low to High',
-                            'Budget: High to Low',
-                          ]
-                          .map(
-                            (item) =>
-                                PopupMenuItem(value: item, child: Text(item)),
-                          )
-                          .toList(),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 5, 24, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.swap_vert, size: 19, color: homeNavy),
                         Text(
-                          sort,
-                          style: const TextStyle(color: homeNavy, fontSize: 14),
+                          name,
+                          style: accountText(
+                            24,
+                            color: const Color(0xFF0F172A),
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$count Leads Available',
+                          style: accountText(
+                            14,
+                            color: homeMuted,
+                            weight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: leads.isEmpty
-                ? const Center(child: Text('No leads match your filters.'))
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    itemCount: leads.length,
-                    itemBuilder: (_, i) => _card(leads[i]),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Material(
+                      color: Colors.white,
+                      elevation: 2,
+                      shadowColor: const Color(0x40000000),
+                      borderRadius: BorderRadius.circular(24),
+                      child: TextFormField(
+                        initialValue: widget.query,
+                        onChanged: widget.onSearch,
+                        style: accountText(13),
+                        decoration: InputDecoration(
+                          hintText:
+                              'Search in $name leads (e.g. house, wall, exterior...)',
+                          hintStyle: accountText(
+                            11,
+                            color: const Color(0xFF94A3B8),
+                            weight: FontWeight.w400,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            size: 18,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          prefixIconConstraints: const BoxConstraints(
+                            minWidth: 32,
+                          ),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 10,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFDCE3F2),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFDCE3F2),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-          ),
-        ],
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height:
+                        32 +
+                        (MediaQuery.textScalerOf(context).scale(12) - 12).clamp(
+                          0,
+                          20,
+                        ),
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      children: [
+                        _chip(
+                          widget.tab,
+                          Icons.filter_alt_outlined,
+                          () => _pick('statuses', [
+                            'All',
+                            'New',
+                            'Joined',
+                            'Closed',
+                          ], (value) => widget.onTab(value ?? 'All')),
+                          active: true,
+                        ),
+                        _chip(
+                          widget.city,
+                          Icons.location_on_outlined,
+                          widget.onFilters,
+                        ),
+                        _chip(
+                          budget ?? 'Budget',
+                          Icons.currency_rupee,
+                          () => _pick(
+                            'budgets',
+                            widget.leads.map(_budget).toList(),
+                            (value) => budget = value,
+                          ),
+                        ),
+                        _chip(
+                          area ?? 'Area (sq ft)',
+                          Icons.open_in_full,
+                          () => _pick(
+                            'areas',
+                            widget.leads.map((lead) => lead.area).toList(),
+                            (value) => area = value,
+                          ),
+                        ),
+                        _chip(
+                          timeline ?? 'Timeline',
+                          Icons.calendar_month_outlined,
+                          () => _pick(
+                            'timelines',
+                            widget.leads.map((lead) => lead.timeline).toList(),
+                            (value) => timeline = value,
+                          ),
+                        ),
+                        _chip('Saved', Icons.bookmark_border, widget.onSaved),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(26, 20, 24, 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${leads.length} Leads Found',
+                            style: accountText(13, color: homeMuted),
+                          ),
+                        ),
+                        PopupMenuButton<String>(
+                          tooltip: 'Sort leads',
+                          initialValue: sort,
+                          onSelected: (value) => setState(() => sort = value),
+                          itemBuilder: (_) =>
+                              [
+                                    'Default order',
+                                    'Budget: Low to High',
+                                    'Budget: High to Low',
+                                  ]
+                                  .map(
+                                    (value) => PopupMenuItem(
+                                      value: value,
+                                      child: Text(
+                                        value == 'Default order'
+                                            ? 'Latest First'
+                                            : value,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.swap_vert,
+                                  size: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  sort == 'Default order'
+                                      ? 'Latest First'
+                                      : sort,
+                                  style: accountText(
+                                    13,
+                                    weight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(2, 0, 1, 0),
+              sliver: DecoratedSliver(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF072565),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                sliver: SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(26.5, 25, 26.5, 20),
+                  sliver: leads.isEmpty
+                      ? SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              'No leads match your filters.',
+                              style: accountText(14, color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      : SliverList.separated(
+                          itemCount: leads.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (_, index) =>
+                              _card(leads[index], images[leads[index].id] ?? 0),
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -367,145 +385,225 @@ class _CategoryLeadsPageState extends State<CategoryLeadsPage> {
     VoidCallback action, {
     bool active = false,
   }) => Padding(
-    padding: const EdgeInsets.only(right: 7),
+    padding: const EdgeInsets.only(right: 8),
     child: OutlinedButton.icon(
       onPressed: action,
-      icon: Icon(icon, size: 17),
-      label: Text(text, style: const TextStyle(fontSize: 13)),
+      icon: Icon(icon, size: 14),
+      label: Text(
+        text,
+        style: accountText(
+          12,
+          color: active ? homeBlue : const Color(0xFF334155),
+          weight: FontWeight.w600,
+        ),
+      ),
       style: OutlinedButton.styleFrom(
-        foregroundColor: active ? homeBlue : homeNavy,
+        foregroundColor: active ? homeBlue : const Color(0xFF64748B),
         backgroundColor: active ? const Color(0xFFE6F1FF) : Colors.white,
-        side: BorderSide(color: active ? homeBlue : const Color(0xFFDCE3F2)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        minimumSize: const Size(0, 30),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: const StadiumBorder(),
+        side: BorderSide(color: active ? homeBlue : const Color(0xFFE2E8F0)),
       ),
     ),
   );
-  Widget _card(PreviewLead lead) {
-    final category =
-        lead.category >= 0 && lead.category < widget.store.categories.length
-        ? widget.store.categories[lead.category]
-        : null;
-    final art = categoryArtwork(category?.name ?? '');
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 80,
-            height: 97,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0F5FC),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: art == null
-                ? Icon(
-                    category?.icon ?? Icons.home_work_outlined,
-                    color: homeBlue,
-                    size: 33,
-                  )
-                : Image.asset(
-                    'assets/Nextlead Mobile  App Asetes/$art',
-                    fit: BoxFit.contain,
+
+  String _posted(PreviewLead lead) {
+    if (lead.postedAt == null) return '';
+    final age = DateTime.now().difference(lead.postedAt!);
+    return age.inDays > 0
+        ? 'Posted ${age.inDays} day${age.inDays == 1 ? '' : 's'} ago'
+        : age.inHours > 0
+        ? 'Posted ${age.inHours} hours ago'
+        : 'Posted just now';
+  }
+
+  Widget _card(PreviewLead lead, int index) {
+    final image = name.toLowerCase().contains('paint')
+        ? 'assets/figma/painting-lead-$index.png'
+        : CategoryMedia.getLeadImage(name, leadId: lead.id);
+    final posted = _posted(lead);
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(13),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  Image.asset(
+                    image,
+                    width: 96,
+                    height: 96,
+                    fit: BoxFit.cover,
+                    cacheWidth: (96 * MediaQuery.devicePixelRatioOf(context))
+                        .ceil(),
                   ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    if (lead.propertyType.isNotEmpty)
-                      Expanded(
-                        child: Text(
-                          lead.propertyType,
-                          style: const TextStyle(fontSize: 13, color: homeBlue),
+                  Positioned(
+                    left: 6,
+                    bottom: 6,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xAA292524),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(3),
+                        child: Icon(
+                          Icons.photo_camera_outlined,
+                          size: 12,
+                          color: Colors.white,
                         ),
                       ),
-                    IconButton(
-                      tooltip: lead.saved ? 'Unsave lead' : 'Save lead',
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      onPressed: () => widget.store.toggleSaved(lead),
-                      icon: Icon(
-                        lead.saved ? Icons.bookmark : Icons.bookmark_border,
-                        color: homeNavy,
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  lead.title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    color: homeNavy,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      color: homeNavy,
-                      size: 14,
-                    ),
-                    Expanded(
-                      child: Text(
-                        lead.city,
-                        style: const TextStyle(fontSize: 13, color: homeMuted),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 9,
-                  runSpacing: 4,
-                  children: [
-                    Text(
-                      _budget(lead),
-                      style: const TextStyle(color: homeNavy, fontSize: 13),
-                    ),
-                    if (lead.area.isNotEmpty)
-                      Text(
-                        lead.area,
-                        style: const TextStyle(color: homeMuted, fontSize: 13),
-                      ),
-                    if (lead.timeline.isNotEmpty)
-                      Text(
-                        lead.timeline,
-                        style: const TextStyle(color: homeMuted, fontSize: 13),
-                      ),
-                  ],
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: OutlinedButton(
-                    onPressed: () => widget.onLead(lead),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: homeBlue,
-                      side: const BorderSide(color: homeBlue),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    child: const Text(
-                      'View Lead',
-                      style: TextStyle(fontSize: 13),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              child: Text(
+                                lead.propertyType,
+                                style: accountText(
+                                  10,
+                                  color: homeBlue,
+                                  weight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: IconButton(
+                          tooltip: lead.saved ? 'Unsave lead' : 'Save lead',
+                          padding: EdgeInsets.zero,
+                          onPressed: () =>
+                              setState(() => widget.store.toggleSaved(lead)),
+                          icon: Icon(
+                            lead.saved ? Icons.bookmark : Icons.bookmark_border,
+                            size: 16,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    lead.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: accountText(
+                      14,
+                      color: const Color(0xFF0F172A),
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: Icon(
+                            Icons.location_on_outlined,
+                            size: 11,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                        TextSpan(
+                          text:
+                              ' ${lead.city}${posted.isEmpty ? '' : ' | ◷ $posted'}',
+                        ),
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: accountText(10, color: const Color(0xFF7B8DA8)),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 7),
+                    child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  ),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: _budget(lead),
+                          style: const TextStyle(
+                            color: Color(0xFF0F172A),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        TextSpan(
+                          text: [
+                            if (lead.area.isNotEmpty) lead.area,
+                            if (lead.timeline.isNotEmpty) lead.timeline,
+                          ].map((value) => '  |  $value').join(),
+                        ),
+                      ],
+                    ),
+                    style: accountText(
+                      11,
+                      color: const Color(0xFF475569),
+                      weight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton(
+                      onPressed: () => widget.onLead(lead),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: homeBlue,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(95, 26),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 5,
+                        ),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: const StadiumBorder(),
+                        textStyle: accountText(
+                          11,
+                          color: Colors.white,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                      child: const Text('View Lead'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

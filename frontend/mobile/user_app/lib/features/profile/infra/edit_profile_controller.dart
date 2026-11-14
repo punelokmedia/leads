@@ -53,9 +53,7 @@ class EditProfileController extends StateNotifier<EditProfileState> {
     try {
       final data = await _repository.fetchEditProfile();
       state = state.copyWith(data: data, isLoading: false);
-    } catch (e, stack) {
-      print("Load Profile Error: $e");
-      print(stack);
+    } catch (e) {
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to load profile.',

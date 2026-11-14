@@ -3,25 +3,21 @@
 import 'package:dio/dio.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:user_app/core/network/api_endpoints.dart';
-import 'package:user_app/core/network/dio_provider.dart'; 
+import 'package:user_app/core/network/dio_provider.dart';
 
 // ── 1. Model ──
 class CategoryModel {
   final String id;
   final String name;
-  final String icon; 
+  final String icon;
 
-  CategoryModel({
-    required this.id, 
-    required this.name, 
-    required this.icon,
-  });
+  CategoryModel({required this.id, required this.name, required this.icon});
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
-      icon: json['icon'] ?? '', 
+      icon: json['icon'] ?? '',
     );
   }
 }
@@ -47,7 +43,7 @@ class CategoryRepository {
 
 // ── 3. Providers ──
 final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
-  final dio = ref.watch(dioProvider); 
+  final dio = ref.watch(dioProvider);
   return CategoryRepository(dio);
 });
 

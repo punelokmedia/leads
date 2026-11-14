@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 
 import 'package:user_app/core/theme/app_colors.dart';
@@ -73,11 +74,13 @@ class ChangePasswordField extends StatefulWidget {
     required this.controller,
     required this.hintText,
     this.validator,
+    this.enabled = true,
   });
 
   final TextEditingController controller;
   final String hintText;
   final String? Function(String?)? validator;
+  final bool enabled;
 
   @override
   State<ChangePasswordField> createState() => _ChangePasswordFieldState();
@@ -85,65 +88,69 @@ class ChangePasswordField extends StatefulWidget {
 
 class _ChangePasswordFieldState extends State<ChangePasswordField> {
   bool _obscure = true;
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+  Widget build(BuildContext context) => TextFormField(
+    controller: widget.controller,
+    obscureText: _obscure,
+    enabled: widget.enabled,
+    validator: widget.validator,
+    autocorrect: false,
+    enableSuggestions: false,
+    style: const TextStyle(
+      fontFamily: 'ProfileMontserrat',
+      fontSize: 13,
+      color: Color(0xFF0F172A),
+    ),
+    decoration: InputDecoration(
+      hintText: widget.hintText,
+      hintStyle: const TextStyle(
+        fontFamily: 'ProfileMontserrat',
+        fontSize: 13,
+        color: Color(0xFF9CA3AF),
+        fontWeight: FontWeight.w600,
       ),
-      child: TextFormField(
-        controller: widget.controller,
-        obscureText: _obscure,
-        validator: widget.validator,
-        style: TextStyle(
-          fontSize: 14.sp,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-        decoration: InputDecoration(
-          hintText: widget.hintText,
-          hintStyle: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 14.sp,
-          ),
-          filled: true,
-          fillColor: Colors.transparent,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 14.h,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: Color(0xFFFFC107), width: 1.5),
-          ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscure
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              size: 20.r,
-            ),
-            onPressed: () => setState(() => _obscure = !_obscure),
-          ),
+      filled: true,
+      fillColor: Colors.white,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.all(12),
+        child: SvgPicture.asset(
+          'assets/figma/password-lock.svg',
+          width: 20,
+          height: 20,
         ),
       ),
-    );
-  }
+      prefixIconConstraints: const BoxConstraints(minWidth: 44, maxWidth: 44),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF0066FF), width: 1.5),
+      ),
+      suffixIcon: IconButton(
+        tooltip: _obscure ? 'Show password' : 'Hide password',
+        onPressed: widget.enabled
+            ? () => setState(() => _obscure = !_obscure)
+            : null,
+        icon: _obscure
+            ? SvgPicture.asset(
+                'assets/figma/password-eye-off.svg',
+                width: 20,
+                height: 20,
+              )
+            : const Icon(
+                Icons.visibility_outlined,
+                size: 20,
+                color: Color(0xFF0F172A),
+              ),
+      ),
+    ),
+  );
 }

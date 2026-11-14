@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { MobileNavigation } from './MobileNavigation'
+import './home-icon.css'
 
 export function HomeHeader() {
   const location = useLocation()
@@ -12,7 +13,7 @@ export function HomeHeader() {
         </Link>
         <nav id="home-header-navigation" className="home-header-navigation" aria-label="Main navigation">
           <div className="home-header-links">
-            <Link to="/" className="is-active" aria-current="page">Home</Link>
+            <Link to="/" className="is-active navbar-home-link" aria-current={location.pathname === '/' ? 'page' : undefined}><img className="navbar-home-icon" src="/home-icon.svg" width={20} height={20} alt="" />Home</Link>
             <Link to="/categories">Categories</Link>
             <a href="/#how-it-works">How It Works</a>
             <a href="/#about-us">About Us</a>
@@ -23,7 +24,7 @@ export function HomeHeader() {
           </div>
         </nav>
         <MobileNavigation key={location.key}>
-          <Link to="/">Home</Link><Link to="/categories">Categories</Link>
+          <Link to="/" className="navbar-home-link"><img className="navbar-home-icon" src="/home-icon.svg" width={20} height={20} alt="" />Home</Link><Link to="/categories">Categories</Link>
           <a href="/#how-it-works">How It Works</a><a href="/#about-us">About Us</a>
           <Link to="/download">Download App</Link><Link to="/login">Login/Signup</Link>
         </MobileNavigation>

@@ -1,3 +1,4 @@
+import 'package:user_app/features/preview/figma_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:user_app/features/preview/preview_app.dart';
@@ -25,7 +26,25 @@ void main() {
       dark.colorScheme.onSurface.computeLuminance(),
       greaterThan(dark.colorScheme.surface.computeLuminance()),
     );
-    await tester.tap(find.text('Explore your first lead'));
+    final firstLead = tester
+        .widget<PreviewHome>(find.byType(PreviewHome))
+        .store
+        .leads
+        .first;
+    await tester.scrollUntilVisible(
+      find.byWidgetPredicate(
+        (widget) => widget is FigmaLeadCard && widget.lead.id == firstLead.id,
+      ),
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('home-leads-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FigmaLeadCard).first);
     await tester.pumpAndSettle();
     expect(
       Theme.of(tester.element(find.byType(LeadDetailsPreview))).brightness,

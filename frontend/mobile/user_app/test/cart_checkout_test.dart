@@ -265,7 +265,7 @@ void main() {
       expect(find.byKey(const Key('cart-availability-notice')), findsOneWidget);
       expect(find.textContaining('This lead is sold out'), findsOneWidget);
       expect(find.text('Your cart is empty'), findsOneWidget);
-      expect(find.text('Pay from wallet'), findsNothing);
+      expect(find.text('Proceed to Checkout'), findsNothing);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
@@ -302,7 +302,7 @@ void main() {
       final readsBeforePurchase = cartReads;
       rejectPurchase = true;
       cartItems = [lead('shown-b', 20)];
-      await tester.tap(find.text('Pay from wallet'));
+      await tester.tap(find.text('Proceed to Checkout'));
       await tester.pumpAndSettle();
       final purchase = requests
           .where((options) => options.path.endsWith('/wallet/purchase'))

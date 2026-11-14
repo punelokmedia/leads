@@ -1,5 +1,9 @@
+import 'package:user_app/features/preview/lead_filters_sheet.dart';
+import 'dart:async';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:user_app/features/preview/live_store.dart';
 import 'package:user_app/features/preview/preview_app.dart';
@@ -97,6 +101,168 @@ void main() {
   });
 
   test(
+    'first lead page starts before metadata and concurrent refresh is deduplicated',
+    () async {
+      final metadata = Completer<void>(), firstPage = Completer<void>();
+      dio.interceptors.insert(
+        0,
+        InterceptorsWrapper(
+          onRequest: (request, handler) async {
+            if (request.path.endsWith('get-all-categories')) {
+              await metadata.future;
+            }
+            if (request.path.endsWith('get-all-leads') &&
+                !firstPage.isCompleted) {
+              firstPage.complete();
+            }
+            handler.next(request);
+          },
+        ),
+      );
+      final store = LiveStore(dio, signedIn: false);
+      addTearDown(store.dispose);
+      final refresh = store.refresh();
+      try {
+        await firstPage.future.timeout(const Duration(seconds: 2));
+        expect(metadata.isCompleted, isFalse);
+        await store.refresh();
+      } finally {
+        metadata.complete();
+        await refresh;
+      }
+      expect(store.error, isNull);
+      expect(
+        requests
+            .where(
+              (r) =>
+                  r.path.endsWith('get-all-leads') &&
+                  r.queryParameters['page'] == 1,
+            )
+            .length,
+        1,
+      );
+    },
+  );
+
+  test(
+    'purchased contact loading is bounded to four requests and preserves order',
+    () async {
+      var active = 0, peak = 0, contacts = 0;
+      dio.interceptors.insert(
+        0,
+        InterceptorsWrapper(
+          onRequest: (request, handler) async {
+            if (request.path.endsWith('get-all-leads')) {
+              handler.resolve(
+                Response(
+                  requestOptions: request,
+                  data: {
+                    'success': true,
+                    'data': List.generate(
+                      7,
+                      (i) => lead('$i', purchased: true),
+                    ),
+                    'pagination': {'totalPages': 1},
+                  },
+                ),
+              );
+            } else if (request.path.contains('get-lead/')) {
+              active++;
+              contacts++;
+              if (active > peak) peak = active;
+              await Future<void>.delayed(const Duration(milliseconds: 1));
+              active--;
+              final id = request.path.split('/').last;
+              handler.resolve(
+                Response(
+                  requestOptions: request,
+                  data: {
+                    'success': true,
+                    'data': {
+                      ...lead(id, purchased: true),
+                      'primaryPhone': '9123456789',
+                    },
+                  },
+                ),
+              );
+            } else {
+              handler.next(request);
+            }
+          },
+        ),
+      );
+      final store = LiveStore(dio, signedIn: true);
+      addTearDown(store.dispose);
+      await store.refresh();
+      expect(store.error, isNull);
+      expect(peak, 4);
+      expect(contacts, 7);
+      expect(
+        store.leads.map((lead) => lead.backendId),
+        List.generate(7, (i) => '$i'),
+      );
+      expect(
+        store.leads.every((lead) => lead.contact.contains('9123456789')),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'applied filters reach every API page using backend category IDs',
+    () async {
+      final store = LiveStore(dio, signedIn: false);
+      addTearDown(store.dispose);
+      await store.refresh();
+      requests.clear();
+      await store.applyFilters(
+        const LeadFilters(
+          city: 'Delhi',
+          category: 0,
+          minBudget: 10000,
+          maxBudget: 90000,
+          minArea: 500,
+          maxArea: 2000,
+          timeline: 'Within 1 Month',
+          postedDays: 1,
+        ),
+      );
+      final calls = requests
+          .where((r) => r.path.endsWith('get-all-leads'))
+          .toList();
+      expect(calls.length, 2);
+      for (final call in calls) {
+        expect(call.queryParameters['city'], 'Delhi');
+        expect(call.queryParameters['category'], 'custom');
+        expect(call.queryParameters['budgetMin'], 10000);
+        expect(call.queryParameters['budgetMax'], 90000);
+        expect(call.queryParameters['areaMin'], 500);
+        expect(call.queryParameters['areaMax'], 2000);
+        expect(call.queryParameters['timeline'], 'Within 1 Month');
+        expect(
+          DateTime.parse(call.queryParameters['postedSince']).isUtc,
+          isTrue,
+        );
+      }
+      expect(store.filteredLeads!.length, 2);
+      expect(store.filtering, isFalse);
+      fail = true;
+      await expectLater(
+        store.applyFilters(const LeadFilters(city: 'Pune')),
+        throwsA(isA<DioException>()),
+      );
+      expect(store.filteredLeads!.length, 2);
+      expect(store.filtering, isFalse);
+      fail = false;
+      await store.applyFilters(const LeadFilters());
+      final cleared = requests.last.queryParameters;
+      expect(cleared.containsKey('city'), isFalse);
+      expect(cleared.containsKey('category'), isFalse);
+      expect(cleared.containsKey('budgetMin'), isFalse);
+    },
+  );
+
+  test(
     'loads every page, backend categories, limits and purchased contacts',
     () async {
       final store = LiveStore(dio, signedIn: true);
@@ -140,6 +306,47 @@ void main() {
     );
   });
 
+  test('location preferences persist only after server success', () async {
+    final store = LiveStore(dio, signedIn: true);
+    addTearDown(store.dispose);
+    await store.refresh();
+    rejectSave = true;
+    await expectLater(
+      store.saveLocation('Pune', 50, ['Baner']),
+      throwsA(isA<DioException>()),
+    );
+    expect(store.profile['City'], 'Delhi');
+    expect(store.serviceRadiusKm, 25);
+    rejectSave = false;
+    await store.saveLocation('Pune', 50, ['Baner']);
+    expect(requests.last.data['serviceRadiusKm'], 50);
+    expect(store.profile['City'], 'Pune');
+    expect(store.profile['State'], isEmpty);
+    expect(store.serviceRadiusKm, 50);
+    expect(store.additionalAreas, ['Baner']);
+  });
+
+  test(
+    'service selections save category IDs only after backend success',
+    () async {
+      final store = LiveStore(dio, signedIn: true);
+      addTearDown(store.dispose);
+      await store.refresh();
+      rejectSave = true;
+      await expectLater(
+        store.saveServiceCategories({'Solar installation'}),
+        throwsA(isA<DioException>()),
+      );
+      expect(store.serviceCategories, isEmpty);
+      rejectSave = false;
+      await store.saveServiceCategories({'Solar installation'});
+      expect(requests.last.data, {
+        'categories': ['custom'],
+      });
+      expect(store.serviceCategories, {'Solar installation'});
+    },
+  );
+
   test(
     'profile updates wait for backend success and preserve data on failure',
     () async {
@@ -150,6 +357,12 @@ void main() {
         ...store.profile,
         'Full name': 'New Vendor',
         'Business name': 'New Solar Co',
+        'Business type': 'Partnership',
+        'GST number': '27ABCDE1234F1Z5',
+        'Business address': '42 Park Road',
+        'Service area': 'Delhi and nearby areas',
+        'Years in business': '3–5 years',
+        'Website': 'https://solar.example.com',
       };
       rejectSave = true;
       await expectLater(store.saveProfile(edit), throwsA(isA<DioException>()));
@@ -158,6 +371,12 @@ void main() {
       await store.saveProfile(edit);
       expect(store.profile['Full name'], 'New Vendor');
       expect(requests.last.data['businessName'], 'New Solar Co');
+      expect(requests.last.data['businessAddress'], '42 Park Road');
+      expect(requests.last.data['gstNumber'], '27ABCDE1234F1Z5');
+      expect(store.profile['Business type'], 'Partnership');
+      expect(store.profile['Service area'], 'Delhi and nearby areas');
+      expect(store.profile['Years in business'], '3–5 years');
+      expect(store.profile['Website'], 'https://solar.example.com');
     },
   );
 
@@ -166,7 +385,7 @@ void main() {
   ) async {
     final store = LiveStore(dio, signedIn: false);
     addTearDown(store.dispose);
-    await tester.pumpWidget(MaterialApp(home: PreviewHome(store: store)));
+    await pumpScoped(tester, MaterialApp(home: PreviewHome(store: store)));
     expect(find.text('Explore your first lead'), findsNothing);
     expect(find.textContaining('TEST MODE'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -178,22 +397,23 @@ void main() {
     final store = LiveStore(dio, signedIn: true);
     addTearDown(store.dispose);
     await tester.runAsync(store.refresh);
-    await tester.pumpWidget(
+    await pumpScoped(
+      tester,
       MaterialApp(
         home: LeadDetailsPreview(lead: store.leads.first, store: store),
       ),
     );
-    await tester.scrollUntilVisible(
-      find.text('Client Contact'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.textContaining('Paid client'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Paid client'), findsNothing);
     expect(find.textContaining('Demo Client'), findsNothing);
-    expect(
-      find.text('Up to 5 vendors can access client details'),
-      findsOneWidget,
-    );
+    expect(find.text('Lead Unlocked'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
+
+Future<void> pumpScoped(WidgetTester tester, Widget child) => tester.pumpWidget(
+  ProviderScope(
+    overrides: [homeBannersProvider.overrideWith((ref) async => [])],
+    child: child,
+  ),
+);

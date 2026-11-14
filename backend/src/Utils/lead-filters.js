@@ -1,4 +1,25 @@
 export function applyLeadFilters(query, filters) {
+  if (filters.timeline !== undefined) {
+    if (typeof filters.timeline !== 'string' || !filters.timeline.trim() || filters.timeline.length > 200) throw new Error('Invalid project timeline.');
+    query.timeline = filters.timeline.trim();
+  }
+  const area = {};
+  for (const [key, operator] of [['areaMin', '$gte'], ['areaMax', '$lte']]) {
+    if (filters[key] === undefined) continue;
+    const value = Number(filters[key]);
+    if (typeof filters[key] !== 'string' || !filters[key].trim() || !Number.isFinite(value) || value < 0) throw new Error('Invalid project area.');
+    area[operator] = value;
+  }
+  if (area.$gte !== undefined && area.$lte !== undefined && area.$gte > area.$lte) throw new Error('Minimum area must not exceed maximum.');
+  if (Object.keys(area).length) {
+    const match = { $regexFind: { input: { $replaceAll: { input: { $ifNull: ['$areaSize', ''] }, find: ',', replacement: '' } }, regex: '[0-9]+(?:\\.[0-9]+)?' } };
+    const size = { $convert: { input: { $getField: { field: 'match', input: match } }, to: 'double', onError: null, onNull: null } };
+    query.$and = [...(query.$and || []), { $expr: { $and: [{ $ne: [size, null] }, ...Object.entries(area).map(([operator, value]) => ({ [operator]: [size, value] }))] } }];
+  }
+  if (filters.postedSince !== undefined) {
+    if (typeof filters.postedSince !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(filters.postedSince) || !Number.isFinite(Date.parse(filters.postedSince))) throw new Error('Invalid posted time.');
+    query.createdAt = { $gte: new Date(filters.postedSince) };
+  }
   const price = {};
   for (const [key, operator] of [['priceMin', '$gte'], ['priceMax', '$lte']]) {
     if (filters[key] === undefined) continue;

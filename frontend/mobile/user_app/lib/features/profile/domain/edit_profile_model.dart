@@ -45,7 +45,8 @@ class EditProfileModel {
       lastName: json['lastname']?.toString() ?? '',
       countryCode: json['countryCode']?.toString() ?? '+91',
       phone: json['phoneNumber']?.toString() ?? '',
-      address: addressData?['street']?.toString() ??
+      address:
+          addressData?['street']?.toString() ??
           (rawAddress is String ? rawAddress : ''),
       city: city,
       email: json['email']?.toString() ?? '',
@@ -55,27 +56,27 @@ class EditProfileModel {
 
   // ── Convert from ProfileModel ──────────────────────────────────────────────
   factory EditProfileModel.fromProfile(ProfileModel p) => EditProfileModel(
-        firstName:   p.firstname,       // ✅ Fixed: Maps to p.firstname
-        lastName:    p.lastname,        // ✅ Fixed: Maps to p.lastname
-        countryCode: '+91',             // ✅ Added Fallback
-        phone:       p.phoneNumber,     // ✅ Fixed: Maps to p.phoneNumber
-        address:     p.address,         
-        city:        p.cityName,        // ✅ Fixed: Maps to p.cityName
-        email:       p.email,
-        avatarUrl:   null,              // ✅ Added Fallback
-      );
+    firstName: p.firstname, // ✅ Fixed: Maps to p.firstname
+    lastName: p.lastname, // ✅ Fixed: Maps to p.lastname
+    countryCode: '+91', // ✅ Added Fallback
+    phone: p.phoneNumber, // ✅ Fixed: Maps to p.phoneNumber
+    address: p.address,
+    city: p.cityName, // ✅ Fixed: Maps to p.cityName
+    email: p.email,
+    avatarUrl: null, // ✅ Added Fallback
+  );
 
   // ── To API request body ────────────────────────────────────────────────────
   Map<String, dynamic> toJson() => {
-        'firstname':   firstName,
-        'lastname':    lastName,
-        'countryCode': countryCode,
-        'phoneNumber': phone,
-        'address':     address,
-        'city':        city,
-        'email':       email,
-        if (avatarUrl != null) 'avatar_url': avatarUrl,
-      };
+    'firstname': firstName,
+    'lastname': lastName,
+    'countryCode': countryCode,
+    'phoneNumber': phone,
+    'address': address,
+    'city': city,
+    'email': email,
+    if (avatarUrl != null) 'avatar_url': avatarUrl,
+  };
 
   EditProfileModel copyWith({
     String? firstName,
@@ -86,17 +87,16 @@ class EditProfileModel {
     String? city,
     String? email,
     String? avatarUrl,
-  }) =>
-      EditProfileModel(
-        firstName:   firstName   ?? this.firstName,
-        lastName:    lastName    ?? this.lastName,
-        countryCode: countryCode ?? this.countryCode,
-        phone:       phone       ?? this.phone,
-        address:     address     ?? this.address,
-        city:        city        ?? this.city,
-        email:       email       ?? this.email,
-        avatarUrl:   avatarUrl   ?? this.avatarUrl,
-      );
+  }) => EditProfileModel(
+    firstName: firstName ?? this.firstName,
+    lastName: lastName ?? this.lastName,
+    countryCode: countryCode ?? this.countryCode,
+    phone: phone ?? this.phone,
+    address: address ?? this.address,
+    city: city ?? this.city,
+    email: email ?? this.email,
+    avatarUrl: avatarUrl ?? this.avatarUrl,
+  );
 
   String get fullName => '$firstName $lastName'.trim();
 }

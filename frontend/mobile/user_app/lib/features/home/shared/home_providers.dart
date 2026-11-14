@@ -6,7 +6,6 @@ import 'package:user_app/features/home/domain/leads_model.dart';
 import '../infra/home_repository.dart';
 import '../infra/home_controller.dart';
 
-
 // Repository provider
 final homeRepositoryProvider = Provider<IHomeRepository>((ref) {
   final dio = ref.watch(dioProvider);
@@ -14,11 +13,12 @@ final homeRepositoryProvider = Provider<IHomeRepository>((ref) {
 });
 
 // Controller / StateNotifier provider
-final homeControllerProvider =
-    StateNotifierProvider<HomeController, HomeState>((ref) {
-  final repository = ref.watch(homeRepositoryProvider);
-  return HomeController(repository);
-});
+final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
+  (ref) {
+    final repository = ref.watch(homeRepositoryProvider);
+    return HomeController(repository);
+  },
+);
 
 // Convenience derived providers
 final leadsProvider = Provider<List<LeadModel>>((ref) {

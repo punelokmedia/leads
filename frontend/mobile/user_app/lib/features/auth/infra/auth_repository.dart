@@ -44,7 +44,6 @@ class AuthRepository {
       formData.fields.add(MapEntry('categories[]', category));
     }
 
-
     // ✅ FIX 3: Backend route is POST /auth/mobile/complete-profile
     final res = await _dio.post(ApiEndpoints.completeProfile, data: formData);
 
@@ -140,11 +139,14 @@ class AuthRepository {
   // ── GET /auth/google ──────────────────────────────────────────────────────
   Future<({AuthUser user, String token})> googleAuth() async {
     // 1. Trigger the native Google Sign-In UI
-    final configuredClientId = dotenv.env['MOBILE_USER_GOOGLE_CLIENT_ID']?.trim();
-    final serverClientId = configuredClientId != null && configuredClientId.isNotEmpty
+    final configuredClientId = dotenv.env['MOBILE_USER_GOOGLE_CLIENT_ID']
+        ?.trim();
+    final serverClientId =
+        configuredClientId != null && configuredClientId.isNotEmpty
         ? configuredClientId
         : (dotenv.env['USER_GOOGLE_WEB_CLIENT_ID'] ??
-            dotenv.env['USER_GOOGLE_CLIENT_ID'])?.trim();
+                  dotenv.env['USER_GOOGLE_CLIENT_ID'])
+              ?.trim();
     if (serverClientId == null || serverClientId.isEmpty) {
       throw const AppException(
         'Google sign-in is not configured: MOBILE_USER_GOOGLE_CLIENT_ID is missing.',
@@ -165,7 +167,9 @@ class AuthRepository {
       googleAuth = await googleUser.authentication;
     } on PlatformException catch (error) {
       if (kDebugMode) {
-        debugPrint('[GoogleAuth] Native sign-in failed: ${error.code}; ${error.message}');
+        debugPrint(
+          '[GoogleAuth] Native sign-in failed: ${error.code}; ${error.message}',
+        );
       }
       throw googleSignInError(error);
     }
@@ -174,12 +178,16 @@ class AuthRepository {
     final String? idToken = googleAuth.idToken;
 
     if (idToken == null) {
-      throw const AppException('Google did not return an ID token. Check the Web client ID configuration.');
+      throw const AppException(
+        'Google did not return an ID token. Check the Web client ID configuration.',
+      );
     }
 
     // 3. Send the token to YOUR backend
     if (kDebugMode) {
-      debugPrint('[GoogleAuth] ID token received; contacting ${_dio.options.baseUrl}${ApiEndpoints.googleAuth}');
+      debugPrint(
+        '[GoogleAuth] ID token received; contacting ${_dio.options.baseUrl}${ApiEndpoints.googleAuth}',
+      );
     }
     late final Response<dynamic> res;
     try {
@@ -193,7 +201,9 @@ class AuthRepository {
       );
     } on DioException catch (error) {
       if (kDebugMode) {
-        debugPrint('[GoogleAuth] Backend request failed: ${error.type.name}; HTTP ${error.response?.statusCode ?? "no response"}');
+        debugPrint(
+          '[GoogleAuth] Backend request failed: ${error.type.name}; HTTP ${error.response?.statusCode ?? "no response"}',
+        );
       }
       final responseData = error.response?.data;
       if (responseData is Map &&
@@ -206,14 +216,18 @@ class AuthRepository {
       }
       rethrow;
     }
-    if (kDebugMode) debugPrint('[GoogleAuth] Backend responded: HTTP ${res.statusCode}');
+    if (kDebugMode) {
+      debugPrint('[GoogleAuth] Backend responded: HTTP ${res.statusCode}');
+    }
 
     final body = res.data;
     if (body is! Map<String, dynamic> ||
         body['user'] is! Map<String, dynamic> ||
         body['token'] is! String ||
         (body['token'] as String).isEmpty) {
-      throw const AppException('The server returned an unexpected Google login response. Check the deployed mobile authentication endpoint.');
+      throw const AppException(
+        'The server returned an unexpected Google login response. Check the deployed mobile authentication endpoint.',
+      );
     }
     final userData = body['user'] as Map<String, dynamic>;
     final token = body['token'] as String;

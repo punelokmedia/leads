@@ -6,6 +6,44 @@ import 'package:user_app/features/preview/preview_app.dart';
 import 'package:user_app/features/preview/preview_data.dart';
 
 void main() {
+  testWidgets(
+    'New membership layout fits small phones and shows active status',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 740);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final store = PreviewStore()..activateMembership();
+      addTearDown(store.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: NextLeadMembership(
+                store: store,
+                onWallet: () {},
+                onNotifications: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Pro Membership Active'), findsOneWidget);
+      await tester.ensureVisible(find.text('Pro Membership Active'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Pro Membership Active'),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('Membership screen renders all required details and features', (
     tester,
   ) async {
@@ -31,13 +69,16 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Hero
-    expect(find.text('MEMBERSHIP'), findsOneWidget);
+    expect(find.text('Membership'), findsOneWidget);
     expect(find.text('Unlock the\nFull Potential'), findsOneWidget);
 
     // Verify Pro Membership details
     expect(find.text('Pro Membership'), findsOneWidget);
     expect(find.text('Most Popular'), findsOneWidget);
-    expect(find.text('Full app access for growing businesses.'), findsOneWidget);
+    expect(
+      find.text('Full app access for growing businesses.'),
+      findsOneWidget,
+    );
     expect(find.text('₹ 499'), findsOneWidget);
     expect(find.text('App access only (not for leads)'), findsOneWidget);
 
@@ -48,22 +89,29 @@ void main() {
     expect(find.text('Access to all app features'), findsOneWidget);
 
     // Verify Action Button
-    expect(find.text('Upgrade to Pro'), findsOneWidget);
+    expect(find.textContaining('Upgrade to Pro'), findsOneWidget);
 
-    // Verify Compare Plans & Refer and Earn
-    expect(find.text('Compare Plans'), findsOneWidget);
-    expect(find.text('Choose the plan that fits your needs.'), findsOneWidget);
+    // The new design contains the referral card without a comparison section.
+    expect(find.text('Compare Plans'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Refer & Earn'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Refer & Earn'), findsOneWidget);
     expect(
       find.text('Invite your friends and earn free app access benefits.'),
       findsOneWidget,
     );
 
-    // Verify Branding
-    expect(find.text('More Leads. More Opportunities.'), findsOneWidget);
-
     // Tap upgrade button to open sheet
-    await tester.tap(find.text('Upgrade to Pro'));
+    await tester.scrollUntilVisible(
+      find.textContaining('Upgrade to Pro'),
+      -250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.textContaining('Upgrade to Pro'));
+    await tester.tap(find.textContaining('Upgrade to Pro'));
     await tester.pumpAndSettle();
     expect(find.text('NextLead Pro Membership'), findsOneWidget);
     expect(
@@ -101,4 +149,3 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
-

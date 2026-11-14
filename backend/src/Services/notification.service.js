@@ -1,6 +1,9 @@
 import { Notification, NotificationPreference } from '../Models/notification.model.js';
 import { User } from '../Models/user.model.js';
 import { Lead } from '../Models/leads.model.js';
+const preferenceKeys = { NEW_LEAD: 'newLeads', ANNOUNCEMENT: 'announcements',
+  PAYMENT_SUCCESS: 'payments', WALLET_CREDIT: 'payments', REFUND_COMPLETED: 'payments',
+  MEMBERSHIP_ACTIVATED: 'membership' };
 
 // Called inside the business transaction for financial events: inbox writes
 // commit with the payment, never before payment verification or after a rollback.
@@ -8,7 +11,8 @@ export async function notifyUser({ user, eventKey, type, title, message, targetI
   const account = await User.findOne({ _id: user, isBlocked: { $ne: true } }).select('_id').session(session);
   if (!account) return null;
   const preference = await NotificationPreference.findOne({ user }).session(session).lean();
-  if ((type === 'NEW_LEAD' && preference?.newLeads === false) || (type === 'ANNOUNCEMENT' && preference?.announcements === false)) return null;
+  const preferenceKey = preferenceKeys[type];
+  if (preferenceKey && preference?.[preferenceKey] === false) return null;
   try {
     return await Notification.findOneAndUpdate({ user, eventKey }, { $setOnInsert: { user, eventKey, type, title, message, targetId } }, { upsert: true, returnDocument: 'after', runValidators: true, session });
   } catch (error) {
