@@ -25,19 +25,18 @@ function HomeLandingPage() {
   const [heroState, setHeroState] = useState<'loading' | 'ready' | 'error'>(loadedHeroSource ? 'ready' : 'loading')
   const [attempt, setAttempt] = useState(0)
   const [activeSlide, setActiveSlide] = useState(0)
-  const [paused, setPaused] = useState(false)
   const carousel = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    if (paused || heroState === 'loading') return
+    if (heroState === 'loading') return
     const timer = window.setInterval(() => {
       if (!motion.matches && !document.hidden && !carousel.current?.matches(':hover') && !carousel.current?.contains(document.activeElement)) {
         setActiveSlide(slide => (slide + 1) % 2)
       }
     }, 6000)
     return () => window.clearInterval(timer)
-  }, [paused, heroState, activeSlide])
+  }, [heroState, activeSlide])
 
   useEffect(() => {
     if (heroState !== 'loading') return
@@ -98,12 +97,6 @@ function HomeLandingPage() {
       </div>
     </div>
     </div>
-    </div>
-    <div className="hero-carousel-controls">
-      <button type="button" aria-label="Previous hero slide" onClick={() => setActiveSlide(slide => (slide + 1) % 2)}>‹</button>
-      {['Lifetime membership', 'Premium vendors network'].map((label, index) => <button key={label} type="button" className="hero-carousel-dot" aria-label={`Show ${label}`} aria-current={activeSlide === index ? 'true' : undefined} onClick={() => setActiveSlide(index)} />)}
-      <button type="button" aria-label={paused ? 'Start automatic slides' : 'Pause automatic slides'} onClick={() => setPaused(value => !value)}>{paused ? '▶' : 'Ⅱ'}</button>
-      <button type="button" aria-label="Next hero slide" onClick={() => setActiveSlide(slide => (slide + 1) % 2)}>›</button>
     </div>
     </section>
     <section id="categories" className="home-categories home-container">

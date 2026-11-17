@@ -7,11 +7,6 @@
 .hero-carousel-track>div{flex:0 0 100%;min-width:0;box-sizing:border-box}
 .hero-membership-slide a{display:block}
 .hero-membership-slide img{display:block;width:100%;height:auto}
-.hero-carousel-controls{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;background:#0a1c42}
-.hero-carousel-controls button{display:grid;place-items:center;width:32px;height:32px;border:1px solid #8293ad;border-radius:50%;background:transparent;color:white;font-size:22px;cursor:pointer}
-.hero-carousel-controls .hero-carousel-dot{width:12px;height:12px;padding:0;background:#8293ad;border:0}
-.hero-carousel-controls .hero-carousel-dot[aria-current="true"]{background:#fff;box-shadow:0 0 0 3px #0066ff}
-.hero-carousel-controls button:focus-visible{outline:3px solid #fff;outline-offset:4px}
 @media(max-width:1100px) and (min-width:701px){.hero-carousel-window[data-slide="1"]{height:490px}}
 @media(max-width:700px){.hero-carousel-window[data-slide="1"]{height:var(--mobile-hero-height, 760px)}}
 @media(prefers-reduced-motion:reduce){.hero-carousel-track{transition:none}}
