@@ -29,7 +29,7 @@ final addressControllerProvider =
             landmark: current.landmark.isEmpty
                 ? place.subLocality?.trim()
                 : null,
-            city: current.city.isEmpty ? place.locality?.trim() : null,
+            city: current.city.isEmpty ? location!.cityName : null,
             state: current.state.isEmpty
                 ? place.administrativeArea?.trim()
                 : null,

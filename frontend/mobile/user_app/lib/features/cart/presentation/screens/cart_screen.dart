@@ -197,15 +197,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             selected: 2,
             onSelect: (i) {
               if (i != 2) {
-                context.go(
-                  [
-                    AppRouter.homePath,
-                    AppRouter.leadsPath,
-                    AppRouter.cartPath,
-                    AppRouter.membershipPath,
-                    AppRouter.profilePath,
-                  ][i],
-                );
+                context.go(AppRouter.primaryTabPaths[i]);
               }
             },
           ),
@@ -315,11 +307,17 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       width: 91,
       height: 110,
       child: item.imageUrl?.isNotEmpty == true
-          ? Image.network(
-              item.imageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _fallback(),
-            )
+          ? item.imageUrl!.startsWith('assets/')
+                ? Image.asset(
+                    item.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => _fallback(),
+                  )
+                : Image.network(
+                    item.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => _fallback(),
+                  )
           : _fallback(),
     ),
   );

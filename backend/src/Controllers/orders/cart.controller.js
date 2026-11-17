@@ -42,7 +42,7 @@ const getCart = async (req, res) => {
     const data = { leads: [], removedLeads: [], totalItems: 0, totalAmount: 0 };
     const leadIds = (cart?.leads ?? []).map(item => item.lead);
     const [leads, purchases, paidOrders] = await Promise.all([
-      Lead.find({ _id: { $in: leadIds } }),
+      Lead.find({ _id: { $in: leadIds } }).populate('category', 'name displayName'),
       LeadPurchase.find({ user: req.user.id, lead: { $in: leadIds } }).select('lead'),
       Order.find({ user: req.user.id, status: 'PAID', 'leads.lead': { $in: leadIds } }).select('leads.lead'),
     ]);
@@ -64,7 +64,7 @@ const getCart = async (req, res) => {
         data.removedLeads.push({ _id: item.lead, title: lead?.title || 'Unavailable lead', code, reason: reasons[code] });
         continue;
       }
-      data.leads.push({ _id: lead._id, title: lead.title, price: lead.price, quantity: 1, city: lead.city, state: lead.state, remainingSlots: info.remainingSlots, totalSlots: 2, expiresAt: lead.expiresAt });
+      data.leads.push({ _id: lead._id, leadDisplayId: `NL${String(lead._id).slice(-8).toUpperCase()}`, category: lead.category ? { name: lead.category.name, displayName: lead.category.displayName } : null, title: lead.title, price: lead.price, quantity: 1, city: lead.city, state: lead.state, remainingSlots: info.remainingSlots, totalSlots: 2, expiresAt: lead.expiresAt });
       data.totalAmount += lead.price;
     }
     // Remove only the entries observed as unavailable; never overwrite concurrent additions.

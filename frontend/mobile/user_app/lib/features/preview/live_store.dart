@@ -4,20 +4,14 @@ import 'package:flutter/material.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/errors/error_handler.dart';
 import 'preview_data.dart';
-import 'package:geolocator/geolocator.dart';
 
 /// API-backed state for the shared design. Never seeds preview fixtures.
 class LiveStore extends PreviewStore {
+  // GPS fills address forms. Lead browsing uses only filters chosen by the user.
   final Dio dio;
   final bool signedIn;
-  final Position? startupPosition;
-  bool _nearbyReady = false;
-  String? locationWarning;
-  LiveStore(this.dio, {required this.signedIn, this.startupPosition})
-    : super.empty();
+  LiveStore(this.dio, {required this.signedIn}) : super.empty();
 
-  Map<String, dynamic> get _nearbyQuery =>
-      _nearbyReady ? {'nearby': 'true', 'radiusKm': serviceRadiusKm} : {};
   @override
   bool get isLive => true;
   @override
@@ -69,26 +63,6 @@ class LiveStore extends PreviewStore {
     error = null;
     _notify();
     try {
-      if (signedIn && startupPosition != null) {
-        try {
-          final response = await dio.put(
-            'api/v1/auth/mobile/permissions',
-            data: {
-              'location': 'granted',
-              'latitude': startupPosition!.latitude,
-              'longitude': startupPosition!.longitude,
-            },
-          );
-          _nearbyReady = response.data['success'] == true;
-          locationWarning = _nearbyReady
-              ? null
-              : 'Could not enable nearby results. Choose a city or retry.';
-        } catch (_) {
-          _nearbyReady = false;
-          locationWarning =
-              'Could not enable nearby results. Choose a city or retry.';
-        }
-      }
       if (_disposed) return;
       final profileResponse = signedIn
           ? await _get(ApiEndpoints.fetchProfile)
@@ -102,10 +76,7 @@ class LiveStore extends PreviewStore {
         _get(ApiEndpoints.getAllCities),
         if (signedIn) Future.value(profileResponse!),
         if (signedIn) _get(ApiEndpoints.history),
-        _get(
-          ApiEndpoints.getAllLeads,
-          query: {..._nearbyQuery, 'page': 1, 'limit': 50},
-        ),
+        _get(ApiEndpoints.getAllLeads, query: {'page': 1, 'limit': 50}),
       ]);
       if (_disposed) return;
       final rawCategories = List<Map<String, dynamic>>.from(results[0]['data']);
@@ -120,7 +91,7 @@ class LiveStore extends PreviewStore {
         if (_disposed) return;
         result = await _get(
           ApiEndpoints.getAllLeads,
-          query: {..._nearbyQuery, 'page': page, 'limit': 50},
+          query: {'page': page, 'limit': 50},
         );
       }
       await _loadPurchased(rows);
@@ -268,7 +239,6 @@ class LiveStore extends PreviewStore {
     filtering = true;
     _notify();
     final query = <String, dynamic>{
-      if (filters.city == 'All Cities') ..._nearbyQuery,
       if (filters.city != 'All Cities') 'city': filters.city,
       if (filters.category != null && filters.category! < _categoryIds.length)
         'category': _categoryIds[filters.category!],
@@ -368,15 +338,16 @@ class LiveStore extends PreviewStore {
 
   @override
   Future<void> saveProfile(Map<String, String> details) async {
-    final names = details['Full name']!.trim().split(RegExp(r'\s+'));
+    final names = details['Full name']?.trim().split(RegExp(r'\s+'));
     final response = await dio.put(
       ApiEndpoints.editProfile,
       data: {
-        'firstname': names.first,
-        'lastname': names.skip(1).join(' '),
-        'email': details['Email'],
-        'phoneNumber': details['Phone'],
-        'businessName': details['Business name'],
+        if (names != null) 'firstname': names.first,
+        if (names != null) 'lastname': names.skip(1).join(' '),
+        if (details.containsKey('Email')) 'email': details['Email'],
+        if (details.containsKey('Phone')) 'phoneNumber': details['Phone'],
+        if (details.containsKey('Business name'))
+          'businessName': details['Business name'],
         if (details.containsKey('Business type'))
           'businessType': details['Business type'],
         if (details.containsKey('GST number'))
@@ -388,9 +359,10 @@ class LiveStore extends PreviewStore {
         if (details.containsKey('Years in business'))
           'yearsInBusiness': details['Years in business'],
         if (details.containsKey('Website')) 'website': details['Website'],
-        'workType': details['Service category'],
-        'city': details['City'],
-        'state': details['State'],
+        if (details.containsKey('Service category'))
+          'workType': details['Service category'],
+        if (details.containsKey('City')) 'city': details['City'],
+        if (details.containsKey('State')) 'state': details['State'],
       },
     );
     if (response.data['success'] != true) {
@@ -438,7 +410,6 @@ class LiveStore extends PreviewStore {
     if (_disposed) return;
     _setProfile(Map<String, dynamic>.from(response.data['data']));
     _notify();
-    if (_nearbyReady) await refresh();
   }
 
   @override

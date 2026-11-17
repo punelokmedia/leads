@@ -15,7 +15,46 @@ class StartupLocation {
     this.message,
     this.needsSettings = false,
   });
+
+  String get cityName =>
+      _labels([
+        placemark?.locality,
+        placemark?.subAdministrativeArea,
+      ]).firstOrNull ??
+      '';
+  String get areaName =>
+      _labels([
+        placemark?.subLocality,
+        placemark?.locality,
+        placemark?.subAdministrativeArea,
+      ]).firstOrNull ??
+      '';
+  String get addressText => _labels([
+    placemark?.street,
+    placemark?.subLocality,
+    cityName,
+    placemark?.administrativeArea,
+    placemark?.postalCode,
+  ]).join(', ');
+
+  static List<String> _labels(List<String?> parts) {
+    final seen = <String>{};
+    return parts
+        .map((value) => value?.trim() ?? '')
+        .where(
+          (value) =>
+              value.isNotEmpty &&
+              !isCoordinateText(value) &&
+              seen.add(value.toLowerCase()),
+        )
+        .toList();
+  }
 }
+
+bool isCoordinateText(String value) => RegExp(
+  r'^\s*(?:lat(?:itude)?\s*[:=]?\s*)?[-+]?\d{1,3}\.\d+\s*[,;/]\s*(?:(?:lon(?:gitude)?|lng)\s*[:=]?\s*)?[-+]?\d{1,3}\.\d+\s*$',
+  caseSensitive: false,
+).hasMatch(value);
 
 // Kept for the app session: navigation never repeatedly asks for permission.
 final startupLocationProvider = FutureProvider<StartupLocation>((ref) async {

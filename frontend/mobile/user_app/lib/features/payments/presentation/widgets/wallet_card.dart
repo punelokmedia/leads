@@ -416,14 +416,21 @@ class _WalletCardState extends ConsumerState<WalletCard> {
         const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
-          height: 43,
           child: FilledButton(
+            key: const ValueKey('wallet-add-selected-amount'),
             onPressed: _busy || frozen
                 ? null
                 : () => _addMoney(presetPaise: _selectedAmount * 100),
             style: FilledButton.styleFrom(
               backgroundColor: blue,
               foregroundColor: Colors.white,
+              minimumSize: const Size(0, 48),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

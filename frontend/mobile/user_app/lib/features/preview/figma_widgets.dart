@@ -286,10 +286,14 @@ class FigmaLeadCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       purchased
-                          ? lead.area
+                          ? (lead.area.trim().isEmpty
+                                ? ''
+                                : 'Area: ${lead.area.trim()}${RegExp(r"^[\d,]+(?:\.\d+)?$").hasMatch(lead.area.trim()) ? ' sq ft' : ''}')
                           : '${lead.availableSlots} Vendor Required | Service',
                       semanticsLabel: purchased
-                          ? lead.area
+                          ? (lead.area.trim().isEmpty
+                                ? ''
+                                : 'Property area: ${lead.area.trim()}${RegExp(r"^[\d,]+(?:\.\d+)?$").hasMatch(lead.area.trim()) ? ' square feet' : ''}')
                           : '${lead.availableSlots} of ${lead.maxBuyers} vendor slots available',
                       style: const TextStyle(
                         color: figmaInk,

@@ -1,4 +1,6 @@
 import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
+import '../core/theme/app_page_transition.dart';
 import 'package:user_app/features/auth/presentation/screens/account_created_screen.dart';
 import 'package:user_app/features/address/presentation/screens/add_address_screen.dart';
 import 'package:user_app/features/auth/presentation/screens/login_screen.dart';
@@ -26,6 +28,23 @@ import 'package:user_app/features/support/presentation/screens/privacy_policy_sc
 import 'package:user_app/features/support/presentation/screens/terms_conditions_screen.dart';
 
 abstract final class AppRouter {
+  static GoRoute _route({
+    required String path,
+    required Widget Function(BuildContext, GoRouterState) builder,
+  }) => GoRoute(
+    path: path,
+    pageBuilder: (context, state) => CustomTransitionPage<void>(
+      key: state.pageKey,
+      transitionDuration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 260),
+      reverseTransitionDuration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 220),
+      transitionsBuilder: AppPageTransitionsBuilder.transition,
+      child: builder(context, state),
+    ),
+  );
   static const String splashPath = '/';
   static const String onboardingPath = '/onboarding';
   static const login = '/login';
@@ -49,6 +68,13 @@ abstract final class AppRouter {
   static const String editProfilePath = '/edit-profile';
   static const String addAddressPath = '/add-address';
   static const String cartPath = '/cart-Screen';
+  static const primaryTabPaths = [
+    homePath,
+    leadsPath,
+    cartPath,
+    membershipPath,
+    profilePath,
+  ];
   static const String paymentsuccessPath = '/pay-success';
 
   static const String termsPath = '/terms-conditions';
@@ -65,23 +91,23 @@ abstract final class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: splashPath,
     routes: [
-      GoRoute(
+      _route(
         path: splashPath,
         builder: (context, state) => const SplashScreen(),
       ),
 
-      GoRoute(
+      _route(
         path: onboardingPath,
         builder: (context, state) => const OnboardingScreen(),
       ),
 
-      GoRoute(path: login, builder: (context, state) => const LoginScreen()),
-      GoRoute(
+      _route(path: login, builder: (context, state) => const LoginScreen()),
+      _route(
         path: accountCreatedPath,
         builder: (context, state) => const AccountCreatedScreen(),
       ),
-      GoRoute(path: register, builder: (context, state) => const LoginScreen()),
-      GoRoute(
+      _route(path: register, builder: (context, state) => const LoginScreen()),
+      _route(
         path: verifyNumberPath,
         builder: (context, state) {
           final extraData = state.extra as Map<String, dynamic>? ?? {};
@@ -98,7 +124,7 @@ abstract final class AppRouter {
         },
       ),
 
-      GoRoute(
+      _route(
         path: otpVerificationPath,
         builder: (context, state) {
           bool isGoogle = false;
@@ -121,7 +147,7 @@ abstract final class AppRouter {
           );
         },
       ),
-      GoRoute(
+      _route(
         path: AppRouter.leadDetailsPath,
         builder: (context, state) {
           // ✅ Extract the lead object from the extra parameter
@@ -129,87 +155,87 @@ abstract final class AppRouter {
           return LeadDetailsScreen(lead: lead);
         },
       ),
-      GoRoute(
+      _route(
         path: tellUsAboutYourselfPath,
         builder: (context, state) => const TellUsAboutYourselfScreen(),
       ),
-      GoRoute(
+      _route(
         path: changePasswordPath,
         builder: (context, state) => const ChangePasswordScreen(),
       ),
-      GoRoute(
+      _route(
         path: chooseWorkCityPath,
         builder: (context, state) => const ChooseWorkCityScreen(),
       ),
-      GoRoute(
+      _route(
         path: chooseCategoryPath,
         builder: (context, state) => const ChooseCategoryScreen(),
       ),
-      GoRoute(
+      _route(
         path: completePaymentPath,
         builder: (context, state) => const LiveHome(initialPage: 4),
       ),
-      GoRoute(
+      _route(
         path: membershipPath,
         builder: (context, state) => const LiveHome(initialPage: 4),
       ),
 
-      GoRoute(
+      _route(
         path: editProfilePath,
         builder: (context, state) => const EditProfileScreen(),
       ),
-      GoRoute(
+      _route(
         path: addAddressPath,
         builder: (context, state) => const AddAddressScreen(),
       ),
-      GoRoute(
+      _route(
         path: notificationPath,
         builder: (context, state) => const NotificationScreen(),
       ),
-      GoRoute(
+      _route(
         path: privacyPath,
         builder: (context, state) => const PrivacyPolicyScreen(),
       ),
 
-      GoRoute(path: cartPath, builder: (context, state) => const CartScreen()),
-      GoRoute(
+      _route(path: cartPath, builder: (context, state) => const CartScreen()),
+      _route(
         path: paymentsuccessPath,
         builder: (context, state) {
           final orderId = state.extra as String?;
           return PaymentSuccessScreen(orderId: orderId ?? 'N/A');
         },
       ),
-      GoRoute(
+      _route(
         path: termsPath,
         builder: (context, state) => const TermsConditionsScreen(),
       ),
-      GoRoute(
+      _route(
         path: helpSupportPath,
         builder: (context, state) => const HelpSupportScreen(),
       ),
-      GoRoute(
+      _route(
         path: aboutusPath,
         builder: (context, state) => const AboutUsPage(),
       ),
-      GoRoute(
+      _route(
         path: settingPath, // no leading slash — relative to /home
         builder: (context, state) => const SettingsPage(),
       ),
 
-      GoRoute(
+      _route(
         path: '/account',
         builder: (context, state) => const ProfileScreen(),
       ),
-      GoRoute(path: homePath, builder: (context, state) => const LiveHome()),
-      GoRoute(
+      _route(path: homePath, builder: (context, state) => const LiveHome()),
+      _route(
         path: leadsPath,
         builder: (context, state) => const LiveHome(initialPage: 1),
       ),
-      GoRoute(
+      _route(
         path: paymentsPath,
         builder: (context, state) => const LiveHome(initialPage: 2),
       ),
-      GoRoute(
+      _route(
         path: profilePath,
         builder: (context, state) => const LiveHome(initialPage: 3),
       ),

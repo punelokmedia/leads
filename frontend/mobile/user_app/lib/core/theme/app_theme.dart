@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_page_transition.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
 
@@ -87,6 +88,16 @@ abstract final class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     );
     return ThemeData(
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: AppPageTransitionsBuilder(),
+          TargetPlatform.iOS: AppPageTransitionsBuilder(),
+          TargetPlatform.macOS: AppPageTransitionsBuilder(),
+          TargetPlatform.windows: AppPageTransitionsBuilder(),
+          TargetPlatform.linux: AppPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: AppPageTransitionsBuilder(),
+        },
+      ),
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colors,

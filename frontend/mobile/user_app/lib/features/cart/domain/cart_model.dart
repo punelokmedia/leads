@@ -1,4 +1,5 @@
 import 'package:user_app/core/utils/intl_helper.dart';
+import '../../preview/category_media.dart';
 
 class CartLead {
   final String id;
@@ -55,23 +56,39 @@ class CartLead {
     'price': price,
   };
 
-  factory CartLead.fromJson(Map<String, dynamic> j) => CartLead(
-    // Map '_id' from backend to 'id'
-    id: (j['id'] ?? j['_id'] ?? '').toString(),
-    title: j['title'] ?? '',
-    // Map 'city' + 'state' from backend to 'location'
-    location: "${j['city'] ?? ''}, ${j['state'] ?? ''}",
-    // Handle missing fields with defaults
-    name: j['name'] ?? j['title'] ?? '',
-    address: j['address'] ?? j['city'] ?? '',
-    time: formatIsoDate(j['expiresAt'] ?? j['time'] ?? ''),
-    sharingCount:
-        j['sharingCount']?.toString() ?? j['remainingSlots']?.toString() ?? '0',
-    imageUrl: j['imageUrl'],
-    isSelected: j['isSelected'] ?? true,
-    quantity: j['quantity'] ?? 1,
-    price: j['price'] is num ? j['price'] as num : null,
-  );
+  factory CartLead.fromJson(Map<String, dynamic> j) {
+    final id = (j['id'] ?? j['_id'] ?? '').toString();
+    final displayId =
+        j['leadDisplayId']?.toString() ??
+        'NL${id.substring(id.length > 8 ? id.length - 8 : 0).toUpperCase()}';
+    return CartLead(
+      // Map '_id' from backend to 'id'
+      id: id,
+      title: j['title'] ?? '',
+      // Map 'city' + 'state' from backend to 'location'
+      location: "${j['city'] ?? ''}, ${j['state'] ?? ''}",
+      // Handle missing fields with defaults
+      name: j['name'] ?? j['title'] ?? '',
+      address: j['address'] ?? j['city'] ?? '',
+      time: formatIsoDate(j['expiresAt'] ?? j['time'] ?? ''),
+      sharingCount:
+          j['sharingCount']?.toString() ??
+          j['remainingSlots']?.toString() ??
+          '0',
+      imageUrl:
+          j['imageUrl'] ??
+          CategoryMedia.getLeadImage(
+            j['category'] is Map
+                ? (j['category']['displayName'] ?? j['category']['name'])
+                      ?.toString()
+                : (j['categoryName'] ?? j['title'])?.toString(),
+            leadId: displayId,
+          ),
+      isSelected: j['isSelected'] ?? true,
+      quantity: j['quantity'] ?? 1,
+      price: j['price'] is num ? j['price'] as num : null,
+    );
+  }
 }
 
 // cart_model.dart (or wherever your CartState is defined)

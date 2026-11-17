@@ -230,7 +230,7 @@ class PreviewStore extends ChangeNotifier {
   List<PreviewCategory> get categories => previewCategories;
   List<String> get cities => ['Mumbai', 'Pune', 'Bangalore', 'Hyderabad'];
   Future<void> saveProfile(Map<String, String> details) async =>
-      updateProfile(details);
+      updateProfile({...profile, ...details});
   Future<void> refresh() async {}
   Future<void> Function(BuildContext, PreviewLead)? checkout;
   Future<void> Function(BuildContext, PreviewLead)? unlock;

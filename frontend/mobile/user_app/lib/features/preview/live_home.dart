@@ -9,7 +9,6 @@ import '../cart/shared/cart_providers.dart';
 import 'live_store.dart';
 import 'preview_app.dart';
 import '../support/presentation/screens/live_support_screen.dart';
-import '../../core/location/startup_location.dart';
 
 import 'package:dio/dio.dart';
 import '../cart/domain/cart_model.dart';
@@ -19,7 +18,6 @@ final liveStoreProvider = Provider.autoDispose<LiveStore>((ref) {
   final store = LiveStore(
     ref.watch(dioProvider),
     signedIn: ref.watch(isLoggedInProvider),
-    startupPosition: ref.watch(startupLocationProvider).asData?.value.position,
   );
   ref.onDispose(store.dispose);
   store.refresh();
@@ -206,7 +204,7 @@ class LiveHome extends ConsumerWidget {
           );
         }
         return PreviewHome(
-          key: ObjectKey(store),
+          key: ValueKey((store, initialPage)),
           store: store,
           initialPage: initialPage,
         );

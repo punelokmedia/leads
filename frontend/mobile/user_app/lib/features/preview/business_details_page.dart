@@ -5,6 +5,8 @@ import '../payments/presentation/widgets/wallet_card.dart';
 import 'preview_data.dart';
 import 'preview_app.dart' show NotificationsPreview;
 import 'profile_design.dart' show profileBackground;
+import '../../core/location/startup_location.dart';
+import '../../core/errors/error_handler.dart';
 
 const _blue = Color(0xFF0066FF),
     _navy = Color(0xFF072565),
@@ -63,6 +65,77 @@ class _EditProfilePreviewState extends ConsumerState<EditProfilePreview> {
       : 'Sole proprietorship';
   late String experience = widget.store.profile['Years in business'] ?? '';
   bool saving = false;
+  bool locating = false;
+  String? detectedState;
+  String? detectedCity;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.store.isLive) {
+      ref.listenManual(startupLocationProvider, (_, next) {
+        final location = next.asData?.value;
+        if (location != null && mounted) fillLocation(location);
+      }, fireImmediately: true);
+    }
+  }
+
+  void fillLocation(StartupLocation location, {bool replace = false}) {
+    if (saving) return;
+    final needsCity = city.text.trim().isEmpty || isCoordinateText(city.text);
+    if (location.addressText.isNotEmpty &&
+        (replace ||
+            address.text.trim().isEmpty ||
+            isCoordinateText(address.text))) {
+      address.text = location.addressText;
+    }
+    if (location.cityName.isNotEmpty && (replace || needsCity)) {
+      city.text = location.cityName;
+      detectedCity = location.cityName;
+      detectedState = location.placemark?.administrativeArea?.trim();
+    }
+    if (location.areaName.isNotEmpty &&
+        (replace ||
+            serviceArea.text.trim().isEmpty ||
+            isCoordinateText(serviceArea.text))) {
+      serviceArea.text = location.areaName;
+    }
+  }
+
+  Future<void> useCurrentLocation() async {
+    if (locating || saving) return;
+    setState(() => locating = true);
+    try {
+      final cached = ref.read(startupLocationProvider).asData?.value;
+      if (cached != null && cached.addressText.isEmpty)
+        ref.invalidate(startupLocationProvider);
+      final location = await ref.read(startupLocationProvider.future);
+      if (!mounted) return;
+      if (location.addressText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              location.message ??
+                  'Could not find your area name. Retry or enter your address manually.',
+            ),
+          ),
+        );
+        return;
+      }
+      fillLocation(location, replace: true);
+    } catch (_) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not find your area name. Please enter it manually.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => locating = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -84,12 +157,15 @@ class _EditProfilePreviewState extends ConsumerState<EditProfilePreview> {
     setState(() => saving = true);
     try {
       await widget.store.saveProfile({
-        ...widget.store.profile,
         'Business name': business.text.trim(),
         'Business type': businessType,
         'GST number': gst.text.trim().toUpperCase(),
         'Business address': address.text.trim(),
         'City': city.text.trim(),
+        if (detectedState != null && city.text.trim() == detectedCity)
+          'State': detectedState!
+        else if (city.text.trim() != widget.store.profile['City'])
+          'State': '',
         'Service area': serviceArea.text.trim(),
         'Years in business': experience,
         'Website': website.text.trim(),
@@ -100,12 +176,10 @@ class _EditProfilePreviewState extends ConsumerState<EditProfilePreview> {
       messenger.showSnackBar(
         const SnackBar(content: Text('Business details saved')),
       );
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not save business details. Please retry.'),
-          ),
+          SnackBar(content: Text(ErrorHandler.handle(error).message)),
         );
       }
     } finally {
@@ -221,6 +295,23 @@ class _EditProfilePreviewState extends ConsumerState<EditProfilePreview> {
                           ),
                         ),
                         _label('Business Address'),
+                        if (widget.store.isLive)
+                          TextButton.icon(
+                            key: const ValueKey('Use current location'),
+                            onPressed: saving || locating
+                                ? null
+                                : useCurrentLocation,
+                            icon: const Icon(
+                              Icons.my_location,
+                              color: Colors.white,
+                            ),
+                            label: Text(
+                              locating
+                                  ? 'Finding your area…'
+                                  : 'Use current location',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
                         _field(
                           'Business address',
                           address,

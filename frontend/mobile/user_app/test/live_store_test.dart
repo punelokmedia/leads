@@ -2,7 +2,7 @@ import 'package:user_app/features/preview/lead_filters_sheet.dart';
 import 'dart:async';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:dio/dio.dart';
-import 'package:geolocator/geolocator.dart';
+
 import 'package:flutter/material.dart';
 import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -104,118 +104,34 @@ void main() {
     );
   });
 
-  Position gpsPosition() => Position(
-    latitude: 18.5,
-    longitude: 73.8,
-    timestamp: DateTime(2026),
-    accuracy: 10,
-    altitude: 0,
-    altitudeAccuracy: 0,
-    heading: 0,
-    headingAccuracy: 0,
-    speed: 0,
-    speedAccuracy: 0,
-  );
-
   test(
-    'empty GPS results stay local without falling back to the profile city',
+    'home and All Cities do not hide leads without GPS coordinates',
     () async {
-      dio.interceptors.insert(
-        0,
-        InterceptorsWrapper(
-          onRequest: (request, handler) {
-            if (request.path.endsWith('get-all-leads') &&
-                request.queryParameters['nearby'] == 'true') {
-              requests.add(request);
-              handler.resolve(
-                Response(
-                  requestOptions: request,
-                  data: {
-                    'success': true,
-                    'data': [],
-                    'pagination': {'totalPages': 0},
-                  },
-                ),
-              );
-            } else {
-              handler.next(request);
-            }
-          },
-        ),
-      );
-      final store = LiveStore(
-        dio,
-        signedIn: true,
-        startupPosition: gpsPosition(),
-      );
+      final store = LiveStore(dio, signedIn: true);
       addTearDown(store.dispose);
       await store.refresh();
       expect(store.error, isNull);
-      expect(store.leads, isEmpty);
-      expect(store.locationWarning, isNull);
-      final fallbackPages = requests.where(
-        (r) =>
-            r.path.endsWith('get-all-leads') &&
-            r.queryParameters['nearby'] == null,
-      );
-      expect(fallbackPages, isEmpty);
-    },
-  );
-
-  test(
-    'GPS coordinates are saved before nearby pages and explicit city overrides GPS',
-    () async {
-      final store = LiveStore(
-        dio,
-        signedIn: true,
-        startupPosition: gpsPosition(),
-      );
-      addTearDown(store.dispose);
-      await store.refresh();
-      expect(store.error, isNull);
-      final consent = requests.indexWhere(
-        (r) => r.path.endsWith('mobile/permissions'),
+      expect(store.leads, hasLength(2));
+      await store.applyFilters(const LeadFilters());
+      expect(store.filteredLeads, hasLength(2));
+      expect(
+        requests.where((r) => r.path.endsWith('mobile/permissions')),
+        isEmpty,
       );
       final pages = requests
           .where((r) => r.path.endsWith('get-all-leads'))
           .toList();
-      expect(requests[consent].data, {
-        'location': 'granted',
-        'latitude': 18.5,
-        'longitude': 73.8,
-      });
-      expect(consent, lessThan(requests.indexOf(pages.first)));
-      expect(pages, hasLength(2));
+      expect(pages, hasLength(4));
       for (final page in pages) {
-        expect(page.queryParameters['nearby'], 'true');
-        expect(page.queryParameters['radiusKm'], 25);
+        expect(page.queryParameters.containsKey('nearby'), isFalse);
+        expect(page.queryParameters.containsKey('radiusKm'), isFalse);
+        expect(page.queryParameters.containsKey('city'), isFalse);
       }
       await store.applyFilters(const LeadFilters(city: 'Pune'));
-      final cityQuery = requests
-          .lastWhere((r) => r.path.endsWith('get-all-leads'))
-          .queryParameters;
-      expect(cityQuery['city'], 'Pune');
-      expect(cityQuery.containsKey('nearby'), isFalse);
-    },
-  );
-
-  test(
-    'failed coordinate upload falls back to city search with a visible warning',
-    () async {
-      rejectSave = true;
-      final store = LiveStore(
-        dio,
-        signedIn: true,
-        startupPosition: gpsPosition(),
-      );
-      addTearDown(store.dispose);
-      await store.refresh();
-      expect(store.error, isNull);
-      expect(store.locationWarning, isNotNull);
-      for (final request in requests.where(
-        (r) => r.path.endsWith('get-all-leads'),
-      )) {
-        expect(request.queryParameters.containsKey('nearby'), isFalse);
+      for (final page
+          in requests.where((r) => r.path.endsWith('get-all-leads')).skip(4)) {
+        expect(page.queryParameters['city'], 'Pune');
+        expect(page.queryParameters.containsKey('nearby'), isFalse);
       }
     },
   );

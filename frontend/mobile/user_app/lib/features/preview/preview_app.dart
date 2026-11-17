@@ -23,6 +23,7 @@ import 'preview_data.dart';
 import 'live_store.dart';
 import '../profile/presentation/widgets/live_referral_section.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_page_transition.dart';
 
 const _purple = Color(0xFF0062CB);
 const _gradient = LinearGradient(
@@ -128,6 +129,17 @@ class _PreviewHomeState extends State<PreviewHome> {
           .toList();
 
   bool _exitDialogOpen = false;
+
+  @override
+  void didUpdateWidget(covariant PreviewHome oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialPage != widget.initialPage) {
+      _resetLeadFilters();
+      page = widget.initialPage;
+      purchasedOnly = page == 1;
+      tab = purchasedOnly ? 'Joined' : 'All';
+    }
+  }
 
   void _resetLeadFilters() {
     _homeReset++;
@@ -342,50 +354,73 @@ class _PreviewHomeState extends State<PreviewHome> {
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
-            child: switch (page) {
-              0 => home(),
-              1 => purchasedOnly ? myLeads() : leads(),
-              2 => payments(),
-              3 => profile(),
-              4 => membership(),
-              5 => SavedLeadsScreen(
-                store: store,
-                savedCategories: _savedCategories,
-                onCategoriesChanged: () => setState(() {}),
-                onBack: () => setState(() => page = _returnPage),
-                onWallet: () => setState(() => page = 2),
-                onNotifications: () {
-                  store.markRead();
-                  Navigator.push(
+            child: AnimatedSwitcher(
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 260),
+              transitionBuilder: (child, animation) =>
+                  AppPageTransitionsBuilder.transition(
                     context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => NotificationsPreview(store: store),
-                    ),
-                  );
-                },
-                onLead: (lead) => Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) =>
-                        LeadDetailsPreview(lead: lead, store: store),
+                    animation,
+                    const AlwaysStoppedAnimation<double>(0),
+                    child,
                   ),
-                ),
-                onCategory: (name) => setState(() {
-                  if (store is LiveStore) {
-                    (store as LiveStore).clearServerFilters();
-                  }
-                  category = store.categories.indexWhere(
-                    (item) => item.name == name,
-                  );
-                  page = 1;
-                  tab = 'All';
-                  savedOnly = false;
-                  city = 'All Cities';
-                  query = '';
-                }),
+              layoutBuilder: (current, previous) => Stack(
+                fit: StackFit.expand,
+                children: [
+                  for (final child in previous)
+                    IgnorePointer(child: ExcludeSemantics(child: child)),
+                  ?current,
+                ],
               ),
-              _ => more(),
-            },
+              child: KeyedSubtree(
+                key: ValueKey('tab-$page-$purchasedOnly'),
+                child: switch (page) {
+                  0 => home(),
+                  1 => purchasedOnly ? myLeads() : leads(),
+                  2 => payments(),
+                  3 => profile(),
+                  4 => membership(),
+                  5 => SavedLeadsScreen(
+                    store: store,
+                    savedCategories: _savedCategories,
+                    onCategoriesChanged: () => setState(() {}),
+                    onBack: () => setState(() => page = _returnPage),
+                    onWallet: () => setState(() => page = 2),
+                    onNotifications: () {
+                      store.markRead();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (_) => NotificationsPreview(store: store),
+                        ),
+                      );
+                    },
+                    onLead: (lead) => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            LeadDetailsPreview(lead: lead, store: store),
+                      ),
+                    ),
+                    onCategory: (name) => setState(() {
+                      if (store is LiveStore) {
+                        (store as LiveStore).clearServerFilters();
+                      }
+                      category = store.categories.indexWhere(
+                        (item) => item.name == name,
+                      );
+                      page = 1;
+                      tab = 'All';
+                      savedOnly = false;
+                      city = 'All Cities';
+                      query = '';
+                    }),
+                  ),
+                  _ => more(),
+                },
+              ),
+            ),
           ),
         ),
         bottomNavigationBar: FigmaBottomNav(
@@ -420,6 +455,8 @@ class _PreviewHomeState extends State<PreviewHome> {
               tab = index == 1 ? 'Joined' : 'All';
               if (index == 0) _resetLeadFilters();
             });
+            if (store.isLive)
+              GoRouter.maybeOf(context)?.go(AppRouter.primaryTabPaths[index]);
           },
         ),
       ),
@@ -526,6 +563,8 @@ class _PreviewHomeState extends State<PreviewHome> {
               tab = index == 1 ? 'Joined' : 'All';
               if (index == 0) _resetLeadFilters();
             });
+            if (store.isLive)
+              GoRouter.maybeOf(context)?.go(AppRouter.primaryTabPaths[index]);
           },
         ),
       ),
