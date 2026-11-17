@@ -8,7 +8,22 @@
   to { opacity: 1; }
 }
 
+@keyframes next-header-enter {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .home-site-header, .marketplace-header {
+    animation: next-header-enter 220ms ease-out both;
+  }
+
+  .home-header-links a, .marketplace-actions a, .marketplace-actions button,
+  .navbar-home-icon {
+    transition: color 200ms ease, background-color 200ms ease,
+      box-shadow 200ms ease, opacity 200ms ease;
+  }
+
   .login-required-dialog[open],
   .next-download-window > div,
   .home-header-navigation.is-open,

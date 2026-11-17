@@ -13,7 +13,7 @@ export function HomeHeader() {
         </Link>
         <nav id="home-header-navigation" className="home-header-navigation" aria-label="Main navigation">
           <div className="home-header-links">
-            <Link to="/" className="is-active navbar-home-link" aria-current={location.pathname === '/' ? 'page' : undefined}><img className="navbar-home-icon" src="/home-icon.svg" width={20} height={20} alt="" />Home</Link>
+            <Link to="/" className={`navbar-home-link${location.pathname === '/' ? ' is-active' : ''}`} aria-current={location.pathname === '/' ? 'page' : undefined}><img className="navbar-home-icon" src="/home-icon.svg" width={20} height={20} alt="" />Home</Link>
             <Link to="/categories">Categories</Link>
             <a href="/#how-it-works">How It Works</a>
             <a href="/#about-us">About Us</a>
