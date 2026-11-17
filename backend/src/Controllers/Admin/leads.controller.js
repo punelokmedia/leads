@@ -1087,6 +1087,7 @@ const getUserHistory = async (req, res) => {
         status: order.status,
         isDownloaded: order.isDownloaded,
         paidAt: order.paidAt,
+        paymentMethod: order.paymentMethod === 'WALLET' ? 'NextLead Wallet' : order.razorpayPaymentId ? 'Razorpay' : null,
         totalAmount: order.status === 'PAID' ? totalAmount : order.totalAmount,
         totalItems: items.reduce((sum, i) => sum + i.quantity, 0), 
         items, 

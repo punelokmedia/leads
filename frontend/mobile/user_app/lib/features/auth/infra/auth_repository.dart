@@ -159,6 +159,9 @@ class AuthRepository {
     GoogleSignInAccount? googleUser;
     GoogleSignInAuthentication googleAuth;
     try {
+      // Explicit login must allow account selection rather than reuse the
+      // native Google session left over from the previous app account.
+      await googleSignIn.signOut();
       if (kDebugMode) debugPrint('[GoogleAuth] Opening Google account picker');
       googleUser = await googleSignIn.signIn();
       if (googleUser == null) {

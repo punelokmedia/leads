@@ -15,6 +15,7 @@ import {
 } from "../Controllers/Admin/leads.controller.js";
 import { auth, isAdmin, optionalAuth } from "../Middlewares/auth.middleware.js";
 import upload from "../Middlewares/fileupload.middleware.js";
+import { downloadReceipt } from '../Services/payment-receipt.js';
 
 const router = express.Router();
 router.get('/filter-options', async (req, res) => {
@@ -39,6 +40,7 @@ router.get("/get-all-leads", optionalAuth, getAllLeads);
 router.get("/get-lead/:id", optionalAuth, getLeadDetailsById);
 router.patch('/:id/contacted', auth, markLeadContacted);
 router.get("/history", auth, getUserHistory );
+router.get('/receipt/:orderId', auth, downloadReceipt);
 router.get("/download/:orderId", auth, downloadLeads);
 
 router.post("/create-lead", auth, isAdmin, createLead);

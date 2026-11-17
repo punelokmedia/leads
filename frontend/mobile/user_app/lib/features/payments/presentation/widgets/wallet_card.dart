@@ -8,6 +8,7 @@ import 'wallet_amount_dialog.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:user_app/core/network/dio_provider.dart';
+import 'package:user_app/core/errors/error_handler.dart';
 
 final walletProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final response = await ref.watch(dioProvider).get('api/v1/wallet');
@@ -129,9 +130,9 @@ class _WalletCardState extends ConsumerState<WalletCard> {
         'name': 'Next Leads',
         'description': 'Wallet top-up',
       });
-    } catch (_) {
+    } catch (error) {
       if (mounted) setState(() => _busy = false);
-      _message('Unable to start top-up. Please retry.');
+      _message(ErrorHandler.handle(error).message);
     }
   }
 

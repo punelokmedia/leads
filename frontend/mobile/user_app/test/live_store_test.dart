@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:user_app/features/preview/live_store.dart';
 import 'package:user_app/features/preview/preview_app.dart';
 import 'package:user_app/features/preview/lead_details_page.dart';
+import 'package:user_app/core/network/dio_provider.dart';
 
 void main() {
   late Dio dio;
@@ -114,6 +115,51 @@ void main() {
     headingAccuracy: 0,
     speed: 0,
     speedAccuracy: 0,
+  );
+
+  test(
+    'empty GPS results stay local without falling back to the profile city',
+    () async {
+      dio.interceptors.insert(
+        0,
+        InterceptorsWrapper(
+          onRequest: (request, handler) {
+            if (request.path.endsWith('get-all-leads') &&
+                request.queryParameters['nearby'] == 'true') {
+              requests.add(request);
+              handler.resolve(
+                Response(
+                  requestOptions: request,
+                  data: {
+                    'success': true,
+                    'data': [],
+                    'pagination': {'totalPages': 0},
+                  },
+                ),
+              );
+            } else {
+              handler.next(request);
+            }
+          },
+        ),
+      );
+      final store = LiveStore(
+        dio,
+        signedIn: true,
+        startupPosition: gpsPosition(),
+      );
+      addTearDown(store.dispose);
+      await store.refresh();
+      expect(store.error, isNull);
+      expect(store.leads, isEmpty);
+      expect(store.locationWarning, isNull);
+      final fallbackPages = requests.where(
+        (r) =>
+            r.path.endsWith('get-all-leads') &&
+            r.queryParameters['nearby'] == null,
+      );
+      expect(fallbackPages, isEmpty);
+    },
   );
 
   test(
@@ -473,14 +519,17 @@ void main() {
     await tester.runAsync(store.refresh);
     await pumpScoped(
       tester,
-      MaterialApp(
-        home: LeadDetailsPreview(lead: store.leads.first, store: store),
+      ProviderScope(
+        overrides: [dioProvider.overrideWithValue(dio)],
+        child: MaterialApp(
+          home: LeadDetailsPreview(lead: store.leads.first, store: store),
+        ),
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('Paid client'), findsNothing);
+    expect(find.textContaining('Paid client'), findsOneWidget);
     expect(find.textContaining('Demo Client'), findsNothing);
-    expect(find.text('Lead Unlocked'), findsOneWidget);
+    expect(find.text('Call Now'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

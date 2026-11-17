@@ -12,6 +12,8 @@ class AddressController extends StateNotifier<AddressState> {
   AddressController(this._repo)
     : super(AddressState(data: AddressModel.empty()));
 
+  AddressModel get data => state.data;
+
   void updateField(AddressModel updated) =>
       state = state.copyWith(data: updated);
 

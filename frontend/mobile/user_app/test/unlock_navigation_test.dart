@@ -103,9 +103,9 @@ void main() {
                   const Scaffold(body: Text('Membership destination')),
             ),
             GoRoute(
-              path: AppRouter.leadsPath,
-              builder: (_, _) =>
-                  const Scaffold(body: Text('My Leads destination')),
+              path: AppRouter.paymentsuccessPath,
+              builder: (_, state) =>
+                  Scaffold(body: Text('Payment success: ${state.extra}')),
             ),
           ],
         );
@@ -147,11 +147,10 @@ void main() {
         await tester.pump(const Duration(milliseconds: 400));
         expect(store.leadActionBusy, isFalse);
         if (errorCode == null) {
-          expect(find.text('Payment successful'), findsOneWidget);
           expect(selected.joined, isTrue);
-          await tester.tap(find.text('View My Leads'));
           await tester.pumpAndSettle();
-          expect(find.text('My Leads destination'), findsOneWidget);
+          expect(find.text('Payment success: paid-order'), findsOneWidget);
+          expect(find.byType(AlertDialog), findsNothing);
         } else {
           expect(selected.joined, isFalse);
           await tester.tap(

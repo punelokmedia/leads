@@ -107,6 +107,7 @@ class LiveStore extends PreviewStore {
           query: {..._nearbyQuery, 'page': 1, 'limit': 50},
         ),
       ]);
+      if (_disposed) return;
       final rawCategories = List<Map<String, dynamic>>.from(results[0]['data']);
       final rows = <Map<String, dynamic>>[];
       var page = 1;

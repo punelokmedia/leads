@@ -6,7 +6,7 @@ import '../../domain/address_model.dart';
 import 'address_input_decoration.dart';
 
 // ── Text Field ────────────────────────────────────────────────────────────────
-class AddressTextField extends StatelessWidget {
+class AddressTextField extends StatefulWidget {
   final String hint;
   final String initialValue;
   final ValueChanged<String> onChanged;
@@ -23,15 +23,36 @@ class AddressTextField extends StatelessWidget {
   });
 
   @override
+  State<AddressTextField> createState() => _AddressTextFieldState();
+}
+
+class _AddressTextFieldState extends State<AddressTextField> {
+  late final controller = TextEditingController(text: widget.initialValue);
+
+  @override
+  void didUpdateWidget(covariant AddressTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (controller.text != widget.initialValue) {
+      controller.text = widget.initialValue;
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => Container(
     decoration: cardShadow(context),
     child: TextFormField(
-      initialValue: initialValue,
-      onChanged: onChanged,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
+      controller: controller,
+      onChanged: widget.onChanged,
+      keyboardType: widget.keyboardType,
+      textInputAction: widget.textInputAction,
       style: _fieldStyle(),
-      decoration: addressInputDeco(context, hint: hint),
+      decoration: addressInputDeco(context, hint: widget.hint),
     ),
   );
 }
@@ -63,7 +84,12 @@ class AddressCityDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final value = _cities.contains(selectedCity) ? selectedCity : _cities.first;
+    final cities = [
+      ..._cities,
+      if (!_cities.contains(selectedCity) && selectedCity.isNotEmpty)
+        selectedCity,
+    ];
+    final value = selectedCity.isEmpty ? cities.first : selectedCity;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: cardShadow(context),
@@ -77,7 +103,7 @@ class AddressCityDropdown extends StatelessWidget {
             size: 20.r,
           ),
           style: _fieldStyle(),
-          items: _cities
+          items: cities
               .map((c) => DropdownMenuItem(value: c, child: Text(c)))
               .toList(),
           onChanged: (val) {

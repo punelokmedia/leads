@@ -5,11 +5,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 class StartupLocation {
   final Position? position;
   final String? locationName;
+  final Placemark? placemark;
   final String? message;
   final bool needsSettings;
   const StartupLocation({
     this.position,
     this.locationName,
+    this.placemark,
     this.message,
     this.needsSettings = false,
   });
@@ -48,6 +50,7 @@ final startupLocationProvider = FutureProvider<StartupLocation>((ref) async {
       ),
     );
     String? locationName;
+    Placemark? placemark;
     try {
       final places = await placemarkFromCoordinates(
         position.latitude,
@@ -55,6 +58,7 @@ final startupLocationProvider = FutureProvider<StartupLocation>((ref) async {
       ).timeout(const Duration(seconds: 5));
       if (places.isNotEmpty) {
         final place = places.first;
+        placemark = place;
         final city = place.locality?.trim();
         final parts = [
           place.subLocality,
@@ -77,7 +81,11 @@ final startupLocationProvider = FutureProvider<StartupLocation>((ref) async {
     } catch (_) {
       // A name lookup failure must not prevent GPS-based nearby searches.
     }
-    return StartupLocation(position: position, locationName: locationName);
+    return StartupLocation(
+      position: position,
+      locationName: locationName,
+      placemark: placemark,
+    );
   } catch (_) {
     return const StartupLocation(
       message: 'Could not get your location. Retry or choose a city manually.',

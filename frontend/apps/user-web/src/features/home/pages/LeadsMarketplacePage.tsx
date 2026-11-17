@@ -336,7 +336,7 @@ export function LeadsMarketplacePage() {
       if (payload.code === 'INSUFFICIENT_BALANCE') { navigate('/wallet'); return }
       if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to purchase this lead.')
       window.dispatchEvent(new Event('cart:updated'))
-      navigate('/my-leads')
+      navigate(payload.data?.orderId ? `/payment/success/${payload.data.orderId}` : '/my-leads')
     } catch (error) { setCartFeedback(error instanceof Error ? error.message : 'Purchase failed. Check history before retrying.') }
     finally { setBuyingLeadId(null) }
   }

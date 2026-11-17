@@ -10,7 +10,7 @@ import 'live_store.dart';
 import 'preview_app.dart';
 import '../support/presentation/screens/live_support_screen.dart';
 import '../../core/location/startup_location.dart';
-import 'package:geolocator/geolocator.dart';
+
 import 'package:dio/dio.dart';
 import '../cart/domain/cart_model.dart';
 import '../payments/presentation/widgets/wallet_card.dart' show walletProvider;
@@ -33,7 +33,7 @@ class LiveHome extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final store = ref.watch(liveStoreProvider);
-    final location = ref.watch(startupLocationProvider).asData?.value;
+
     store.support = (supportContext) => Navigator.of(supportContext).push(
       MaterialPageRoute<void>(
         builder: (chatContext) => LiveSupportScreen(
@@ -122,30 +122,7 @@ class LiveHome extends ConsumerWidget {
       }
       if (!detailContext.mounted) return;
       if (failure == null && orderId != null) {
-        await showDialog<void>(
-          context: detailContext,
-          builder: (dialogContext) => AlertDialog(
-            icon: const Icon(Icons.check_circle, color: Colors.green, size: 56),
-            title: const Text(
-              'Payment successful',
-              textAlign: TextAlign.center,
-            ),
-            content: const Text(
-              'Your lead is unlocked. View it in My Leads to access the full details.',
-              textAlign: TextAlign.center,
-            ),
-            actions: [
-              FilledButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('View My Leads'),
-              ),
-            ],
-          ),
-        );
-        if (!detailContext.mounted || !context.mounted) return;
-        Navigator.of(detailContext).pop();
-        context.go(AppRouter.leadsPath);
-        await store.refresh();
+        detailContext.go(AppRouter.paymentsuccessPath, extra: orderId);
         return;
       }
       final data = failure is DioException
@@ -228,51 +205,10 @@ class LiveHome extends ConsumerWidget {
             ),
           );
         }
-        final message =
-            store.locationWarning ??
-            location?.message ??
-            (store.signedIn && location?.position != null
-                ? 'Showing projects within ${store.serviceRadiusKm} km of ${location?.locationName ?? 'your current location'}. Choose a city in Filters to search elsewhere.'
-                : location?.locationName != null
-                ? 'Your location: ${location!.locationName}. Sign in to find nearby projects.'
-                : null);
-        final home = PreviewHome(
+        return PreviewHome(
           key: ObjectKey(store),
           store: store,
           initialPage: initialPage,
-        );
-        if (message == null) return home;
-        return Column(
-          children: [
-            Material(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text(message)),
-                      if (location?.needsSettings == true)
-                        TextButton(
-                          onPressed: Geolocator.openAppSettings,
-                          child: const Text('Settings'),
-                        ),
-                      TextButton(
-                        onPressed: () =>
-                            ref.invalidate(startupLocationProvider),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Expanded(child: home),
-          ],
         );
       },
     );

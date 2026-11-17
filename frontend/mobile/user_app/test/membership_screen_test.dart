@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dio/dio.dart';
+import 'package:user_app/core/network/dio_provider.dart';
+import 'package:user_app/features/preview/live_store.dart';
+import 'package:user_app/features/payments/presentation/widgets/wallet_card.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:user_app/features/preview/membership_dashboard.dart';
@@ -7,6 +11,60 @@ import 'package:user_app/features/preview/preview_app.dart';
 import 'package:user_app/features/preview/preview_data.dart';
 
 void main() {
+  testWidgets(
+    'membership payment displays backend failure instead of a generic initiation error',
+    (tester) async {
+      final dio = Dio();
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (request, handler) {
+            handler.reject(
+              DioException(
+                requestOptions: request,
+                response: Response(
+                  requestOptions: request,
+                  statusCode: 503,
+                  data: {
+                    'success': false,
+                    'message': 'Payments unavailable on this server.',
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      );
+      final store = LiveStore(dio, signedIn: true);
+      store.profile['Full name'] = 'Test Member';
+      addTearDown(store.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            dioProvider.overrideWithValue(dio),
+            walletProvider.overrideWith((ref) async => {'balancePaise': 0}),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: NextLeadMembership(
+                store: store,
+                onWallet: () {},
+                onNotifications: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.textContaining('Upgrade to Pro'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Upgrade to Pro'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add ₹499 & Activate'));
+      await tester.pumpAndSettle();
+      expect(find.text('Payments unavailable on this server.'), findsOneWidget);
+      expect(find.text('Membership activated!'), findsNothing);
+    },
+  );
   testWidgets(
     'active member can open the WhatsApp channel below membership status',
     (tester) async {

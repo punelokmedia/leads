@@ -36,6 +36,7 @@ export const router = createBrowserRouter(loadingBoundaries([
       { path: 'leads/:leadId', lazy: async () => ({ Component: (await import('@/features/home/pages/LeadDetailsPage')).LeadDetailsPage }) },
       ...['cart', 'my-leads', 'signup', 'forgot-password', 'forgot-password/verify', 'forgot-password/reset'].map(path => ({ path, element: null })),
       { path: 'history', element: <Navigate to="/my-leads" replace /> },
+      ...['orders/:orderId', 'payment/success/:orderId'].map(path => ({ path, lazy: async () => ({ Component: (await import('@/features/home/pages/OrderDetailsPage')).OrderDetailsPage }) })),
       { path: 'profile', lazy: async () => ({ Component: (await import('@/features/profile/pages/ProfilePage')).ProfilePage }) },
       { path: 'wallet', lazy: async () => ({ Component: (await import('@/features/wallet/pages/WalletPage')).WalletPage }) },
       { path: 'wallet/success/:topupId', lazy: async () => ({ Component: (await import('@/features/wallet/pages/WalletSuccessPage')).WalletSuccessPage }) },

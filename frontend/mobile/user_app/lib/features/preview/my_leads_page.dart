@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'figma_widgets.dart';
 import 'preview_data.dart';
+import '../payments/presentation/widgets/receipt_button.dart';
 
 class MyLeadsPage extends StatefulWidget {
   final PreviewStore store;
@@ -118,11 +119,17 @@ class _MyLeadsPageState extends State<MyLeadsPage> {
                     ),
                   ),
                 ...shown.map(
-                  (l) => FigmaLeadCard(
-                    lead: l,
-                    store: widget.store,
-                    purchased: true,
-                    onTap: () => widget.onLead(l),
+                  (l) => Column(
+                    children: [
+                      FigmaLeadCard(
+                        lead: l,
+                        store: widget.store,
+                        purchased: true,
+                        onTap: () => widget.onLead(l),
+                      ),
+                      if (widget.store.isLive)
+                        ReceiptButton(leadId: l.backendId),
+                    ],
                   ),
                 ),
               ],

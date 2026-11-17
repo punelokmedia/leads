@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:user_app/core/network/dio_provider.dart';
+import 'package:user_app/core/errors/error_handler.dart';
 import 'package:user_app/core/utils/snackbar_helper.dart';
 import 'package:user_app/features/payments/presentation/widgets/wallet_card.dart';
 import 'preview_data.dart';
@@ -168,10 +169,7 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
       }
     } catch (e) {
       if (mounted) {
-        SnackbarHelper.showError(
-          context,
-          'Wallet balance insufficient. Please add money and retry.',
-        );
+        SnackbarHelper.showError(context, ErrorHandler.handle(e).message);
       }
     } finally {
       if (mounted) setState(() => _upgrading = false);
@@ -412,13 +410,10 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
         'name': 'NextLeads',
         'description': 'Pro Membership App Access Fee',
       });
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         setState(() => _upgrading = false);
-        SnackbarHelper.showError(
-          context,
-          'Unable to initiate payment. Please retry.',
-        );
+        SnackbarHelper.showError(context, ErrorHandler.handle(error).message);
       }
     }
   }

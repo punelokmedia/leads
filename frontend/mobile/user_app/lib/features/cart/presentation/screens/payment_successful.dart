@@ -1,11 +1,9 @@
-import 'dart:io';
+import '../../../payments/presentation/widgets/receipt_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../../../app/app_router.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -81,16 +79,7 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen> {
     if (downloading) return;
     setState(() => downloading = true);
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final id = widget.orderId.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
-      final file = File('${directory.path}/Receipt_$id.txt');
-      await file.writeAsString(
-        'NextLead — Payment Receipt\n\nOrder: ${widget.orderId}\nStatus: PAID\n'
-        'Amount: ${_money(order['totalAmount'] as num)}\nPaid at: ${order['paidAt'] ?? 'Not provided'}\n'
-        'Payment method: ${order['paymentMethod'] ?? 'Not provided'}\n\n'
-        '${(order['items'] as List).map((item) => '${item['title']} — ${_money(item['total'] as num? ?? item['price'] as num? ?? 0)}').join('\n')}\n',
-      );
-      await OpenFilex.open(file.path);
+      await savePaymentReceipt(ref.read(dioProvider), widget.orderId);
       if (mounted) {
         ScaffoldMessenger.of(
           context,

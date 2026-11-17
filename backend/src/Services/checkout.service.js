@@ -6,6 +6,7 @@ import { qualifyReferral } from './referral.service.js';
 import mongoose from 'mongoose';
 import { Lead } from '../Models/leads.model.js';
 import { Order } from '../Models/orders.models.js';
+import { Category } from '../Models/category.model.js';
 import { Cart } from '../Models/cart.mode.js';
 import { LeadPurchase } from '../Models/lead.purchase.model.js';
 import { PaymentRefund } from '../Models/payment-refund.model.js';
@@ -74,7 +75,11 @@ export async function reserveCheckout(userId, selectedIds, walletCheckout = fals
         const status = current ? inventory(current, now).status : 'MISSING';
         throw new CheckoutError(status, status === 'SOLD_OUT' ? 'Out of stock: two buyers already purchased this lead.' : status === 'EXPIRED' ? 'This lead has expired.' : status === 'MISSING' ? 'This lead is no longer available. Review your cart.' : 'Currently unavailable: checkout slots are reserved. Please try later.');
       }
-      lines.push({ lead: lead._id, quantity: 1, price: lead.price });
+      const category = await Category.findById(lead.category).select('name').session(session);
+      lines.push({ lead: lead._id, quantity: 1, price: lead.price,
+        title: lead.title, categoryName: category?.name,
+        serviceLocation: [lead.areaLocality, lead.city, lead.state].filter(Boolean).join(', '),
+      });
     }
     const totalAmount = Math.round(lines.reduce((total, line) => total + line.price, 0) * 100) / 100;
     if (expectedTotalPaise !== undefined && Math.round(totalAmount * 100) !== expectedTotalPaise) throw new CheckoutError('PRICE_CHANGED', 'The cart price has changed. Review your cart before paying again.');

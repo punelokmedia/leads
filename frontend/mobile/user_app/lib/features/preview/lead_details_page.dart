@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../payments/presentation/widgets/receipt_button.dart';
 import 'package:flutter/services.dart';
 
 import 'dart:ui' as ui;
@@ -7,6 +8,7 @@ import 'category_media.dart';
 import 'business_details_page.dart' show accountText;
 import 'profile_design.dart' show profileBackground;
 import 'preview_data.dart';
+import 'owned_lead_details_page.dart';
 
 class LeadDetailsPreview extends StatelessWidget {
   final PreviewLead lead;
@@ -100,6 +102,13 @@ class LeadDetailsPreview extends StatelessWidget {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: store,
     builder: (context, _) {
+      if (store.isLive && lead.joined && clientDetails == null) {
+        return OwnedLeadDetailsPage(
+          lead: lead,
+          store: store,
+          categoryName: categoryName,
+        );
+      }
       final requirements = lead.description
           .split(RegExp(r'(?<=[.!?])\s+|\n+'))
           .where((item) => item.trim().isNotEmpty)
@@ -197,6 +206,8 @@ class LeadDetailsPreview extends StatelessWidget {
                     clientDetails == null
                         ? _clientPanel()
                         : _unlockedClientPanel(),
+                    if (store.isLive && lead.joined)
+                      ReceiptButton(leadId: lead.backendId),
                     const SizedBox(height: 16),
                     _heading('Project Requirements'),
                     const SizedBox(height: 10),

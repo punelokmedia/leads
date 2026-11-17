@@ -20,6 +20,9 @@ const OrderSchema = new mongoose.Schema(
           type: Number,
           required: true,
         },
+        title: String,
+        categoryName: String,
+        serviceLocation: String,
         quantity: { 
           type: Number,
           required: true,
@@ -55,6 +58,7 @@ const OrderSchema = new mongoose.Schema(
 
     paymentMethod: { type: String, enum: ['RAZORPAY', 'WALLET'], default: 'RAZORPAY' },
     paidAt: Date,
+    receiptSnapshot: mongoose.Schema.Types.Mixed,
     reservationExpiresAt: Date,
     cartHash: String,
     fulfillmentVersion: Number,

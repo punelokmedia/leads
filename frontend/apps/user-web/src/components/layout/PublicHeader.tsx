@@ -1,4 +1,5 @@
 import './cart.css'
+import { ReceiptButton } from '@/components/ReceiptButton'
 import './signup.css'
 import { animateWindowClose } from './motion'
 import { apiFetch } from '@/features/auth/session'
@@ -514,7 +515,7 @@ export function PublicHeader() {
       setPanelMode('history')
       await fetchHistoryLeads()
       const orderId = payload.data?.orderId
-      if (orderId) { setDownloadOrderId(String(orderId)) }
+      if (orderId) { setDownloadOrderId(String(orderId)); setPanelMode(null); navigate(`/payment/success/${orderId}`) }
     } catch (error) {
       await fetchCart()
       setAuthError(error instanceof Error ? error.message : 'Wallet purchase failed. Review your cart before retrying.')
@@ -1155,7 +1156,7 @@ export function PublicHeader() {
                       <div className="my-lead-card-heading"><img src={getLeadPreviewImage(lead.id)} alt="" /><div><h3><button type="button" onClick={() => navigate(`/leads/${lead.id}`)}>{lead.title}</button></h3><p>⌖ {lead.city}</p></div><span className="my-lead-paid">{lead.status}</span></div>
                       <div className="my-lead-customer"><div className="my-lead-customer-title"><span>Customer Details</span><span className="my-lead-unlocked">✓ Unlocked</span></div><h4>{lead.customerName || 'Name not provided'}</h4><p>{lead.address || 'Address not provided'}</p><a className="my-lead-phone" href={lead.phone === 'N/A' ? undefined : `tel:${lead.phone}`}>{lead.phone}</a></div>
                       <div className="my-lead-purchase"><div><span>Purchased for</span><strong>₹{lead.price.toLocaleString('en-IN')}</strong></div><time dateTime={lead.paidAt}>{new Date(lead.paidAt).toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short', timeZone:'Asia/Kolkata' })} IST</time></div>
-                      <div className="my-lead-card-actions"><button type="button" onClick={() => navigate(`/leads/${lead.id}`)}>View Lead Details →</button><button type="button" disabled={lead.isDownloaded} onClick={() => void handleDownloadLead(lead.orderId || lead.id)}>{lead.isDownloaded ? 'Excel downloaded' : 'Download Excel ↓'}</button></div>
+                      <div className="my-lead-card-actions"><button type="button" onClick={() => navigate(`/leads/${lead.id}`)}>View Lead Details →</button><button type="button" disabled={lead.isDownloaded} onClick={() => void handleDownloadLead(lead.orderId || lead.id)}>{lead.isDownloaded ? 'Excel downloaded' : 'Download Excel ↓'}</button>{lead.status === 'PAID' && <><ReceiptButton orderId={lead.orderId} /><button type="button" onClick={() => { setPanelMode(null); navigate(`/orders/${lead.orderId}`) }}>Order Details</button></>}</div>
                     </article>
                   ))}
                 </div>

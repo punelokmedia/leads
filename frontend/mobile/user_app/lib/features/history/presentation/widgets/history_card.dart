@@ -10,6 +10,7 @@ import 'package:user_app/core/widgets/app_network_image.dart';
 import 'package:user_app/features/cart/shared/cart_providers.dart';
 import '../../domain/history_model.dart';
 import 'history_status_badge.dart';
+import '../../../payments/presentation/widgets/receipt_button.dart';
 
 class HistoryCard extends StatelessWidget {
   final HistoryModel item;
@@ -55,6 +56,7 @@ class HistoryCard extends StatelessWidget {
               ),
               child: _CardDetails(item: item),
             ),
+            if (item.status == 'PAID') ReceiptButton(orderId: item.orderId),
           ],
         ),
       ),
