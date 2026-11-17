@@ -34,7 +34,7 @@ function HomeLandingPage() {
       if (!motion.matches && !document.hidden && !carousel.current?.matches(':hover') && !carousel.current?.contains(document.activeElement)) {
         setActiveSlide(slide => (slide + 1) % 2)
       }
-    }, 6000)
+    }, 4000)
     return () => window.clearInterval(timer)
   }, [heroState, activeSlide])
 

@@ -233,6 +233,13 @@ class PreviewStore extends ChangeNotifier {
       updateProfile(details);
   Future<void> refresh() async {}
   Future<void> Function(BuildContext, PreviewLead)? checkout;
+  Future<void> Function(BuildContext, PreviewLead)? unlock;
+  bool leadActionBusy = false;
+  void setLeadActionBusy(bool value) {
+    leadActionBusy = value;
+    notifyListeners();
+  }
+
   void Function(BuildContext)? support;
   void Function(BuildContext)? account;
   PreviewStore.empty() {

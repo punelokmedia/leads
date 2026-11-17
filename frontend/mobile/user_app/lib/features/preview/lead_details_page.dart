@@ -45,7 +45,7 @@ class LeadDetailsPreview extends StatelessWidget {
 
   Future<void> _unlock(BuildContext context) async {
     if (store.isLive) {
-      await store.checkout?.call(context, lead);
+      await store.unlock?.call(context, lead);
       return;
     }
     final result = await showDialog<String>(
@@ -268,7 +268,8 @@ class LeadDetailsPreview extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       FilledButton(
-                        onPressed: lead.joined || lead.closed
+                        onPressed:
+                            lead.joined || lead.closed || store.leadActionBusy
                             ? null
                             : () => _unlock(context),
                         style: FilledButton.styleFrom(
@@ -301,6 +302,8 @@ class LeadDetailsPreview extends StatelessWidget {
                                     ? 'Lead Unlocked'
                                     : lead.closed
                                     ? lead.availabilityLabel
+                                    : store.leadActionBusy
+                                    ? 'Processing…'
                                     : 'Unlock Lead',
                               ),
                             ),
@@ -319,6 +322,34 @@ class LeadDetailsPreview extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (!lead.joined && !lead.closed) ...[
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: store.leadActionBusy
+                              ? null
+                              : () async {
+                                  if (store.isLive) {
+                                    await store.checkout?.call(context, lead);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Cart is available after signing in.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                          icon: const Icon(Icons.add_shopping_cart_outlined),
+                          label: const Text('Add to Cart'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _blue,
+                            minimumSize: const Size(double.infinity, 48),
+                            side: const BorderSide(color: _blue),
+                            shape: const StadiumBorder(),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       Text(
                         'One time payment · Get full access to this lead',

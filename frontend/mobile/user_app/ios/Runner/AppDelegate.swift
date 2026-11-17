@@ -19,7 +19,8 @@ import UIKit
       guard call.method == "open" else { result(FlutterMethodNotImplemented); return }
       guard let args = call.arguments as? [String: Any],
             let value = args["url"] as? String, let url = URL(string: value),
-            url.scheme == "tel" || url.scheme == "sms" || (url.scheme == "https" && url.host == "wa.me") else {
+            url.scheme == "tel" || url.scheme == "sms" || (url.scheme == "https" && url.host == "wa.me") ||
+              (url.scheme == "https" && url.host == "whatsapp.com" && url.path == "/channel/0029VbDk1WOFSAtCeBnE8q3e") else {
         result(FlutterError(code: "INVALID_URL", message: "Unsupported contact action", details: nil))
         return
       }

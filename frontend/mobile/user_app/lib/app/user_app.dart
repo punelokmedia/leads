@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../core/network/session_events.dart';
+import '../core/location/startup_location.dart';
 import '../features/auth/shared/auth_providers.dart';
 import '../features/profile/infra/profile_repository.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
@@ -12,6 +13,7 @@ class UserApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(startupLocationProvider);
     ref.listen(sessionExpiredProvider, (previous, next) {
       ref.read(isLoggedInProvider.notifier).markSessionExpired();
       ref.invalidate(authControllerProvider);

@@ -24,6 +24,8 @@ class MainActivity : FlutterActivity() {
                     uri.scheme == "tel" -> Intent.ACTION_DIAL
                     uri.scheme == "sms" -> Intent.ACTION_SENDTO
                     uri.scheme == "https" && uri.host == "wa.me" -> Intent.ACTION_VIEW
+                    uri.scheme == "https" && uri.host == "whatsapp.com" &&
+                        uri.path == "/channel/0029VbDk1WOFSAtCeBnE8q3e" -> Intent.ACTION_VIEW
                     else -> null
                 }
                 if (action == null) {

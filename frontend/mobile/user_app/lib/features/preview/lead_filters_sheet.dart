@@ -442,8 +442,6 @@ class _LeadFiltersSheetState extends State<LeadFiltersSheet> {
     shape: const StadiumBorder(),
   );
   InputDecoration _decoration(String hint) => InputDecoration(
-    filled: true,
-    fillColor: Colors.white,
     hintText: hint,
     isDense: true,
     hintStyle: const TextStyle(color: Color(0xFF9EB2DB), fontSize: 14),
@@ -468,8 +466,7 @@ class _LeadFiltersSheetState extends State<LeadFiltersSheet> {
               controller: item.$1,
               keyboardType: TextInputType.number,
               onChanged: (_) => setState(() {}),
-              style: const TextStyle(color: figmaInk, fontSize: 14),
-              cursorColor: figmaBlue,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: _decoration(item.$2),
             ),
           ),

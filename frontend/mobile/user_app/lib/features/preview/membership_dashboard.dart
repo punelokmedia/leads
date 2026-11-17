@@ -1,5 +1,6 @@
 import 'figma_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
@@ -32,6 +33,63 @@ class NextLeadMembership extends ConsumerStatefulWidget {
 }
 
 class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
+  static const _whatsappChannel =
+      'https://whatsapp.com/channel/0029VbDk1WOFSAtCeBnE8q3e';
+
+  Future<void> _joinWhatsAppChannel() async {
+    try {
+      await const MethodChannel(
+        'nextlead/contact',
+      ).invokeMethod<void>('open', {'url': _whatsappChannel});
+    } catch (_) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Open WhatsApp Channel'),
+          content: const SelectableText(
+            'Could not open the channel. Copy this link and open it in your browser:\n\n$_whatsappChannel',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _showWhatsAppInvitation() async {
+    final join = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(
+          Icons.chat_outlined,
+          color: Color(0xFF128C7E),
+          size: 52,
+        ),
+        title: const Text('Membership activated!', textAlign: TextAlign.center),
+        content: const Text(
+          'Join our WhatsApp channel for the latest lead updates. Tap Follow when the channel opens.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Later'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Join WhatsApp Channel'),
+          ),
+        ],
+      ),
+    );
+    if (join == true && mounted) await _joinWhatsAppChannel();
+  }
+
   bool _upgrading = false;
   late final Razorpay _razorpay;
 
@@ -87,17 +145,26 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
     setState(() => _upgrading = true);
     try {
       if (widget.store.isLive) {
-        await ref.read(dioProvider).post('api/v1/wallet/membership');
+        final response = await ref
+            .read(dioProvider)
+            .post('api/v1/wallet/membership');
+        if (response.data['success'] != true ||
+            response.data['data']?['status'] != 'PAID') {
+          throw StateError('Membership activation is not confirmed.');
+        }
         ref.invalidate(walletProvider);
-        await widget.store.refresh();
+        widget.store.activateMembership();
       } else {
         widget.store.activateMembership();
       }
       if (mounted) {
+        setState(() => _upgrading = false);
         SnackbarHelper.showSuccess(
           context,
           'Pro Membership activated successfully! Full app access unlocked.',
         );
+        await _showWhatsAppInvitation();
+        if (widget.store.isLive) await widget.store.refresh();
       }
     } catch (e) {
       if (mounted) {
@@ -798,6 +865,35 @@ class _NextLeadMembershipState extends ConsumerState<NextLeadMembership> {
                 ],
               ),
             ),
+            if (isPro) ...[
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _joinWhatsAppChannel,
+                    icon: const Icon(Icons.chat_outlined),
+                    label: const Text('Join WhatsApp Channel'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF128C7E),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
+                child: Text(
+                  'Follow our channel for the latest lead updates.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),

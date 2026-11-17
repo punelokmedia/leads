@@ -4,12 +4,20 @@ import 'package:flutter/material.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/errors/error_handler.dart';
 import 'preview_data.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// API-backed state for the shared design. Never seeds preview fixtures.
 class LiveStore extends PreviewStore {
   final Dio dio;
   final bool signedIn;
-  LiveStore(this.dio, {required this.signedIn}) : super.empty();
+  final Position? startupPosition;
+  bool _nearbyReady = false;
+  String? locationWarning;
+  LiveStore(this.dio, {required this.signedIn, this.startupPosition})
+    : super.empty();
+
+  Map<String, dynamic> get _nearbyQuery =>
+      _nearbyReady ? {'nearby': 'true', 'radiusKm': serviceRadiusKm} : {};
   @override
   bool get isLive => true;
   @override
@@ -38,6 +46,12 @@ class LiveStore extends PreviewStore {
     if (!_disposed) notifyListeners();
   }
 
+  @override
+  void setLeadActionBusy(bool value) {
+    leadActionBusy = value;
+    _notify();
+  }
+
   Future<Map<String, dynamic>> _get(
     String path, {
     Map<String, dynamic>? query,
@@ -55,12 +69,43 @@ class LiveStore extends PreviewStore {
     error = null;
     _notify();
     try {
+      if (signedIn && startupPosition != null) {
+        try {
+          final response = await dio.put(
+            'api/v1/auth/mobile/permissions',
+            data: {
+              'location': 'granted',
+              'latitude': startupPosition!.latitude,
+              'longitude': startupPosition!.longitude,
+            },
+          );
+          _nearbyReady = response.data['success'] == true;
+          locationWarning = _nearbyReady
+              ? null
+              : 'Could not enable nearby results. Choose a city or retry.';
+        } catch (_) {
+          _nearbyReady = false;
+          locationWarning =
+              'Could not enable nearby results. Choose a city or retry.';
+        }
+      }
+      if (_disposed) return;
+      final profileResponse = signedIn
+          ? await _get(ApiEndpoints.fetchProfile)
+          : null;
+      if (_disposed) return;
+      if (profileResponse != null) {
+        _setProfile(Map<String, dynamic>.from(profileResponse['data']));
+      }
       final results = await Future.wait([
         _get(ApiEndpoints.getAllCategories),
         _get(ApiEndpoints.getAllCities),
-        if (signedIn) _get(ApiEndpoints.fetchProfile),
+        if (signedIn) Future.value(profileResponse!),
         if (signedIn) _get(ApiEndpoints.history),
-        _get(ApiEndpoints.getAllLeads, query: {'page': 1, 'limit': 50}),
+        _get(
+          ApiEndpoints.getAllLeads,
+          query: {..._nearbyQuery, 'page': 1, 'limit': 50},
+        ),
       ]);
       final rawCategories = List<Map<String, dynamic>>.from(results[0]['data']);
       final rows = <Map<String, dynamic>>[];
@@ -74,7 +119,7 @@ class LiveStore extends PreviewStore {
         if (_disposed) return;
         result = await _get(
           ApiEndpoints.getAllLeads,
-          query: {'page': page, 'limit': 50},
+          query: {..._nearbyQuery, 'page': page, 'limit': 50},
         );
       }
       await _loadPurchased(rows);
@@ -222,6 +267,7 @@ class LiveStore extends PreviewStore {
     filtering = true;
     _notify();
     final query = <String, dynamic>{
+      if (filters.city == 'All Cities') ..._nearbyQuery,
       if (filters.city != 'All Cities') 'city': filters.city,
       if (filters.category != null && filters.category! < _categoryIds.length)
         'category': _categoryIds[filters.category!],
@@ -391,6 +437,7 @@ class LiveStore extends PreviewStore {
     if (_disposed) return;
     _setProfile(Map<String, dynamic>.from(response.data['data']));
     _notify();
+    if (_nearbyReady) await refresh();
   }
 
   @override

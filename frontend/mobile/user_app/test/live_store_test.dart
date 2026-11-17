@@ -2,6 +2,7 @@ import 'package:user_app/features/preview/lead_filters_sheet.dart';
 import 'dart:async';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:dio/dio.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:user_app/features/home/presentation/widgets/home_banner_carousel.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -72,6 +73,8 @@ void main() {
               'customerName': 'Paid client',
               'primaryPhone': '9123456789',
             };
+          } else if (request.path.endsWith('mobile/permissions')) {
+            data = {};
           } else if (request.path.endsWith('update-profile')) {
             data = request.data;
           } else if (request.path.endsWith('profile')) {
@@ -99,6 +102,77 @@ void main() {
       ),
     );
   });
+
+  Position gpsPosition() => Position(
+    latitude: 18.5,
+    longitude: 73.8,
+    timestamp: DateTime(2026),
+    accuracy: 10,
+    altitude: 0,
+    altitudeAccuracy: 0,
+    heading: 0,
+    headingAccuracy: 0,
+    speed: 0,
+    speedAccuracy: 0,
+  );
+
+  test(
+    'GPS coordinates are saved before nearby pages and explicit city overrides GPS',
+    () async {
+      final store = LiveStore(
+        dio,
+        signedIn: true,
+        startupPosition: gpsPosition(),
+      );
+      addTearDown(store.dispose);
+      await store.refresh();
+      expect(store.error, isNull);
+      final consent = requests.indexWhere(
+        (r) => r.path.endsWith('mobile/permissions'),
+      );
+      final pages = requests
+          .where((r) => r.path.endsWith('get-all-leads'))
+          .toList();
+      expect(requests[consent].data, {
+        'location': 'granted',
+        'latitude': 18.5,
+        'longitude': 73.8,
+      });
+      expect(consent, lessThan(requests.indexOf(pages.first)));
+      expect(pages, hasLength(2));
+      for (final page in pages) {
+        expect(page.queryParameters['nearby'], 'true');
+        expect(page.queryParameters['radiusKm'], 25);
+      }
+      await store.applyFilters(const LeadFilters(city: 'Pune'));
+      final cityQuery = requests
+          .lastWhere((r) => r.path.endsWith('get-all-leads'))
+          .queryParameters;
+      expect(cityQuery['city'], 'Pune');
+      expect(cityQuery.containsKey('nearby'), isFalse);
+    },
+  );
+
+  test(
+    'failed coordinate upload falls back to city search with a visible warning',
+    () async {
+      rejectSave = true;
+      final store = LiveStore(
+        dio,
+        signedIn: true,
+        startupPosition: gpsPosition(),
+      );
+      addTearDown(store.dispose);
+      await store.refresh();
+      expect(store.error, isNull);
+      expect(store.locationWarning, isNotNull);
+      for (final request in requests.where(
+        (r) => r.path.endsWith('get-all-leads'),
+      )) {
+        expect(request.queryParameters.containsKey('nearby'), isFalse);
+      }
+    },
+  );
 
   test(
     'first lead page starts before metadata and concurrent refresh is deduplicated',

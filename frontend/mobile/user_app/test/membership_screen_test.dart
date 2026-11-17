@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:user_app/features/preview/membership_dashboard.dart';
@@ -6,6 +7,91 @@ import 'package:user_app/features/preview/preview_app.dart';
 import 'package:user_app/features/preview/preview_data.dart';
 
 void main() {
+  testWidgets(
+    'active member can open the WhatsApp channel below membership status',
+    (tester) async {
+      final store = PreviewStore()..activateMembership();
+      addTearDown(store.dispose);
+      final opened = <MethodCall>[];
+      const channel = MethodChannel('nextlead/contact');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+        call,
+      ) async {
+        opened.add(call);
+      });
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          null,
+        ),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: NextLeadMembership(
+                store: store,
+                onWallet: () {},
+                onNotifications: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final join = find.text('Join WhatsApp Channel');
+      await tester.scrollUntilVisible(
+        join,
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(join);
+      await tester.pumpAndSettle();
+      await tester.tap(join);
+      await tester.pumpAndSettle();
+      expect(opened.single.method, 'open');
+      expect(
+        opened.single.arguments['url'],
+        'https://whatsapp.com/channel/0029VbDk1WOFSAtCeBnE8q3e',
+      );
+    },
+  );
+
+  testWidgets('membership activation invites the user to follow the channel', (
+    tester,
+  ) async {
+    final store = PreviewStore();
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: NextLeadMembership(
+              store: store,
+              onWallet: () {},
+              onNotifications: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Join WhatsApp Channel'), findsNothing);
+    await tester.ensureVisible(find.textContaining('Upgrade to Pro'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Upgrade to Pro'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pay ₹499 & Activate Pro'));
+    await tester.pumpAndSettle();
+    expect(store.isProMember, isTrue);
+    expect(find.text('Membership activated!'), findsOneWidget);
+    expect(find.textContaining('Tap Follow'), findsOneWidget);
+    await tester.tap(find.text('Later'));
+    await tester.pumpAndSettle();
+    expect(find.text('Membership activated!'), findsNothing);
+    expect(find.text('Join WhatsApp Channel'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets(
     'New membership layout fits small phones and shows active status',
     (tester) async {
