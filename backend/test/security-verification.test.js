@@ -18,10 +18,17 @@ import { Order } from '../src/Models/orders.models.js';
 import { creditCapturedTopup, walletTransaction } from '../src/Services/wallet.service.js';
 import { purchaseWithWallet } from '../src/Services/checkout.service.js';
 import { applyReferral, qualifyReferral } from '../src/Services/referral.service.js';
+import { setTwilioFetch } from '../src/Services/sms-verification.js';
 
 // This suite never connects to the configured Atlas database or payment network.
 Object.assign(process.env, { NODE_ENV: 'production', JWT_SECRET: 'verification-jwt-only', RAZORPAY_KEY_ID: 'rzp_test_verification', RAZORPAY_KEY_SECRET: 'verification-gateway-only', RAZORPAY_WEBHOOK_SECRET: 'verification-webhook-only', RESEND_API_KEY: 're_test_only', WALLET_LEDGER_HMAC_KEY: 'verification-ledger-key-at-least-32-bytes', WALLET_REFERRAL_MIN_PURCHASE_PAISE: '5000' });
 delete process.env.VERCEL;
+// Twilio Verify is faked: no SMS or provider call can leave this suite.
+Object.assign(process.env, { TWILIO_VERIFY_SERVICE_SID: 'VAverification', TWILIO_API_KEY_SID: 'SKverification', TWILIO_API_KEY_SECRET: 'verification-only' });
+delete process.env.SMS_PROVIDER; delete process.env.TWILIO_VERIFY_PHONE_CHANGE_SERVICE_SID;
+setTwilioFetch(async () => { throw new Error('Unexpected Twilio call blocked by verification suite'); });
+const twilioApproves = (phone, sid) => setTwilioFetch(async (_url, { body }) => ({ status: 200, ok: true, json: async () => ({ sid, to: '+91' + phone, status: new URLSearchParams(body).get('Code') === '123456' ? 'approved' : 'pending', valid: new URLSearchParams(body).get('Code') === '123456' }) }));
+const otpBinding = (user, purpose, phoneNumber, sid, expiresInMs = 60000) => ({ purpose, phoneNumber, userId: user._id, provider: 'twilio', verificationSid: sid, sentAt: new Date(), expiresAt: new Date(Date.now() + expiresInMs) });
 let mongo, server, base, gateway;
 let number = 0;
 const vendor = name => User.create({ firstname: name, lastname: 'Test', email: `${name}${++number}@example.invalid` });
@@ -93,13 +100,16 @@ test('VER-02 JWT validation, admin authorization and blocked-account access', as
 
 test('VER-03 mobile OTP expires, is consumed after success and attempts are limited', async () => {
   const a = await vendor('otp');
-  await User.updateOne({ _id: a.id }, { $set: { phoneNumber: '9876543201', loginOtp: '1234', loginOtpExpire: new Date(Date.now() - 1000) } });
-  assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '1234' })).status, 400);
-  await User.updateOne({ _id: a.id }, { $set: { loginOtpExpire: new Date(Date.now() + 60000) } });
-  assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '1234' })).status, 200);
-  assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '1234' })).status, 400);
-  for (let i = 0; i < 2; i++) assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '9999' })).status, 400);
-  assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '9999' })).status, 429);
+  const restore = twilioApproves('9876543201', 'VEver03');
+  try {
+    await User.updateOne({ _id: a.id }, { $set: { phoneNumber: '9876543201', phoneVerification: otpBinding(a, 'LOGIN', '9876543201', 'VEver03', -1000) } });
+    assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '123456' })).status, 400);
+    await User.updateOne({ _id: a.id }, { $set: { 'phoneVerification.expiresAt': new Date(Date.now() + 60000) } });
+    assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '123456' })).status, 200);
+    assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '123456' })).status, 400);
+    for (let i = 0; i < 2; i++) assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '999999' })).status, 400);
+    assert.equal((await call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543201', otp: '999999' })).status, 429);
+  } finally { restore(); }
 });
 
 test('VER-04 real app parser, CORS, prototype/operator and content-type probes', async () => {
@@ -242,7 +252,9 @@ test('VER-14 logout invalidates a previously issued token (security expectation)
 
 test('VER-15 concurrent use of one mobile OTP issues at most one session (security expectation)', async t => {
   const a = await vendor('otpRace');
-  await User.updateOne({ _id: a.id }, { $set: { phoneNumber: '9876543202', loginOtp: '2468', loginOtpExpire: new Date(Date.now() + 60000) } });
+  await User.updateOne({ _id: a.id }, { $set: { phoneNumber: '9876543202', phoneVerification: otpBinding(a, 'LOGIN', '9876543202', 'VEver15') } });
+  // Worst case: the provider approves both concurrent checks; the atomic local consume must still allow one session.
+  t.after(twilioApproves('9876543202', 'VEver15'));
   // Deterministic slow-read barrier: both legitimate concurrent requests read the
   // OTP before either saves. No authentication result or database value is faked.
   const original = User.findOne.bind(User);
@@ -253,7 +265,7 @@ test('VER-15 concurrent use of one mobile OTP issues at most one session (securi
     if (filter.phoneNumber === '9876543202') { if (++reads === 2) release(); await barrier; }
     return document;
   });
-  const results = await Promise.all(Array.from({ length: 2 }, () => call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543202', otp: '2468' })));
+  const results = await Promise.all(Array.from({ length: 2 }, () => call('/auth/mobile/verify-otp', null, { phoneNumber: '9876543202', otp: '123456' })));
   assert.equal(results.filter(result => result.status === 200).length, 1, 'Concurrent OTP submissions both issued sessions');
 });
 
@@ -365,10 +377,11 @@ test('FIX-20 audit failure rolls back promotion; success records actor, target a
   assert.equal(audit.detail.action, 'ADMIN_ROLE_PROMOTED'); assert.ok(audit.detail.timestamp);
 });
 
-test('FIX-15 authenticated phone verification also consumes an OTP once', async () => {
+test('FIX-15 authenticated phone verification also consumes an OTP once', async t => {
   const a = await vendor('sessionOtp');
-  await User.updateOne({ _id: a.id }, { $set: { pendingPhoneNumber: '9876543297', loginOtp: '1357', loginOtpExpire: new Date(Date.now() + 60000) } });
-  const responses = await Promise.all(Array.from({ length: 2 }, () => call('/auth/mobile/verify-otp-session', a, { phoneNumber: '9876543297', otp: '1357' })));
+  await User.updateOne({ _id: a.id }, { $set: { phoneVerification: otpBinding(a, 'PHONE_CHANGE', '9876543297', 'VEfix15') } });
+  t.after(twilioApproves('9876543297', 'VEfix15'));
+  const responses = await Promise.all(Array.from({ length: 2 }, () => call('/auth/mobile/verify-otp-session', a, { phoneNumber: '9876543297', otp: '123456' })));
   assert.equal(responses.filter(result => result.status === 200).length, 1);
   assert.equal((await User.findById(a.id)).phoneNumber, '9876543297');
 });

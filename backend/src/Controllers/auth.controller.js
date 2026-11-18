@@ -1,6 +1,18 @@
 import { OAuthHandoff } from '../Models/oauth-handoff.model.js';
 import { MEMBERSHIP_PRICE_INR } from '../Config/membership.js';
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import {
+  PHONE_OTP_PURPOSE,
+  PHONE_OTP_TTL_MS,
+  PHONE_OTP_RESEND_COOLDOWN_MS,
+  SmsProviderError,
+  phoneOtpProvider,
+  startTwilioVerification,
+  checkTwilioVerification,
+  createLocalCode,
+  hashLocalCode,
+} from "../Services/sms-verification.js";
 import crypto from "crypto";
 import { User } from "../Models/user.model.js";
 import { hashPassword, comparePassword } from "../Utils/hash.js";
@@ -20,8 +32,6 @@ const normalizeIndianPhone = (phoneNumber = "") => {
 
 const buildMobilePlaceholderEmail = (phoneNumber) =>
   `${phoneNumber}.${Date.now()}@mobile.nextleads.local`;
-const MOBILE_OTP_TTL_MS = 30 * 60 * 1000;
-const MOBILE_OTP_RESEND_COOLDOWN_MS = 30 * 1000;
 const REGISTRATION_FEE_AMOUNT_INR = MEMBERSHIP_PRICE_INR;
 const RAZORPAY_PUBLIC_KEY =
   process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || "";
@@ -437,7 +447,7 @@ const getUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).select("-password -resetOtp -resetOtpExpire -loginOtp -loginOtpExpire -pendingPhoneNumber -sessionVersion -registrationPayment.razorpaySignature").lean();
+    const user = await User.findById(userId).select("-password -resetOtp -resetOtpExpire -loginOtp -loginOtpExpire -pendingPhoneNumber -phoneVerification -sessionVersion -registrationPayment.razorpaySignature").lean();
 
     if (!user) {
       return res.status(404).json({
@@ -571,9 +581,98 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+const smsUnavailable = (res, message) =>
+  res.status(503).json({ success: false, code: "SMS_NOT_CONFIGURED", message });
+
+const invalidOtp = (res) =>
+  res.status(400).json({ success: false, code: "INVALID_OTP", message: "Invalid or expired OTP." });
+
+const sendOtpFailure = (res, error, label) => {
+  if (error instanceof SmsProviderError) {
+    if (error.status === 429) {
+      return res.status(429).json({ success: false, code: "OTP_RATE_LIMITED", message: "Too many OTP requests for this number. Please try again later." });
+    }
+    return res.status(502).json({ success: false, code: "OTP_SEND_FAILED", message: "Unable to send OTP at the moment." });
+  }
+  console.error(`${label}:`, error);
+  return res.status(500).json({ success: false, code: "OTP_SEND_FAILED", message: "Unable to send OTP at the moment." });
+};
+
+const verifyOtpFailure = (res, error, label) => {
+  if (!(error instanceof SmsProviderError)) console.error(`${label}:`, error);
+  return res.status(error instanceof SmsProviderError ? 502 : 500).json({ success: false, code: "OTP_VERIFY_FAILED", message: "Unable to verify OTP right now." });
+};
+
+const isBindingFor = (binding, { purpose, phoneNumber, userId }, now = Date.now()) =>
+  !!binding &&
+  binding.purpose === purpose &&
+  binding.phoneNumber === phoneNumber &&
+  String(binding.userId) === String(userId) &&
+  new Date(binding.expiresAt).getTime() > now;
+
+// A Twilio code sent moments ago is still pending; don't pay for (or rate-limit on) a duplicate send.
+const canReuseBinding = (binding, target, now = Date.now()) =>
+  isBindingFor(binding, target, now) &&
+  binding.provider === "twilio" &&
+  phoneOtpProvider(target.purpose) === "twilio" &&
+  now - new Date(binding.sentAt).getTime() < PHONE_OTP_RESEND_COOLDOWN_MS;
+
+// Sends the code (Twilio) or creates it (dev-only local provider). Resolves only after the provider accepts.
+const issuePhoneOtp = async (target) => {
+  const sentAt = new Date();
+  const binding = { ...target, sentAt, expiresAt: new Date(sentAt.getTime() + PHONE_OTP_TTL_MS) };
+  if (phoneOtpProvider(target.purpose) === "twilio") {
+    const { verificationSid } = await startTwilioVerification(target);
+    return { binding: { ...binding, provider: "twilio", verificationSid } };
+  }
+  const devCode = createLocalCode();
+  return { binding: { ...binding, provider: "local", codeHash: hashLocalCode(devCode, target) }, devCode };
+};
+
+const isApprovedCode = async (binding, otp) => {
+  if (binding.provider === "twilio") {
+    return checkTwilioVerification({ purpose: binding.purpose, phoneNumber: binding.phoneNumber, code: otp, verificationSid: binding.verificationSid });
+  }
+  if (process.env.NODE_ENV === "production" || !binding.codeHash) return false;
+  const expected = Buffer.from(binding.codeHash, "hex");
+  const actual = Buffer.from(hashLocalCode(otp, binding), "hex");
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+};
+
+// Matches exactly the binding that was checked, so a concurrent or newer request cannot be consumed twice.
+const bindingFilter = (binding) => ({
+  "phoneVerification.purpose": binding.purpose,
+  "phoneVerification.phoneNumber": binding.phoneNumber,
+  "phoneVerification.userId": binding.userId,
+  "phoneVerification.sentAt": binding.sentAt,
+  "phoneVerification.expiresAt": { $gt: new Date() },
+  ...(binding.provider === "twilio"
+    ? { "phoneVerification.verificationSid": binding.verificationSid }
+    : { "phoneVerification.codeHash": binding.codeHash }),
+});
+
+const LEGACY_OTP_FIELDS = { loginOtp: 1, loginOtpExpire: 1, pendingPhoneNumber: 1 };
+
+const otpSentResponse = (res, binding, devCode) =>
+  res.status(200).json({
+    success: true,
+    code: "OTP_SENT",
+    message: "OTP sent successfully.",
+    data: {
+      phoneNumber: binding.phoneNumber,
+      expiresInSeconds: Math.max(1, Math.floor((new Date(binding.expiresAt).getTime() - Date.now()) / 1000)),
+      ...(devCode && process.env.NODE_ENV !== "production" ? { otp: devCode } : {}),
+    },
+  });
+
+const normalizeOtpInput = (value) => {
+  const otp = String(value ?? "").trim();
+  return /^\d{4,10}$/.test(otp) ? otp : null;
+};
+
 const requestMobileOtp = async (req, res) => {
-  if (process.env.NODE_ENV === "production") {
-    return res.status(503).json({ success: false, code: "SMS_NOT_CONFIGURED", message: "Phone verification is unavailable. Please use email or Google login." });
+  if (!phoneOtpProvider(PHONE_OTP_PURPOSE.LOGIN)) {
+    return smsUnavailable(res, "Phone verification is unavailable. Please use email or Google login.");
   }
   try {
     const normalizedPhone = normalizeIndianPhone(req.body?.phoneNumber);
@@ -586,69 +685,49 @@ const requestMobileOtp = async (req, res) => {
       });
     }
 
-    const now = Date.now();
-
     let user = await User.findOne({ phoneNumber: normalizedPhone });
-    let otpToUse = Math.floor(100000 + Math.random() * 900000).toString();
-    let otpExpireDate = new Date(now + MOBILE_OTP_TTL_MS);
+    const userId = user?._id ?? new mongoose.Types.ObjectId();
+    const target = { purpose: PHONE_OTP_PURPOSE.LOGIN, phoneNumber: normalizedPhone, userId };
 
-    if (!user) {
-      user = await User.create({
-        firstname: "New",
-        lastname: "User",
-        email: buildMobilePlaceholderEmail(normalizedPhone),
-        phoneNumber: normalizedPhone,
-        password: null,
-        providers: ["LOCAL"],
-        loginOtp: otpToUse,
-        loginOtpExpire: otpExpireDate,
-      });
+    if (user && canReuseBinding(user.phoneVerification, target)) {
+      return otpSentResponse(res, user.phoneVerification);
+    }
+
+    const { binding, devCode } = await issuePhoneOtp(target);
+
+    if (user) {
+      await User.updateOne({ _id: user._id }, { $set: { phoneVerification: binding }, $unset: LEGACY_OTP_FIELDS });
     } else {
-      const hasActiveOtp =
-        user.loginOtp &&
-        user.loginOtpExpire &&
-        new Date(user.loginOtpExpire).getTime() > now;
-      const lastOtpCreatedRecently =
-        hasActiveOtp &&
-        new Date(user.loginOtpExpire).getTime() - now >
-          MOBILE_OTP_TTL_MS - MOBILE_OTP_RESEND_COOLDOWN_MS;
-
-      if (hasActiveOtp && lastOtpCreatedRecently) {
-        otpToUse = user.loginOtp;
-        otpExpireDate = new Date(user.loginOtpExpire);
-      } else {
-        user.loginOtp = otpToUse;
-        user.loginOtpExpire = otpExpireDate;
-        await user.save();
+      try {
+        await User.create({
+          _id: userId,
+          firstname: "New",
+          lastname: "User",
+          email: buildMobilePlaceholderEmail(normalizedPhone),
+          phoneNumber: normalizedPhone,
+          password: null,
+          providers: ["LOCAL"],
+          phoneVerification: binding,
+        });
+      } catch (error) {
+        if (error?.code !== 11000) throw error;
+        // Another request created this phone's account first; bind the code to that account instead.
+        user = await User.findOne({ phoneNumber: normalizedPhone });
+        if (!user) throw error;
+        binding.userId = user._id;
+        await User.updateOne({ _id: user._id }, { $set: { phoneVerification: binding } });
       }
     }
 
-    return res.status(200).json({
-      success: true,
-      code: "OTP_SENT",
-      message: "OTP sent successfully.",
-      data: {
-        phoneNumber: normalizedPhone,
-        expiresInSeconds: Math.max(
-          1,
-          Math.floor((new Date(otpExpireDate).getTime() - now) / 1000),
-        ),
-        ...(process.env.NODE_ENV !== "production" ? { otp: otpToUse } : {}),
-      },
-    });
+    return otpSentResponse(res, binding, devCode);
   } catch (error) {
-    console.error("Request Mobile OTP Error:", error);
-    return res.status(500).json({
-      success: false,
-      code: "OTP_SEND_FAILED",
-      message: "Unable to send OTP at the moment.",
-    });
+    return sendOtpFailure(res, error, "Request Mobile OTP Error");
   }
 };
 
 const requestSessionMobileOtp = async (req, res) => {
-  if (process.env.NODE_ENV === "production") {
-    return res.status(503).json({ success: false, code: "SMS_NOT_CONFIGURED", message: "Phone verification is unavailable. Please contact support." });
+  if (!phoneOtpProvider(PHONE_OTP_PURPOSE.PHONE_CHANGE)) {
+    return smsUnavailable(res, "Phone verification is unavailable. Please contact support.");
   }
   try {
     const userId = req.user.id;
@@ -683,68 +762,49 @@ const requestSessionMobileOtp = async (req, res) => {
       });
     }
 
-    const now = Date.now();
-    let otpToUse = Math.floor(100000 + Math.random() * 900000).toString();
-    let otpExpireDate = new Date(now + MOBILE_OTP_TTL_MS);
-
-    const hasActiveOtp =
-      user.loginOtp &&
-      user.loginOtpExpire &&
-      new Date(user.loginOtpExpire).getTime() > now &&
-      user.pendingPhoneNumber === normalizedPhone;
-    const lastOtpCreatedRecently =
-      hasActiveOtp &&
-      new Date(user.loginOtpExpire).getTime() - now >
-        MOBILE_OTP_TTL_MS - MOBILE_OTP_RESEND_COOLDOWN_MS;
-
-    if (hasActiveOtp && lastOtpCreatedRecently) {
-      otpToUse = user.loginOtp;
-      otpExpireDate = new Date(user.loginOtpExpire);
-    } else {
-      user.loginOtp = otpToUse;
-      user.loginOtpExpire = otpExpireDate;
-      user.pendingPhoneNumber = normalizedPhone;
-      await user.save();
+    const target = { purpose: PHONE_OTP_PURPOSE.PHONE_CHANGE, phoneNumber: normalizedPhone, userId: user._id };
+    if (canReuseBinding(user.phoneVerification, target)) {
+      return otpSentResponse(res, user.phoneVerification);
     }
 
-    return res.status(200).json({
-      success: true,
-      code: "OTP_SENT",
-      message: "OTP sent successfully.",
-      data: {
-        phoneNumber: normalizedPhone,
-        expiresInSeconds: Math.max(
-          1,
-          Math.floor((new Date(otpExpireDate).getTime() - now) / 1000),
-        ),
-        ...(process.env.NODE_ENV !== "production" ? { otp: otpToUse } : {}),
-      },
-    });
+    const { binding, devCode } = await issuePhoneOtp(target);
+    await User.updateOne({ _id: user._id }, { $set: { phoneVerification: binding }, $unset: LEGACY_OTP_FIELDS });
+
+    return otpSentResponse(res, binding, devCode);
   } catch (error) {
-    console.error("Request Session Mobile OTP Error:", error);
-    return res.status(500).json({
-      success: false,
-      code: "OTP_SEND_FAILED",
-      message: "Unable to send OTP at the moment.",
-    });
+    return sendOtpFailure(res, error, "Request Session Mobile OTP Error");
   }
 };
 
 const verifyMobileOtp = async (req, res) => {
   try {
     const normalizedPhone = normalizeIndianPhone(req.body?.phoneNumber);
-    const otp = String(req.body?.otp ?? "").trim();
+    const rawOtp = String(req.body?.otp ?? "").trim();
 
-    if (!normalizedPhone || !otp) {
+    if (!normalizedPhone || !rawOtp) {
       return res.status(400).json({
         success: false,
         code: "VALIDATION_ERROR",
         message: "Phone number and OTP are required.",
       });
     }
+    const otp = normalizeOtpInput(rawOtp);
+    if (!otp) return invalidOtp(res);
 
-    const user = await User.findOneAndUpdate({ phoneNumber: normalizedPhone, loginOtp: otp, loginOtpExpire: { $gt: new Date() }, isBlocked: { $ne: true } }, { $unset: { loginOtp: 1, loginOtpExpire: 1 } }, { returnDocument: 'after' });
-    if (!user) return res.status(400).json({ success: false, code: 'INVALID_OTP', message: 'Invalid or expired OTP.' });
+    const candidate = await User.findOne({ phoneNumber: normalizedPhone, isBlocked: { $ne: true } });
+    const binding = candidate?.phoneVerification;
+    if (!candidate || !isBindingFor(binding, { purpose: PHONE_OTP_PURPOSE.LOGIN, phoneNumber: normalizedPhone, userId: candidate._id })) {
+      return invalidOtp(res);
+    }
+    if (!(await isApprovedCode(binding, otp))) return invalidOtp(res);
+
+    const user = await User.findOneAndUpdate(
+      { _id: candidate._id, phoneNumber: normalizedPhone, isBlocked: { $ne: true }, ...bindingFilter(binding) },
+      { $unset: { phoneVerification: 1, ...LEGACY_OTP_FIELDS } },
+      { returnDocument: "after" },
+    );
+    if (!user) return invalidOtp(res);
+
     const isNewUser = user.firstname === "New" && user.lastname === "User";
     const needsProfile =
       !user.businessName ||
@@ -776,12 +836,7 @@ const verifyMobileOtp = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Verify Mobile OTP Error:", error);
-    return res.status(500).json({
-      success: false,
-      code: "OTP_VERIFY_FAILED",
-      message: "Unable to verify OTP right now.",
-    });
+    return verifyOtpFailure(res, error, "Verify Mobile OTP Error");
   }
 };
 
@@ -789,15 +844,17 @@ const verifySessionMobileOtp = async (req, res) => {
   try {
     const userId = req.user.id;
     const normalizedPhone = normalizeIndianPhone(req.body?.phoneNumber);
-    const otp = String(req.body?.otp ?? "").trim();
+    const rawOtp = String(req.body?.otp ?? "").trim();
 
-    if (!normalizedPhone || !otp) {
+    if (!normalizedPhone || !rawOtp) {
       return res.status(400).json({
         success: false,
         code: "VALIDATION_ERROR",
         message: "Phone number and OTP are required.",
       });
     }
+    const otp = normalizeOtpInput(rawOtp);
+    if (!otp) return invalidOtp(res);
 
     const user = await User.findById(userId);
     if (!user) {
@@ -808,53 +865,50 @@ const verifySessionMobileOtp = async (req, res) => {
       });
     }
 
-    const isOtpValid =
-      user.loginOtp === otp &&
-      user.loginOtpExpire &&
-      user.loginOtpExpire > new Date() &&
-      user.pendingPhoneNumber === normalizedPhone;
-
-    if (!isOtpValid) {
-      return res.status(400).json({
-        success: false,
-        code: "INVALID_OTP",
-        message: "Invalid or expired OTP.",
-      });
+    const binding = user.phoneVerification;
+    if (user.isBlocked || !isBindingFor(binding, { purpose: PHONE_OTP_PURPOSE.PHONE_CHANGE, phoneNumber: normalizedPhone, userId })) {
+      return invalidOtp(res);
     }
+    if (!(await isApprovedCode(binding, otp))) return invalidOtp(res);
+
+    const phoneInUse = () => res.status(409).json({
+      success: false,
+      code: "PHONE_ALREADY_IN_USE",
+      message: "This phone number is already associated with another account.",
+    });
 
     const existingPhoneUser = await User.findOne({
       phoneNumber: normalizedPhone,
       _id: { $ne: userId },
     }).select("_id");
-    if (existingPhoneUser) {
-      return res.status(409).json({
-        success: false,
-        code: "PHONE_ALREADY_IN_USE",
-        message: "This phone number is already associated with another account.",
-      });
-    }
+    if (existingPhoneUser) return phoneInUse();
 
-    const consumed = await User.findOneAndUpdate({ _id: userId, loginOtp: otp, loginOtpExpire: { $gt: new Date() }, pendingPhoneNumber: normalizedPhone, isBlocked: { $ne: true } }, { $set: { phoneNumber: normalizedPhone }, $unset: { loginOtp: 1, loginOtpExpire: 1, pendingPhoneNumber: 1 } }, { returnDocument: 'after', runValidators: true });
-    if (!consumed) return res.status(400).json({ success: false, code: 'INVALID_OTP', message: 'Invalid or expired OTP.' });
-    user.phoneNumber = consumed.phoneNumber;
+    let consumed;
+    try {
+      consumed = await User.findOneAndUpdate(
+        { _id: userId, isBlocked: { $ne: true }, ...bindingFilter(binding) },
+        { $set: { phoneNumber: normalizedPhone }, $unset: { phoneVerification: 1, ...LEGACY_OTP_FIELDS } },
+        { returnDocument: "after", runValidators: true },
+      );
+    } catch (error) {
+      if (error?.code === 11000) return phoneInUse();
+      throw error;
+    }
+    if (!consumed) return invalidOtp(res);
 
     return res.status(200).json({
       success: true,
       code: "PHONE_VERIFIED",
       message: "Phone verified successfully.",
       data: {
-        phoneNumber: user.phoneNumber,
+        phoneNumber: consumed.phoneNumber,
       },
     });
   } catch (error) {
-    console.error("Verify Session Mobile OTP Error:", error);
-    return res.status(500).json({
-      success: false,
-      code: "OTP_VERIFY_FAILED",
-      message: "Unable to verify OTP right now.",
-    });
+    return verifyOtpFailure(res, error, "Verify Session Mobile OTP Error");
   }
 };
+
 
 const completeMobileProfile = async (req, res) => {
   try {

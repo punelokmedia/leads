@@ -152,6 +152,24 @@ const UserSchema = new Schema(
       type: String,
       default: "",
     },
+    // Active phone OTP, bound to one purpose, phone number and user. With Twilio the
+    // code never reaches this server; the dev-only local provider stores only a hash.
+    phoneVerification: {
+      type: new Schema(
+        {
+          purpose: { type: String, enum: ["LOGIN", "PHONE_CHANGE"], required: true },
+          phoneNumber: { type: String, required: true },
+          userId: { type: Schema.Types.ObjectId, required: true },
+          provider: { type: String, enum: ["twilio", "local"], required: true },
+          verificationSid: String,
+          codeHash: String,
+          sentAt: { type: Date, required: true },
+          expiresAt: { type: Date, required: true },
+        },
+        { _id: false },
+      ),
+      default: undefined,
+    },
     registrationFeePaid: {
       type: Boolean,
       default: false,
@@ -191,7 +209,7 @@ UserSchema.index(
 
 UserSchema.set("toJSON", {
   transform(_document, result) {
-    for (const field of ["sessionVersion", "password", "resetOtp", "resetOtpExpire", "loginOtp", "loginOtpExpire", "pendingPhoneNumber"]) {
+    for (const field of ["sessionVersion", "password", "resetOtp", "resetOtpExpire", "loginOtp", "loginOtpExpire", "pendingPhoneNumber", "phoneVerification"]) {
       delete result[field];
     }
     if (result.registrationPayment) delete result.registrationPayment.razorpaySignature;

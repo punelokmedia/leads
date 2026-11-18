@@ -11,6 +11,8 @@ import 'package:user_app/features/preview/figma_widgets.dart';
 import 'package:user_app/features/preview/home_dashboard.dart';
 import 'package:user_app/features/preview/live_store.dart';
 import 'package:user_app/features/preview/preview_app.dart';
+import 'package:user_app/features/preview/preview_data.dart';
+import 'package:user_app/features/preview/my_leads_page.dart';
 
 Map<String, dynamic> lead(int i) => {
   '_id': '$i',
@@ -36,6 +38,46 @@ Map<String, dynamic> lead(int i) => {
 };
 
 void main() {
+  testWidgets(
+    'purchasing removes a lead from Home and retains it in My Leads',
+    (tester) async {
+      final store = PreviewStore();
+      addTearDown(store.dispose);
+      final target = store.leads.firstWhere(
+        (lead) => !lead.joined && !lead.closed,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [homeBannersProvider.overrideWith((ref) async => [])],
+          child: MaterialApp(home: PreviewHome(store: store)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<NextLeadDashboard>(find.byType(NextLeadDashboard)).leads,
+        contains(target),
+      );
+      expect(store.purchase(target), isTrue);
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<NextLeadDashboard>(find.byType(NextLeadDashboard)).leads,
+        isNot(contains(target)),
+      );
+      await tester.tap(find.text('My Leads').last);
+      await tester.pumpAndSettle();
+      expect(find.byType(MyLeadsPage), findsOneWidget);
+      expect(store.leads.where((lead) => lead.joined), contains(target));
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is FigmaLeadCard &&
+              widget.lead == target &&
+              widget.purchased,
+        ),
+        findsOneWidget,
+      );
+    },
+  );
   for (final search in [false, true]) {
     test(
       'repository loads every page for ${search ? 'search' : 'browsing'}',

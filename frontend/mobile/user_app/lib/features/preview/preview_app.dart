@@ -111,6 +111,7 @@ class _PreviewHomeState extends State<PreviewHome> {
               : store.leads)
           .where(
             (l) =>
+                !l.joined &&
                 (store is LiveStore &&
                         (store as LiveStore).filteredLeads != null ||
                     advancedFilters.matches(l)) &&

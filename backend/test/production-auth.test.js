@@ -22,13 +22,12 @@ test('admin login rejects an OTP without an expiry', async (t) => {
   assert.equal(res.statusCode, 400);
 });
 
-test('production phone OTP does not claim delivery without an SMS integration', async (t) => {
-  const previous = process.env.NODE_ENV;
+test('production phone OTP does not claim delivery without Twilio configuration', async (t) => {
+  const keys = ['NODE_ENV', 'SMS_PROVIDER', 'TWILIO_VERIFY_SERVICE_SID', 'TWILIO_VERIFY_PHONE_CHANGE_SERVICE_SID', 'TWILIO_API_KEY_SID', 'TWILIO_API_KEY_SECRET', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN'];
+  const saved = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  for (const key of keys) delete process.env[key];
   process.env.NODE_ENV = 'production';
-  t.after(() => {
-    if (previous === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = previous;
-  });
+  t.after(() => { for (const key of keys) { if (saved[key] === undefined) delete process.env[key]; else process.env[key] = saved[key]; } });
   t.mock.method(User, 'findOne', () => assert.fail('must not create an undeliverable code'));
   for (const handler of [requestMobileOtp, requestSessionMobileOtp]) {
     const res = response();
